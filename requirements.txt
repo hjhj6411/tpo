@@ -1,0 +1,11 @@
+requests>=2.31
+numpy>=1.24
+Pillow>=10.0
+tqdm>=4.65
+
+# CLIP for homogeneity check
+transformers>=4.40
+torch>=2.0
+
+# (optional) for evaluator with vLLM
+# vllm>=0.6.0
