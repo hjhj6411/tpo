@@ -1,29 +1,21 @@
 """
 Image Collector
 ================
-각 option plan의 4 선지에 대해 이미지를 수집합니다.
 
-수집 소스 우선순위:
-  1. Amazon Reviews 2023 (이미 다운로드된 메타데이터)
-  2. Google Custom Search API (무료 100 queries/day)
-  3. (fallback) 사용자가 직접 이미지 URL 제공
+For each option plan, collect 4 images (one per option) and verify quality:
 
-품질 검증:
-  - 최소 해상도 (224x224)
-  - 단일 객체 / 깔끔한 배경 (CLIP 기반)
-  - 4 선지 간 시각적 동질성 (CLIP 임베딩 거리 측정)
+Sources (priority order):
+  1. Amazon Reviews 2023 metadata (free, already on disk)
+  2. Google Custom Search API (free 100/day, fallback)
 
-사용:
-  python -m src.image_collector
-
-산출:
-  data/images/<query_id>/A.jpg, B.jpg, C.jpg, D.jpg
-  data/images/collection_log.jsonl
+Quality checks:
+  - Min resolution 224x224
+  - 4 options must be visually homogeneous (CLIP distance check)
 """
 
 import argparse
-import hashlib
 import io
+import json
 import os
 import time
 from pathlib import Path
@@ -32,28 +24,22 @@ import numpy as np
 import requests
 from PIL import Image
 
-from .utils import (
-    save_jsonl, load_jsonl, save_json, load_json, log_step,
-)
+from .utils import save_jsonl, load_jsonl, log_step
 
 import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from configs.config import (
-    IMAGES_DIR, OPTIONS_DIR, IMAGE_COLLECTION,
-)
+from configs.config import IMAGES_DIR, OPTIONS_DIR, IMAGE_COLLECTION
 
 
 # ─────────────────────────────────────────────
-# Amazon Reviews 2023 검색 (메타데이터 기반)
+# Amazon Reviews 2023 metadata search
 # ─────────────────────────────────────────────
 
 class AmazonCatalogIndex:
-    """Amazon Reviews 2023 메타데이터에서 이미지 검색.
+    """In-memory keyword index over Amazon Reviews 2023 metadata.
 
-    사용자의 환경에는 이미 ingest된 amazon 데이터가 있다고 가정합니다.
-    예상 경로: /home/hjhj6411/fashion/data/amazon/meta_*.jsonl
-
-    이 클래스는 lazy하게 작동합니다 — 데이터가 없으면 None 반환.
+    Expected files at $AMAZON_META_DIR/*.jsonl with fields:
+      title, images (list of dict or str), main_category, ...
     """
 
     def __init__(self, index_path: Path = None):
@@ -61,40 +47,36 @@ class AmazonCatalogIndex:
             os.environ.get("AMAZON_META_DIR", "/home/hjhj6411/fashion/data/amazon")
         )
         self._loaded = False
-        self._items = []  # 간단한 in-memory index
+        self._items = []
 
     def _ensure_loaded(self):
         if self._loaded:
             return
         self._loaded = True
-
         if not self.index_path.exists():
-            print(f"  Amazon catalog not found at {self.index_path}; will skip Amazon source")
+            print(f"  Amazon catalog not found at {self.index_path}, skipping.")
             return
 
-        # 모든 meta_*.jsonl 파일에서 (title, image_url) 추출
         meta_files = list(self.index_path.glob("meta_*.jsonl"))
         if not meta_files:
             meta_files = list(self.index_path.glob("*.jsonl"))
 
-        print(f"  Loading Amazon catalog index from {len(meta_files)} files...")
+        print(f"  Indexing {len(meta_files)} Amazon meta files...")
         n_loaded = 0
-        for mf in meta_files[:5]:  # 너무 큰 경우 제한
+        for mf in meta_files[:5]:
             try:
                 with open(mf, encoding="utf-8") as f:
                     for line in f:
                         try:
-                            import json
                             item = json.loads(line)
-                            title = item.get("title", "") or item.get("name", "")
-                            images = item.get("images", []) or item.get("image", [])
-
-                            # image URL 추출
+                            title = (item.get("title") or item.get("name") or "").lower()
+                            images = item.get("images") or item.get("image") or []
                             img_url = None
                             if isinstance(images, list) and images:
                                 first = images[0]
                                 if isinstance(first, dict):
-                                    img_url = first.get("large") or first.get("hi_res") or first.get("thumb")
+                                    img_url = (first.get("large") or first.get("hi_res")
+                                                or first.get("thumb"))
                                 elif isinstance(first, str):
                                     img_url = first
                             elif isinstance(images, str):
@@ -102,198 +84,141 @@ class AmazonCatalogIndex:
 
                             if title and img_url:
                                 self._items.append({
-                                    "title": title.lower(),
-                                    "image_url": img_url,
+                                    "title": title, "image_url": img_url,
                                     "category": item.get("main_category", ""),
                                 })
                                 n_loaded += 1
                         except Exception:
                             continue
-                        if n_loaded >= 50000:  # 메모리 절약
+                        if n_loaded >= 50000:
                             break
             except Exception as e:
                 print(f"    Skipped {mf.name}: {e}")
-
             if n_loaded >= 50000:
                 break
-
-        print(f"  Loaded {n_loaded} Amazon items")
+        print(f"  Indexed {n_loaded} Amazon items")
 
     def search(self, query: str, top_k: int = 5) -> list[dict]:
-        """단순 키워드 매칭으로 검색."""
         self._ensure_loaded()
         if not self._items:
             return []
-
-        # 쿼리 토큰
         tokens = [t.lower() for t in query.split() if len(t) > 2]
         if not tokens:
             return []
-
-        # 매칭 점수 계산
         scored = []
-        for item in self._items:
-            score = sum(1 for t in tokens if t in item["title"])
+        for it in self._items:
+            score = sum(1 for t in tokens if t in it["title"])
             if score >= max(1, len(tokens) // 2):
-                scored.append((score, item))
-
+                scored.append((score, it))
         scored.sort(key=lambda x: -x[0])
         return [s[1] for s in scored[:top_k]]
 
 
 # ─────────────────────────────────────────────
-# Google Custom Search (무료 100/day)
+# Google Custom Search (free 100/day)
 # ─────────────────────────────────────────────
 
 def google_image_search(query: str, top_k: int = 5) -> list[dict]:
-    """Google Custom Search API로 이미지 검색.
-
-    환경변수 필요:
-      GOOGLE_API_KEY: Google Cloud API key
-      GOOGLE_CSE_ID: Custom Search Engine ID
-
-    무료 한도: 100 queries/day.
-    """
     api_key = os.environ.get("GOOGLE_API_KEY")
     cse_id = os.environ.get("GOOGLE_CSE_ID")
-
     if not api_key or not cse_id:
-        return []  # 비활성
-
+        return []
     try:
         resp = requests.get(
             "https://www.googleapis.com/customsearch/v1",
-            params={
-                "key": api_key,
-                "cx": cse_id,
-                "q": query,
-                "searchType": "image",
-                "num": min(top_k, 10),
-                "safe": "active",
-                "imgSize": "medium",
-            },
+            params={"key": api_key, "cx": cse_id, "q": query,
+                    "searchType": "image", "num": min(top_k, 10),
+                    "safe": "active", "imgSize": "medium"},
             timeout=20,
         )
         resp.raise_for_status()
         items = resp.json().get("items", [])
-        return [{
-            "image_url": it.get("link"),
-            "title": it.get("title", ""),
-            "source": "google",
-        } for it in items]
+        return [{"image_url": it.get("link"), "title": it.get("title", ""),
+                 "source": "google"} for it in items]
     except Exception as e:
         print(f"    Google search error: {e}")
         return []
 
 
 # ─────────────────────────────────────────────
-# 이미지 다운로드 + 검증
+# Image download
 # ─────────────────────────────────────────────
 
 def download_image(url: str, target_path: Path,
                     min_resolution=(224, 224)) -> bool:
-    """이미지 다운로드 + 크기 검증 + 표준화."""
     try:
         resp = requests.get(url, timeout=15,
                             headers={"User-Agent": "Mozilla/5.0"})
         resp.raise_for_status()
-
         img = Image.open(io.BytesIO(resp.content)).convert("RGB")
-
         if img.size[0] < min_resolution[0] or img.size[1] < min_resolution[1]:
             return False
-
-        # 512x512로 리사이즈 (긴 변 기준)
         img.thumbnail((512, 512), Image.LANCZOS)
         target_path.parent.mkdir(parents=True, exist_ok=True)
         img.save(target_path, "JPEG", quality=90)
         return True
-    except Exception as e:
+    except Exception:
         return False
 
 
 # ─────────────────────────────────────────────
-# CLIP 기반 동질성 검증
+# CLIP-based homogeneity check
 # ─────────────────────────────────────────────
 
-class CLIPHomogeneityChecker:
-    """4 선지의 시각적 동질성을 CLIP으로 검증."""
-
+class CLIPHomogeneity:
     def __init__(self):
         self._model = None
         self._processor = None
         self._device = None
+        self._torch = None
 
     def _ensure_loaded(self):
         if self._model is not None:
             return
-
         try:
             import torch
             from transformers import CLIPProcessor, CLIPModel
-
             self._device = "cuda" if torch.cuda.is_available() else "cpu"
-            model_name = "openai/clip-vit-base-patch32"  # 빠른 버전
-            print(f"  Loading CLIP ({model_name}) on {self._device}")
-            self._model = CLIPModel.from_pretrained(model_name).to(self._device).eval()
-            self._processor = CLIPProcessor.from_pretrained(model_name)
+            name = "openai/clip-vit-base-patch32"
+            print(f"  Loading CLIP ({name}) on {self._device}")
+            self._model = CLIPModel.from_pretrained(name).to(self._device).eval()
+            self._processor = CLIPProcessor.from_pretrained(name)
             self._torch = torch
         except Exception as e:
-            print(f"  CLIP loading failed: {e}. Homogeneity check disabled.")
+            print(f"  CLIP unavailable: {e}")
             self._model = "DISABLED"
 
-    def check_homogeneity(self, image_paths: list[Path]) -> dict:
-        """4개 이미지 간 pairwise distance를 측정.
-
-        Returns: {
-          "mean_distance": float,
-          "max_distance": float,
-          "passed": bool,
-        }
-        """
+    def check(self, image_paths: list[Path]) -> dict:
         self._ensure_loaded()
         if self._model == "DISABLED" or len(image_paths) < 2:
-            return {"mean_distance": 0.0, "max_distance": 0.0, "passed": True,
+            return {"mean_distance": 0, "max_distance": 0, "passed": True,
                     "note": "skipped"}
-
         try:
             images = [Image.open(p).convert("RGB") for p in image_paths]
             inputs = self._processor(images=images, return_tensors="pt").to(self._device)
             with self._torch.no_grad():
-                features = self._model.get_image_features(**inputs)
-                features = features / features.norm(dim=-1, keepdim=True)
-
-            # pairwise cosine distance
-            sim_matrix = features @ features.T
-            distances = 1 - sim_matrix.cpu().numpy()
+                feats = self._model.get_image_features(**inputs)
+                feats = feats / feats.norm(dim=-1, keepdim=True)
+            sims = (feats @ feats.T).cpu().numpy()
+            dists = 1 - sims
             n = len(image_paths)
-            pairs = [distances[i, j] for i in range(n) for j in range(i+1, n)]
-
+            pairs = [dists[i, j] for i in range(n) for j in range(i+1, n)]
             mean_d = float(np.mean(pairs))
             max_d = float(np.max(pairs))
-
             threshold = IMAGE_COLLECTION["max_clip_distance_within_options"]
-            passed = max_d <= threshold
-
-            return {
-                "mean_distance": mean_d,
-                "max_distance": max_d,
-                "passed": passed,
-                "threshold": threshold,
-            }
+            return {"mean_distance": mean_d, "max_distance": max_d,
+                    "passed": max_d <= threshold, "threshold": threshold}
         except Exception as e:
-            return {"mean_distance": 0.0, "max_distance": 0.0, "passed": True,
-                    "note": f"check failed: {e}"}
+            return {"mean_distance": 0, "max_distance": 0, "passed": True,
+                    "note": f"failed: {e}"}
 
 
 # ─────────────────────────────────────────────
-# 메인 파이프라인
+# Main pipeline
 # ─────────────────────────────────────────────
 
-def collect_images_for_plan(plan: dict, amazon: AmazonCatalogIndex,
-                             checker: CLIPHomogeneityChecker,
-                             out_root: Path) -> dict:
-    """단일 plan의 4 선지에 대해 이미지 수집."""
+def collect_for_plan(plan: dict, amazon: AmazonCatalogIndex,
+                      checker: CLIPHomogeneity, out_root: Path) -> dict:
     query_id = plan["query_id"]
     out_dir = out_root / query_id
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -301,7 +226,7 @@ def collect_images_for_plan(plan: dict, amazon: AmazonCatalogIndex,
     result = {
         "query_id": query_id,
         "user_id": plan["user_id"],
-        "domain": plan["domain"],
+        "domain": "fashion",
         "main_category": plan["main_category"],
         "options": {},
         "all_collected": False,
@@ -309,11 +234,9 @@ def collect_images_for_plan(plan: dict, amazon: AmazonCatalogIndex,
     }
 
     image_paths = []
-    sources_used = {}
-
-    for opt_key in ["A", "B", "C", "D"]:
+    for opt_key in "ABCD":
         opt = plan["options"][opt_key]
-        search_query = opt["search_query_en"]
+        query = opt["search_query"]
         img_path = out_dir / f"{opt_key}.jpg"
 
         if img_path.exists():
@@ -321,36 +244,32 @@ def collect_images_for_plan(plan: dict, amazon: AmazonCatalogIndex,
             result["options"][opt_key] = {
                 "image_path": str(img_path),
                 "source": "cached",
-                "search_query": search_query,
+                "search_query": query,
             }
             continue
 
-        # 1순위: Amazon
         downloaded = False
-        amazon_results = amazon.search(search_query, top_k=3)
-        for cand in amazon_results:
+        # 1) Amazon
+        for cand in amazon.search(query, top_k=3):
             if download_image(cand["image_url"], img_path):
                 downloaded = True
-                sources_used[opt_key] = "amazon"
                 result["options"][opt_key] = {
                     "image_path": str(img_path),
                     "source": "amazon",
-                    "search_query": search_query,
+                    "search_query": query,
                     "source_title": cand.get("title", "")[:100],
                 }
                 break
 
-        # 2순위: Google
+        # 2) Google fallback
         if not downloaded:
-            google_results = google_image_search(search_query, top_k=3)
-            for cand in google_results:
+            for cand in google_image_search(query, top_k=3):
                 if download_image(cand["image_url"], img_path):
                     downloaded = True
-                    sources_used[opt_key] = "google"
                     result["options"][opt_key] = {
                         "image_path": str(img_path),
                         "source": "google",
-                        "search_query": search_query,
+                        "search_query": query,
                         "source_title": cand.get("title", "")[:100],
                     }
                     break
@@ -359,80 +278,67 @@ def collect_images_for_plan(plan: dict, amazon: AmazonCatalogIndex,
             image_paths.append(img_path)
         else:
             result["options"][opt_key] = {
-                "image_path": None,
-                "source": "FAILED",
-                "search_query": search_query,
+                "image_path": None, "source": "FAILED",
+                "search_query": query,
             }
 
     result["all_collected"] = len(image_paths) == 4
-
     if result["all_collected"]:
-        result["homogeneity"] = checker.check_homogeneity(image_paths)
-
+        result["homogeneity"] = checker.check(image_paths)
     return result
 
 
 def run_pipeline(plan_path: Path, output_path: Path,
                  image_root: Path, limit: int = 0):
-    """전체 image collection 파이프라인 실행."""
     log_step("Image Collector")
-
     plans = load_jsonl(plan_path)
-    print(f"  Loaded {len(plans)} option plans")
+    print(f"  Loaded {len(plans)} plans")
 
     amazon = AmazonCatalogIndex()
-    checker = CLIPHomogeneityChecker()
+    checker = CLIPHomogeneity()
 
     if output_path.exists():
         existing = load_jsonl(output_path)
         done = {r["query_id"] for r in existing}
-        print(f"  Resuming: {len(done)} plans already processed")
         results = existing
-        plans_to_do = [p for p in plans if p["query_id"] not in done]
+        todo = [p for p in plans if p["query_id"] not in done]
+        print(f"  Resuming: {len(done)} already collected")
     else:
         results = []
-        plans_to_do = plans
+        todo = plans
 
     if limit > 0:
-        plans_to_do = plans_to_do[:limit]
+        todo = todo[:limit]
 
     n_complete = 0
-    n_homogeneous = 0
+    n_homo = 0
 
-    for i, plan in enumerate(plans_to_do):
-        print(f"\n  [{i+1}/{len(plans_to_do)}] {plan['query_id']}")
+    for i, plan in enumerate(todo):
+        print(f"\n  [{i+1}/{len(todo)}] {plan['query_id']}")
         try:
-            result = collect_images_for_plan(plan, amazon, checker, image_root)
-            results.append(result)
-
-            if result["all_collected"]:
+            r = collect_for_plan(plan, amazon, checker, image_root)
+            results.append(r)
+            if r["all_collected"]:
                 n_complete += 1
-                homo = result.get("homogeneity") or {}
+                homo = r.get("homogeneity") or {}
                 if homo.get("passed", True):
-                    n_homogeneous += 1
+                    n_homo += 1
                     status = "✓"
                 else:
                     status = f"⚠ heterogeneous (d_max={homo.get('max_distance', 0):.3f})"
             else:
-                missing = [k for k, v in result["options"].items()
-                          if v.get("source") == "FAILED"]
+                missing = [k for k, v in r["options"].items()
+                            if v.get("source") == "FAILED"]
                 status = f"✗ missing {missing}"
             print(f"    {status}")
-
-            # 매 10개마다 저장
             if (i + 1) % 10 == 0:
                 save_jsonl(results, output_path)
-
         except Exception as e:
             print(f"    ERROR: {e}")
-
-        # API rate limiting
         time.sleep(0.5)
 
     save_jsonl(results, output_path)
-    print(f"\n  ✓ Saved {len(results)} collection records to {output_path}")
-    print(f"  Complete (all 4 images): {n_complete}/{len(plans_to_do)}")
-    print(f"  Homogeneous: {n_homogeneous}/{n_complete}")
+    print(f"\n  ✓ Saved {len(results)}, complete {n_complete}, homo {n_homo}")
 
 
 def main():
@@ -444,7 +350,6 @@ def main():
     parser.add_argument("--image_root", type=Path, default=IMAGES_DIR)
     parser.add_argument("--limit", type=int, default=0)
     args = parser.parse_args()
-
     run_pipeline(args.plan_path, args.output, args.image_root, args.limit)
 
 

@@ -1,73 +1,154 @@
 # POD-Bench: Preference Origin Disentanglement Benchmark
 
-VLM이 사용자의 **본질적 취향(Intrinsic Preference)**과 **상황적 선호(TPO: Time/Place/Occasion)**를 구분할 수 있는지 진단하는 멀티모달 벤치마크.
+A vision-essential benchmark for diagnosing whether VLM-based personalization
+methods can disentangle a user's **intrinsic preference** from **situational TPO
+(Time / Place / Occasion)** context.
 
-## 핵심 구조
+## Core Idea
 
-각 인스턴스는 4지선다 + 모든 선지가 이미지:
-
-```
-Query: "비 오는 날 외출용으로 가져갈 최선의 선택은?"
-User Profile: "차분한 어두운 푸른 톤, 미니멀 디자인 선호..."
-
-A) 네이비 우비, 미니멀 라인       (TPO+선호) ← 정답
-B) 빨간 우비, 큰 로고             (TPO만)
-C) 네이비 후드티, 미니멀 디자인    (선호만)
-D) 베이지 우비, 화려한 패턴       (둘 다 부분 X)
-```
-
-오답 패턴이 진단적 의미를 가짐:
-- B 편향 → TPO 과다 반영 (PCogAlign 계열 실패 양상)
-- C 편향 → 선호 과다 반영 (Whose Boat?/SynthesizeMe 계열의 "기계적 FAE")
-
-## One-Cycle Pipeline
+Each instance is a 4-option multiple-choice item where all options are images
+of fashion items in the same garment category. The four options are constructed
+along two independent axes:
 
 ```
-1. profile_generator.py     → 50명 narrative profile 생성
-2. query_generator.py       → 사용자당 20개 query 생성
-3. option_planner.py        → 각 query에 대해 4 선지의 속성 조합 계산
-4. image_collector.py       → Amazon Reviews 2023 + Google 검색으로 이미지 수집
-5. label_verifier.py        → 자동 라벨링 + LLM judge ensemble
-6. quality_audit.py         → vision-essentiality 검증
-7. evaluator.py             → VLM 평가 실행
+                    matches preference?
+                       YES        NO
+TPO match?  YES        A          B          (A is correct)
+            NO         C          D
 ```
 
-## 비용 정책
+- **A** = TPO + preference both satisfied (correct)
+- **B** = TPO only — situationally appropriate but violates user taste
+- **C** = preference only — matches taste but situationally wrong
+- **D** = neither
 
-- **GPT-5-mini**: 유료 (profile/query 생성, judge ensemble 일부)
-- **나머지 모두 무료**:
-  - Local LLM judge (Qwen2.5-7B via vLLM, 사용자의 4× RTX 6000 Ada 활용)
-  - CLIP/SigLIP 임베딩 (HuggingFace 무료)
-  - 이미지 수집: Amazon Reviews 2023 (이미 다운로드된 데이터) + Google Custom Search (free tier 100 queries/day)
-  - VLM 평가: vLLM으로 로컬 서빙 (Qwen2.5-VL, InternVL 등)
+The diagnostic power lies in the *confusion matrix*:
+- B-bias → TPO over-weighting (PCogAlign-style failure)
+- C-bias → preference over-weighting (Whose Boat? / SynthesizeMe / FSPO-style
+  failure, i.e., "mechanical FAE")
 
-## 실행 순서
+## Design (Locked)
+
+| Aspect | Choice | Rationale |
+|---|---|---|
+| Domain | Fashion only | Phase 1 simplicity |
+| Profile language | English | International venue target |
+| Profile structure | likes/dislikes keywords + narrative | MMPB-style, supports ablation |
+| Attribute axes | Closed-set, objectively decidable | Unambiguous rule-based labeling |
+| Image source | Amazon Reviews 2023 + Google fallback | Free, real catalog |
+| Labeling | Rule-based + 3-judge LLM ensemble | No human annotation needed |
+| Phase 1 size | 50 users × 20 queries | Pilot → expand on validation |
+
+## Attribute Taxonomy (Closed Vocabulary)
+
+The taxonomy is grounded in DeepFashion (Liu et al. CVPR 2016), Fashionpedia
+(Jia et al. ECCV 2020), and Berlin & Kay (1969) basic color terms:
+
+| Axis | Values |
+|---|---|
+| color | black, white, gray, navy, blue, red, pink, orange, yellow, green, brown, beige, purple |
+| material | cotton, linen, wool, silk, cashmere, denim, leather, suede, polyester, nylon, knit, fleece |
+| pattern | solid, striped, checkered, plaid, floral, polka_dot, graphic_print, camouflage, animal_print |
+| garment_category | t_shirt, shirt, blouse, sweater, hoodie, jacket, coat, trench_coat, blazer, dress, skirt, pants, jeans, shorts, suit |
+| fit | slim, regular, loose, oversized |
+| sleeve_length | sleeveless, short_sleeve, three_quarter_sleeve, long_sleeve |
+| neckline | crew_neck, v_neck, scoop_neck, turtleneck, collared, off_shoulder, hooded |
+| formality_level | very_casual, casual, smart_casual, business_casual, formal |
+
+**Excluded from likes/dislikes**: style labels like "minimalist", "classic",
+"bohemian" — they are subjective and ambiguous. They may appear in the
+narrative profile for fluency only.
+
+## Profile Representation (MMPB-style)
+
+Each profile has three representations to support ablation:
+
+```json
+{
+  "user_id": "U001",
+  "structured_attributes": {       // hidden ground-truth
+    "color":    {"likes": ["navy", "beige"], "dislikes": ["orange"]},
+    "material": {"likes": ["cotton", "linen"], "dislikes": ["polyester"]},
+    "fit":      {"likes": ["regular"], "dislikes": ["oversized"]}
+  },
+  "likes_keywords":    ["color:navy", "color:beige", "material:cotton",
+                        "material:linen", "fit:regular"],
+  "dislikes_keywords": ["color:orange", "material:polyester", "fit:oversized"],
+  "narrative_profile": "This early-30s researcher gravitates toward navy and
+                        beige tones, and prefers natural-fiber pieces in cotton
+                        or linen. They favor a regular fit and tend to avoid
+                        polyester, bright orange tones, and oversized cuts."
+}
+```
+
+Three exposure variants for ablation (in final benchmark):
+- `keyword_only`: only the keyword lists
+- `narrative_only`: only the narrative
+- `combined`: narrative + keyword recap
+
+## Query Types
+
+| Type | Ratio | Example |
+|---|---|---|
+| explicit_tpo | 30% | "What should I wear for a rainy outdoor event this fall?" |
+| implicit_tpo | 25% | "What should I wear to my friend's wedding?" |
+| visual_tpo | 30% | "What should I wear to a place like this?" (+ TPO image) |
+| neutral | 15% | "Pick an item that fits my personal style." |
+
+## Pipeline
+
+```
+1. profile_generator  → 50 narrative+keyword profiles (English)
+2. query_generator    → 20 queries/user across 4 TPO types
+3. option_planner     → 4-option attribute specs per query
+4. image_collector    → Amazon + Google image fetch + CLIP homogeneity
+5. label_verifier     → rule + 3-judge ensemble + Krippendorff α / Cohen κ
+6. quality_audit      → vision-essentiality controls + final assembly
+7. evaluator          → VLM eval with position-shuffle + confusion matrix
+```
+
+## Cost Policy
+
+- **Paid**: GPT-5-mini only (profile/query/option generation, 1 of 3 judges)
+- **Free**:
+  - Local vLLM: Qwen2.5-7B, Llama-3.1-8B (2 of 3 judges), Qwen2.5-VL-7B
+    (captioner + VLM evaluator)
+  - HuggingFace CLIP (homogeneity check)
+  - Amazon Reviews 2023 (already downloaded)
+  - Google Custom Search (free 100/day)
+
+## GPT-5-mini API Notes
+
+This codebase handles three specific quirks of GPT-5 reasoning models:
+
+1. **Parameter name**: uses `max_completion_tokens`, not `max_tokens`.
+2. **Reasoning budget**: reasoning tokens (300-500 typical) count toward the
+   `max_completion_tokens` cap. Default is set to 4096, long-output mode 8192.
+3. **No temperature**: GPT-5 family rejects custom temperature values
+   (must use default 1). Our code does NOT pass `temperature` at all.
+4. **Response parsing**: uses the Chat Completions endpoint
+   (`/v1/chat/completions`) with `.choices[0].message.content` extraction
+   that gracefully handles refusals, list-form content, and `finish_reason=length`
+   (empty response when reasoning consumed the entire budget).
+
+## Quick Start
 
 ```bash
-# Phase 1: 데이터 구축 (1회만)
-python -m src.profile_generator --n_users 50 --domain_split 0.7
-python -m src.query_generator --n_per_user 20
-python -m src.option_planner
-python -m src.image_collector
-python -m src.label_verifier
-python -m src.quality_audit
+unzip pod_bench.zip && cd pod_bench
+pip install -r requirements.txt
 
-# Phase 2: 모델 평가
-python -m src.evaluator --model qwen2.5-vl-7b
+# Set API key
+export OPENAI_API_KEY=sk-...
+
+# Start local vLLM (see docs/SETUP.md for full setup)
+# Then run the pipeline:
+bash scripts/run_pipeline.sh
+
+# Evaluate
+python -m src.evaluator --model vlm_evaluator --profile_variant combined
+python -m src.evaluator --model vlm_evaluator --profile_variant keyword_only
+python -m src.evaluator --model vlm_evaluator --profile_variant narrative_only
 ```
 
-## 디렉토리
-
-```
-pod_bench/
-├── src/                    # 파이프라인 코드
-├── data/
-│   ├── profiles/          # 생성된 user profiles
-│   ├── queries/           # 생성된 queries
-│   ├── options/           # 선지 속성 plan
-│   ├── images/            # 수집된 이미지
-│   ├── labels/            # 자동 라벨 + judge 결과
-│   └── final/             # 최종 벤치마크 JSON
-├── configs/                # 설정 파일
-└── scripts/                # 실행 스크립트
-```
+Each pipeline step supports `--limit N` for partial runs and is idempotent
+(resumable on re-run).

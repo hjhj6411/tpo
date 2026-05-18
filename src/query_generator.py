@@ -1,22 +1,17 @@
 """
-Query Generator
-================
-각 user profile에 대해 다양한 TPO를 가진 query를 생성합니다.
+Query Generator (English, Fashion)
+====================================
 
-생성 비율 (configs.config.QUERY_TYPE_RATIO):
-  - explicit_tpo: 30% — "비 오는 날 외출용으로 무엇을 가져갈까?"
-  - implicit_tpo: 25% — "야외 결혼식에 입을 옷을 추천해줘"
-  - visual_tpo:   30% — 모호 텍스트 + 별도 TPO 컨텍스트 이미지
-  - neutral:      15% — TPO 없음, 순수 선호 질문
+Generates N queries per user, distributed across 4 query types:
+  - explicit_tpo (30%): TPO directly stated in text
+  - implicit_tpo (25%): TPO inferable from named situation
+  - visual_tpo  (30%): vague text + separate TPO context image (image collected later)
+  - neutral     (15%): pure preference, no TPO
 
-각 query는 사용자의 structured_attributes와 *독립적*으로 생성됩니다
-(query는 상황만 정의; 선호는 profile에서 가져옴).
+Queries are deliberately INDEPENDENT of the user's preferences — they specify
+situations only. The user's enduring taste is supplied via their profile.
 
-사용:
-  python -m src.query_generator --n_per_user 20
-
-산출:
-  data/queries/queries.jsonl
+All queries in ENGLISH.
 """
 
 import argparse
@@ -24,178 +19,147 @@ import random
 from pathlib import Path
 
 from .utils import (
-    call_gpt5_mini, parse_json_response, parse_json_list_response,
+    call_gpt5_mini, parse_json_list_response,
     save_jsonl, load_jsonl, log_step,
 )
 
 import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from configs.config import (
-    QUERIES_DIR, PROFILES_DIR, TPO_BY_DOMAIN,
-    QUERY_TYPE_RATIO, PHASE1_CONFIG,
+    QUERIES_DIR, PROFILES_DIR, FASHION_TPO,
+    QUERY_TYPE_RATIO, PHASE1_CONFIG, GPT5_MINI,
 )
 
 
 # ─────────────────────────────────────────────
-# TPO 시나리오 샘플러
+# TPO scenario sampler
 # ─────────────────────────────────────────────
 
-def sample_tpo_scenario(domain: str, seed: int) -> dict:
-    """TPO 축에서 한 시나리오 샘플링."""
+def sample_tpo_scenario(seed: int) -> dict:
+    """Sample a coherent TPO scenario from the fashion TPO axes."""
     rng = random.Random(seed)
-    tpo = TPO_BY_DOMAIN[domain]
-
     scenario = {}
-    for axis, sub_axes in tpo.items():
+    for axis, sub_axes in FASHION_TPO.items():
         scenario[axis] = {}
-        # 각 sub_axis에서 1개씩 샘플 (부분만 채워도 됨)
         sub_keys = list(sub_axes.keys())
         n_to_sample = rng.randint(1, len(sub_keys))
-        sampled_keys = rng.sample(sub_keys, n_to_sample)
-        for sk in sampled_keys:
+        for sk in rng.sample(sub_keys, n_to_sample):
             scenario[axis][sk] = rng.choice(sub_axes[sk])
-
     return scenario
 
 
-def tpo_to_text(scenario: dict, domain: str) -> str:
-    """TPO scenario를 자연어 힌트로 변환."""
+def tpo_to_hint(scenario: dict) -> str:
+    """Render TPO scenario as a hint string for the LLM."""
     parts = []
-    for axis, sub_dict in scenario.items():
-        for sub_key, value in sub_dict.items():
-            parts.append(f"{sub_key}={value}")
-    return ", ".join(parts)
+    for axis, sub in scenario.items():
+        for k, v in sub.items():
+            parts.append(f"{axis}.{k}={v}")
+    return "; ".join(parts)
 
 
 # ─────────────────────────────────────────────
-# Query 생성 프롬프트
+# Prompts (English)
 # ─────────────────────────────────────────────
 
-QUERY_GEN_SYSTEM = """\
-You are a query writer for a personalization benchmark.
-You write natural Korean queries that users would ask a shopping/recommendation assistant.
-
-Output ONLY a JSON list of strings."""
-
-
-def build_explicit_tpo_prompt(domain: str, scenario: dict, n_queries: int) -> str:
-    """명시적 TPO query 생성: TPO 정보가 query 텍스트에 직접 등장."""
-    scenario_hint = tpo_to_text(scenario, domain)
-    domain_kr = "패션" if domain == "fashion" else "인테리어"
-
-    return f"""다음 TPO 시나리오에 대한 자연스러운 한국어 query를 {n_queries}개 생성하세요.
-TPO 정보가 query 텍스트에 명시적으로 포함되어야 합니다.
-
-도메인: {domain_kr}
-TPO 시나리오 힌트: {scenario_hint}
-
-요구사항:
-- 각 query는 1-2문장, 자연스러운 한국어
-- TPO 요소(시간/장소/상황)가 query에 명시적으로 등장
-- 사용자가 추천을 요청하는 형태
-- 너무 구체적인 색상/스타일은 언급하지 말 것 (그건 profile에서 옴)
-
-좋은 예시:
-  "비 오는 가을 야외 행사에 입고 갈 아우터 추천해줘"
-  "여름 휴가 때 해변 산책용 신발 골라줘"
-
-나쁜 예시:
-  "푸른색 우비 추천해줘"  ← 색상 명시 금지
-  "옷 추천해줘"           ← TPO 없음
-
-출력 형식 (JSON list):
-["query1", "query2", ...]"""
+QUERY_SYSTEM = """\
+You write natural English queries that users would ask a fashion
+recommendation assistant. Output ONLY a JSON list of strings, no other text.
+"""
 
 
-def build_implicit_tpo_prompt(domain: str, scenario: dict, n_queries: int) -> str:
-    """함축적 TPO query: 상황 키워드만으로 TPO 추론 필요."""
-    scenario_hint = tpo_to_text(scenario, domain)
-    domain_kr = "패션" if domain == "fashion" else "인테리어"
+def build_explicit_prompt(scenario: dict, n: int) -> str:
+    return f"""Generate {n} natural English fashion queries for the following TPO scenario.
+The TPO information must appear EXPLICITLY in the query text (mention season,
+weather, place, or occasion words directly).
 
-    return f"""다음 TPO 시나리오에 대한 자연스러운 한국어 query를 {n_queries}개 생성하세요.
-TPO 정보가 query 텍스트에 *함축적으로* 포함되어야 합니다.
-즉, 시간/날씨/격식 등을 직접 말하지 않고, *상황의 이름*만 언급합니다.
+TPO scenario hint: {tpo_to_hint(scenario)}
 
-도메인: {domain_kr}
-TPO 시나리오 힌트: {scenario_hint}
+Requirements:
+- Each query: 1-2 sentences, natural English
+- Ask for a recommendation (e.g., "What should I wear...?", "Pick an outfit for...")
+- Do NOT mention specific colors, materials, or styles (those come from the user's profile)
 
-좋은 예시:
-  "친구 결혼식 입을 옷 추천해줘"    ← '결혼식'에서 격식/실내/낮 등을 추론
-  "주말 캠핑 갈 때 옷 어떤 게 좋을까?"  ← '캠핑'에서 야외/활동성 등 추론
+Good examples:
+  "What should I wear for a rainy outdoor event this fall?"
+  "I'm flying out for a winter trip — pick a coat for me."
 
-나쁜 예시:
-  "비 오는 날에 갈 결혼식 옷"  ← 너무 명시적
-  "옷 추천해줘"                ← 상황 없음
+Bad examples:
+  "Recommend a navy raincoat."     (color specified — forbidden)
+  "Pick something for me."          (no TPO)
 
-출력 형식 (JSON list):
-["query1", "query2", ...]"""
-
-
-def build_visual_tpo_prompt(domain: str, scenario: dict, n_queries: int) -> str:
-    """시각적 TPO query: 텍스트는 모호, TPO는 별도 이미지로 제공.
-
-    Phase 1에서는 query만 생성. TPO 컨텍스트 이미지는 별도 단계에서.
-    """
-    domain_kr = "패션" if domain == "fashion" else "인테리어"
-
-    return f"""다음 도메인에 대한 *모호한* 한국어 query를 {n_queries}개 생성하세요.
-이 query는 별도의 TPO 컨텍스트 이미지와 함께 모델에게 제시됩니다.
-따라서 query 텍스트만으로는 TPO를 알 수 없어야 합니다.
-
-도메인: {domain_kr}
-
-좋은 예시:
-  "여기 갈 때 입을 옷 추천해줘"        ← '여기'가 이미지로만 명시됨
-  "이 분위기에 맞는 가구 찾아줘"
-  "이런 곳에서 신을 신발 골라줘"
-
-나쁜 예시:
-  "결혼식 옷 추천해줘"      ← 상황을 텍스트로 말함
-  "비 오는 날 옷"          ← TPO 노출
-
-출력 형식 (JSON list):
-["query1", "query2", ...]"""
+Output JSON list: ["query1", "query2", ...]
+"""
 
 
-def build_neutral_prompt(domain: str, n_queries: int) -> str:
-    """TPO-중립 query: 순수 선호만 묻는 대조군."""
-    domain_kr = "패션" if domain == "fashion" else "인테리어"
+def build_implicit_prompt(scenario: dict, n: int) -> str:
+    return f"""Generate {n} natural English fashion queries where the TPO is conveyed
+IMPLICITLY through the name of a situation (rather than spelling out
+weather/time/formality directly).
 
-    return f"""다음 도메인에 대한 TPO 정보가 없는 순수 선호 query를 {n_queries}개 생성하세요.
+TPO scenario hint (for your understanding): {tpo_to_hint(scenario)}
 
-도메인: {domain_kr}
+Good examples:
+  "What should I wear to a friend's wedding?"     (formality inferred from 'wedding')
+  "Pick an outfit for my weekend hiking trip."    (outdoor/active inferred from 'hiking')
 
-좋은 예시:
-  "내 취향에 맞는 옷 추천해줘"
-  "내가 좋아할 만한 의자 골라줘"
-  "이 중에 어떤 게 내 스타일에 맞을까?"
+Bad examples:
+  "What should I wear to a formal indoor wedding?"  (too explicit)
+  "Pick an outfit."                                  (no situation)
 
-나쁜 예시:
-  "사무실용 옷"  ← TPO 있음
-  "비 올 때 입을 옷"  ← TPO 있음
+Output JSON list: ["query1", "query2", ...]
+"""
 
-출력 형식 (JSON list):
-["query1", "query2", ...]"""
+
+def build_visual_prompt(n: int) -> str:
+    return f"""Generate {n} VAGUE English fashion queries that point to an
+external image as the source of TPO information. The query text alone
+should NOT reveal the situation.
+
+Good examples:
+  "What should I wear to a place like this?"
+  "Pick an outfit that matches this vibe."
+  "What's appropriate for the setting shown here?"
+
+Bad examples:
+  "What should I wear to a wedding?"   (situation revealed in text)
+  "Pick an outfit."                     (too generic, no reference to image)
+
+Output JSON list: ["query1", "query2", ...]
+"""
+
+
+def build_neutral_prompt(n: int) -> str:
+    return f"""Generate {n} English fashion queries with NO TPO context — purely
+about the user's taste, no situation, no season, no weather, no occasion.
+
+Good examples:
+  "Pick something I would like."
+  "Which of these matches my taste best?"
+  "Recommend an item that fits my personal style."
+
+Bad examples:
+  "Pick an office outfit."    (situational)
+  "Anything for tonight?"      (time)
+
+Output JSON list: ["query1", "query2", ...]
+"""
 
 
 # ─────────────────────────────────────────────
-# 메인 파이프라인
+# Pipeline
 # ─────────────────────────────────────────────
 
 def generate_queries_for_user(profile: dict, n_per_user: int) -> list[dict]:
-    """단일 user에 대해 n개의 query 생성."""
-    domain = profile["domain"]
     user_id = profile["user_id"]
     base_seed = abs(hash(user_id)) % 100000
 
-    # 유형별 개수 계산
+    # allocate type counts
     type_counts = {}
     remaining = n_per_user
     for qtype, ratio in QUERY_TYPE_RATIO.items():
-        count = int(n_per_user * ratio)
-        type_counts[qtype] = count
-        remaining -= count
-    # 나머지는 explicit에
+        c = int(n_per_user * ratio)
+        type_counts[qtype] = c
+        remaining -= c
     type_counts["explicit_tpo"] += remaining
 
     all_queries = []
@@ -204,37 +168,35 @@ def generate_queries_for_user(profile: dict, n_per_user: int) -> list[dict]:
         if count == 0:
             continue
 
-        # batch로 생성 (한 번에 3-4개씩)
-        batch_size = min(count, 4)
+        batch = min(count, 4)
         generated = 0
-
         while generated < count:
-            this_batch = min(batch_size, count - generated)
+            this_batch = min(batch, count - generated)
 
             if qtype == "explicit_tpo":
-                scenario = sample_tpo_scenario(domain, base_seed + generated)
-                prompt = build_explicit_tpo_prompt(domain, scenario, this_batch)
-                tpo_field = scenario
+                scen = sample_tpo_scenario(base_seed + generated)
+                prompt = build_explicit_prompt(scen, this_batch)
+                tpo_field = scen
             elif qtype == "implicit_tpo":
-                scenario = sample_tpo_scenario(domain, base_seed + generated + 100)
-                prompt = build_implicit_tpo_prompt(domain, scenario, this_batch)
-                tpo_field = scenario
+                scen = sample_tpo_scenario(base_seed + generated + 100)
+                prompt = build_implicit_prompt(scen, this_batch)
+                tpo_field = scen
             elif qtype == "visual_tpo":
-                scenario = sample_tpo_scenario(domain, base_seed + generated + 200)
-                prompt = build_visual_tpo_prompt(domain, scenario, this_batch)
-                tpo_field = scenario  # 이미지로 표현될 TPO
+                scen = sample_tpo_scenario(base_seed + generated + 200)
+                prompt = build_visual_prompt(this_batch)
+                tpo_field = scen
             else:  # neutral
-                prompt = build_neutral_prompt(domain, this_batch)
+                prompt = build_neutral_prompt(this_batch)
                 tpo_field = None
 
             try:
                 response = call_gpt5_mini(
-                    prompt=prompt, system=QUERY_GEN_SYSTEM,
-                    max_tokens=512, temperature=0.8,
+                    prompt=prompt, system=QUERY_SYSTEM,
+                    max_completion_tokens=GPT5_MINI["max_completion_tokens_default"],
                 )
                 queries = parse_json_list_response(response)
                 if not queries:
-                    print(f"      Parse failed for {qtype}, skipping batch")
+                    print(f"      Parse fail for {qtype}")
                     generated += this_batch
                     continue
 
@@ -242,55 +204,49 @@ def generate_queries_for_user(profile: dict, n_per_user: int) -> list[dict]:
                     all_queries.append({
                         "query_id": f"{user_id}_Q{len(all_queries)+1:03d}",
                         "user_id": user_id,
-                        "domain": domain,
+                        "domain": "fashion",
                         "query_type": qtype,
                         "query_text": q,
                         "tpo_scenario": tpo_field,
                     })
                 generated += len(queries[:this_batch])
-
             except Exception as e:
-                print(f"      Error generating {qtype} batch: {e}")
-                generated += this_batch  # 진행은 계속
+                print(f"      Error in {qtype}: {e}")
+                generated += this_batch
 
     return all_queries[:n_per_user]
 
 
-def run_pipeline(profile_path: Path, output_path: Path, n_per_user: int,
-                 force: bool = False):
-    """전체 query 생성 파이프라인 실행."""
-    log_step(f"Query Generator — {n_per_user} queries/user")
+def run_pipeline(profile_path: Path, output_path: Path,
+                 n_per_user: int, force: bool = False):
+    log_step(f"Query Generator — {n_per_user} queries/user (English)")
 
     profiles = load_jsonl(profile_path)
     print(f"  Loaded {len(profiles)} profiles")
 
     if output_path.exists() and not force:
         existing = load_jsonl(output_path)
-        existing_users = {q["user_id"] for q in existing}
-        print(f"  Resuming: {len(existing_users)} users already have queries")
+        done_users = {q["user_id"] for q in existing}
         all_queries = existing
-        profiles_to_do = [p for p in profiles if p["user_id"] not in existing_users]
+        todo = [p for p in profiles if p["user_id"] not in done_users]
+        print(f"  Resuming: {len(done_users)} users already have queries")
     else:
         all_queries = []
-        profiles_to_do = profiles
+        todo = profiles
 
-    for i, profile in enumerate(profiles_to_do):
-        print(f"\n  [{i+1}/{len(profiles_to_do)}] {profile['user_id']} ({profile['domain']})")
+    for i, prof in enumerate(todo):
+        print(f"\n  [{i+1}/{len(todo)}] {prof['user_id']}")
         try:
-            queries = generate_queries_for_user(profile, n_per_user)
-            all_queries.extend(queries)
-            print(f"    Generated {len(queries)} queries")
-
-            # 매 5명마다 저장
+            qs = generate_queries_for_user(prof, n_per_user)
+            all_queries.extend(qs)
+            print(f"    {len(qs)} queries generated")
             if (i + 1) % 5 == 0:
                 save_jsonl(all_queries, output_path)
         except Exception as e:
             print(f"    ERROR: {e}")
-            continue
 
     save_jsonl(all_queries, output_path)
     print(f"\n  ✓ Saved {len(all_queries)} queries to {output_path}")
-    return all_queries
 
 
 def main():
@@ -303,7 +259,6 @@ def main():
                         default=PHASE1_CONFIG["n_queries_per_user"])
     parser.add_argument("--force", action="store_true")
     args = parser.parse_args()
-
     run_pipeline(args.profile_path, args.output, args.n_per_user, args.force)
 
 

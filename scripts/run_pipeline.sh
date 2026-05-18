@@ -1,31 +1,29 @@
 #!/bin/bash
-# POD-Bench One-Cycle Pipeline 실행 스크립트
+# POD-Bench One-Cycle Pipeline
 #
-# 실행 전 준비:
-#   1. export OPENAI_API_KEY=sk-...  (GPT-5-mini용)
-#   2. 로컬 vLLM 서버 띄우기:
-#      터미널 1: vllm serve Qwen/Qwen2.5-7B-Instruct --port 8000
-#      터미널 2: vllm serve meta-llama/Llama-3.1-8B-Instruct --port 8001
-#      터미널 3: vllm serve Qwen/Qwen2.5-VL-7B-Instruct --port 8000 \
-#                          --limit-mm-per-prompt image=5
-#      (8000 포트는 텍스트와 VLM이 공유 — 단계별로 다른 모델을 띄움)
-#   3. (선택) Google Custom Search API 설정:
-#      export GOOGLE_API_KEY=...
-#      export GOOGLE_CSE_ID=...
-#   4. (선택) Amazon Reviews 2023 메타데이터 경로:
-#      export AMAZON_META_DIR=/home/hjhj6411/fashion/data/amazon
+# Prerequisites:
+#   export OPENAI_API_KEY=sk-...           # GPT-5-mini (paid)
+#   # Optional fallback for image search:
+#   export GOOGLE_API_KEY=...
+#   export GOOGLE_CSE_ID=...
+#   # Optional Amazon catalog path:
+#   export AMAZON_META_DIR=/path/to/amazon
+#
+# Local vLLM servers (see docs/SETUP.md):
+#   Steps 5 (label_verifier): Qwen2.5-7B at :8000, Llama-3.1-8B at :8001
+#   Steps 6-7 (audit, eval):  Qwen2.5-VL-7B at :8000
 
 set -e
 cd "$(dirname "$0")/.."
 
-echo "========================================"
-echo " POD-Bench One-Cycle Pipeline"
-echo "========================================"
-
-# Phase 1 — 작은 수로 빠르게 검증
 N_USERS=${N_USERS:-50}
 N_QUERIES=${N_QUERIES:-20}
 LIMIT=${LIMIT:-0}
+
+echo "========================================"
+echo " POD-Bench One-Cycle Pipeline (English)"
+echo " Domain: fashion only"
+echo "========================================"
 
 echo ""
 echo "Step 1/6: Profile Generation ($N_USERS users)"
@@ -44,19 +42,22 @@ echo "Step 4/6: Image Collection"
 python -m src.image_collector --limit $LIMIT
 
 echo ""
-echo "Step 5/6: Label Verification (rule + judge ensemble)"
+echo "Step 5/6: Label Verification (rule + 3-judge ensemble)"
 python -m src.label_verifier --limit $LIMIT
 
 echo ""
-echo "Step 6/6: Quality Audit & Final Benchmark Assembly"
+echo "Step 6/6: Quality Audit + Final Assembly"
 python -m src.quality_audit --n_audit 30
 
 echo ""
 echo "========================================"
 echo " Pipeline Complete"
 echo "========================================"
-echo "Final benchmark: data/final/pod_bench.jsonl"
-echo "Audit metrics:   data/labels/audit_metrics.json"
-echo "Reliability:     data/labels/reliability_metrics.json"
+echo "Final benchmark:  data/final/pod_bench.jsonl"
+echo "Audit metrics:    data/labels/audit_metrics.json"
+echo "Reliability:      data/labels/reliability_metrics.json"
 echo ""
-echo "Next: python -m src.evaluator --model vlm_evaluator"
+echo "Run evaluation:"
+echo "  python -m src.evaluator --model vlm_evaluator --profile_variant combined"
+echo "  python -m src.evaluator --model vlm_evaluator --profile_variant narrative_only"
+echo "  python -m src.evaluator --model vlm_evaluator --profile_variant keyword_only"
