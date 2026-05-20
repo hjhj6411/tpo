@@ -1,254 +1,274 @@
 """
-Option Planner (English, Fashion)
-==================================
+Option Planner v2 — DETERMINISTIC 4-option construction (no LLM at label time).
 
-For each (profile, query) pair, plan 4 image options as attribute specs:
+Given (profile, query) with active_axis + fixed_attrs + tpo_scenario:
+  A = liked active value + fixed                              (tpo_and_preference)
+  B = disliked active value + fixed                           (tpo_only)
+  C = liked active value + fixed (one fixed axis → TPO-bad)   (preference_only)
+  D = disliked active value + fixed (one fixed axis → TPO-bad) (neither)
 
-  A: TPO_match=YES, Preference_match=YES   (correct)
-  B: TPO_match=YES, Preference_match=NO
-  C: TPO_match=NO,  Preference_match=YES
-  D: TPO_match=NO,  Preference_match=NO
-
-All 4 options share the SAME garment_category. Differentiation comes from
-fine-grained attributes (color, material, pattern, detail) — captioner-resistant.
-
-Attribute values are drawn ONLY from the closed-set vocabulary in
-configs/config.py to make automatic rule-based labeling reliable.
+For active_axis ∈ {color, pattern}, TPO violation is achieved by swapping
+garment_category to a TPO-incompatible value. For active_axis=garment_category,
+TPO violation is by swapping color (secondary axis).
 """
 
 import argparse
 import random
+import sys
 from pathlib import Path
 
-from .utils import (
-    call_gpt5_mini, parse_json_response,
-    save_jsonl, load_jsonl, log_step,
-)
+from .utils import save_jsonl, load_jsonl, log_step
 
-import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from configs.config import (
-    OPTIONS_DIR, PROFILES_DIR, QUERIES_DIR,
-    FASHION_ATTRIBUTE_AXES, GPT5_MINI,
+    OPTIONS_DIR, PROFILES_DIR, QUERIES_DIR, FASHION_ATTRIBUTE_AXES,
 )
 
 
-# ─────────────────────────────────────────────
-# Prompt
-# ─────────────────────────────────────────────
-
-OPTION_PLAN_SYSTEM = """\
-You design 4-option multiple-choice items for a fashion personalization benchmark.
-
-For each user profile + query, output exactly 4 options A/B/C/D following this 2x2 matrix:
-  A: matches BOTH user preference AND TPO situation   (correct)
-  B: matches TPO situation, VIOLATES user preference
-  C: matches user preference, VIOLATES TPO situation
-  D: violates BOTH
-
-CRITICAL DESIGN RULES:
-1. ALL 4 options must share the same garment_category. They must look like
-   sibling alternatives in the same category, not different garment types.
-2. Each option's attribute values MUST come from the controlled vocabulary
-   I will provide. Do not invent attribute values.
-3. Differentiation across options should mix coarse attributes (color, material)
-   with fine-grained ones (pattern, fit, sleeve_length, neckline). Avoid
-   trivially captionable extreme contrasts (e.g., neon vs black).
-4. Each option also has a 3-7 word English `search_query` usable for catalog/
-   web image search.
-5. Each option has a `rationale` (1 sentence) explaining its label.
-
-Output ONLY a JSON object.
-"""
+# Curated TPO incompatibility rules (used by both planner and label_verifier)
+TPO_ATTR_INCOMPATIBILITIES = [
+    ({"rainy", "snowy", "winter", "cold"}, "garment_category",
+        {"shorts", "t_shirt", "tank_top", "skirt"}),
+    ({"summer", "hot_humid"}, "garment_category",
+        {"trench_coat", "coat", "parka", "sweater"}),
+    ({"formal", "wedding_venue", "ceremony_attendance"}, "garment_category",
+        {"t_shirt", "shorts", "hoodie", "tank_top", "windbreaker"}),
+    ({"office", "work_meeting", "business_casual"}, "garment_category",
+        {"shorts", "hoodie", "tank_top"}),
+    ({"exercise", "gym"}, "garment_category",
+        {"suit_jacket", "blazer", "coat", "trench_coat", "dress"}),
+    ({"beach"}, "garment_category",
+        {"suit_jacket", "blazer", "trench_coat", "coat", "parka"}),
+    ({"formal", "wedding_venue", "ceremony_attendance", "business_casual",
+       "office", "work_meeting"}, "pattern",
+        {"graphic_print", "camouflage", "animal_print", "floral"}),
+    ({"formal", "wedding_venue", "ceremony_attendance"}, "color",
+        {"orange", "yellow", "pink", "green", "red", "purple"}),
+    ({"office", "work_meeting", "business_casual"}, "color",
+        {"orange", "yellow", "pink"}),
+]
 
 
-def render_attribute_vocabulary() -> str:
-    """Render the closed-set vocabulary for the LLM."""
-    lines = ["Controlled vocabulary (use ONLY these values for each axis):"]
-    for axis, values in FASHION_ATTRIBUTE_AXES.items():
-        lines.append(f"  - {axis}: {values}")
-    return "\n".join(lines)
+def _flat_tpo(scenario):
+    flat = set()
+    if not scenario:
+        return flat
+    for axis, sub in scenario.items():
+        if isinstance(sub, dict):
+            for v in sub.values():
+                flat.add(str(v).lower())
+    return flat
 
 
-def build_option_plan_prompt(profile: dict, query: dict) -> str:
-    """Build the option-planning prompt."""
-
-    # Both keyword and narrative representations are shown to the planner,
-    # since we want the option labels to be correct under both profile variants.
-    likes_str = ", ".join(profile["likes_keywords"]) or "(none)"
-    dislikes_str = ", ".join(profile["dislikes_keywords"]) or "(none)"
-
-    tpo = query.get("tpo_scenario") or {}
-    tpo_str = "(no TPO; neutral query)"
-    if tpo:
-        parts = []
-        for axis, sub in tpo.items():
-            if isinstance(sub, dict):
-                for k, v in sub.items():
-                    parts.append(f"{axis}.{k}={v}")
-        tpo_str = "; ".join(parts)
-
-    vocab = render_attribute_vocabulary()
-
-    return f"""Design 4 options for the following instance.
-
-USER PROFILE
-  narrative: {profile['narrative_profile']}
-  likes:    {likes_str}
-  dislikes: {dislikes_str}
-
-QUERY ({query['query_type']})
-  text: "{query['query_text']}"
-  TPO:  {tpo_str}
-
-{vocab}
-
-OUTPUT JSON:
-{{
-  "main_category": "<one value from garment_category vocabulary>",
-  "options": {{
-    "A": {{
-      "label": "tpo_and_preference",
-      "attributes": {{"color": "...", "material": "...", "pattern": "...", ...}},
-      "search_query": "<3-7 English words>",
-      "rationale": "<one sentence>"
-    }},
-    "B": {{"label": "tpo_only", "attributes": {{...}}, "search_query": "...", "rationale": "..."}},
-    "C": {{"label": "preference_only", "attributes": {{...}}, "search_query": "...", "rationale": "..."}},
-    "D": {{"label": "neither", "attributes": {{...}}, "search_query": "...", "rationale": "..."}}
-  }}
-}}"""
+def tpo_compatible(attrs, scenario):
+    if not scenario:
+        return True
+    flat = _flat_tpo(scenario)
+    for keys, axis, forbidden in TPO_ATTR_INCOMPATIBILITIES:
+        if flat & keys:
+            v = attrs.get(axis)
+            if v and v in forbidden:
+                return False
+    return True
 
 
-# ─────────────────────────────────────────────
-# Validation
-# ─────────────────────────────────────────────
-
-EXPECTED_LABELS = {
-    "A": "tpo_and_preference",
-    "B": "tpo_only",
-    "C": "preference_only",
-    "D": "neither",
-}
+def axis_values_tpo_incompatible(axis, fixed_attrs, scenario):
+    out = []
+    for v in FASHION_ATTRIBUTE_AXES[axis]:
+        attrs = dict(fixed_attrs)
+        attrs[axis] = v
+        if not tpo_compatible(attrs, scenario):
+            out.append(v)
+    return out
 
 
-def validate_plan(plan: dict) -> tuple[bool, str]:
-    """Check plan structure and vocabulary compliance."""
-    if "main_category" not in plan or not plan["main_category"]:
-        return False, "missing main_category"
-    if plan["main_category"] not in FASHION_ATTRIBUTE_AXES["garment_category"]:
-        return False, f"main_category '{plan['main_category']}' not in vocabulary"
-
-    options = plan.get("options", {})
-    if set(options.keys()) != {"A", "B", "C", "D"}:
-        return False, f"options keys should be A/B/C/D, got {list(options.keys())}"
-
-    for k, expected_label in EXPECTED_LABELS.items():
-        opt = options[k]
-        if opt.get("label") != expected_label:
-            return False, f"option {k} label mismatch: {opt.get('label')} vs {expected_label}"
-        if not opt.get("search_query"):
-            return False, f"option {k} missing search_query"
-        attrs = opt.get("attributes") or {}
-        if not attrs:
-            return False, f"option {k} missing attributes"
-
-        # Validate each attribute value is in vocabulary
-        for ax, val in attrs.items():
-            if ax not in FASHION_ATTRIBUTE_AXES:
-                return False, f"option {k} unknown axis '{ax}'"
-            if val not in FASHION_ATTRIBUTE_AXES[ax]:
-                return False, f"option {k}.{ax}='{val}' not in vocabulary"
-
-        # Ensure garment_category matches main_category
-        if attrs.get("garment_category") and attrs["garment_category"] != plan["main_category"]:
-            return False, f"option {k} garment_category mismatches main_category"
-
-    return True, ""
-
-
-# ─────────────────────────────────────────────
-# Main pipeline
-# ─────────────────────────────────────────────
-
-def plan_options_for_query(profile: dict, query: dict) -> dict:
-    prompt = build_option_plan_prompt(profile, query)
-    response = call_gpt5_mini(
-        prompt=prompt, system=OPTION_PLAN_SYSTEM,
-        max_completion_tokens=GPT5_MINI["max_completion_tokens_long"],
-    )
-    plan = parse_json_response(response)
-    if plan is None:
+def build_options_color_or_pattern(active_axis, fixed_attrs, structured,
+                                      scenario, rng):
+    prefs = structured.get(active_axis, {})
+    likes = list(prefs.get("likes", []))
+    dislikes = list(prefs.get("dislikes", []))
+    if not likes or not dislikes:
         return None
 
-    ok, msg = validate_plan(plan)
-    if not ok:
-        # Single retry with explicit error feedback
-        retry_prompt = (
-            prompt
-            + f"\n\nPrevious attempt failed validation: {msg}\n"
-            + "Please regenerate, strictly using ONLY the controlled vocabulary."
+    compatible_likes = [v for v in likes
+                         if tpo_compatible({**fixed_attrs, active_axis: v}, scenario)]
+    if not compatible_likes:
+        return None
+    liked_v = rng.choice(compatible_likes)
+
+    compatible_dislikes = [v for v in dislikes
+                            if tpo_compatible({**fixed_attrs, active_axis: v}, scenario)]
+    if not compatible_dislikes:
+        return None
+    disliked_v = rng.choice(compatible_dislikes)
+
+    incompat_g = axis_values_tpo_incompatible(
+        "garment_category", {**fixed_attrs, active_axis: liked_v}, scenario
+    )
+    if not incompat_g:
+        return None
+    bad_g = rng.choice(incompat_g)
+
+    return {
+        "A": {**fixed_attrs, active_axis: liked_v},
+        "B": {**fixed_attrs, active_axis: disliked_v},
+        "C": {**fixed_attrs, active_axis: liked_v, "garment_category": bad_g},
+        "D": {**fixed_attrs, active_axis: disliked_v, "garment_category": bad_g},
+        "main_category": fixed_attrs.get("garment_category"),
+        "tpo_violation_axis": "garment_category",
+    }
+
+
+def build_options_garment_category(fixed_attrs, structured, scenario,
+                                      secondary_axis, rng):
+    prefs = structured.get("garment_category", {})
+    likes = list(prefs.get("likes", []))
+    dislikes = list(prefs.get("dislikes", []))
+    if not likes or not dislikes:
+        return None
+
+    compatible_likes = [v for v in likes
+                         if tpo_compatible({**fixed_attrs, "garment_category": v}, scenario)]
+    if not compatible_likes:
+        return None
+    liked_g = rng.choice(compatible_likes)
+
+    compatible_dislikes = [v for v in dislikes
+                            if tpo_compatible({**fixed_attrs, "garment_category": v}, scenario)]
+    if not compatible_dislikes:
+        return None
+    disliked_g = rng.choice(compatible_dislikes)
+
+    incompat_sec = axis_values_tpo_incompatible(
+        secondary_axis, {**fixed_attrs, "garment_category": liked_g}, scenario
+    )
+    if not incompat_sec:
+        return None
+    bad_sec = rng.choice(incompat_sec)
+
+    return {
+        "A": {**fixed_attrs, "garment_category": liked_g},
+        "B": {**fixed_attrs, "garment_category": disliked_g},
+        "C": {**fixed_attrs, "garment_category": liked_g, secondary_axis: bad_sec},
+        "D": {**fixed_attrs, "garment_category": disliked_g, secondary_axis: bad_sec},
+        "main_category": None,
+        "tpo_violation_axis": secondary_axis,
+    }
+
+
+def attrs_to_search_query(attrs):
+    parts = []
+    color = attrs.get("color")
+    pattern = attrs.get("pattern")
+    garment = attrs.get("garment_category", "item")
+    if pattern and pattern != "solid":
+        parts.append(pattern.replace("_", " "))
+    if color:
+        parts.append(color)
+    parts.append(garment.replace("_", " "))
+    return " ".join(parts)
+
+
+def _rationale(k, active_axis, attrs, violation_axis):
+    val = attrs.get(active_axis)
+    if k == "A":
+        return f"liked {active_axis}={val}, TPO-compatible"
+    if k == "B":
+        return f"disliked {active_axis}={val}, TPO-compatible"
+    if k == "C":
+        return (f"liked {active_axis}={val}, but {violation_axis}={attrs.get(violation_axis)} "
+                 f"violates TPO")
+    if k == "D":
+        return (f"disliked {active_axis}={val}, AND {violation_axis}={attrs.get(violation_axis)} "
+                 f"violates TPO")
+    return ""
+
+
+def plan_options_for_query(profile, query):
+    active_axis = query["active_axis"]
+    fixed_attrs = query["fixed_attrs"]
+    scenario = query.get("tpo_scenario") or {}
+    rng = random.Random(abs(hash(query["query_id"])) % 100000)
+    structured = profile["structured_attributes"]
+
+    if active_axis in ("color", "pattern"):
+        result = build_options_color_or_pattern(
+            active_axis, fixed_attrs, structured, scenario, rng,
         )
-        response = call_gpt5_mini(
-            prompt=retry_prompt, system=OPTION_PLAN_SYSTEM,
-            max_completion_tokens=GPT5_MINI["max_completion_tokens_long"],
+    elif active_axis == "garment_category":
+        sec_axes = query.get("secondary_differentiation_axis", ["color"])
+        sec_axis = sec_axes[0] if sec_axes else "color"
+        result = build_options_garment_category(
+            fixed_attrs, structured, scenario, sec_axis, rng,
         )
-        plan = parse_json_response(response)
-        if plan is None:
-            return None
-        ok, msg = validate_plan(plan)
-        if not ok:
-            return None
+    else:
+        return None
+
+    if result is None:
+        return None
+
+    options = {}
+    label_map = {"A": "tpo_and_preference", "B": "tpo_only",
+                  "C": "preference_only", "D": "neither"}
+    for k in "ABCD":
+        attrs = result[k]
+        options[k] = {
+            "label": label_map[k],
+            "attributes": attrs,
+            "search_query": attrs_to_search_query(attrs),
+            "rationale": _rationale(k, active_axis, attrs, result["tpo_violation_axis"]),
+        }
 
     return {
         "query_id": query["query_id"],
         "user_id": query["user_id"],
         "domain": "fashion",
         "query_type": query["query_type"],
-        "main_category": plan["main_category"],
-        "options": plan["options"],
+        "active_axis": active_axis,
+        "tpo_axis": query["tpo_axis"],
+        "fixed_attrs": fixed_attrs,
+        "main_category": result["main_category"],
+        "tpo_violation_axis": result["tpo_violation_axis"],
+        "options": options,
     }
 
 
-def run_pipeline(profile_path: Path, query_path: Path, output_path: Path,
-                 force: bool = False, limit: int = 0):
-    log_step("Option Planner")
-
+def run_pipeline(profile_path, query_path, output_path, force=False, limit=0,
+                  provider=None):
+    log_step("Option Planner v2 (deterministic, One Axis Per Instance)")
     profiles = {p["user_id"]: p for p in load_jsonl(profile_path)}
     queries = load_jsonl(query_path)
-    print(f"  Loaded {len(profiles)} profiles, {len(queries)} queries")
+    print(f"  {len(profiles)} profiles, {len(queries)} queries")
 
     if output_path.exists() and not force:
         existing = load_jsonl(output_path)
         done = {p["query_id"] for p in existing}
         plans = existing
-        queries_todo = [q for q in queries if q["query_id"] not in done]
+        todo = [q for q in queries if q["query_id"] not in done]
         print(f"  Resuming: {len(done)} already planned")
     else:
         plans = []
-        queries_todo = queries
-
+        todo = queries
     if limit > 0:
-        queries_todo = queries_todo[:limit]
+        todo = todo[:limit]
 
     n_fail = 0
-    for i, query in enumerate(queries_todo):
+    for i, query in enumerate(todo):
         if query["user_id"] not in profiles:
             continue
         prof = profiles[query["user_id"]]
-        print(f"\n  [{i+1}/{len(queries_todo)}] {query['query_id']} ({query['query_type']})")
-        print(f"    Q: {query['query_text']}")
+        print(f"\n  [{i+1}/{len(todo)}] {query['query_id']} "
+              f"(axis={query['active_axis']}, qtype={query['query_type']})")
         try:
             plan = plan_options_for_query(prof, query)
             if plan is None:
-                print("    Failed validation")
+                print("    Could not build valid options")
                 n_fail += 1
                 continue
             plans.append(plan)
-            print(f"    Category: {plan['main_category']}")
             for k in "ABCD":
-                attrs = plan["options"][k]["attributes"]
-                print(f"      {k} ({plan['options'][k]['label']}): {attrs}")
+                print(f"    {k} ({plan['options'][k]['label']}): "
+                      f"{plan['options'][k]['attributes']}")
             if (i + 1) % 10 == 0:
                 save_jsonl(plans, output_path)
         except Exception as e:
@@ -256,22 +276,20 @@ def run_pipeline(profile_path: Path, query_path: Path, output_path: Path,
             n_fail += 1
 
     save_jsonl(plans, output_path)
-    print(f"\n  ✓ Saved {len(plans)} plans, failed {n_fail}")
+    print(f"\n  ✓ Saved {len(plans)} plans, {n_fail} failed")
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--profile_path", type=Path,
-                        default=PROFILES_DIR / "profiles.jsonl")
-    parser.add_argument("--query_path", type=Path,
-                        default=QUERIES_DIR / "queries.jsonl")
-    parser.add_argument("--output", type=Path,
-                        default=OPTIONS_DIR / "option_plans.jsonl")
+    parser.add_argument("--profile_path", type=Path, default=PROFILES_DIR / "profiles.jsonl")
+    parser.add_argument("--query_path", type=Path, default=QUERIES_DIR / "queries.jsonl")
+    parser.add_argument("--output", type=Path, default=OPTIONS_DIR / "option_plans.jsonl")
     parser.add_argument("--force", action="store_true")
     parser.add_argument("--limit", type=int, default=0)
+    parser.add_argument("--provider", type=str, default=None)
     args = parser.parse_args()
     run_pipeline(args.profile_path, args.query_path, args.output,
-                 args.force, args.limit)
+                  args.force, args.limit, args.provider)
 
 
 if __name__ == "__main__":

@@ -1,61 +1,27 @@
 """
-Profile Generator (Fashion only, English)
-==========================================
-
-Profile structure (MMPB-inspired):
-
-  structured_attributes:    closed-set ground-truth (hidden from model)
-  likes_keywords:           flat list of "axis:value" tokens (shown to model)
-  dislikes_keywords:        flat list of "axis:value" tokens (shown to model)
-  narrative_profile:        natural-language paragraph derived from keywords
-
-The benchmark supports an ablation comparing:
-  (a) keyword-only profile representation
-  (b) narrative-only profile representation
-  (c) keyword + narrative combined
-This corresponds to MMPB's "4 levels of granularity" axis.
-
-All profiles are generated in ENGLISH (target = international venue).
-
-Attribute axes are *closed-set* and *objectively decidable*
-(color, material, pattern, garment category, fit, sleeve length, neckline,
-formality). Style labels like "minimalist" are excluded from likes/dislikes
-because they are subjective and ambiguous.
+Profile Generator v2 (One Axis Per Instance, Phase 1)
+Restricted to PHASE1_AXES (color, pattern, garment_category).
 """
 
 import argparse
 import random
+import sys
 from pathlib import Path
 
-from .utils import (
-    call_gpt5_mini, parse_json_response,
-    save_jsonl, load_jsonl, log_step,
-)
+from .utils import call_llm, parse_json_response, save_jsonl, load_jsonl, log_step
 
-import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from configs.config import (
     PROFILES_DIR, FASHION_ATTRIBUTE_AXES, ATTRIBUTE_SAMPLING,
-    PHASE1_CONFIG, GPT5_MINI,
+    PHASE1_CONFIG, PHASE1_AXES,
 )
 
 
-# ─────────────────────────────────────────────
-# 1. Sample structured ground-truth attributes
-# ─────────────────────────────────────────────
-
-def sample_structured_attributes(seed: int) -> dict:
-    """Sample a coherent set of likes/dislikes from closed-set axes.
-
-    Strategy: avoid contradictions inside an axis (no liking & disliking
-    the same value); allow likes to span multiple values per axis;
-    ensure 5-7 axes have explicit preferences (the rest are unconstrained).
-    """
+def sample_structured_attributes(seed):
     rng = random.Random(seed)
-    axes = list(FASHION_ATTRIBUTE_AXES.keys())
-
+    axes = list(PHASE1_AXES)
     n_axes_min, n_axes_max = ATTRIBUTE_SAMPLING["n_axes_with_preferences"]
-    n_axes = rng.randint(n_axes_min, n_axes_max)
+    n_axes = rng.randint(n_axes_min, min(n_axes_max, len(axes)))
     chosen_axes = rng.sample(axes, n_axes)
 
     n_likes_min, n_likes_max = ATTRIBUTE_SAMPLING["n_likes_per_axis"]
@@ -65,20 +31,13 @@ def sample_structured_attributes(seed: int) -> dict:
     for axis in chosen_axes:
         values = list(FASHION_ATTRIBUTE_AXES[axis])
         rng.shuffle(values)
-
         n_like = rng.randint(n_likes_min, min(n_likes_max, len(values)))
         n_dis = rng.randint(n_dis_min, min(n_dis_max, max(0, len(values) - n_like)))
-
-        likes = values[:n_like]
-        dislikes = values[n_like : n_like + n_dis]
-
         structured[axis] = {
-            "likes": likes,
-            "dislikes": dislikes,
+            "likes": values[:n_like],
+            "dislikes": values[n_like:n_like + n_dis],
         }
 
-    # Ensure at least the foundational axes (color, garment_category) are present
-    # (otherwise it's hard to write a meaningful narrative)
     if "color" not in structured:
         colors = list(FASHION_ATTRIBUTE_AXES["color"])
         rng.shuffle(colors)
@@ -87,13 +46,7 @@ def sample_structured_attributes(seed: int) -> dict:
     return structured
 
 
-def flatten_to_keywords(structured: dict) -> tuple[list[str], list[str]]:
-    """Convert structured dict to flat keyword lists.
-
-    Format: 'axis:value' (e.g., 'color:navy', 'material:linen').
-    This explicit prefixing prevents ambiguity (e.g., 'cotton' could be
-    misread as a color in raw form, but 'material:cotton' is unambiguous).
-    """
+def flatten_to_keywords(structured):
     likes, dislikes = [], []
     for axis, prefs in structured.items():
         for v in prefs.get("likes", []):
@@ -103,150 +56,89 @@ def flatten_to_keywords(structured: dict) -> tuple[list[str], list[str]]:
     return likes, dislikes
 
 
-# ─────────────────────────────────────────────
-# 2. Generate English narrative from keywords
-# ─────────────────────────────────────────────
+NARRATIVE_SYSTEM = """You write concise English user profiles for a fashion personalization benchmark.
 
-NARRATIVE_SYSTEM = """\
-You are a user profile writer for a personalization research benchmark.
-You produce concise, specific English user profiles based on a list of
-preference keywords supplied to you.
-
-Strict rules:
-1. Write in ENGLISH.
-2. Faithfully reflect EVERY supplied like/dislike keyword in the narrative.
-   Do not add new preferences that are not in the keyword list.
-3. Express preferences in everyday natural language (e.g., 'tends to gravitate
-   toward navy and beige tones', 'avoids floral or polka-dot patterns').
-4. The narrative must describe ENDURING taste only.
-   Do NOT include any situation/TPO information (no 'for the office',
-   'on rainy days', 'when going hiking', etc.).
-5. Length: 3-5 sentences, ~80-120 English words.
-6. You MAY use light style descriptors (e.g., 'understated', 'practical')
-   for fluency, but the substance must come from the keywords.
-7. Output ONLY a JSON object with key 'narrative_profile'.
+Rules:
+1. English only.
+2. Reflect EVERY supplied like/dislike keyword in the narrative.
+3. Use everyday natural language.
+4. Describe enduring taste only — NO situation/TPO information.
+5. Length: 3-5 sentences.
+6. Output ONLY a JSON object: {"narrative_profile": "..."}
 """
 
 
-def build_narrative_prompt(likes: list[str], dislikes: list[str],
-                            user_idx: int) -> str:
-    """Build the prompt for narrative generation."""
-    # Light demographic context (independent of taste)
+def build_narrative_prompt(likes, dislikes, user_idx):
     rng = random.Random(user_idx * 31 + 7)
     age = rng.choice(["late 20s", "early 30s", "mid 30s", "early 40s"])
-    occupation = rng.choice([
-        "office worker", "freelancer", "graduate student", "designer",
-        "engineer", "teacher", "consultant", "researcher",
-    ])
-
-    likes_str = ", ".join(likes) if likes else "(none specified)"
-    dislikes_str = ", ".join(dislikes) if dislikes else "(none specified)"
-
+    occupation = rng.choice(["office worker", "freelancer", "graduate student",
+                              "designer", "engineer", "teacher", "consultant",
+                              "researcher"])
     return f"""Generate a narrative profile for the following user.
 
 Demographic context: a {age} {occupation}.
 
-Fashion likes (keywords): {likes_str}
-Fashion dislikes (keywords): {dislikes_str}
+Fashion likes: {', '.join(likes) if likes else '(none)'}
+Fashion dislikes: {', '.join(dislikes) if dislikes else '(none)'}
 
-Write 3-5 sentences in English that describe this user's enduring fashion taste.
-Every like and dislike above must be reflected in the narrative.
+Write 3-5 sentences. Every like and dislike must be reflected.
 Do NOT include situation-specific information.
 
 Output JSON:
-{{
-  "narrative_profile": "..."
-}}"""
+{{"narrative_profile": "..."}}"""
 
 
-# ─────────────────────────────────────────────
-# 3. Fallback (if GPT-5-mini returns empty)
-# ─────────────────────────────────────────────
-
-def narrative_fallback(likes: list[str], dislikes: list[str]) -> str:
-    """Build a deterministic narrative if the API returns nothing.
-
-    This protects the pipeline from API failures during the first cycle.
-    Quality is lower than LLM-generated but preserves all preference info.
-    """
+def narrative_fallback(likes, dislikes):
     parts = []
-
-    def group_by_axis(kws):
-        groups = {}
+    def group(kws):
+        g = {}
         for kw in kws:
             if ":" in kw:
                 ax, v = kw.split(":", 1)
-                groups.setdefault(ax, []).append(v.replace("_", " "))
-        return groups
-
-    like_groups = group_by_axis(likes)
-    dislike_groups = group_by_axis(dislikes)
-
-    if like_groups:
-        seg = []
-        for ax, vs in like_groups.items():
-            ax_h = ax.replace("_", " ")
-            if len(vs) == 1:
-                seg.append(f"{ax_h} of {vs[0]}")
-            else:
-                seg.append(f"{ax_h}s like {' or '.join(vs)}")
+                g.setdefault(ax, []).append(v.replace("_", " "))
+        return g
+    lg, dg = group(likes), group(dislikes)
+    if lg:
+        seg = [f"{ax.replace('_',' ')} of {' or '.join(vs)}" for ax, vs in lg.items()]
         parts.append("This user gravitates toward " + ", ".join(seg) + ".")
-
-    if dislike_groups:
-        seg = []
-        for ax, vs in dislike_groups.items():
-            ax_h = ax.replace("_", " ")
-            seg.append(f"{' or '.join(vs)} {ax_h}")
+    if dg:
+        seg = [f"{' or '.join(vs)} {ax.replace('_',' ')}" for ax, vs in dg.items()]
         parts.append("They tend to avoid " + ", ".join(seg) + ".")
-
     if not parts:
-        parts.append("This user has flexible fashion preferences with no strong likes or dislikes.")
-
+        parts.append("This user has flexible fashion preferences.")
     return " ".join(parts)
 
 
-# ─────────────────────────────────────────────
-# 4. Main pipeline
-# ─────────────────────────────────────────────
-
-def generate_profile(user_idx: int, seed: int) -> dict:
-    """Generate a single user profile."""
+def generate_profile(user_idx, seed, provider_override=None):
     structured = sample_structured_attributes(seed)
     likes, dislikes = flatten_to_keywords(structured)
-
     prompt = build_narrative_prompt(likes, dislikes, user_idx)
-    response = call_gpt5_mini(
-        prompt=prompt,
-        system=NARRATIVE_SYSTEM,
-        max_completion_tokens=GPT5_MINI["max_completion_tokens_default"],
-    )
-
+    response = call_llm(prompt=prompt, stage="profile_generation",
+                          system=NARRATIVE_SYSTEM, provider_override=provider_override)
     parsed = parse_json_response(response)
     if parsed and parsed.get("narrative_profile"):
         narrative = parsed["narrative_profile"].strip()
     else:
         narrative = narrative_fallback(likes, dislikes)
-
     return {
         "user_id": f"U{user_idx:03d}",
         "domain": "fashion",
-        "structured_attributes": structured,    # ground-truth (hidden)
-        "likes_keywords": likes,                # shown to model (keyword variant)
-        "dislikes_keywords": dislikes,          # shown to model (keyword variant)
-        "narrative_profile": narrative,         # shown to model (narrative variant)
+        "structured_attributes": structured,
+        "likes_keywords": likes,
+        "dislikes_keywords": dislikes,
+        "narrative_profile": narrative,
         "seed": seed,
     }
 
 
-def run_pipeline(n_users: int, output_path: Path, force: bool = False):
-    log_step(f"Profile Generator — {n_users} users (English, fashion only)")
+def run_pipeline(n_users, output_path, force=False, provider=None):
+    log_step(f"Profile Generator — {n_users} users (provider={provider or 'default'})")
 
     if output_path.exists() and not force:
         existing = load_jsonl(output_path)
         if len(existing) >= n_users:
-            print(f"  Already have {len(existing)} profiles. Skipping.")
+            print(f"  Already have {len(existing)} profiles.")
             return existing
-        print(f"  Resuming from {len(existing)} profiles")
         profiles = existing
         start_idx = len(existing)
     else:
@@ -257,32 +149,29 @@ def run_pipeline(n_users: int, output_path: Path, force: bool = False):
         seed = 1000 + i * 17
         print(f"\n  [{i+1}/{n_users}] seed={seed}")
         try:
-            p = generate_profile(i + 1, seed)
+            p = generate_profile(i + 1, seed, provider_override=provider)
             profiles.append(p)
             print(f"    {p['user_id']}")
             print(f"    likes:    {p['likes_keywords']}")
             print(f"    dislikes: {p['dislikes_keywords']}")
             print(f"    narrative: {p['narrative_profile'][:100]}...")
-
             if (i + 1) % 5 == 0:
                 save_jsonl(profiles, output_path)
         except Exception as e:
             print(f"    ERROR: {e}")
 
     save_jsonl(profiles, output_path)
-    print(f"\n  ✓ Saved {len(profiles)} profiles to {output_path}")
-    return profiles
+    print(f"\n  ✓ Saved {len(profiles)} profiles")
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--n_users", type=int,
-                        default=PHASE1_CONFIG["n_users_total"])
-    parser.add_argument("--output", type=Path,
-                        default=PROFILES_DIR / "profiles.jsonl")
+    parser.add_argument("--n_users", type=int, default=PHASE1_CONFIG["n_users_total"])
+    parser.add_argument("--output", type=Path, default=PROFILES_DIR / "profiles.jsonl")
     parser.add_argument("--force", action="store_true")
+    parser.add_argument("--provider", type=str, default=None)
     args = parser.parse_args()
-    run_pipeline(args.n_users, args.output, args.force)
+    run_pipeline(args.n_users, args.output, args.force, args.provider)
 
 
 if __name__ == "__main__":

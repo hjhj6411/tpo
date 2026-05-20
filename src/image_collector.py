@@ -1,23 +1,21 @@
 """
-Image Collector
-================
+Image Collector v2 — Parent-ASIN Variant Search.
 
-For each option plan, collect 4 images (one per option) and verify quality:
+For active_axis ∈ {color, pattern}: prefer parent_asin variants so structure
+is preserved across A vs B. For active_axis=garment_category, fall back to
+title-keyword search. Google fallback as last resort.
 
-Sources (priority order):
-  1. Amazon Reviews 2023 metadata (free, already on disk)
-  2. Google Custom Search API (free 100/day, fallback)
-
-Quality checks:
-  - Min resolution 224x224
-  - 4 options must be visually homogeneous (CLIP distance check)
+Quality gates: CLIP pairwise distance ≤ 0.45; SSIM ≥ 0.35 between A and B
+(color/pattern only).
 """
 
 import argparse
 import io
 import json
 import os
+import sys
 import time
+from collections import defaultdict
 from pathlib import Path
 
 import numpy as np
@@ -26,28 +24,18 @@ from PIL import Image
 
 from .utils import save_jsonl, load_jsonl, log_step
 
-import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from configs.config import IMAGES_DIR, OPTIONS_DIR, IMAGE_COLLECTION
 
 
-# ─────────────────────────────────────────────
-# Amazon Reviews 2023 metadata search
-# ─────────────────────────────────────────────
-
 class AmazonCatalogIndex:
-    """In-memory keyword index over Amazon Reviews 2023 metadata.
-
-    Expected files at $AMAZON_META_DIR/*.jsonl with fields:
-      title, images (list of dict or str), main_category, ...
-    """
-
-    def __init__(self, index_path: Path = None):
+    def __init__(self, index_path=None):
         self.index_path = index_path or Path(
             os.environ.get("AMAZON_META_DIR", "/home/hjhj6411/fashion/data/amazon")
         )
         self._loaded = False
         self._items = []
+        self._by_parent = defaultdict(list)
 
     def _ensure_loaded(self):
         if self._loaded:
@@ -60,9 +48,8 @@ class AmazonCatalogIndex:
         meta_files = list(self.index_path.glob("meta_*.jsonl"))
         if not meta_files:
             meta_files = list(self.index_path.glob("*.jsonl"))
-
         print(f"  Indexing {len(meta_files)} Amazon meta files...")
-        n_loaded = 0
+        n = 0
         for mf in meta_files[:5]:
             try:
                 with open(mf, encoding="utf-8") as f:
@@ -81,24 +68,27 @@ class AmazonCatalogIndex:
                                     img_url = first
                             elif isinstance(images, str):
                                 img_url = images
-
+                            parent = item.get("parent_asin")
                             if title and img_url:
-                                self._items.append({
-                                    "title": title, "image_url": img_url,
-                                    "category": item.get("main_category", ""),
-                                })
-                                n_loaded += 1
+                                rec = {"title": title, "image_url": img_url,
+                                        "category": item.get("main_category", ""),
+                                        "parent_asin": parent,
+                                        "asin": item.get("asin")}
+                                self._items.append(rec)
+                                if parent:
+                                    self._by_parent[parent].append(rec)
+                                n += 1
                         except Exception:
                             continue
-                        if n_loaded >= 50000:
+                        if n >= 50000:
                             break
             except Exception as e:
                 print(f"    Skipped {mf.name}: {e}")
-            if n_loaded >= 50000:
+            if n >= 50000:
                 break
-        print(f"  Indexed {n_loaded} Amazon items")
+        print(f"  Indexed {n} items, {len(self._by_parent)} parent groups")
 
-    def search(self, query: str, top_k: int = 5) -> list[dict]:
+    def title_search(self, query, top_k=5):
         self._ensure_loaded()
         if not self._items:
             return []
@@ -113,12 +103,36 @@ class AmazonCatalogIndex:
         scored.sort(key=lambda x: -x[0])
         return [s[1] for s in scored[:top_k]]
 
+    def variant_search(self, anchor_query, variant_tokens, top_k_groups=3):
+        self._ensure_loaded()
+        if not self._items or not self._by_parent:
+            return []
+        anchor_tokens = [t.lower() for t in anchor_query.split() if len(t) > 2]
+        var_lower = [v.lower() for v in variant_tokens]
+        candidate_parents = []
+        for parent, group in self._by_parent.items():
+            if len(group) < 2:
+                continue
+            scored = []
+            for it in group:
+                a_score = sum(1 for t in anchor_tokens if t in it["title"])
+                scored.append((a_score, it))
+            scored.sort(key=lambda x: -x[0])
+            if scored[0][0] < max(1, len(anchor_tokens) // 2):
+                continue
+            covered = {}
+            for vt in var_lower:
+                for _, it in scored:
+                    if vt in it["title"]:
+                        covered[vt] = it
+                        break
+            if len(covered) >= 2:
+                candidate_parents.append((len(covered), list(covered.values())))
+        candidate_parents.sort(key=lambda x: -x[0])
+        return [g[1] for g in candidate_parents[:top_k_groups]]
 
-# ─────────────────────────────────────────────
-# Google Custom Search (free 100/day)
-# ─────────────────────────────────────────────
 
-def google_image_search(query: str, top_k: int = 5) -> list[dict]:
+def google_image_search(query, top_k=5):
     api_key = os.environ.get("GOOGLE_API_KEY")
     cse_id = os.environ.get("GOOGLE_CSE_ID")
     if not api_key or not cse_id:
@@ -134,21 +148,15 @@ def google_image_search(query: str, top_k: int = 5) -> list[dict]:
         resp.raise_for_status()
         items = resp.json().get("items", [])
         return [{"image_url": it.get("link"), "title": it.get("title", ""),
-                 "source": "google"} for it in items]
+                  "source": "google"} for it in items]
     except Exception as e:
-        print(f"    Google search error: {e}")
+        print(f"    Google error: {e}")
         return []
 
 
-# ─────────────────────────────────────────────
-# Image download
-# ─────────────────────────────────────────────
-
-def download_image(url: str, target_path: Path,
-                    min_resolution=(224, 224)) -> bool:
+def download_image(url, target_path, min_resolution=(224, 224)):
     try:
-        resp = requests.get(url, timeout=15,
-                            headers={"User-Agent": "Mozilla/5.0"})
+        resp = requests.get(url, timeout=15, headers={"User-Agent": "Mozilla/5.0"})
         resp.raise_for_status()
         img = Image.open(io.BytesIO(resp.content)).convert("RGB")
         if img.size[0] < min_resolution[0] or img.size[1] < min_resolution[1]:
@@ -161,43 +169,39 @@ def download_image(url: str, target_path: Path,
         return False
 
 
-# ─────────────────────────────────────────────
-# CLIP-based homogeneity check
-# ─────────────────────────────────────────────
-
-class CLIPHomogeneity:
+class HomogeneityChecker:
     def __init__(self):
-        self._model = None
-        self._processor = None
+        self._clip = None
+        self._proc = None
         self._device = None
         self._torch = None
 
-    def _ensure_loaded(self):
-        if self._model is not None:
+    def _ensure_clip(self):
+        if self._clip is not None:
             return
         try:
             import torch
-            from transformers import CLIPProcessor, CLIPModel
+            from transformers import CLIPModel, CLIPProcessor
             self._device = "cuda" if torch.cuda.is_available() else "cpu"
             name = "openai/clip-vit-base-patch32"
             print(f"  Loading CLIP ({name}) on {self._device}")
-            self._model = CLIPModel.from_pretrained(name).to(self._device).eval()
-            self._processor = CLIPProcessor.from_pretrained(name)
+            self._clip = CLIPModel.from_pretrained(name).to(self._device).eval()
+            self._proc = CLIPProcessor.from_pretrained(name)
             self._torch = torch
         except Exception as e:
             print(f"  CLIP unavailable: {e}")
-            self._model = "DISABLED"
+            self._clip = "DISABLED"
 
-    def check(self, image_paths: list[Path]) -> dict:
-        self._ensure_loaded()
-        if self._model == "DISABLED" or len(image_paths) < 2:
-            return {"mean_distance": 0, "max_distance": 0, "passed": True,
-                    "note": "skipped"}
+    def clip_distances(self, image_paths):
+        self._ensure_clip()
+        if self._clip == "DISABLED" or len(image_paths) < 2:
+            return {"mean_distance": 0.0, "max_distance": 0.0,
+                    "passed": True, "note": "skipped"}
         try:
-            images = [Image.open(p).convert("RGB") for p in image_paths]
-            inputs = self._processor(images=images, return_tensors="pt").to(self._device)
+            imgs = [Image.open(p).convert("RGB") for p in image_paths]
+            inp = self._proc(images=imgs, return_tensors="pt").to(self._device)
             with self._torch.no_grad():
-                feats = self._model.get_image_features(**inputs)
+                feats = self._clip.get_image_features(**inp)
                 feats = feats / feats.norm(dim=-1, keepdim=True)
             sims = (feats @ feats.T).cpu().numpy()
             dists = 1 - sims
@@ -205,97 +209,130 @@ class CLIPHomogeneity:
             pairs = [dists[i, j] for i in range(n) for j in range(i+1, n)]
             mean_d = float(np.mean(pairs))
             max_d = float(np.max(pairs))
-            threshold = IMAGE_COLLECTION["max_clip_distance_within_options"]
+            th = IMAGE_COLLECTION["max_clip_distance_within_options"]
             return {"mean_distance": mean_d, "max_distance": max_d,
-                    "passed": max_d <= threshold, "threshold": threshold}
+                    "passed": max_d <= th, "threshold": th}
         except Exception as e:
-            return {"mean_distance": 0, "max_distance": 0, "passed": True,
-                    "note": f"failed: {e}"}
+            return {"mean_distance": 0.0, "max_distance": 0.0,
+                    "passed": True, "note": f"failed: {e}"}
+
+    def ssim_pair(self, p1, p2):
+        try:
+            from skimage.metrics import structural_similarity as ssim
+        except ImportError:
+            return -1.0
+        try:
+            img1 = np.array(Image.open(p1).convert("L").resize((256, 256)))
+            img2 = np.array(Image.open(p2).convert("L").resize((256, 256)))
+            return float(ssim(img1, img2, data_range=255))
+        except Exception:
+            return -1.0
 
 
-# ─────────────────────────────────────────────
-# Main pipeline
-# ─────────────────────────────────────────────
-
-def collect_for_plan(plan: dict, amazon: AmazonCatalogIndex,
-                      checker: CLIPHomogeneity, out_root: Path) -> dict:
+def collect_for_plan(plan, amazon, checker, out_root):
     query_id = plan["query_id"]
     out_dir = out_root / query_id
     out_dir.mkdir(parents=True, exist_ok=True)
 
     result = {
-        "query_id": query_id,
-        "user_id": plan["user_id"],
-        "domain": "fashion",
+        "query_id": query_id, "user_id": plan["user_id"],
+        "domain": "fashion", "active_axis": plan["active_axis"],
         "main_category": plan["main_category"],
-        "options": {},
-        "all_collected": False,
-        "homogeneity": None,
+        "options": {}, "all_collected": False,
+        "homogeneity": None, "structure_preserved": None,
     }
-
+    active_axis = plan["active_axis"]
     image_paths = []
-    for opt_key in "ABCD":
-        opt = plan["options"][opt_key]
-        query = opt["search_query"]
-        img_path = out_dir / f"{opt_key}.jpg"
+    used_variant = False
 
+    if active_axis in ("color", "pattern"):
+        a_attrs = plan["options"]["A"]["attributes"]
+        anchor = a_attrs.get("garment_category", "").replace("_", " ")
+        var_tokens = [a_attrs.get(active_axis, ""),
+                       plan["options"]["B"]["attributes"].get(active_axis, "")]
+        groups = amazon.variant_search(anchor, var_tokens, top_k_groups=2)
+        if groups:
+            group = groups[0]
+            for k in "ABCD":
+                opt = plan["options"][k]
+                target_v = opt["attributes"][active_axis]
+                if opt["attributes"].get("garment_category") != a_attrs.get("garment_category"):
+                    continue
+                match = next((it for it in group if target_v in it["title"]), None)
+                if match:
+                    img_path = out_dir / f"{k}.jpg"
+                    if download_image(match["image_url"], img_path):
+                        result["options"][k] = {
+                            "image_path": str(img_path), "source": "amazon_variant",
+                            "search_query": opt["search_query"],
+                            "source_title": match.get("title", "")[:100],
+                            "parent_asin": match.get("parent_asin"),
+                        }
+                        image_paths.append(img_path)
+                        used_variant = True
+
+    for k in "ABCD":
+        if k in result["options"]:
+            continue
+        opt = plan["options"][k]
+        query = opt["search_query"]
+        img_path = out_dir / f"{k}.jpg"
         if img_path.exists():
             image_paths.append(img_path)
-            result["options"][opt_key] = {
-                "image_path": str(img_path),
-                "source": "cached",
-                "search_query": query,
-            }
+            result["options"][k] = {"image_path": str(img_path),
+                                      "source": "cached", "search_query": query}
             continue
-
         downloaded = False
-        # 1) Amazon
-        for cand in amazon.search(query, top_k=3):
+        for cand in amazon.title_search(query, top_k=3):
             if download_image(cand["image_url"], img_path):
                 downloaded = True
-                result["options"][opt_key] = {
-                    "image_path": str(img_path),
-                    "source": "amazon",
+                result["options"][k] = {
+                    "image_path": str(img_path), "source": "amazon_title",
                     "search_query": query,
                     "source_title": cand.get("title", "")[:100],
                 }
                 break
-
-        # 2) Google fallback
         if not downloaded:
             for cand in google_image_search(query, top_k=3):
                 if download_image(cand["image_url"], img_path):
                     downloaded = True
-                    result["options"][opt_key] = {
-                        "image_path": str(img_path),
-                        "source": "google",
+                    result["options"][k] = {
+                        "image_path": str(img_path), "source": "google",
                         "search_query": query,
                         "source_title": cand.get("title", "")[:100],
                     }
                     break
-
         if downloaded:
             image_paths.append(img_path)
         else:
-            result["options"][opt_key] = {
-                "image_path": None, "source": "FAILED",
-                "search_query": query,
-            }
+            result["options"][k] = {"image_path": None,
+                                      "source": "FAILED", "search_query": query}
 
     result["all_collected"] = len(image_paths) == 4
+    result["used_variant_search"] = used_variant
     if result["all_collected"]:
-        result["homogeneity"] = checker.check(image_paths)
+        result["homogeneity"] = checker.clip_distances(image_paths)
+        if active_axis in ("color", "pattern"):
+            ssim = checker.ssim_pair(
+                Path(result["options"]["A"]["image_path"]),
+                Path(result["options"]["B"]["image_path"]),
+            )
+            th = IMAGE_COLLECTION["min_ssim_for_color_variants"]
+            result["structure_preserved"] = {
+                "ssim_A_vs_B": ssim, "threshold": th,
+                "passed": (ssim < 0) or (ssim >= th),
+                "note": "skipped" if ssim < 0 else "",
+            }
     return result
 
 
-def run_pipeline(plan_path: Path, output_path: Path,
-                 image_root: Path, limit: int = 0):
-    log_step("Image Collector")
+def run_pipeline(plan_path, output_path, image_root, limit=0):
+    log_step("Image Collector v2 (parent-ASIN variant + fallback)")
     plans = load_jsonl(plan_path)
     print(f"  Loaded {len(plans)} plans")
 
     amazon = AmazonCatalogIndex()
-    checker = CLIPHomogeneity()
+    checker = HomogeneityChecker()
 
     if output_path.exists():
         existing = load_jsonl(output_path)
@@ -306,15 +343,12 @@ def run_pipeline(plan_path: Path, output_path: Path,
     else:
         results = []
         todo = plans
-
     if limit > 0:
         todo = todo[:limit]
 
-    n_complete = 0
-    n_homo = 0
-
+    n_complete = n_homo = n_variant = 0
     for i, plan in enumerate(todo):
-        print(f"\n  [{i+1}/{len(todo)}] {plan['query_id']}")
+        print(f"\n  [{i+1}/{len(todo)}] {plan['query_id']} ({plan['active_axis']})")
         try:
             r = collect_for_plan(plan, amazon, checker, image_root)
             results.append(r)
@@ -325,7 +359,10 @@ def run_pipeline(plan_path: Path, output_path: Path,
                     n_homo += 1
                     status = "✓"
                 else:
-                    status = f"⚠ heterogeneous (d_max={homo.get('max_distance', 0):.3f})"
+                    status = f"⚠ d_max={homo.get('max_distance', 0):.3f}"
+                if r.get("used_variant_search"):
+                    n_variant += 1
+                    status += " (variant)"
             else:
                 missing = [k for k, v in r["options"].items()
                             if v.get("source") == "FAILED"]
@@ -338,15 +375,14 @@ def run_pipeline(plan_path: Path, output_path: Path,
         time.sleep(0.5)
 
     save_jsonl(results, output_path)
-    print(f"\n  ✓ Saved {len(results)}, complete {n_complete}, homo {n_homo}")
+    print(f"\n  ✓ Saved {len(results)}: complete={n_complete}, homo={n_homo}, "
+          f"variant={n_variant}")
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--plan_path", type=Path,
-                        default=OPTIONS_DIR / "option_plans.jsonl")
-    parser.add_argument("--output", type=Path,
-                        default=IMAGES_DIR / "collection_log.jsonl")
+    parser.add_argument("--plan_path", type=Path, default=OPTIONS_DIR / "option_plans.jsonl")
+    parser.add_argument("--output", type=Path, default=IMAGES_DIR / "collection_log.jsonl")
     parser.add_argument("--image_root", type=Path, default=IMAGES_DIR)
     parser.add_argument("--limit", type=int, default=0)
     args = parser.parse_args()

@@ -4,4 +4,5 @@ Pillow>=10.0
 tqdm>=4.65
 transformers>=4.40
 torch>=2.0
-# vllm>=0.6.0  # for serving; install separately on GPU machine
+scikit-image>=0.21
+vllm>=0.6.0  # install separately on GPU machine
