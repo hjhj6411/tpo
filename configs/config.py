@@ -176,7 +176,7 @@ VISION_ESSENTIALITY_THRESHOLDS = {
 IMAGE_COLLECTION = {
     "min_resolution": (224, 224),
     "preferred_resolution": (512, 512),
-    "max_clip_distance_within_options": 0.45,
+    "max_clip_distance_within_options": 0.65,
     "min_ssim_for_color_variants": 0.35,
     "google_api_daily_quota": 100,
 }

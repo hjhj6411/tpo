@@ -95,12 +95,13 @@ class AmazonCatalogIndex:
             "blouse", "shirt", "jacket", "coat", "dress", "skirt",
             "shorts", "pants", "jeans", "hoodie", "sweater", "blazer",
             "tank", "t-shirt", "tshirt", "windbreaker", "parka", "trench",
-            "suit", "cardigan", "vest", "leggings", "jumpsuit",
+            "suit", "cardigan", "vest", "leggings", "jumpsuit", 
+            "coat", "overcoat", "raincoat", "trenchcoat",
         }
         required = [t for t in tokens if t in garment_tokens]
         scored = []
         for it in self._items:
-            if required and not all(r in it["title"] for r in required):
+            if required and not any(r in it["title"] for r in required):
                 continue
             score = sum(1 for t in tokens if t in it["title"])
             if score >= max(1, len(tokens) // 2):
