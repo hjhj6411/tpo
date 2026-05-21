@@ -80,12 +80,12 @@ class AmazonCatalogIndex:
                                 n += 1
                         except Exception:
                             continue
-                        if n >= 50000:
-                            break
+                        #if n >= 50000:
+                            #break
             except Exception as e:
                 print(f"    Skipped {mf.name}: {e}")
-            if n >= 50000:
-                break
+            #if n >= 50000:
+               # break
         print(f"  Indexed {n} items, {len(self._by_parent)} parent groups")
 
     def title_search(self, query, top_k=5):
@@ -93,10 +93,17 @@ class AmazonCatalogIndex:
         if not self._items:
             return []
         tokens = [t.lower() for t in query.split() if len(t) > 2]
-        if not tokens:
-            return []
+        # garment 토큰은 반드시 포함
+        garment_tokens = {"blouse","shirt","jacket","coat","dress","skirt",
+                        "shorts","pants","jeans","hoodie","sweater","blazer",
+                        "tank","t-shirt","tshirt"}
+        required = [t for t in tokens if t in garment_tokens]
+        
         scored = []
         for it in self._items:
+            # required 토큰이 하나라도 없으면 즉시 제외
+            if required and not all(r in it["title"] for r in required):
+                continue
             score = sum(1 for t in tokens if t in it["title"])
             if score >= max(1, len(tokens) // 2):
                 scored.append((score, it))
@@ -181,16 +188,44 @@ class HomogeneityChecker:
             return
         try:
             import torch
-            from transformers import CLIPModel, CLIPProcessor
-            self._device = "cuda" if torch.cuda.is_available() else "cpu"
-            name = "openai/clip-vit-base-patch32"
-            print(f"  Loading CLIP ({name}) on {self._device}")
-            self._clip = CLIPModel.from_pretrained(name).to(self._device).eval()
-            self._proc = CLIPProcessor.from_pretrained(name)
+            import open_clip
+
+            self._device = "cpu"
+            print(f"  Loading Marqo/marqo-fashionSigLIP on {self._device}")
+
+            self._clip, _, self._proc = open_clip.create_model_and_transforms(
+                "hf-hub:Marqo/marqo-fashionSigLIP"
+            )
+            self._clip = self._clip.to(self._device).eval()
             self._torch = torch
         except Exception as e:
             print(f"  CLIP unavailable: {e}")
             self._clip = "DISABLED"
+
+    
+        self._ensure_clip()
+        if self._clip == "DISABLED" or len(image_paths) < 2:
+            return {"mean_distance": 0.0, "max_distance": 0.0, "passed": True, "note": "skipped"}
+        try:
+            imgs = [Image.open(p).convert("RGB") for p in image_paths]
+            inp = self._proc(
+                images=imgs,
+                return_tensors="pt",
+                padding="max_length"   # ← fashionSigLIP 요구사항
+            ).to(self._device)
+            with self._torch.no_grad():
+                feats = self._clip.get_image_features(inp["pixel_values"], normalize=True)
+            sims = (feats @ feats.T).cpu().numpy()
+            dists = 1 - sims
+            n = len(image_paths)
+            pairs = [dists[i, j] for i in range(n) for j in range(i+1, n)]
+            mean_d = float(np.mean(pairs))
+            max_d  = float(np.max(pairs))
+            th = IMAGE_COLLECTION["max_clip_distance_within_options"]
+            return {"mean_distance": mean_d, "max_distance": max_d,
+                    "passed": max_d <= th, "threshold": th}
+        except Exception as e:
+            return {"mean_distance": 0.0, "max_distance": 0.0, "passed": True, "note": f"failed: {e}"}
 
     def clip_distances(self, image_paths):
         self._ensure_clip()
@@ -198,17 +233,18 @@ class HomogeneityChecker:
             return {"mean_distance": 0.0, "max_distance": 0.0,
                     "passed": True, "note": "skipped"}
         try:
-            imgs = [Image.open(p).convert("RGB") for p in image_paths]
-            inp = self._proc(images=imgs, return_tensors="pt").to(self._device)
+            imgs = self._torch.stack([
+                self._proc(Image.open(p).convert("RGB"))
+                for p in image_paths
+            ]).to(self._device)
             with self._torch.no_grad():
-                feats = self._clip.get_image_features(**inp)
-                feats = feats / feats.norm(dim=-1, keepdim=True)
+                feats = self._clip.encode_image(imgs, normalize=True)
             sims = (feats @ feats.T).cpu().numpy()
             dists = 1 - sims
             n = len(image_paths)
             pairs = [dists[i, j] for i in range(n) for j in range(i+1, n)]
             mean_d = float(np.mean(pairs))
-            max_d = float(np.max(pairs))
+            max_d  = float(np.max(pairs))
             th = IMAGE_COLLECTION["max_clip_distance_within_options"]
             return {"mean_distance": mean_d, "max_distance": max_d,
                     "passed": max_d <= th, "threshold": th}
@@ -227,6 +263,8 @@ class HomogeneityChecker:
             return float(ssim(img1, img2, data_range=255))
         except Exception:
             return -1.0
+    
+
 
 
 def collect_for_plan(plan, amazon, checker, out_root):

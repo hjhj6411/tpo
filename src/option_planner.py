@@ -97,7 +97,14 @@ def build_options_color_or_pattern(active_axis, fixed_attrs, structured,
     compatible_likes = [v for v in likes
                         if tpo_compatible({**fixed_attrs, active_axis: v}, scenario)]
     if not compatible_likes:
-        return None                          # liked 값이 모두 TPO-incompatible → 포기
+        # Fallback: not-disliked + TPO-compatible 전체 어휘에서
+        compatible_likes = [
+            v for v in FASHION_ATTRIBUTE_AXES[active_axis]
+            if v not in dislikes
+            and tpo_compatible({**fixed_attrs, active_axis: v}, scenario)
+        ]
+    if not compatible_likes:
+        return None
     liked_v = rng.choice(compatible_likes)
 
     # ── B: disliked + TPO-compatible ───────────────────────────────
@@ -147,6 +154,12 @@ def build_options_garment_category(fixed_attrs, structured, scenario,
     # ── A: liked garment + TPO-compatible ─────────────────────────
     compatible_likes = [v for v in likes
                         if tpo_compatible({**fixed_attrs, "garment_category": v}, scenario)]
+    if not compatible_likes:
+        compatible_likes = [
+            v for v in FASHION_ATTRIBUTE_AXES["garment_category"]
+            if v not in dislikes
+            and tpo_compatible({**fixed_attrs, "garment_category": v}, scenario)
+        ]
     if not compatible_likes:
         return None
     liked_g = rng.choice(compatible_likes)
@@ -238,7 +251,16 @@ def plan_options_for_query(profile, query):
     rng         = random.Random(abs(hash(query["query_id"])) % 100000)
     structured = dict(profile["structured_attributes"])
     structured[active_axis] = _ensure_axis_prefs(structured, active_axis, rng)
-
+    if active_axis in ("color", "pattern") and scenario:
+        if not tpo_compatible(fixed_attrs, scenario):
+            # TPO-compatible한 garment 후보
+            compatible_garments = [
+                g for g in FASHION_ATTRIBUTE_AXES["garment_category"]
+                if tpo_compatible({**fixed_attrs, "garment_category": g}, scenario)
+            ]
+            if compatible_garments:
+                fixed_attrs["garment_category"] = rng.choice(compatible_garments)
+                
     if active_axis in ("color", "pattern"):
         result = build_options_color_or_pattern(
             active_axis, fixed_attrs, structured, scenario, rng,
