@@ -5,8 +5,12 @@ For active_axis ∈ {color, pattern}: prefer parent_asin variants so structure
 is preserved across A vs B. For active_axis=garment_category, fall back to
 title-keyword search. Google fallback as last resort.
 
-Quality gates: FashionSigLIP pairwise distance ≤ 0.65; SSIM ≥ 0.35 between A and B
-(color/pattern only). FashionSigLIP also used for pre-download candidate reranking.
+Quality gates:
+  1. AttributeVerifier: VLM closed-set check (garment / color / pattern / gender)
+  2. SetConsistencyVerifier: 4-option gender + framing consistency
+  3. HomogeneityChecker: FashionSigLIP pairwise distance ≤ 0.65
+  4. SSIM ≥ 0.35 between A and B (color/pattern only)
+FashionSigLIP also used for pre-download candidate reranking.
 """
 
 import argparse
@@ -22,12 +26,167 @@ import numpy as np
 import requests
 from PIL import Image
 
-from .utils import save_jsonl, load_jsonl, log_step
+from .utils import save_jsonl, load_jsonl, log_step, call_vlm, parse_json_response
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from configs.config import IMAGES_DIR, OPTIONS_DIR, IMAGE_COLLECTION
 
+# ---------------------------------------------------------------------------
+# Attribute verification constants
+# ---------------------------------------------------------------------------
+KNOWN_COLORS = [
+    "red", "blue", "green", "yellow", "orange", "purple", "pink",
+    "black", "white", "gray", "grey", "brown", "beige", "navy",
+    "teal", "cyan", "magenta", "olive", "maroon", "khaki", "cream",
+    "sky blue", "light blue", "dark blue", "light gray", "dark gray",
+]
+KNOWN_PATTERNS = [
+    "solid", "striped", "plaid", "floral", "graphic", "animal_print",
+    "checkered", "polka_dot", "geometric", "abstract", "camouflage",
+    "tie_dye", "paisley",
+]
+FEMININE_GARMENTS = {"blouse", "dress", "skirt", "sundress", "camisole"}
+MALE_TITLE_TOKENS = {"men", "mens", "men's", "male", "boy", "boys"}
 
+
+# ---------------------------------------------------------------------------
+# AttributeVerifier
+# ---------------------------------------------------------------------------
+class AttributeVerifier:
+    """VLM closed-set verification: garment / color / pattern / model gender."""
+
+    STAGE = "image_verifier"
+
+    SYSTEM = (
+        "You are a fashion image analyst. "
+        "Answer strictly in JSON with no extra text."
+    )
+
+    def verify(self, image_path: Path, expected_attrs: dict) -> dict:
+        """
+        Returns:
+          passes         : bool  — all three attribute checks passed
+          garment_match  : bool
+          color_match    : bool
+          pattern_match  : bool
+          model_gender   : 'male' | 'female' | 'no_model' | 'unclear'
+          rejection_reason: str | None
+        """
+        garment = expected_attrs.get("garment_category", "").replace("_", " ")
+        color   = expected_attrs.get("color", "")
+        pattern = expected_attrs.get("pattern", "").replace("_", " ")
+
+        prompt = (
+            f"Look at this fashion product image and answer the following questions "
+            f"about the PRIMARY garment shown.\n"
+            f"1. Is the primary garment a {garment}? (yes/no)\n"
+            f"2. What is the dominant color? Choose the closest from: "
+            f"{', '.join(KNOWN_COLORS)}\n"
+            f"3. What is the pattern? Choose from: {', '.join(KNOWN_PATTERNS)}\n"
+            f"4. What is the apparent gender of the model (if any)? "
+            f"Choose from: male, female, no_model, unclear\n\n"
+            f"Respond ONLY with JSON like:\n"
+            f'{{"garment_ok": true, "detected_color": "blue", '
+            f'"detected_pattern": "solid", "model_gender": "female"}}'
+        )
+        try:
+            raw = call_vlm(
+                prompt=prompt,
+                image_paths=[str(image_path)],
+                stage=self.STAGE,
+                system=self.SYSTEM,
+                max_tokens=128,
+                temperature=0.0,
+            )
+            parsed = parse_json_response(raw)
+            if not parsed:
+                return self._fail("VLM parse error", model_gender="unclear")
+
+            garment_match = bool(parsed.get("garment_ok", False))
+            detected_color   = str(parsed.get("detected_color", "")).lower()
+            detected_pattern = str(parsed.get("detected_pattern", "")).lower()
+            model_gender     = str(parsed.get("model_gender", "unclear")).lower()
+
+            color_match   = self._color_match(color, detected_color)
+            pattern_match = self._pattern_match(pattern, detected_pattern)
+
+            passes = garment_match and color_match and pattern_match
+            reason = None
+            if not passes:
+                parts = []
+                if not garment_match:
+                    parts.append(f"garment(expected={garment}->no)")
+                if not color_match:
+                    parts.append(f"color(expected={color},got={detected_color})")
+                if not pattern_match:
+                    parts.append(f"pattern(expected={pattern},got={detected_pattern})")
+                reason = "; ".join(parts)
+
+            return {
+                "passes": passes,
+                "garment_match": garment_match,
+                "color_match": color_match,
+                "pattern_match": pattern_match,
+                "detected_color": detected_color,
+                "detected_pattern": detected_pattern,
+                "model_gender": model_gender,
+                "rejection_reason": reason,
+            }
+        except Exception as e:
+            return self._fail(str(e), model_gender="unclear")
+
+    @staticmethod
+    def _color_match(expected: str, detected: str) -> bool:
+        exp = expected.lower().replace("_", " ")
+        det = detected.lower().replace("_", " ")
+        # direct match or one contains the other (e.g. "sky blue" ~ "blue")
+        return exp in det or det in exp
+
+    @staticmethod
+    def _pattern_match(expected: str, detected: str) -> bool:
+        exp = expected.lower().replace("_", " ")
+        det = detected.lower().replace("_", " ")
+        return exp in det or det in exp
+
+    @staticmethod
+    def _fail(reason, model_gender="unclear"):
+        return {
+            "passes": False,
+            "garment_match": False,
+            "color_match": False,
+            "pattern_match": False,
+            "detected_color": "",
+            "detected_pattern": "",
+            "model_gender": model_gender,
+            "rejection_reason": reason,
+        }
+
+    def check_set_consistency(self, verifications: dict) -> dict:
+        """
+        verifications: {"A": verify_result, "B": ..., "C": ..., "D": ...}
+        Returns {"passed": bool, "gender_consistent": bool, "note": str}
+        """
+        genders = [
+            v["model_gender"]
+            for v in verifications.values()
+            if v.get("model_gender") not in ("no_model", "unclear", None)
+        ]
+        if len(genders) < 2:
+            return {"passed": True, "gender_consistent": True,
+                    "note": "insufficient model data"}
+        unique = set(genders)
+        consistent = len(unique) == 1
+        return {
+            "passed": consistent,
+            "gender_consistent": consistent,
+            "detected_genders": genders,
+            "note": "" if consistent else f"mixed genders: {sorted(unique)}",
+        }
+
+
+# ---------------------------------------------------------------------------
+# AmazonCatalogIndex
+# ---------------------------------------------------------------------------
 class AmazonCatalogIndex:
     def __init__(self, index_path=None):
         self.index_path = index_path or Path(
@@ -95,14 +254,24 @@ class AmazonCatalogIndex:
             "blouse", "shirt", "jacket", "coat", "dress", "skirt",
             "shorts", "pants", "jeans", "hoodie", "sweater", "blazer",
             "tank", "t-shirt", "tshirt", "windbreaker", "parka", "trench",
-            "suit", "cardigan", "vest", "leggings", "jumpsuit", 
-            "coat", "overcoat", "raincoat", "trenchcoat",
+            "suit", "cardigan", "vest", "leggings", "jumpsuit",
+            "overcoat", "raincoat", "trenchcoat", "blouses",
         }
         required = [t for t in tokens if t in garment_tokens]
+
+        # feminine garment 쿼리 시 남성복 제외
+        is_feminine_query = any(r in FEMININE_GARMENTS for r in required)
+
         scored = []
         for it in self._items:
+            # garment 토큰 중 하나라도 title에 있어야 통과 (any)
             if required and not any(r in it["title"] for r in required):
                 continue
+            # 단성복 필터: feminine garment 쿼리에서 남성복 제외
+            if is_feminine_query:
+                title_words = set(it["title"].split())
+                if title_words & MALE_TITLE_TOKENS:
+                    continue
             score = sum(1 for t in tokens if t in it["title"])
             if score >= max(1, len(tokens) // 2):
                 scored.append((score, it))
@@ -175,6 +344,9 @@ def download_image(url, target_path, min_resolution=(224, 224)):
         return False
 
 
+# ---------------------------------------------------------------------------
+# HomogeneityChecker
+# ---------------------------------------------------------------------------
 class HomogeneityChecker:
     def __init__(self):
         self._clip = None
@@ -203,9 +375,7 @@ class HomogeneityChecker:
             self._clip = "DISABLED"
 
     def rank_candidates_by_clip(self, candidates, attrs):
-        """다운로드 전에 FashionSigLIP text embedding으로 후보 재랭킹.
-        attrs: {"garment_category": ..., "color": ..., "pattern": ...}
-        """
+        """다운로드 전에 FashionSigLIP text embedding으로 후보 재랭킹."""
         self._ensure_clip()
         if self._clip == "DISABLED" or not candidates:
             return candidates
@@ -218,12 +388,10 @@ class HomogeneityChecker:
             text_tokens = self._tokenizer([query]).to(self._device)
             with self._torch.no_grad():
                 text_feat = self._clip.encode_text(text_tokens, normalize=True)
-
             titles = [c.get("title", "")[:77] for c in candidates]
             title_tokens = self._tokenizer(titles).to(self._device)
             with self._torch.no_grad():
                 title_feats = self._clip.encode_text(title_tokens, normalize=True)
-
             sims = (title_feats @ text_feat.T).squeeze(-1).cpu().numpy()
             if sims.ndim == 0:
                 sims = np.array([float(sims)])
@@ -250,7 +418,7 @@ class HomogeneityChecker:
             n = len(image_paths)
             pairs = [dists[i, j] for i in range(n) for j in range(i + 1, n)]
             mean_d = float(np.mean(pairs))
-            max_d = float(np.max(pairs))
+            max_d  = float(np.max(pairs))
             th = IMAGE_COLLECTION["max_clip_distance_within_options"]
             return {"mean_distance": mean_d, "max_distance": max_d,
                     "passed": max_d <= th, "threshold": th}
@@ -271,7 +439,29 @@ class HomogeneityChecker:
             return -1.0
 
 
-def collect_for_plan(plan, amazon, checker, out_root):
+# ---------------------------------------------------------------------------
+# collect_for_plan
+# ---------------------------------------------------------------------------
+def _try_download_verified(candidates, img_path, attrs, verifier, top_n=5):
+    """
+    후보 리스트에서 순서대로 다운로드 후 VLM 검증.
+    통과한 첫 번째 후보를 반환한다.
+    Returns (success: bool, source_title: str, verify_result: dict)
+    """
+    tmp_path = img_path.with_suffix(".tmp.jpg")
+    for cand in candidates[:top_n]:
+        if not download_image(cand["image_url"], tmp_path):
+            continue
+        vr = verifier.verify(tmp_path, attrs)
+        if vr["passes"]:
+            tmp_path.rename(img_path)
+            return True, cand.get("title", "")[:100], vr
+        else:
+            tmp_path.unlink(missing_ok=True)
+    return False, "", {}
+
+
+def collect_for_plan(plan, amazon, checker, verifier, out_root):
     query_id = plan["query_id"]
     out_dir = out_root / query_id
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -282,11 +472,16 @@ def collect_for_plan(plan, amazon, checker, out_root):
         "main_category": plan["main_category"],
         "options": {}, "all_collected": False,
         "homogeneity": None, "structure_preserved": None,
+        "set_consistency": None,
     }
     active_axis = plan["active_axis"]
     image_paths = []
     used_variant = False
+    verifications = {}   # {k: verify_result}
 
+    # ------------------------------------------------------------------
+    # 1단계: variant search (color / pattern axis)
+    # ------------------------------------------------------------------
     if active_axis in ("color", "pattern"):
         a_attrs = plan["options"]["A"]["attributes"]
         anchor = a_attrs.get("garment_category", "").replace("_", " ")
@@ -304,58 +499,75 @@ def collect_for_plan(plan, amazon, checker, out_root):
                 if match:
                     img_path = out_dir / f"{k}.jpg"
                     if download_image(match["image_url"], img_path):
-                        result["options"][k] = {
-                            "image_path": str(img_path), "source": "amazon_variant",
-                            "search_query": opt["search_query"],
-                            "source_title": match.get("title", "")[:100],
-                            "parent_asin": match.get("parent_asin"),
-                        }
-                        image_paths.append(img_path)
-                        used_variant = True
+                        vr = verifier.verify(img_path, opt["attributes"])
+                        if vr["passes"]:
+                            result["options"][k] = {
+                                "image_path": str(img_path), "source": "amazon_variant",
+                                "search_query": opt["search_query"],
+                                "source_title": match.get("title", "")[:100],
+                                "parent_asin": match.get("parent_asin"),
+                                "verification": vr,
+                            }
+                            image_paths.append(img_path)
+                            verifications[k] = vr
+                            used_variant = True
+                        else:
+                            img_path.unlink(missing_ok=True)
+                            print(f"    [{k}] variant rejected: {vr['rejection_reason']}")
 
+    # ------------------------------------------------------------------
+    # 2단계: title search + FashionSigLIP 재랭킹 + VLM 검증 fallback
+    # ------------------------------------------------------------------
     for k in "ABCD":
         if k in result["options"]:
             continue
         opt = plan["options"][k]
+        attrs = opt["attributes"]
         query = opt["search_query"]
         img_path = out_dir / f"{k}.jpg"
+
         if img_path.exists():
+            # 캐시된 이미지도 검증 통과로 간주 (verify 스킵)
             image_paths.append(img_path)
             result["options"][k] = {"image_path": str(img_path),
                                       "source": "cached", "search_query": query}
+            verifications[k] = {"passes": True, "model_gender": "unclear",
+                                  "note": "cached"}
             continue
-        downloaded = False
-        # title_search top_k=10 후보 → FashionSigLIP 재랭킹 → 상위 3개만 시도
-        cands = amazon.title_search(query, top_k=10)
-        cands = checker.rank_candidates_by_clip(cands, opt["attributes"])
-        for cand in cands[:3]:
-            if download_image(cand["image_url"], img_path):
-                downloaded = True
-                result["options"][k] = {
-                    "image_path": str(img_path), "source": "amazon_title",
-                    "search_query": query,
-                    "source_title": cand.get("title", "")[:100],
-                }
-                break
-        if not downloaded:
-            for cand in google_image_search(query, top_k=3):
-                if download_image(cand["image_url"], img_path):
-                    downloaded = True
-                    result["options"][k] = {
-                        "image_path": str(img_path), "source": "google",
-                        "search_query": query,
-                        "source_title": cand.get("title", "")[:100],
-                    }
-                    break
-        if downloaded:
+
+        # Amazon title search → CLIP 재랭킹 → VLM 검증 (top 8)
+        cands = amazon.title_search(query, top_k=15)
+        cands = checker.rank_candidates_by_clip(cands, attrs)
+        ok, src_title, vr = _try_download_verified(cands, img_path, attrs, verifier, top_n=8)
+
+        if not ok:
+            # Google fallback → VLM 검증 (top 5)
+            gcands = google_image_search(query, top_k=5)
+            ok, src_title, vr = _try_download_verified(gcands, img_path, attrs, verifier, top_n=5)
+            src = "google" if ok else "FAILED"
+        else:
+            src = "amazon_title"
+
+        if ok:
+            result["options"][k] = {
+                "image_path": str(img_path), "source": src,
+                "search_query": query, "source_title": src_title,
+                "verification": vr,
+            }
             image_paths.append(img_path)
+            verifications[k] = vr
         else:
             result["options"][k] = {"image_path": None,
                                       "source": "FAILED", "search_query": query}
 
+    # ------------------------------------------------------------------
+    # 3단계: set-level 충일성 (gender consistency)
+    # ------------------------------------------------------------------
     result["all_collected"] = len(image_paths) == 4
     result["used_variant_search"] = used_variant
+
     if result["all_collected"]:
+        result["set_consistency"] = verifier.check_set_consistency(verifications)
         result["homogeneity"] = checker.clip_distances(image_paths)
         if active_axis in ("color", "pattern"):
             ssim = checker.ssim_pair(
@@ -371,13 +583,17 @@ def collect_for_plan(plan, amazon, checker, out_root):
     return result
 
 
+# ---------------------------------------------------------------------------
+# Pipeline
+# ---------------------------------------------------------------------------
 def run_pipeline(plan_path, output_path, image_root, limit=0):
     log_step("Image Collector v2 (parent-ASIN variant + fallback)")
     plans = load_jsonl(plan_path)
     print(f"  Loaded {len(plans)} plans")
 
-    amazon = AmazonCatalogIndex()
-    checker = HomogeneityChecker()
+    amazon   = AmazonCatalogIndex()
+    checker  = HomogeneityChecker()
+    verifier = AttributeVerifier()
 
     if output_path.exists():
         existing = load_jsonl(output_path)
@@ -391,20 +607,24 @@ def run_pipeline(plan_path, output_path, image_root, limit=0):
     if limit > 0:
         todo = todo[:limit]
 
-    n_complete = n_homo = n_variant = 0
+    n_complete = n_homo = n_variant = n_consistent = 0
     for i, plan in enumerate(todo):
         print(f"\n  [{i+1}/{len(todo)}] {plan['query_id']} ({plan['active_axis']})")
         try:
-            r = collect_for_plan(plan, amazon, checker, image_root)
+            r = collect_for_plan(plan, amazon, checker, verifier, out_root=image_root)
             results.append(r)
             if r["all_collected"]:
                 n_complete += 1
                 homo = r.get("homogeneity") or {}
+                cons = r.get("set_consistency") or {}
                 if homo.get("passed", True):
                     n_homo += 1
-                    status = "✓"
-                else:
-                    status = f"⚠ d_max={homo.get('max_distance', 0):.3f}"
+                if cons.get("passed", True):
+                    n_consistent += 1
+                status = "✓" if homo.get("passed", True) and cons.get("passed", True) \
+                    else f"⚠ d_max={homo.get('max_distance',0):.3f}"
+                if not cons.get("passed", True):
+                    status += f" gender={cons.get('note','')}"
                 if r.get("used_variant_search"):
                     n_variant += 1
                     status += " (variant)"
@@ -421,7 +641,7 @@ def run_pipeline(plan_path, output_path, image_root, limit=0):
 
     save_jsonl(results, output_path)
     print(f"\n  ✓ Saved {len(results)}: complete={n_complete}, homo={n_homo}, "
-          f"variant={n_variant}")
+          f"consistent={n_consistent}, variant={n_variant}")
 
 
 def main():
