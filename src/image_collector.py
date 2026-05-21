@@ -5,8 +5,8 @@ For active_axis ∈ {color, pattern}: prefer parent_asin variants so structure
 is preserved across A vs B. For active_axis=garment_category, fall back to
 title-keyword search. Google fallback as last resort.
 
-Quality gates: CLIP pairwise distance ≤ 0.45; SSIM ≥ 0.35 between A and B
-(color/pattern only).
+Quality gates: FashionSigLIP pairwise distance ≤ 0.65; SSIM ≥ 0.35 between A and B
+(color/pattern only). FashionSigLIP also used for pre-download candidate reranking.
 """
 
 import argparse
@@ -50,7 +50,7 @@ class AmazonCatalogIndex:
             meta_files = list(self.index_path.glob("*.jsonl"))
         print(f"  Indexing {len(meta_files)} Amazon meta files...")
         n = 0
-        for mf in meta_files[:5]:
+        for mf in meta_files:
             try:
                 with open(mf, encoding="utf-8") as f:
                     for line in f:
@@ -80,28 +80,26 @@ class AmazonCatalogIndex:
                                 n += 1
                         except Exception:
                             continue
-                        #if n >= 50000:
-                            #break
             except Exception as e:
                 print(f"    Skipped {mf.name}: {e}")
-            #if n >= 50000:
-               # break
         print(f"  Indexed {n} items, {len(self._by_parent)} parent groups")
 
-    def title_search(self, query, top_k=5):
+    def title_search(self, query, top_k=10):
         self._ensure_loaded()
         if not self._items:
             return []
         tokens = [t.lower() for t in query.split() if len(t) > 2]
-        # garment 토큰은 반드시 포함
-        garment_tokens = {"blouse","shirt","jacket","coat","dress","skirt",
-                        "shorts","pants","jeans","hoodie","sweater","blazer",
-                        "tank","t-shirt","tshirt"}
+        if not tokens:
+            return []
+        garment_tokens = {
+            "blouse", "shirt", "jacket", "coat", "dress", "skirt",
+            "shorts", "pants", "jeans", "hoodie", "sweater", "blazer",
+            "tank", "t-shirt", "tshirt", "windbreaker", "parka", "trench",
+            "suit", "cardigan", "vest", "leggings", "jumpsuit",
+        }
         required = [t for t in tokens if t in garment_tokens]
-        
         scored = []
         for it in self._items:
-            # required 토큰이 하나라도 없으면 즉시 제외
             if required and not all(r in it["title"] for r in required):
                 continue
             score = sum(1 for t in tokens if t in it["title"])
@@ -180,6 +178,7 @@ class HomogeneityChecker:
     def __init__(self):
         self._clip = None
         self._proc = None
+        self._tokenizer = None
         self._device = None
         self._torch = None
 
@@ -192,40 +191,46 @@ class HomogeneityChecker:
 
             self._device = "cpu"
             print(f"  Loading Marqo/marqo-fashionSigLIP on {self._device}")
-
             self._clip, _, self._proc = open_clip.create_model_and_transforms(
                 "hf-hub:Marqo/marqo-fashionSigLIP"
             )
             self._clip = self._clip.to(self._device).eval()
+            self._tokenizer = open_clip.get_tokenizer("hf-hub:Marqo/marqo-fashionSigLIP")
             self._torch = torch
         except Exception as e:
             print(f"  CLIP unavailable: {e}")
             self._clip = "DISABLED"
 
-    
+    def rank_candidates_by_clip(self, candidates, attrs):
+        """다운로드 전에 FashionSigLIP text embedding으로 후보 재랭킹.
+        attrs: {"garment_category": ..., "color": ..., "pattern": ...}
+        """
         self._ensure_clip()
-        if self._clip == "DISABLED" or len(image_paths) < 2:
-            return {"mean_distance": 0.0, "max_distance": 0.0, "passed": True, "note": "skipped"}
+        if self._clip == "DISABLED" or not candidates:
+            return candidates
         try:
-            imgs = [Image.open(p).convert("RGB") for p in image_paths]
-            inp = self._proc(
-                images=imgs,
-                return_tensors="pt",
-                padding="max_length"   # ← fashionSigLIP 요구사항
-            ).to(self._device)
+            query = " ".join(filter(None, [
+                attrs.get("color", ""),
+                attrs.get("pattern", ""),
+                attrs.get("garment_category", "").replace("_", " "),
+            ])).strip()
+            text_tokens = self._tokenizer([query]).to(self._device)
             with self._torch.no_grad():
-                feats = self._clip.get_image_features(inp["pixel_values"], normalize=True)
-            sims = (feats @ feats.T).cpu().numpy()
-            dists = 1 - sims
-            n = len(image_paths)
-            pairs = [dists[i, j] for i in range(n) for j in range(i+1, n)]
-            mean_d = float(np.mean(pairs))
-            max_d  = float(np.max(pairs))
-            th = IMAGE_COLLECTION["max_clip_distance_within_options"]
-            return {"mean_distance": mean_d, "max_distance": max_d,
-                    "passed": max_d <= th, "threshold": th}
+                text_feat = self._clip.encode_text(text_tokens, normalize=True)
+
+            titles = [c.get("title", "")[:77] for c in candidates]
+            title_tokens = self._tokenizer(titles).to(self._device)
+            with self._torch.no_grad():
+                title_feats = self._clip.encode_text(title_tokens, normalize=True)
+
+            sims = (title_feats @ text_feat.T).squeeze(-1).cpu().numpy()
+            if sims.ndim == 0:
+                sims = np.array([float(sims)])
+            ranked = sorted(zip(candidates, sims.tolist()), key=lambda x: -x[1])
+            return [c for c, _ in ranked]
         except Exception as e:
-            return {"mean_distance": 0.0, "max_distance": 0.0, "passed": True, "note": f"failed: {e}"}
+            print(f"    rank_candidates_by_clip failed: {e}")
+            return candidates
 
     def clip_distances(self, image_paths):
         self._ensure_clip()
@@ -242,9 +247,9 @@ class HomogeneityChecker:
             sims = (feats @ feats.T).cpu().numpy()
             dists = 1 - sims
             n = len(image_paths)
-            pairs = [dists[i, j] for i in range(n) for j in range(i+1, n)]
+            pairs = [dists[i, j] for i in range(n) for j in range(i + 1, n)]
             mean_d = float(np.mean(pairs))
-            max_d  = float(np.max(pairs))
+            max_d = float(np.max(pairs))
             th = IMAGE_COLLECTION["max_clip_distance_within_options"]
             return {"mean_distance": mean_d, "max_distance": max_d,
                     "passed": max_d <= th, "threshold": th}
@@ -263,8 +268,6 @@ class HomogeneityChecker:
             return float(ssim(img1, img2, data_range=255))
         except Exception:
             return -1.0
-    
-
 
 
 def collect_for_plan(plan, amazon, checker, out_root):
@@ -321,7 +324,10 @@ def collect_for_plan(plan, amazon, checker, out_root):
                                       "source": "cached", "search_query": query}
             continue
         downloaded = False
-        for cand in amazon.title_search(query, top_k=3):
+        # title_search top_k=10 후보 → FashionSigLIP 재랭킹 → 상위 3개만 시도
+        cands = amazon.title_search(query, top_k=10)
+        cands = checker.rank_candidates_by_clip(cands, opt["attributes"])
+        for cand in cands[:3]:
             if download_image(cand["image_url"], img_path):
                 downloaded = True
                 result["options"][k] = {
@@ -423,7 +429,10 @@ def main():
     parser.add_argument("--output", type=Path, default=IMAGES_DIR / "collection_log.jsonl")
     parser.add_argument("--image_root", type=Path, default=IMAGES_DIR)
     parser.add_argument("--limit", type=int, default=0)
+    parser.add_argument("--force", action="store_true", help="Ignore existing cache")
     args = parser.parse_args()
+    if args.force and args.output.exists():
+        args.output.unlink()
     run_pipeline(args.plan_path, args.output, args.image_root, args.limit)
 
 
