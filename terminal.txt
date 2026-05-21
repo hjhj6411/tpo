@@ -1,0 +1,9 @@
+conda activate pod\
+
+vllm serve Qwen/Qwen3-4B-Instruct-2507 \
+  --tensor-parallel-size 4 \
+  --max-model-len 30000 \
+  --dtype bfloat16 \
+  --port 8000 \
+  --trust-remote-code \
+  --gpu-memory-utilization 0.95 

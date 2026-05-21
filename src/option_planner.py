@@ -24,6 +24,9 @@ from configs.config import (
     OPTIONS_DIR, PROFILES_DIR, QUERIES_DIR, FASHION_ATTRIBUTE_AXES,
 )
 
+# neutral 쿼리 전용 fallback violation 후보
+NEUTRAL_VIOLATION_GARMENTS = ["shorts", "tank_top", "t_shirt"]
+NEUTRAL_VIOLATION_COLORS   = ["orange", "yellow"]
 
 # Curated TPO incompatibility rules (used by both planner and label_verifier)
 TPO_ATTR_INCOMPATIBILITIES = [
@@ -83,28 +86,42 @@ def axis_values_tpo_incompatible(axis, fixed_attrs, scenario):
 
 
 def build_options_color_or_pattern(active_axis, fixed_attrs, structured,
-                                      scenario, rng):
-    prefs = structured.get(active_axis, {})
-    likes = list(prefs.get("likes", []))
+                                   scenario, rng):
+    prefs    = structured.get(active_axis, {})
+    likes    = list(prefs.get("likes",    []))
     dislikes = list(prefs.get("dislikes", []))
     if not likes or not dislikes:
         return None
 
+    # ── A: liked + TPO-compatible ──────────────────────────────────
     compatible_likes = [v for v in likes
-                         if tpo_compatible({**fixed_attrs, active_axis: v}, scenario)]
+                        if tpo_compatible({**fixed_attrs, active_axis: v}, scenario)]
     if not compatible_likes:
-        return None
+        return None                          # liked 값이 모두 TPO-incompatible → 포기
     liked_v = rng.choice(compatible_likes)
 
+    # ── B: disliked + TPO-compatible ───────────────────────────────
     compatible_dislikes = [v for v in dislikes
-                            if tpo_compatible({**fixed_attrs, active_axis: v}, scenario)]
+                           if tpo_compatible({**fixed_attrs, active_axis: v}, scenario)]
+    if not compatible_dislikes:
+        # Fallback: 전체 어휘에서 liked가 아니고 TPO-compatible한 값
+        compatible_dislikes = [
+            v for v in FASHION_ATTRIBUTE_AXES[active_axis]
+            if v not in likes
+            and tpo_compatible({**fixed_attrs, active_axis: v}, scenario)
+        ]
     if not compatible_dislikes:
         return None
     disliked_v = rng.choice(compatible_dislikes)
 
+    # ── C/D: TPO-violation garment ─────────────────────────────────
     incompat_g = axis_values_tpo_incompatible(
         "garment_category", {**fixed_attrs, active_axis: liked_v}, scenario
     )
+    if not incompat_g:
+        # Fallback: neutral 쿼리 — 현재 garment와 다른 violation 후보
+        current_g = fixed_attrs.get("garment_category", "")
+        incompat_g = [g for g in NEUTRAL_VIOLATION_GARMENTS if g != current_g]
     if not incompat_g:
         return None
     bad_g = rng.choice(incompat_g)
@@ -112,36 +129,51 @@ def build_options_color_or_pattern(active_axis, fixed_attrs, structured,
     return {
         "A": {**fixed_attrs, active_axis: liked_v},
         "B": {**fixed_attrs, active_axis: disliked_v},
-        "C": {**fixed_attrs, active_axis: liked_v, "garment_category": bad_g},
+        "C": {**fixed_attrs, active_axis: liked_v,    "garment_category": bad_g},
         "D": {**fixed_attrs, active_axis: disliked_v, "garment_category": bad_g},
-        "main_category": fixed_attrs.get("garment_category"),
+        "main_category":      fixed_attrs.get("garment_category"),
         "tpo_violation_axis": "garment_category",
     }
 
 
 def build_options_garment_category(fixed_attrs, structured, scenario,
-                                      secondary_axis, rng):
-    prefs = structured.get("garment_category", {})
-    likes = list(prefs.get("likes", []))
+                                   secondary_axis, rng):
+    prefs    = structured.get("garment_category", {})
+    likes    = list(prefs.get("likes",    []))
     dislikes = list(prefs.get("dislikes", []))
     if not likes or not dislikes:
         return None
 
+    # ── A: liked garment + TPO-compatible ─────────────────────────
     compatible_likes = [v for v in likes
-                         if tpo_compatible({**fixed_attrs, "garment_category": v}, scenario)]
+                        if tpo_compatible({**fixed_attrs, "garment_category": v}, scenario)]
     if not compatible_likes:
         return None
     liked_g = rng.choice(compatible_likes)
 
+    # ── B: disliked garment + TPO-compatible ──────────────────────
     compatible_dislikes = [v for v in dislikes
-                            if tpo_compatible({**fixed_attrs, "garment_category": v}, scenario)]
+                           if tpo_compatible({**fixed_attrs, "garment_category": v}, scenario)]
+    if not compatible_dislikes:
+        compatible_dislikes = [
+            v for v in FASHION_ATTRIBUTE_AXES["garment_category"]
+            if v not in likes
+            and tpo_compatible({**fixed_attrs, "garment_category": v}, scenario)
+        ]
     if not compatible_dislikes:
         return None
     disliked_g = rng.choice(compatible_dislikes)
 
+    # ── C/D: TPO-violation secondary value ────────────────────────
     incompat_sec = axis_values_tpo_incompatible(
         secondary_axis, {**fixed_attrs, "garment_category": liked_g}, scenario
     )
+    if not incompat_sec:
+        # Fallback: neutral 쿼리
+        current_sec = fixed_attrs.get(secondary_axis, "")
+        fallback_pool = (NEUTRAL_VIOLATION_COLORS if secondary_axis == "color"
+                         else ["graphic_print", "camouflage"])
+        incompat_sec = [v for v in fallback_pool if v != current_sec]
     if not incompat_sec:
         return None
     bad_sec = rng.choice(incompat_sec)
@@ -149,16 +181,16 @@ def build_options_garment_category(fixed_attrs, structured, scenario,
     return {
         "A": {**fixed_attrs, "garment_category": liked_g},
         "B": {**fixed_attrs, "garment_category": disliked_g},
-        "C": {**fixed_attrs, "garment_category": liked_g, secondary_axis: bad_sec},
+        "C": {**fixed_attrs, "garment_category": liked_g,    secondary_axis: bad_sec},
         "D": {**fixed_attrs, "garment_category": disliked_g, secondary_axis: bad_sec},
-        "main_category": None,
+        "main_category":      None,
         "tpo_violation_axis": secondary_axis,
     }
 
 
 def attrs_to_search_query(attrs):
     parts = []
-    color = attrs.get("color")
+    color   = attrs.get("color")
     pattern = attrs.get("pattern")
     garment = attrs.get("garment_category", "item")
     if pattern and pattern != "solid":
@@ -177,19 +209,35 @@ def _rationale(k, active_axis, attrs, violation_axis):
         return f"disliked {active_axis}={val}, TPO-compatible"
     if k == "C":
         return (f"liked {active_axis}={val}, but {violation_axis}={attrs.get(violation_axis)} "
-                 f"violates TPO")
+                f"violates TPO")
     if k == "D":
         return (f"disliked {active_axis}={val}, AND {violation_axis}={attrs.get(violation_axis)} "
-                 f"violates TPO")
+                f"violates TPO")
     return ""
 
+
+def _ensure_axis_prefs(structured, axis, rng):
+    """프로필에 axis가 없거나 likes/dislikes가 비어 있으면 즉석 생성."""
+    prefs = structured.get(axis, {})
+    likes    = list(prefs.get("likes",    []))
+    dislikes = list(prefs.get("dislikes", []))
+    all_vals = FASHION_ATTRIBUTE_AXES[axis]
+
+    if not likes:
+        likes = rng.sample(all_vals, min(2, len(all_vals)))
+    if not dislikes:
+        remaining = [v for v in all_vals if v not in likes]
+        dislikes = rng.sample(remaining, min(1, len(remaining))) if remaining else []
+
+    return {"likes": likes, "dislikes": dislikes}
 
 def plan_options_for_query(profile, query):
     active_axis = query["active_axis"]
     fixed_attrs = query["fixed_attrs"]
-    scenario = query.get("tpo_scenario") or {}
-    rng = random.Random(abs(hash(query["query_id"])) % 100000)
-    structured = profile["structured_attributes"]
+    scenario    = query.get("tpo_scenario") or {}
+    rng         = random.Random(abs(hash(query["query_id"])) % 100000)
+    structured = dict(profile["structured_attributes"])
+    structured[active_axis] = _ensure_axis_prefs(structured, active_axis, rng)
 
     if active_axis in ("color", "pattern"):
         result = build_options_color_or_pattern(
@@ -207,48 +255,48 @@ def plan_options_for_query(profile, query):
     if result is None:
         return None
 
-    options = {}
+    options   = {}
     label_map = {"A": "tpo_and_preference", "B": "tpo_only",
-                  "C": "preference_only", "D": "neither"}
+                 "C": "preference_only",     "D": "neither"}
     for k in "ABCD":
         attrs = result[k]
         options[k] = {
-            "label": label_map[k],
-            "attributes": attrs,
+            "label":        label_map[k],
+            "attributes":   attrs,
             "search_query": attrs_to_search_query(attrs),
-            "rationale": _rationale(k, active_axis, attrs, result["tpo_violation_axis"]),
+            "rationale":    _rationale(k, active_axis, attrs, result["tpo_violation_axis"]),
         }
 
     return {
-        "query_id": query["query_id"],
-        "user_id": query["user_id"],
-        "domain": "fashion",
-        "query_type": query["query_type"],
-        "active_axis": active_axis,
-        "tpo_axis": query["tpo_axis"],
-        "fixed_attrs": fixed_attrs,
-        "main_category": result["main_category"],
+        "query_id":           query["query_id"],
+        "user_id":            query["user_id"],
+        "domain":             "fashion",
+        "query_type":         query["query_type"],
+        "active_axis":        active_axis,
+        "tpo_axis":           query["tpo_axis"],
+        "fixed_attrs":        fixed_attrs,
+        "main_category":      result["main_category"],
         "tpo_violation_axis": result["tpo_violation_axis"],
-        "options": options,
+        "options":            options,
     }
 
 
 def run_pipeline(profile_path, query_path, output_path, force=False, limit=0,
-                  provider=None):
+                 provider=None):
     log_step("Option Planner v2 (deterministic, One Axis Per Instance)")
     profiles = {p["user_id"]: p for p in load_jsonl(profile_path)}
-    queries = load_jsonl(query_path)
+    queries  = load_jsonl(query_path)
     print(f"  {len(profiles)} profiles, {len(queries)} queries")
 
     if output_path.exists() and not force:
         existing = load_jsonl(output_path)
-        done = {p["query_id"] for p in existing}
-        plans = existing
-        todo = [q for q in queries if q["query_id"] not in done]
+        done     = {p["query_id"] for p in existing}
+        plans    = existing
+        todo     = [q for q in queries if q["query_id"] not in done]
         print(f"  Resuming: {len(done)} already planned")
     else:
         plans = []
-        todo = queries
+        todo  = queries
     if limit > 0:
         todo = todo[:limit]
 
@@ -282,14 +330,14 @@ def run_pipeline(profile_path, query_path, output_path, force=False, limit=0,
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--profile_path", type=Path, default=PROFILES_DIR / "profiles.jsonl")
-    parser.add_argument("--query_path", type=Path, default=QUERIES_DIR / "queries.jsonl")
-    parser.add_argument("--output", type=Path, default=OPTIONS_DIR / "option_plans.jsonl")
-    parser.add_argument("--force", action="store_true")
-    parser.add_argument("--limit", type=int, default=0)
+    parser.add_argument("--query_path",   type=Path, default=QUERIES_DIR   / "queries.jsonl")
+    parser.add_argument("--output",       type=Path, default=OPTIONS_DIR   / "option_plans.jsonl")
+    parser.add_argument("--force",    action="store_true")
+    parser.add_argument("--limit",    type=int, default=0)
     parser.add_argument("--provider", type=str, default=None)
     args = parser.parse_args()
     run_pipeline(args.profile_path, args.query_path, args.output,
-                  args.force, args.limit, args.provider)
+                 args.force, args.limit, args.provider)
 
 
 if __name__ == "__main__":

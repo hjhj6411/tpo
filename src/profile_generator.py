@@ -19,33 +19,21 @@ from configs.config import (
 
 def sample_structured_attributes(seed):
     rng = random.Random(seed)
-    axes = list(PHASE1_AXES)
-    n_axes_min, n_axes_max = ATTRIBUTE_SAMPLING["n_axes_with_preferences"]
-    n_axes = rng.randint(n_axes_min, min(n_axes_max, len(axes)))
-    chosen_axes = rng.sample(axes, n_axes)
-
-    n_likes_min, n_likes_max = ATTRIBUTE_SAMPLING["n_likes_per_axis"]
-    n_dis_min, n_dis_max = ATTRIBUTE_SAMPLING["n_dislikes_per_axis"]
-
+    # Phase 1은 3개 axis 모두 필수 — n_axes_with_preferences 무시
     structured = {}
-    for axis in chosen_axes:
+    for axis in PHASE1_AXES:
         values = list(FASHION_ATTRIBUTE_AXES[axis])
         rng.shuffle(values)
-        n_like = rng.randint(n_likes_min, min(n_likes_max, len(values)))
-        n_dis = rng.randint(n_dis_min, min(n_dis_max, max(0, len(values) - n_like)))
+        n_like = rng.randint(1, min(2, len(values)))
+        # dislikes는 likes와 겹치지 않는 값에서 최소 1개 보장
+        remaining = values[n_like:]
+        n_dis = rng.randint(1, min(2, len(remaining))) if remaining else 0
         structured[axis] = {
-            "likes": values[:n_like],
-            "dislikes": values[n_like:n_like + n_dis],
+            "likes":    values[:n_like],
+            "dislikes": remaining[:n_dis] if n_dis else [],
         }
-
-    if "color" not in structured:
-        colors = list(FASHION_ATTRIBUTE_AXES["color"])
-        rng.shuffle(colors)
-        structured["color"] = {"likes": colors[:2], "dislikes": colors[2:3]}
-
     return structured
-
-
+    
 def flatten_to_keywords(structured):
     likes, dislikes = [], []
     for axis, prefs in structured.items():

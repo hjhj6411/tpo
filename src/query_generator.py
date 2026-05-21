@@ -12,6 +12,8 @@ from collections import Counter
 from pathlib import Path
 
 from .utils import call_llm, parse_json_list_response, save_jsonl, load_jsonl, log_step
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from configs.config import (
@@ -234,13 +236,14 @@ def allocate_query_types(n_instances, seed):
 
 
 def generate_instances_for_user(profile, n_instances, provider_override=None):
-    user_id = profile["user_id"]
+    user_id   = profile["user_id"]
     base_seed = abs(hash(user_id)) % 100000
 
-    axes = allocate_axes(profile, n_instances)
+    axes        = allocate_axes(profile, n_instances)
     query_types = allocate_query_types(len(axes), base_seed + 7)
 
-    instances = []
+    # ── Step 1: scenario 먼저 전부 샘플링 (LLM 없음) ──────────────
+    meta = []
     for idx, (active_axis, qtype) in enumerate(zip(axes, query_types)):
         seed = base_seed + idx * 13
         try:
@@ -261,30 +264,62 @@ def generate_instances_for_user(profile, n_instances, provider_override=None):
             if scenario is None:
                 continue
 
+        meta.append((active_axis, qtype, scenario, fixed))
+
+    # ── Step 2: qtype별로 묶어서 배치 LLM 호출 ────────────────────
+    # neutral은 scenario 무관 → 한 번에 전부
+    # explicit/implicit는 scenario마다 다르나, n개씩 한 번에 요청
+    from collections import defaultdict
+    buckets = defaultdict(list)   # key: (qtype, scenario_key)
+    for i, (active_axis, qtype, scenario, fixed) in enumerate(meta):
+        # scenario를 hashable key로 변환
+        sc_key = str(sorted(scenario.items())) if scenario else "neutral"
+        buckets[(qtype, sc_key)].append(i)
+
+    texts = [None] * len(meta)
+    for (qtype, sc_key), indices in buckets.items():
+        scenario = meta[indices[0]][2]
+        n = len(indices)
         try:
-            text = generate_query_text(qtype, scenario or {}, provider_override)
+            if qtype == "explicit_tpo":
+                prompt = build_explicit_prompt(scenario, n)
+            elif qtype == "implicit_tpo":
+                prompt = build_implicit_prompt(scenario, n)
+            else:
+                prompt = build_neutral_prompt(n)
+
+            response = call_llm(prompt=prompt, stage="query_generation",
+                                system=QUERY_SYSTEM,
+                                provider_override=provider_override)
+            queries = parse_json_list_response(response)
+            if not queries:
+                continue
+            for rank, idx in enumerate(indices):
+                if rank < len(queries):
+                    texts[idx] = str(queries[rank])
         except Exception as e:
-            print(f"      query gen failed: {e}")
-            continue
+            print(f"      batch query gen failed ({qtype}): {e}")
+
+    # ── Step 3: 텍스트 붙여서 instances 조립 ──────────────────────
+    instances = []
+    for i, (active_axis, qtype, scenario, fixed) in enumerate(meta):
+        text = texts[i]
         if not text:
             continue
-
         secondary = ["color"] if active_axis == "garment_category" else []
-
         instances.append({
-            "query_id": f"{user_id}_Q{len(instances)+1:03d}",
-            "user_id": user_id,
-            "domain": "fashion",
+            "query_id":  f"{user_id}_Q{len(instances)+1:03d}",
+            "user_id":   user_id,
+            "domain":    "fashion",
             "query_type": qtype,
             "query_text": text,
             "tpo_scenario": scenario,
             "active_axis": active_axis,
-            "tpo_axis": active_axis,
+            "tpo_axis":    active_axis,
             "fixed_attrs": fixed,
             "secondary_differentiation_axis": secondary,
         })
     return instances
-
 
 def run_pipeline(profile_path, output_path, n_per_user, force=False, provider=None):
     log_step(f"Query+Axis Generator — {n_per_user} inst/user (provider={provider or 'default'})")
@@ -302,23 +337,40 @@ def run_pipeline(profile_path, output_path, n_per_user, force=False, provider=No
         all_q = []
         todo = profiles
 
-    for i, prof in enumerate(todo):
-        print(f"\n  [{i+1}/{len(todo)}] {prof['user_id']}")
+    # 유저당 독립적이므로 thread 병렬화 가능
+    # vLLM 서버 부하를 고려해 max_workers=5 (조정 가능)
+    MAX_WORKERS = 5
+
+    results = {}  # user_id → instances
+
+    def _gen(prof):
         try:
             qs = generate_instances_for_user(prof, n_per_user, provider)
-            all_q.extend(qs)
-            print(f"    {len(qs)} instances generated")
-            if (i + 1) % 5 == 0:
-                save_jsonl(all_q, output_path)
+            print(f"    {prof['user_id']}: {len(qs)} instances")
+            return prof["user_id"], qs
         except Exception as e:
-            print(f"    ERROR: {e}")
+            print(f"    {prof['user_id']} ERROR: {e}")
+            return prof["user_id"], []
+
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+        futures = {executor.submit(_gen, prof): prof for prof in todo}
+        for i, future in enumerate(as_completed(futures)):
+            uid, qs = future.result()
+            results[uid] = qs
+            if (i + 1) % 5 == 0:
+                # 중간 저장 (순서 보장을 위해 원래 profile 순서대로)
+                flat = all_q + [q for uid in results for q in results[uid]]
+                save_jsonl(flat, output_path)
+
+    # 원래 프로필 순서대로 정렬해서 저장
+    for prof in todo:
+        all_q.extend(results.get(prof["user_id"], []))
 
     save_jsonl(all_q, output_path)
     print(f"\n  ✓ Saved {len(all_q)} instances")
     print(f"  axis dist: {dict(Counter(q['active_axis'] for q in all_q))}")
     print(f"  qtype dist: {dict(Counter(q['query_type'] for q in all_q))}")
-
-
+    
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--profile_path", type=Path, default=PROFILES_DIR / "profiles.jsonl")
