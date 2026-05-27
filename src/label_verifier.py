@@ -1,5 +1,6 @@
 """
-Label Verifier v2 — Rule + 3-judge LLM ensemble via provider stages.
+Label Verifier v2 — Rule + 3-judge LLM ensemble.
+Updated: rule_match uses scenario constraints instead of TPO_ATTR_INCOMPATIBILITIES.
 """
 
 import argparse
@@ -12,49 +13,65 @@ import numpy as np
 from .utils import (
     call_llm, parse_json_response, save_jsonl, load_jsonl, save_json, log_step,
 )
-from .option_planner import tpo_compatible
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from configs.config import (
     LABELS_DIR, PROFILES_DIR, OPTIONS_DIR, QUERIES_DIR,
     LABEL_QUALITY_THRESHOLDS, PROVIDERS,
 )
+from configs.scenarios import get_scenario_by_id
 
 
 LABEL_TO_INT = {"tpo_and_preference": 0, "tpo_only": 1,
-                 "preference_only": 2, "neither": 3}
+                "preference_only": 2, "neither": 3}
 INT_TO_LABEL = {v: k for k, v in LABEL_TO_INT.items()}
-
 JUDGE_STAGES = ["label_judge_primary", "label_judge_secondary", "label_judge_tertiary"]
 
 
-def rule_match(opt_attrs, user_structured, scenario):
-    pref_hits = pref_violations = 0
-    detail = []
-    for axis, prefs in user_structured.items():
-        v = opt_attrs.get(axis)
-        if v is None:
+def _is_tpo_compatible(attrs, scenario, active_axis, violation_axis):
+    """Check if attrs violate TPO based on scenario constraints."""
+    # Check violation axis: if the attr value is in scenario's incompatible set
+    for axis_name in [active_axis, violation_axis, "garment_category", "color", "pattern"]:
+        constraint = scenario.get(axis_name)
+        if constraint is None:
             continue
-        if v in prefs.get("likes", []):
-            pref_hits += 1
-            detail.append(f"+{axis}:{v}")
-        if v in prefs.get("dislikes", []):
-            pref_violations += 1
-            detail.append(f"-{axis}:{v}")
-    preference_match = pref_hits > pref_violations
-    tpo_ok = tpo_compatible(opt_attrs, scenario or {})
-    return preference_match, tpo_ok, {"pref_hits": pref_hits,
-                                        "pref_violations": pref_violations,
-                                        "detail": detail}
+        incompat = set(constraint.get("incompatible", []))
+        val = attrs.get(axis_name)
+        if val and val in incompat:
+            return False
+    return True
+
+
+def rule_match(opt_attrs, user_structured, scenario, active_axis, violation_axis):
+    """Rule-based label inference using scenario constraints."""
+    # Preference match: check active_axis value against user prefs
+    prefs = user_structured.get(active_axis, {})
+    likes = set(prefs.get("likes", []))
+    dislikes = set(prefs.get("dislikes", []))
+    active_val = opt_attrs.get(active_axis)
+
+    if active_val in likes:
+        preference_match = True
+    elif active_val in dislikes:
+        preference_match = False
+    else:
+        preference_match = False  # neutral = non-preferred
+
+    # TPO match: check if any attr is in scenario's incompatible set
+    tpo_ok = _is_tpo_compatible(opt_attrs, scenario, active_axis, violation_axis)
+
+    return preference_match, tpo_ok
 
 
 def derive_rule_labels(plan, profile, scenario):
     out = {}
+    active_axis = plan["active_axis"]
+    violation_axis = plan.get("violation_axis", "garment_category")
     for k in "ABCD":
         opt = plan["options"][k]
-        pref_m, tpo_m, detail = rule_match(opt["attributes"],
-                                              profile["structured_attributes"],
-                                              scenario)
+        pref_m, tpo_m = rule_match(
+            opt["attributes"], profile["structured_attributes"],
+            scenario, active_axis, violation_axis)
         if tpo_m and pref_m:
             inferred = "tpo_and_preference"
         elif tpo_m:
@@ -63,19 +80,20 @@ def derive_rule_labels(plan, profile, scenario):
             inferred = "preference_only"
         else:
             inferred = "neither"
-        out[k] = {"inferred_label": inferred, "plan_label": opt["label"],
-                   "matches_plan": inferred == opt["label"],
-                   "preference_match": pref_m, "tpo_match": tpo_m,
-                   "detail": detail}
+        out[k] = {
+            "inferred_label": inferred, "plan_label": opt["label"],
+            "matches_plan": inferred == opt["label"],
+            "preference_match": pref_m, "tpo_match": tpo_m,
+        }
     return out
 
 
 JUDGE_SYSTEM = """You are a careful labeler for a fashion personalization benchmark.
 
-Given a user profile (narrative + keyword likes/dislikes), a query with TPO
-context, and 4 option items described by attributes, assign each option ONE label:
+Given a user profile, a query with TPO context, and 4 option items described
+by attributes, assign each option ONE label:
   - "tpo_and_preference": matches BOTH user taste AND TPO situation
-  - "tpo_only":           matches TPO, violates user taste
+  - "tpo_only":           matches TPO, does not match user taste
   - "preference_only":    matches user taste, violates TPO
   - "neither":            violates both
 
@@ -89,14 +107,13 @@ Output ONLY a JSON object:
 def build_judge_prompt(plan, profile, query_text, scenario):
     likes_str = ", ".join(profile["likes_keywords"]) or "(none)"
     dislikes_str = ", ".join(profile["dislikes_keywords"]) or "(none)"
-    tpo_str = "(none, neutral query)"
-    if scenario:
-        parts = []
-        for axis, sub in scenario.items():
-            if isinstance(sub, dict):
-                for k, v in sub.items():
-                    parts.append(f"{axis}.{k}={v}")
-        tpo_str = "; ".join(parts)
+    tpo_parts = []
+    tpo = scenario.get("tpo", {})
+    for axis, sub in tpo.items():
+        if isinstance(sub, dict):
+            for k, v in sub.items():
+                tpo_parts.append(f"{axis}.{k}={v}")
+    tpo_str = "; ".join(tpo_parts) or "(no TPO context)"
 
     opts_block = []
     for k in "ABCD":
@@ -110,16 +127,14 @@ def build_judge_prompt(plan, profile, query_text, scenario):
 
 QUERY: "{query_text}"
 TPO:   {tpo_str}
+Scenario: {scenario['name']}
 
-OPTIONS (attribute descriptions only — no images):
+OPTIONS:
 {chr(10).join(opts_block)}
 
 Assign each of A/B/C/D one of:
 tpo_and_preference, tpo_only, preference_only, neither.
-Each label must appear exactly once.
-
-Output JSON only.
-"""
+Each label must appear exactly once. Output JSON only."""
 
 
 def call_one_judge(stage, prompt):
@@ -179,9 +194,17 @@ def cohens_kappa(r1, r2):
 def verify_instance(plan, profile, query, enable_judges=None):
     if enable_judges is None:
         enable_judges = list(JUDGE_STAGES)
-    scenario = query.get("tpo_scenario") or {}
+
+    scenario = get_scenario_by_id(plan.get("scenario_id", ""))
+    if scenario is None:
+        # Fallback: construct minimal scenario from query TPO
+        scenario = {"tpo": query.get("tpo_scenario", {}),
+                    "name": query.get("scenario_name", "unknown"),
+                    "garment_category": None, "color": None, "pattern": None}
+
     rule_results = derive_rule_labels(plan, profile, scenario)
     prompt = build_judge_prompt(plan, profile, query["query_text"], scenario)
+
     judges = {}
     for stage in enable_judges:
         provider = PROVIDERS.get(stage, {}).get("provider", "?")
@@ -209,7 +232,7 @@ def verify_instance(plan, profile, query, enable_judges=None):
         rule_label = rule_results[k]["inferred_label"]
         final = majority if count >= th else plan_label
         all_agree = (count >= th and majority == plan_label
-                      and rule_label == plan_label)
+                     and rule_label == plan_label)
         consensus[k] = {
             "plan_label": plan_label, "rule_label": rule_label,
             "judge_votes": votes, "majority": majority,
@@ -219,6 +242,7 @@ def verify_instance(plan, profile, query, enable_judges=None):
 
     return {
         "query_id": plan["query_id"], "user_id": plan["user_id"],
+        "scenario_id": plan.get("scenario_id"),
         "active_axis": plan["active_axis"],
         "rule_results": rule_results, "judges": judges,
         "consensus": consensus,
@@ -251,13 +275,12 @@ def run_pipeline(plan_path, profile_path, query_path, output_path,
             continue
         prof = profiles[plan["user_id"]]
         q = queries[plan["query_id"]]
-        print(f"\n  [{i+1}/{len(todo)}] {plan['query_id']}")
+        if (i + 1) % 25 == 0:
+            print(f"  [{i+1}/{len(todo)}]")
         try:
             res = verify_instance(plan, prof, q, judge_stages)
             results.append(res)
-            n_agree = sum(1 for c in res["consensus"].values() if c["all_agree"])
-            print(f"    full agreement on {n_agree}/4 options")
-            if (i + 1) % 10 == 0:
+            if (i + 1) % 50 == 0:
                 save_jsonl(results, output_path)
         except Exception as e:
             print(f"    ERROR: {e}")
@@ -294,7 +317,7 @@ def _compute_reliability(results, out_dir, judge_stages):
     valid = [i for i in range(len(rule_seq))
              if rule_seq[i] >= 0 and judge_maj[i] >= 0]
     kappa = cohens_kappa([rule_seq[i] for i in valid],
-                          [judge_maj[i] for i in valid]) if valid else 0.0
+                         [judge_maj[i] for i in valid]) if valid else 0.0
 
     metrics = {
         "n_instances": len(results), "n_decisions": len(rule_seq),
@@ -311,22 +334,26 @@ def _compute_reliability(results, out_dir, judge_stages):
     }
     save_json(metrics, out_dir / "reliability_metrics.json")
     print(f"\n  Reliability:")
-    print(f"    α (judges):       {alpha:.3f} (≥{metrics['thresholds']['alpha_min']})")
+    print(f"    α (judges):        {alpha:.3f} (≥{metrics['thresholds']['alpha_min']})")
     print(f"    κ (rule vs judge): {kappa:.3f} (≥{metrics['thresholds']['kappa_min']})")
     print(f"    passed: {metrics['passed']}")
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--plan_path", type=Path, default=OPTIONS_DIR / "option_plans.jsonl")
-    parser.add_argument("--profile_path", type=Path, default=PROFILES_DIR / "profiles.jsonl")
-    parser.add_argument("--query_path", type=Path, default=QUERIES_DIR / "queries.jsonl")
-    parser.add_argument("--output", type=Path, default=LABELS_DIR / "labels.jsonl")
+    parser.add_argument("--plan_path", type=Path,
+                        default=OPTIONS_DIR / "option_plans.jsonl")
+    parser.add_argument("--profile_path", type=Path,
+                        default=PROFILES_DIR / "profiles.jsonl")
+    parser.add_argument("--query_path", type=Path,
+                        default=QUERIES_DIR / "queries.jsonl")
+    parser.add_argument("--output", type=Path,
+                        default=LABELS_DIR / "labels.jsonl")
     parser.add_argument("--limit", type=int, default=0)
     parser.add_argument("--judges", nargs="+", default=None)
     args = parser.parse_args()
     run_pipeline(args.plan_path, args.profile_path, args.query_path,
-                  args.output, args.limit, args.judges)
+                 args.output, args.limit, args.judges)
 
 
 if __name__ == "__main__":

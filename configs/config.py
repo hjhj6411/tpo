@@ -1,15 +1,11 @@
 """
-POD-Bench central configuration (v2: One Axis Per Instance)
+POD-Bench v2 central configuration — Canonical Extreme Scenario edition
 
-Phase 1 design:
-  - Axes: color, pattern, garment_category ONLY
-    (material/fit/sleeve_length excluded — mixed-attribute risk)
-  - One Axis Per Instance: each instance varies ONE attribute (active_axis);
-    others are fixed across A/B/C/D
-  - Provider abstraction: every LLM/VLM stage can route to 'gpt5_mini' (paid)
-    or 'vllm'/'vllm_alt'/'vllm_vlm' (free local) via PROVIDERS dict
-  - 15 users x 18 instances/user ≈ 270 instances across 3 axis tasks
-  - Parent-ASIN variant search for color/pattern (no diffusion)
+Key changes from v1:
+  - TPO_ATTR_INCOMPATIBILITIES removed → CANONICAL_SCENARIOS in scenarios.py
+  - Random TPO sampling removed → scenario-based matching
+  - Profile generation: archetype-based, backward-designed from scenarios
+  - Option planner: uses scenario compatible/incompatible sets directly
 """
 
 from pathlib import Path
@@ -26,7 +22,7 @@ FINAL_DIR = DATA_DIR / "final"
 for d in [PROFILES_DIR, QUERIES_DIR, OPTIONS_DIR, IMAGES_DIR, LABELS_DIR, FINAL_DIR]:
     d.mkdir(parents=True, exist_ok=True)
 
-
+# ── Phase-1 axes ──────────────────────────────────────────
 PHASE1_AXES = ["color", "pattern", "garment_category"]
 
 FASHION_ATTRIBUTE_AXES = {
@@ -46,69 +42,39 @@ FASHION_ATTRIBUTE_AXES = {
     ],
 }
 
-ATTRIBUTE_SAMPLING = {
-    "n_likes_per_axis": (1, 2),
-    "n_dislikes_per_axis": (1, 2),
-    "n_axes_with_preferences": (2, 3),
+GARMENT_FUNCTIONAL_GROUPS = {
+    "heavy_outerwear": ["parka", "coat", "trench_coat"],
+    "light_outerwear": ["jacket", "windbreaker", "blazer"],
+    "formal_tops":     ["suit_jacket", "shirt", "blouse"],
+    "casual_tops":     ["t_shirt", "hoodie", "tank_top", "sweater"],
+    "bottoms":         ["pants", "jeans", "shorts"],
+    "full_body":       ["dress", "skirt"],
 }
 
-FASHION_TPO = {
-    "time": {
-        "season": ["spring", "summer", "fall", "winter"],
-        "weather": ["sunny", "rainy", "snowy", "hot_humid", "cold", "windy"],
-        "time_of_day": ["morning", "daytime", "evening", "night"],
-    },
-    "place": {
-        "venue": ["office", "cafe", "park", "beach", "city_street",
-                  "restaurant", "wedding_venue", "gym",
-                  "art_gallery", "concert_hall", "airport"],
-        "indoor_outdoor": ["indoor", "outdoor", "mixed"],
-    },
-    "occasion": {
-        "activity": ["work_meeting", "casual_outing", "exercise", "first_date",
-                      "ceremony_attendance", "travel", "errands", "social_gathering"],
-        "formality_required": ["very_casual", "casual", "smart_casual",
-                                "business_casual", "formal"],
-    },
-}
-
-# Color-as-safety TPO exclusions (documented in paper Appendix)
-COLOR_AS_SAFETY_TPO_EXCLUSIONS = [
-    ("color", {"mountain_hike", "skiing", "hunting", "running_outdoors",
-                "construction", "cycling_on_road", "fishing_boat"}),
-]
-
-QUERY_TYPE_RATIO = {
-    "explicit_tpo": 0.40,
-    "implicit_tpo": 0.30,
-    "neutral":      0.30,
+COLOR_GROUPS = {
+    "dark":    ["black", "navy", "gray", "brown"],
+    "neutral": ["white", "beige"],
+    "bright":  ["red", "blue", "green", "orange", "yellow", "pink", "purple"],
 }
 
 OPTION_LABELS = {
     "tpo_and_preference": "matches both TPO and user preference (correct)",
-    "tpo_only":           "matches TPO but violates user preference",
+    "tpo_only":           "matches TPO but does not match user preference",
     "preference_only":    "matches user preference but violates TPO",
     "neither":            "violates both",
 }
 
 PHASE1_CONFIG = {
-    "n_users_total": 15,
-    "n_instances_per_user": 18,
-    "axis_task_distribution": {
-        "color":            0.40,
-        "pattern":          0.30,
-        "garment_category": 0.30,
-    },
+    "n_users_total": 20,
+    "n_users_per_archetype": 3,
     "n_options_per_query": 4,
+    "query_type_distribution": {
+        "explicit_tpo": 0.55,
+        "implicit_tpo": 0.45,
+    },
 }
 
-
-# ─────────────────────────────────────────────
-# Provider abstraction
-# ─────────────────────────────────────────────
-# Every pipeline stage maps to one of the providers below. To switch a stage
-# from free vllm to paid gpt5_mini, change PROVIDERS[<stage>]["provider"].
-
+# ── Provider abstraction ──────────────────────────────────
 PROVIDERS = {
     "profile_generation":    {"provider": "vllm"},
     "query_generation":      {"provider": "vllm"},
@@ -119,6 +85,7 @@ PROVIDERS = {
     "blind_solver":          {"provider": "vllm"},
     "captioner":             {"provider": "vllm_vlm"},
     "vlm_evaluator":         {"provider": "vllm_vlm"},
+    "image_verifier":        {"provider": "vllm_vlm"},
 }
 
 PROVIDER_ENDPOINTS = {
@@ -159,7 +126,6 @@ PROVIDER_ENDPOINTS = {
         "long_max_tokens": 1024,
     },
 }
-
 
 LABEL_QUALITY_THRESHOLDS = {
     "krippendorff_alpha_min": 0.7,

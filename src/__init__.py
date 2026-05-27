@@ -1,4 +1,4 @@
-"""POD-Bench source package."""
+"""POD-Bench v2 source package."""
 
 from .utils import (
     call_llm, call_vlm, resolve_provider,

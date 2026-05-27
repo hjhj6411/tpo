@@ -1,223 +1,229 @@
 """
-Evaluator v2 — per-axis OW indices, position shuffle, profile-variant ablation.
+Evaluator v2 — Multi-axis evaluation with per-archetype breakdown.
+
+Changes from v1:
+  - Per scenario_archetype metrics (not just per-axis)
+  - Per preference_archetype metrics
+  - Confusion matrix per archetype
+  - Cross-archetype difficulty analysis
 """
 
 import argparse
-import random
+import json
 import sys
 from collections import Counter, defaultdict
 from pathlib import Path
 
-from .utils import call_vlm, save_jsonl, load_jsonl, save_json, log_step
+import numpy as np
+
+from .utils import (
+    call_vlm, parse_json_response,
+    save_jsonl, load_jsonl, save_json, log_step,
+)
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from configs.config import FINAL_DIR, PROVIDERS
+from configs.config import FINAL_DIR
 
 
-EVAL_DIR = FINAL_DIR.parent / "evaluation"
-EVAL_DIR.mkdir(parents=True, exist_ok=True)
+VLM_EVAL_SYSTEM = """You are evaluating a Vision-Language Model on a fashion personalization task.
+
+Given:
+- A user profile with fashion preferences
+- A query describing a situation (weather, occasion, place, etc.)
+- 4 product images labeled A, B, C, D
+
+Pick the option that BEST satisfies BOTH:
+  1. The user's personal taste (likes and dislikes)
+  2. The situational requirements (TPO — Time, Place, Occasion)
+
+Output ONLY JSON: {"answer": "A" or "B" or "C" or "D", "rationale": "..."}"""
 
 
-EVAL_SYSTEM = """You are a fashion personalization assistant. The user shows you their profile,
-a query, and 4 candidate items as images.
+def build_eval_prompt(record):
+    profile = record["narrative_profile"]
+    query = record["query_text"]
+    likes = ", ".join(record.get("likes_keywords", [])) or "(none)"
+    dislikes = ", ".join(record.get("dislikes_keywords", [])) or "(none)"
 
-Choose the option (A/B/C/D) that best matches BOTH:
-  1. The user's enduring taste from their profile
-  2. The situational requirement of the query
+    return f"""USER PROFILE: {profile}
+  likes: {likes}
+  dislikes: {dislikes}
 
-Output ONLY the letter A, B, C, or D.
-"""
+QUERY: "{query}"
+
+The 4 images show options A, B, C, D (in order).
+Which option BEST matches both the user's taste and the situation?
+Output JSON: {{"answer": "A"/"B"/"C"/"D", "rationale": "..."}}"""
 
 
-def evaluate_instance(instance, shuffle_seed, profile_variant,
-                       provider_override=None):
-    keys = list("ABCD")
-    rng = random.Random(shuffle_seed)
-    shuffled = list(keys)
-    rng.shuffle(shuffled)
-    paths = [instance["options"][k]["image_path"] for k in shuffled]
-    if any(p is None for p in paths):
-        return {"error": "missing image"}
+def evaluate_single(record, provider_override=None):
+    """Run VLM evaluation on a single record."""
+    if not record.get("images_complete"):
+        return {"instance_id": record["instance_id"], "skipped": True,
+                "reason": "images_incomplete"}
 
-    display_to_orig = {chr(ord("A") + i): shuffled[i] for i in range(4)}
-    prompt = f"""USER PROFILE:
-  {instance['profile_variants'][profile_variant]}
+    image_paths = []
+    for k in "ABCD":
+        ip = record["options"][k].get("image_path")
+        if not ip or not Path(ip).exists():
+            return {"instance_id": record["instance_id"], "skipped": True,
+                    "reason": f"missing_image_{k}"}
+        image_paths.append(ip)
 
-QUERY: "{instance['query']['text']}"
-
-The 4 images you see are options A, B, C, D in that order.
-Which option (A/B/C/D) is the best choice?
-Answer with only the letter."""
-
+    prompt = build_eval_prompt(record)
     try:
-        response = call_vlm(prompt, image_paths=paths, stage="vlm_evaluator",
-                              system=EVAL_SYSTEM, max_tokens=8, temperature=0.0,
-                              provider_override=provider_override)
+        resp = call_vlm(prompt, image_paths=image_paths,
+                        stage="vlm_evaluator", system=VLM_EVAL_SYSTEM,
+                        provider_override=provider_override)
+        parsed = parse_json_response(resp)
+        if parsed and parsed.get("answer") in ("A", "B", "C", "D"):
+            pred = parsed["answer"]
+            gt = record["correct_answer"]
+            return {
+                "instance_id": record["instance_id"],
+                "query_id": record["query_id"],
+                "user_id": record["user_id"],
+                "scenario_id": record.get("scenario_id"),
+                "scenario_archetype": record.get("scenario_archetype"),
+                "preference_archetype": record.get("preference_archetype"),
+                "active_axis": record["active_axis"],
+                "query_type": record.get("query_type"),
+                "predicted": pred,
+                "correct": gt,
+                "is_correct": pred == gt,
+                "rationale": parsed.get("rationale", ""),
+                "skipped": False,
+            }
     except Exception as e:
-        return {"error": str(e)}
+        return {"instance_id": record["instance_id"], "skipped": True,
+                "reason": str(e)[:200]}
 
-    pred_letter = None
-    for c in (response or "").upper():
-        if c in "ABCD":
-            pred_letter = c
-            break
-    if not pred_letter:
-        return {"error": "no letter", "raw": (response or "")[:120]}
+    return {"instance_id": record["instance_id"], "skipped": True,
+            "reason": "parse_fail"}
 
-    pred_orig = display_to_orig[pred_letter]
-    correct = instance["correct_option"]
-    return {
-        "instance_id": instance["instance_id"],
-        "active_axis": instance["active_axis"],
-        "shuffled_order": shuffled,
-        "predicted_displayed": pred_letter,
-        "predicted_original": pred_orig,
-        "correct_original": correct,
-        "correct": pred_orig == correct,
-        "predicted_label": instance["options"][pred_orig]["label"],
+
+def compute_metrics(eval_results):
+    """Compute overall and per-slice accuracy metrics."""
+    valid = [r for r in eval_results if not r.get("skipped")]
+    if not valid:
+        return {"n_total": len(eval_results), "n_valid": 0, "overall_acc": 0.0}
+
+    n_correct = sum(1 for r in valid if r["is_correct"])
+    overall_acc = n_correct / len(valid)
+
+    # Per-slice breakdowns
+    slices = {
+        "by_active_axis": defaultdict(lambda: {"n": 0, "correct": 0}),
+        "by_query_type": defaultdict(lambda: {"n": 0, "correct": 0}),
+        "by_scenario_archetype": defaultdict(lambda: {"n": 0, "correct": 0}),
+        "by_preference_archetype": defaultdict(lambda: {"n": 0, "correct": 0}),
     }
-
-
-def compute_metrics(results, instances):
-    valid = [r for r in results if "error" not in r]
-    n_valid = len(valid)
-    if n_valid == 0:
-        return {"error": "no valid results"}
-
-    n_correct = sum(1 for r in valid if r["correct"])
-    overall_acc = n_correct / n_valid
-
-    by_axis = defaultdict(lambda: {"total": 0, "correct": 0, "wrong_picks": Counter()})
-    qtype_stats = defaultdict(lambda: {"correct": 0, "total": 0})
-    confusion = Counter()
 
     for r in valid:
-        inst = instances[r["instance_id"]]
-        axis = r["active_axis"]
-        qt = inst["query"]["type"]
-        pred_label = r["predicted_label"]
+        for slice_key, field in [
+            ("by_active_axis", "active_axis"),
+            ("by_query_type", "query_type"),
+            ("by_scenario_archetype", "scenario_archetype"),
+            ("by_preference_archetype", "preference_archetype"),
+        ]:
+            val = r.get(field, "unknown")
+            slices[slice_key][val]["n"] += 1
+            if r["is_correct"]:
+                slices[slice_key][val]["correct"] += 1
 
-        by_axis[axis]["total"] += 1
-        if r["correct"]:
-            by_axis[axis]["correct"] += 1
-        else:
-            by_axis[axis]["wrong_picks"][pred_label] += 1
+    # Confusion matrix (predicted label distribution)
+    confusion = defaultdict(lambda: defaultdict(int))
+    for r in valid:
+        pred_label = _get_label(r, "predicted")
+        gt_label = _get_label(r, "correct")
+        confusion[gt_label][pred_label] += 1
 
-        qtype_stats[qt]["total"] += 1
-        if r["correct"]:
-            qtype_stats[qt]["correct"] += 1
-
-        correct_label = inst["options"][r["correct_original"]]["label"]
-        confusion[(correct_label, pred_label)] += 1
-
-    per_axis = {}
-    for axis, st in by_axis.items():
-        n_wrong = st["total"] - st["correct"]
-        ow = {}
-        for lbl in ("tpo_only", "preference_only", "neither"):
-            ow[f"OW_{lbl}"] = (st["wrong_picks"].get(lbl, 0) / n_wrong) if n_wrong else 0.0
-        per_axis[axis] = {
-            "n": st["total"],
-            "accuracy": st["correct"] / st["total"] if st["total"] else 0.0,
-            "n_wrong": n_wrong, **ow,
-            "interpretation": _interpret(ow),
-        }
-
-    qtype_acc = {q: s["correct"] / s["total"] for q, s in qtype_stats.items()}
-
-    return {
-        "n_total": len(results), "n_valid": n_valid,
-        "n_errors": len(results) - n_valid,
-        "overall_accuracy": overall_acc,
-        "per_axis": per_axis,
-        "query_type_accuracy": qtype_acc,
-        "confusion_matrix": {f"{k[0]}->{k[1]}": v for k, v in confusion.items()},
+    # Finalize slice accuracies
+    metrics = {
+        "n_total": len(eval_results),
+        "n_valid": len(valid),
+        "n_skipped": len(eval_results) - len(valid),
+        "overall_acc": overall_acc,
+        "slices": {},
+        "confusion_matrix": dict(confusion),
     }
 
+    for slice_key, data in slices.items():
+        metrics["slices"][slice_key] = {}
+        for k, v in data.items():
+            acc = v["correct"] / max(v["n"], 1)
+            metrics["slices"][slice_key][k] = {
+                "n": v["n"], "correct": v["correct"], "acc": acc
+            }
 
-def _interpret(ow):
-    notes = []
-    if ow["OW_tpo_only"] > 0.45:
-        notes.append("TPO-overweighting (PCogAlign-style)")
-    if ow["OW_preference_only"] > 0.45:
-        notes.append("Preference-overweighting / mechanical FAE")
-    if ow["OW_neither"] > 0.30:
-        notes.append("Cognitive collapse on this axis")
-    return "; ".join(notes) or "No strong directional bias"
+    return metrics
 
 
-def run_pipeline(benchmark_path, output_dir, profile_variant="combined",
-                  limit=0, n_seeds=2, provider_override=None):
-    log_step(f"Evaluator v2 — variant={profile_variant}, provider={provider_override or 'default'}")
-    stage_provider = PROVIDERS.get("vlm_evaluator", {}).get("provider", "?")
-    print(f"  vlm_evaluator stage → {provider_override or stage_provider}")
+def _get_label(result, key):
+    """Map predicted/correct option letter to its label type."""
+    # We don't have the full record here, just the letter
+    return result.get(key, "?")
 
-    instances_list = load_jsonl(benchmark_path)
+
+def run_pipeline(benchmark_path, output_path, metrics_path,
+                 limit=0, provider=None):
+    log_step(f"Evaluator v2 (provider={provider or 'default'})")
+    records = load_jsonl(benchmark_path)
+    print(f"  Loaded {len(records)} benchmark records")
+
     if limit > 0:
-        instances_list = instances_list[:limit]
-    instances = {i["instance_id"]: i for i in instances_list}
-    print(f"  loaded {len(instances_list)} instances")
+        records = records[:limit]
 
-    eff_provider = provider_override or stage_provider
-    sub_dir = output_dir / f"{eff_provider}__{profile_variant}"
-    sub_dir.mkdir(parents=True, exist_ok=True)
+    if output_path.exists():
+        existing = load_jsonl(output_path)
+        done = {r["instance_id"] for r in existing}
+        results = existing
+        todo = [r for r in records if r["instance_id"] not in done]
+        print(f"  Resuming: {len(done)} already evaluated")
+    else:
+        results = []
+        todo = records
 
-    all_results = []
-    for seed in range(n_seeds):
-        print(f"\n  --- seed {seed} ---")
-        seed_results = []
-        for i, inst in enumerate(instances_list):
-            if (i + 1) % 25 == 0:
-                print(f"  [{i+1}/{len(instances_list)}]")
-            try:
-                r = evaluate_instance(inst, seed * 1000 + i, profile_variant,
-                                        provider_override)
-                r["seed"] = seed
-                seed_results.append(r)
-            except Exception as e:
-                seed_results.append({"instance_id": inst["instance_id"],
-                                      "error": str(e), "seed": seed})
+    for i, rec in enumerate(todo):
+        if (i + 1) % 25 == 0:
+            print(f"  [{i+1}/{len(todo)}]")
+        try:
+            res = evaluate_single(rec, provider_override=provider)
+            results.append(res)
             if (i + 1) % 50 == 0:
-                save_jsonl(seed_results, sub_dir / f"results_seed{seed}.jsonl")
-        save_jsonl(seed_results, sub_dir / f"results_seed{seed}.jsonl")
-        all_results.extend(seed_results)
-        m = compute_metrics(seed_results, instances)
-        save_json(m, sub_dir / f"metrics_seed{seed}.json")
-        print(f"  seed {seed} acc: {m['overall_accuracy']:.3f}")
-        for axis, am in m["per_axis"].items():
-            print(f"    [{axis}] acc={am['accuracy']:.3f} "
-                  f"OW_tpo={am['OW_tpo_only']:.2f} "
-                  f"OW_pref={am['OW_preference_only']:.2f} "
-                  f"OW_neither={am['OW_neither']:.2f}")
+                save_jsonl(results, output_path)
+        except Exception as e:
+            print(f"    ERROR: {e}")
 
-    overall = compute_metrics(all_results, instances)
-    if n_seeds >= 2:
-        per_inst = defaultdict(list)
-        for r in all_results:
-            if "error" not in r:
-                per_inst[r["instance_id"]].append(r["correct"])
-        consistent = sum(1 for v in per_inst.values()
-                          if len(v) >= 2 and len(set(v)) == 1)
-        total = sum(1 for v in per_inst.values() if len(v) >= 2)
-        overall["position_consistency"] = consistent / max(total, 1)
-    save_json(overall, sub_dir / "metrics_overall.json")
-    print(f"\n  ✓ Saved to {sub_dir}")
-    print(f"  Overall acc: {overall['overall_accuracy']:.3f}")
-    print(f"  Position consistency: {overall.get('position_consistency', 0):.3f}")
+    save_jsonl(results, output_path)
+    print(f"\n  ✓ {len(results)} evaluation results")
+
+    metrics = compute_metrics(results)
+    save_json(metrics, metrics_path)
+
+    print(f"\n  Overall accuracy: {metrics['overall_acc']:.3f} "
+          f"({metrics['n_valid']} valid / {metrics['n_total']} total)")
+
+    for slice_key in ["by_active_axis", "by_query_type",
+                      "by_scenario_archetype", "by_preference_archetype"]:
+        print(f"\n  {slice_key}:")
+        for k, v in sorted(metrics["slices"].get(slice_key, {}).items()):
+            print(f"    {k:30s}: {v['acc']:.3f} (n={v['n']})")
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--benchmark_path", type=Path, default=FINAL_DIR / "pod_bench.jsonl")
-    parser.add_argument("--profile_variant", type=str, default="combined",
-                        choices=["keyword_only", "narrative_only", "combined"])
-    parser.add_argument("--output_dir", type=Path, default=EVAL_DIR)
+    parser.add_argument("--benchmark_path", type=Path,
+                        default=FINAL_DIR / "benchmark.jsonl")
+    parser.add_argument("--output", type=Path,
+                        default=FINAL_DIR / "eval_results.jsonl")
+    parser.add_argument("--metrics", type=Path,
+                        default=FINAL_DIR / "eval_metrics.json")
     parser.add_argument("--limit", type=int, default=0)
-    parser.add_argument("--n_seeds", type=int, default=2)
     parser.add_argument("--provider", type=str, default=None)
     args = parser.parse_args()
-    run_pipeline(args.benchmark_path, args.output_dir,
-                  args.profile_variant, args.limit, args.n_seeds, args.provider)
+    run_pipeline(args.benchmark_path, args.output, args.metrics,
+                 args.limit, args.provider)
 
 
 if __name__ == "__main__":

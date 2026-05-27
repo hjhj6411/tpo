@@ -1,69 +1,120 @@
-#!/bin/bash
-# POD-Bench v2 One-Cycle Pipeline (One Axis Per Instance)
-#
-# (A) ALL-FREE testing: keep PROVIDERS defaults (vllm everywhere), then
-#       bash scripts/run_pipeline.sh
-#
-# (B) Mixed paid+free: edit configs/config.py PROVIDERS to set selected
-#     stages to "gpt5_mini", then:
-#       export OPENAI_API_KEY=sk-...
-#       bash scripts/run_pipeline.sh
-#
-# CLI override at runtime: PROVIDER=gpt5_mini bash scripts/run_pipeline.sh
+#!/usr/bin/env bash
+# ═══════════════════════════════════════════════════════════
+#  POD-Bench v2 — Full Pipeline Runner
+#  Usage: bash scripts/run_pipeline.sh [--stage STAGE] [--limit N]
+# ═══════════════════════════════════════════════════════════
+set -euo pipefail
 
-set -e
-cd "$(dirname "$0")/.."
+PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$PROJECT_ROOT"
 
-N_USERS=${N_USERS:-15}
-N_PER_USER=${N_PER_USER:-18}
-LIMIT=${LIMIT:-0}
-PROVIDER=${PROVIDER:-}
+# ── Defaults ──────────────────────────────────────────────
+STAGE="all"
+LIMIT=0
+FORCE=""
+PROVIDER=""
+N_USERS=20
 
-PROVIDER_FLAG=""
-if [ -n "$PROVIDER" ]; then
-  PROVIDER_FLAG="--provider $PROVIDER"
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --stage)     STAGE="$2"; shift 2 ;;
+        --limit)     LIMIT="$2"; shift 2 ;;
+        --force)     FORCE="--force"; shift ;;
+        --provider)  PROVIDER="--provider $2"; shift 2 ;;
+        --n_users)   N_USERS="$2"; shift 2 ;;
+        *)           echo "Unknown: $1"; exit 1 ;;
+    esac
+done
+
+run_stage() {
+    local name="$1"
+    shift
+    echo ""
+    echo "══════════════════════════════════════════════════"
+    echo "  STAGE: $name"
+    echo "══════════════════════════════════════════════════"
+    python -m src."$@"
+}
+
+# ── Stage 1: Profile Generation ──────────────────────────
+if [[ "$STAGE" == "all" || "$STAGE" == "profiles" ]]; then
+    run_stage "Profile Generation" profile_generator \
+        --n_users "$N_USERS" \
+        --output data/profiles/profiles.jsonl \
+        $FORCE $PROVIDER
 fi
 
-echo "============================================="
-echo " POD-Bench v2 Pipeline (One Axis Per Instance)"
-echo "   Users:  $N_USERS"
-echo "   Inst/u: $N_PER_USER"
-echo "   Override provider: ${PROVIDER:-(use config defaults)}"
-echo "============================================="
+# ── Stage 2: Query + Scenario Matching ───────────────────
+if [[ "$STAGE" == "all" || "$STAGE" == "queries" ]]; then
+    LIMIT_ARG=""
+    [[ $LIMIT -gt 0 ]] && LIMIT_ARG="--limit $LIMIT"
+    run_stage "Query Generation" query_generator \
+        --profile_path data/profiles/profiles.jsonl \
+        --output data/queries/queries.jsonl \
+        $FORCE $PROVIDER $LIMIT_ARG
+fi
+
+# ── Stage 3: Option Planning ─────────────────────────────
+if [[ "$STAGE" == "all" || "$STAGE" == "options" ]]; then
+    LIMIT_ARG=""
+    [[ $LIMIT -gt 0 ]] && LIMIT_ARG="--limit $LIMIT"
+    run_stage "Option Planning" option_planner \
+        --profile_path data/profiles/profiles.jsonl \
+        --query_path data/queries/queries.jsonl \
+        --output data/options/option_plans.jsonl \
+        $FORCE $LIMIT_ARG
+fi
+
+# ── Stage 4: Image Collection ────────────────────────────
+if [[ "$STAGE" == "all" || "$STAGE" == "images" ]]; then
+    LIMIT_ARG=""
+    [[ $LIMIT -gt 0 ]] && LIMIT_ARG="--limit $LIMIT"
+    run_stage "Image Collection" image_collector \
+        --plan_path data/options/option_plans.jsonl \
+        --output data/images/collection_log.jsonl \
+        --image_root data/images \
+        $FORCE $LIMIT_ARG
+fi
+
+# ── Stage 5: Label Verification ──────────────────────────
+if [[ "$STAGE" == "all" || "$STAGE" == "labels" ]]; then
+    LIMIT_ARG=""
+    [[ $LIMIT -gt 0 ]] && LIMIT_ARG="--limit $LIMIT"
+    run_stage "Label Verification" label_verifier \
+        --plan_path data/options/option_plans.jsonl \
+        --profile_path data/profiles/profiles.jsonl \
+        --query_path data/queries/queries.jsonl \
+        --output data/labels/labels.jsonl \
+        $LIMIT_ARG
+fi
+
+# ── Stage 6: Quality Audit + Assembly ────────────────────
+if [[ "$STAGE" == "all" || "$STAGE" == "audit" ]]; then
+    LIMIT_ARG=""
+    [[ $LIMIT -gt 0 ]] && LIMIT_ARG="--limit $LIMIT"
+    run_stage "Quality Audit" quality_audit \
+        --label_path data/labels/labels.jsonl \
+        --plan_path data/options/option_plans.jsonl \
+        --query_path data/queries/queries.jsonl \
+        --profile_path data/profiles/profiles.jsonl \
+        --image_path data/images/collection_log.jsonl \
+        --output data/final/benchmark.jsonl \
+        --essentiality_output data/final/essentiality.json \
+        $LIMIT_ARG
+fi
+
+# ── Stage 7: Evaluation ─────────────────────────────────
+if [[ "$STAGE" == "all" || "$STAGE" == "eval" ]]; then
+    LIMIT_ARG=""
+    [[ $LIMIT -gt 0 ]] && LIMIT_ARG="--limit $LIMIT"
+    run_stage "Evaluation" evaluator \
+        --benchmark_path data/final/benchmark.jsonl \
+        --output data/final/eval_results.jsonl \
+        --metrics data/final/eval_metrics.json \
+        $PROVIDER $LIMIT_ARG
+fi
 
 echo ""
-echo "Step 1/6: Profile Generation"
-python -m src.profile_generator --n_users $N_USERS $PROVIDER_FLAG
-
-echo ""
-echo "Step 2/6: Query+Axis Generation"
-python -m src.query_generator --n_per_user $N_PER_USER $PROVIDER_FLAG
-
-echo ""
-echo "Step 3/6: Option Planning (deterministic)"
-python -m src.option_planner --limit $LIMIT
-
-echo ""
-echo "Step 4/6: Image Collection (parent-ASIN variant + fallback)"
-python -m src.image_collector --limit $LIMIT
-
-echo ""
-echo "Step 5/6: Label Verification (rule + 3-judge ensemble)"
-python -m src.label_verifier --limit $LIMIT
-
-echo ""
-echo "Step 6/6: Quality Audit + Final Assembly"
-python -m src.quality_audit --n_audit 30
-
-echo ""
-echo "============================================="
-echo " Pipeline complete"
-echo "============================================="
-echo "Final:        data/final/pod_bench.jsonl"
-echo "Reliability:  data/labels/reliability_metrics.json"
-echo "Audit:        data/labels/audit_metrics.json"
-echo ""
-echo "Evaluation:"
-echo "  python -m src.evaluator --profile_variant combined"
-echo "  python -m src.evaluator --profile_variant keyword_only"
-echo "  python -m src.evaluator --profile_variant narrative_only"
+echo "══════════════════════════════════════════════════"
+echo "  PIPELINE COMPLETE"
+echo "══════════════════════════════════════════════════"

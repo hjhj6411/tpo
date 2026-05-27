@@ -1,267 +1,378 @@
 """
-Quality Audit + Final Assembly v2
+Quality Audit v2 — Final assembly + vision-essentiality gate.
 
-(1) Assemble final benchmark with 3 profile variants and active_axis metadata.
-(2) Vision-essentiality audit: blind LLM, captioner→LLM, full VLM.
+Changes from v1:
+  - scenario_id, scenario_archetype added to final record
+  - Blind solver prompt includes scenario name for fair comparison
+  - Per-archetype breakdown in essentiality stats
 """
 
 import argparse
 import random
 import sys
-from collections import Counter
+from collections import Counter, defaultdict
 from pathlib import Path
 
-from .utils import call_llm, call_vlm, save_jsonl, load_jsonl, save_json, log_step
+from .utils import (
+    call_llm, call_vlm, parse_json_response,
+    save_jsonl, load_jsonl, save_json, log_step,
+)
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from configs.config import (
-    FINAL_DIR, LABELS_DIR, PROFILES_DIR, OPTIONS_DIR,
-    QUERIES_DIR, IMAGES_DIR, VISION_ESSENTIALITY_THRESHOLDS,
+    FINAL_DIR, LABELS_DIR, IMAGES_DIR, OPTIONS_DIR, QUERIES_DIR, PROFILES_DIR,
+    VISION_ESSENTIALITY_THRESHOLDS,
 )
 
 
-def build_final(profiles, queries, plans, collection, labels,
-                  output_path, require_full_agreement=False):
-    final = []
-    for qid, plan in plans.items():
-        if qid not in queries or qid not in collection or qid not in labels:
-            continue
-        coll = collection[qid]
-        if not coll.get("all_collected"):
-            continue
-        homo = coll.get("homogeneity") or {}
-        if not homo.get("passed", True):
-            continue
-        structure = coll.get("structure_preserved") or {}
-        if structure and not structure.get("passed", True):
-            continue
-        lbl = labels[qid]
-        if require_full_agreement and not lbl.get("all_options_agree", False):
-            continue
+# ── Blind LLM solver ─────────────────────────────────────
 
-        q = queries[qid]
-        prof = profiles[q["user_id"]]
-        options_final = {}
-        for k in "ABCD":
-            options_final[k] = {
-                "image_path": coll["options"][k]["image_path"],
-                "label": lbl["consensus"][k]["final_label"],
-                "attributes": plan["options"][k]["attributes"],
-                "image_source": coll["options"][k].get("source"),
-            }
-        correct = [k for k, v in options_final.items()
-                    if v["label"] == "tpo_and_preference"]
-        if len(correct) != 1:
-            continue
+BLIND_SYSTEM = """You are a fashion recommendation expert. Given a user profile, a query,
+and 4 options described only by text attributes, pick the BEST option.
 
-        likes_str = ", ".join(prof["likes_keywords"]) or "(none)"
-        dislikes_str = ", ".join(prof["dislikes_keywords"]) or "(none)"
-        kw = f"Likes: {likes_str}. Dislikes: {dislikes_str}."
+The best option satisfies BOTH the user's personal preference AND the
+situational requirements (weather, formality, occasion, etc.).
 
-        final.append({
-            "instance_id": qid, "user_id": q["user_id"], "domain": "fashion",
-            "profile_variants": {
-                "keyword_only": kw,
-                "narrative_only": prof["narrative_profile"],
-                "combined": prof["narrative_profile"] + " " + kw,
-            },
-            "query": {"text": q["query_text"], "type": q["query_type"],
-                       "tpo_scenario": q.get("tpo_scenario") or {}},
-            "active_axis": plan["active_axis"],
-            "tpo_axis": plan.get("tpo_axis"),
-            "fixed_attrs": plan.get("fixed_attrs"),
-            "main_category": plan.get("main_category"),
-            "options": options_final, "correct_option": correct[0],
-            "homogeneity": homo, "structure_preserved": structure,
-        })
-    save_jsonl(final, output_path)
-    return final
+Output ONLY JSON: {"answer": "A" or "B" or "C" or "D", "rationale": "..."}"""
 
 
-SOLVE_SYSTEM = """You are a fashion personalization assistant. Pick the BEST option (A/B/C/D)
-that matches BOTH the user's enduring taste AND the situational requirement
-of the query. Output ONLY the letter A, B, C, or D.
-"""
+def _build_blind_prompt(record):
+    profile = record["narrative_profile"]
+    query = record["query_text"]
+    scenario_name = record.get("scenario_name", "")
+    likes = ", ".join(record.get("likes_keywords", [])) or "(none)"
+    dislikes = ", ".join(record.get("dislikes_keywords", [])) or "(none)"
+
+    opts = []
+    for k in "ABCD":
+        attrs = record["options"][k]["attributes"]
+        opts.append(f"  {k}: " + ", ".join(f"{a}={v}" for a, v in attrs.items()))
+
+    return f"""USER PROFILE: {profile}
+  likes: {likes}
+  dislikes: {dislikes}
+
+QUERY: "{query}"
+SCENARIO: {scenario_name}
+
+OPTIONS (text attributes only — no images):
+{chr(10).join(opts)}
+
+Which option BEST matches both the user's taste and the situation?
+Output JSON: {{"answer": "A"/"B"/"C"/"D", "rationale": "..."}}"""
 
 
-def _parse_letter(text):
-    for c in (text or "").upper():
-        if c in "ABCD":
-            return c
+def blind_solve(record, provider_override=None):
+    prompt = _build_blind_prompt(record)
+    try:
+        resp = call_llm(prompt, stage="blind_solver", system=BLIND_SYSTEM,
+                        provider_override=provider_override)
+        parsed = parse_json_response(resp)
+        if parsed and parsed.get("answer") in ("A", "B", "C", "D"):
+            return parsed["answer"]
+    except Exception:
+        pass
     return None
 
 
-def blind_solve(instance, variant="combined"):
+# ── Captioner LLM solver ─────────────────────────────────
+
+CAPTIONER_SYSTEM = """You are a fashion image captioner. Describe the garment in the image:
+color, pattern, garment type, and style. Be concise (1-2 sentences).
+Output ONLY the description text."""
+
+
+def caption_image(image_path, provider_override=None):
+    try:
+        resp = call_vlm(
+            prompt="Describe this fashion item: color, pattern, garment type, style.",
+            image_paths=[str(image_path)],
+            stage="captioner", system=CAPTIONER_SYSTEM,
+            max_tokens=128, temperature=0.0,
+            provider_override=provider_override,
+        )
+        return resp.strip() if resp else ""
+    except Exception:
+        return ""
+
+
+CAPTIONER_SOLVER_SYSTEM = """You are a fashion recommendation expert. Given a user profile,
+a query, and 4 options described by captions (not images), pick the BEST option.
+
+Output ONLY JSON: {"answer": "A" or "B" or "C" or "D", "rationale": "..."}"""
+
+
+def captioner_solve(record, captions, provider_override=None):
+    profile = record["narrative_profile"]
+    query = record["query_text"]
+    scenario_name = record.get("scenario_name", "")
+    likes = ", ".join(record.get("likes_keywords", [])) or "(none)"
+    dislikes = ", ".join(record.get("dislikes_keywords", [])) or "(none)"
+
     opts = []
     for k in "ABCD":
-        attrs = instance["options"][k]["attributes"]
-        opts.append(f"  {k}: " + ", ".join(f"{a}={v}" for a, v in attrs.items()))
-    prompt = f"""USER PROFILE:
-  {instance['profile_variants'][variant]}
+        opts.append(f"  {k}: {captions.get(k, '(no caption)')}")
 
-QUERY: "{instance['query']['text']}"
+    prompt = f"""USER PROFILE: {profile}
+  likes: {likes}
+  dislikes: {dislikes}
 
-OPTIONS:
+QUERY: "{query}"
+SCENARIO: {scenario_name}
+
+OPTIONS (described by captions — no images):
 {chr(10).join(opts)}
 
-Which option (A/B/C/D) is best? Answer with only the letter."""
+Which option BEST matches both the user's taste and the situation?
+Output JSON: {{"answer": "A"/"B"/"C"/"D", "rationale": "..."}}"""
+
     try:
-        resp = call_llm(prompt, stage="blind_solver", system=SOLVE_SYSTEM,
-                         max_tokens=8, temperature=0.0)
-        return _parse_letter(resp)
+        resp = call_llm(prompt, stage="blind_solver",
+                        system=CAPTIONER_SOLVER_SYSTEM,
+                        provider_override=provider_override)
+        parsed = parse_json_response(resp)
+        if parsed and parsed.get("answer") in ("A", "B", "C", "D"):
+            return parsed["answer"]
     except Exception:
-        return None
+        pass
+    return None
 
 
-def caption_image(img_path):
-    sys_msg = ("Describe this fashion item in 1-2 sentences: garment type, color, "
-                "material, pattern, and any visible details.")
+# ── VLM solver ────────────────────────────────────────────
+
+VLM_SYSTEM = """You are a fashion recommendation VLM. Given a user profile, a query,
+and 4 product images, pick the BEST option.
+
+Output ONLY JSON: {"answer": "A" or "B" or "C" or "D", "rationale": "..."}"""
+
+
+def vlm_solve(record, image_paths, provider_override=None):
+    profile = record["narrative_profile"]
+    query = record["query_text"]
+    scenario_name = record.get("scenario_name", "")
+    likes = ", ".join(record.get("likes_keywords", [])) or "(none)"
+    dislikes = ", ".join(record.get("dislikes_keywords", [])) or "(none)"
+
+    prompt = f"""USER PROFILE: {profile}
+  likes: {likes}
+  dislikes: {dislikes}
+
+QUERY: "{query}"
+SCENARIO: {scenario_name}
+
+The 4 images are options A, B, C, D (in order).
+Which BEST matches both the user's taste and the situation?
+Output JSON: {{"answer": "A"/"B"/"C"/"D", "rationale": "..."}}"""
+
     try:
-        return call_vlm(prompt="Describe this item.",
-                          image_paths=[str(img_path)],
-                          stage="captioner", system=sys_msg,
-                          max_tokens=120, temperature=0.0)
-    except Exception as e:
-        return f"(caption failed: {e})"
+        resp = call_vlm(prompt, image_paths=image_paths,
+                        stage="vlm_evaluator", system=VLM_SYSTEM,
+                        provider_override=provider_override)
+        parsed = parse_json_response(resp)
+        if parsed and parsed.get("answer") in ("A", "B", "C", "D"):
+            return parsed["answer"]
+    except Exception:
+        pass
+    return None
 
 
-def captioner_solve(instance, variant="combined"):
-    caps = {}
+# ── Assembly + audit ──────────────────────────────────────
+
+def assemble_final_record(label_rec, plan, query, profile, image_rec):
+    """Merge all pipeline stages into one final benchmark record."""
+    options = {}
     for k in "ABCD":
-        p = instance["options"][k]["image_path"]
-        caps[k] = caption_image(Path(p)) if p else "(missing)"
-    opts = "\n".join(f"  {k}: {v}" for k, v in caps.items())
-    prompt = f"""USER PROFILE:
-  {instance['profile_variants'][variant]}
+        opt_plan = plan["options"][k]
+        img_info = image_rec["options"].get(k, {}) if image_rec else {}
+        consensus = label_rec["consensus"][k]
+        options[k] = {
+            "attributes": opt_plan["attributes"],
+            "search_query": opt_plan["search_query"],
+            "label": consensus["final_label"],
+            "plan_label": opt_plan["label"],
+            "image_path": img_info.get("image_path"),
+            "image_source": img_info.get("source"),
+        }
 
-QUERY: "{instance['query']['text']}"
+    # Correct answer = tpo_and_preference
+    correct = None
+    for k, opt in options.items():
+        if opt["label"] == "tpo_and_preference":
+            correct = k
+            break
 
-OPTIONS (image captions):
-{opts}
-
-Which option (A/B/C/D) is best? Answer with only the letter."""
-    try:
-        resp = call_llm(prompt, stage="blind_solver", system=SOLVE_SYSTEM,
-                         max_tokens=8, temperature=0.0)
-        return _parse_letter(resp)
-    except Exception:
-        return None
-
-
-def full_vlm_solve(instance, variant="combined"):
-    paths = [instance["options"][k]["image_path"] for k in "ABCD"]
-    if any(p is None for p in paths):
-        return None
-    prompt = f"""USER PROFILE:
-  {instance['profile_variants'][variant]}
-
-QUERY: "{instance['query']['text']}"
-
-The 4 images you see are options A, B, C, D in order.
-Which option (A/B/C/D) is best? Answer with only the letter."""
-    try:
-        resp = call_vlm(prompt, image_paths=paths, stage="vlm_evaluator",
-                         system=SOLVE_SYSTEM, max_tokens=8, temperature=0.0)
-        return _parse_letter(resp)
-    except Exception:
-        return None
-
-
-def run_audit(instances, n_audit=30, enable_vlm=True):
-    log_step(f"Vision-Essentiality Audit (n={n_audit})")
-    if not instances:
-        return {"error": "no instances"}
-    rng = random.Random(42)
-    sample = rng.sample(instances, min(n_audit, len(instances)))
-    blind_c, cap_c, vlm_c = [], [], []
-    for i, inst in enumerate(sample):
-        print(f"  [{i+1}/{len(sample)}] {inst['instance_id']}")
-        correct = inst["correct_option"]
-        try:
-            b = blind_solve(inst)
-            blind_c.append(b == correct)
-            print(f"    blind: {b} (correct {correct})")
-        except Exception as e:
-            print(f"    blind err: {e}")
-        if i < min(20, len(sample)):
-            try:
-                c = captioner_solve(inst)
-                cap_c.append(c == correct)
-                print(f"    caption→LLM: {c}")
-            except Exception as e:
-                print(f"    cap err: {e}")
-        if enable_vlm:
-            try:
-                v = full_vlm_solve(inst)
-                vlm_c.append(v == correct)
-                print(f"    full VLM: {v}")
-            except Exception as e:
-                print(f"    vlm err: {e}")
-
-    blind_a = sum(blind_c) / max(len(blind_c), 1)
-    cap_a = sum(cap_c) / max(len(cap_c), 1)
-    vlm_a = sum(vlm_c) / max(len(vlm_c), 1)
-    th = VISION_ESSENTIALITY_THRESHOLDS
-    audit = {
-        "n_audited": len(sample),
-        "blind_llm_accuracy": blind_a,
-        "captioner_llm_accuracy": cap_a,
-        "full_vlm_accuracy": vlm_a,
-        "vision_on_off_gap": vlm_a - blind_a,
-        "captioner_vs_vlm_gap": vlm_a - cap_a,
-        "thresholds": th,
-        "passed": (blind_a <= th["blind_llm_max_acc"]
-                    and cap_a <= th["captioner_llm_max_acc"]
-                    and vlm_a >= th["full_vlm_min_acc"]),
+    return {
+        "instance_id": label_rec["query_id"],
+        "query_id": label_rec["query_id"],
+        "user_id": label_rec["user_id"],
+        "scenario_id": label_rec.get("scenario_id", query.get("scenario_id")),
+        "scenario_archetype": query.get("scenario_archetype"),
+        "scenario_name": query.get("scenario_name"),
+        "domain": "fashion",
+        "query_type": query.get("query_type"),
+        "query_text": query["query_text"],
+        "active_axis": label_rec["active_axis"],
+        "narrative_profile": profile["narrative_profile"],
+        "preference_archetype": profile.get("preference_archetype"),
+        "likes_keywords": profile.get("likes_keywords", []),
+        "dislikes_keywords": profile.get("dislikes_keywords", []),
+        "options": options,
+        "correct_answer": correct,
+        "all_labels_agree": label_rec.get("all_options_agree", False),
+        "images_complete": image_rec["all_collected"] if image_rec else False,
+        "homogeneity": image_rec.get("homogeneity") if image_rec else None,
     }
-    print(f"\n  blind:    {blind_a:.3f} (≤{th['blind_llm_max_acc']})")
-    print(f"  caption→LLM: {cap_a:.3f} (≤{th['captioner_llm_max_acc']})")
-    print(f"  full VLM: {vlm_a:.3f} (≥{th['full_vlm_min_acc']})")
-    print(f"  vision-essentiality {'PASSED' if audit['passed'] else 'FAILED'}")
-    return audit
 
 
-def run_pipeline(profile_path, query_path, plan_path, collection_path,
-                  label_path, final_output, audit_output,
-                  n_audit=30, enable_vlm=True, require_full_agreement=False):
-    log_step("Quality Audit + Final Assembly")
-    profiles = {p["user_id"]: p for p in load_jsonl(profile_path)}
-    queries = {q["query_id"]: q for q in load_jsonl(query_path)}
+def run_pipeline(label_path, plan_path, query_path, profile_path, image_path,
+                 output_path, essentiality_path, limit=0,
+                 run_blind=True, run_captioner=True, run_vlm=True):
+    log_step("Quality Audit v2 — assembly + vision-essentiality")
+
+    labels = {r["query_id"]: r for r in load_jsonl(label_path)}
     plans = {p["query_id"]: p for p in load_jsonl(plan_path)}
-    collection = {c["query_id"]: c for c in load_jsonl(collection_path)}
-    labels = {l["query_id"]: l for l in load_jsonl(label_path)}
-    print(f"  profiles={len(profiles)}, queries={len(queries)}, "
-          f"plans={len(plans)}, collected={len(collection)}, labels={len(labels)}")
+    queries = {q["query_id"]: q for q in load_jsonl(query_path)}
+    profiles = {p["user_id"]: p for p in load_jsonl(profile_path)}
+    images = {r["query_id"]: r for r in load_jsonl(image_path)} if image_path.exists() else {}
 
-    instances = build_final(profiles, queries, plans, collection, labels,
-                              final_output, require_full_agreement)
-    print(f"  ✓ {len(instances)} final instances → {final_output}")
-    print(f"  active_axis: {dict(Counter(i['active_axis'] for i in instances))}")
-    print(f"  query_type:  {dict(Counter(i['query']['type'] for i in instances))}")
+    print(f"  labels={len(labels)}, plans={len(plans)}, "
+          f"queries={len(queries)}, profiles={len(profiles)}, images={len(images)}")
 
-    audit = run_audit(instances, n_audit, enable_vlm)
-    save_json(audit, audit_output)
-    print(f"  ✓ Audit → {audit_output}")
+    # Assemble
+    records = []
+    for qid, lbl in labels.items():
+        if qid not in plans or qid not in queries:
+            continue
+        uid = lbl["user_id"]
+        if uid not in profiles:
+            continue
+        img = images.get(qid)
+        rec = assemble_final_record(lbl, plans[qid], queries[qid],
+                                    profiles[uid], img)
+        if rec["correct_answer"] is None:
+            continue
+        records.append(rec)
+
+    if limit > 0:
+        records = records[:limit]
+
+    print(f"  Assembled {len(records)} final records")
+
+    # Vision-essentiality probes
+    blind_correct = 0
+    captioner_correct = 0
+    vlm_correct = 0
+    n_tested = 0
+    by_archetype = defaultdict(lambda: {"blind": 0, "cap": 0, "vlm": 0, "n": 0})
+
+    for i, rec in enumerate(records):
+        gt = rec["correct_answer"]
+        arch = rec.get("scenario_archetype", "unknown")
+        if (i + 1) % 50 == 0:
+            print(f"  [{i+1}/{len(records)}] essentiality probes...")
+
+        if run_blind:
+            ans = blind_solve(rec)
+            rec["blind_answer"] = ans
+            if ans == gt:
+                blind_correct += 1
+                by_archetype[arch]["blind"] += 1
+
+        if run_captioner and rec.get("images_complete"):
+            captions = {}
+            for k in "ABCD":
+                ip = rec["options"][k].get("image_path")
+                if ip:
+                    captions[k] = caption_image(ip)
+                else:
+                    captions[k] = ", ".join(f"{a}={v}" for a, v
+                                            in rec["options"][k]["attributes"].items())
+            rec["captions"] = captions
+            ans = captioner_solve(rec, captions)
+            rec["captioner_answer"] = ans
+            if ans == gt:
+                captioner_correct += 1
+                by_archetype[arch]["cap"] += 1
+
+        if run_vlm and rec.get("images_complete"):
+            img_paths = [rec["options"][k]["image_path"] for k in "ABCD"]
+            if all(img_paths):
+                ans = vlm_solve(rec, img_paths)
+                rec["vlm_answer"] = ans
+                if ans == gt:
+                    vlm_correct += 1
+                    by_archetype[arch]["vlm"] += 1
+
+        n_tested += 1
+        by_archetype[arch]["n"] += 1
+
+    save_jsonl(records, output_path)
+    print(f"\n  ✓ Saved {len(records)} final records")
+
+    # Essentiality report
+    th = VISION_ESSENTIALITY_THRESHOLDS
+    blind_acc = blind_correct / max(n_tested, 1)
+    cap_acc = captioner_correct / max(n_tested, 1)
+    vlm_acc = vlm_correct / max(n_tested, 1)
+
+    essentiality = {
+        "n_tested": n_tested,
+        "blind_llm_acc": blind_acc,
+        "captioner_llm_acc": cap_acc,
+        "full_vlm_acc": vlm_acc,
+        "thresholds": th,
+        "passed": (blind_acc <= th["blind_llm_max_acc"]
+                   and cap_acc <= th["captioner_llm_max_acc"]
+                   and vlm_acc >= th["full_vlm_min_acc"]),
+        "by_archetype": {},
+    }
+    for arch, s in by_archetype.items():
+        n = max(s["n"], 1)
+        essentiality["by_archetype"][arch] = {
+            "n": s["n"],
+            "blind_acc": s["blind"] / n,
+            "captioner_acc": s["cap"] / n,
+            "vlm_acc": s["vlm"] / n,
+        }
+
+    save_json(essentiality, essentiality_path)
+    print(f"\n  Vision Essentiality:")
+    print(f"    blind LLM:     {blind_acc:.3f} (≤{th['blind_llm_max_acc']})")
+    print(f"    captioner LLM: {cap_acc:.3f} (≤{th['captioner_llm_max_acc']})")
+    print(f"    full VLM:      {vlm_acc:.3f} (≥{th['full_vlm_min_acc']})")
+    print(f"    passed: {essentiality['passed']}")
+    for arch, s in essentiality["by_archetype"].items():
+        print(f"    [{arch}] n={s['n']} blind={s['blind_acc']:.2f} "
+              f"cap={s['captioner_acc']:.2f} vlm={s['vlm_acc']:.2f}")
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--profile_path", type=Path, default=PROFILES_DIR / "profiles.jsonl")
-    parser.add_argument("--query_path", type=Path, default=QUERIES_DIR / "queries.jsonl")
-    parser.add_argument("--plan_path", type=Path, default=OPTIONS_DIR / "option_plans.jsonl")
-    parser.add_argument("--collection_path", type=Path, default=IMAGES_DIR / "collection_log.jsonl")
-    parser.add_argument("--label_path", type=Path, default=LABELS_DIR / "labels.jsonl")
-    parser.add_argument("--final_output", type=Path, default=FINAL_DIR / "pod_bench.jsonl")
-    parser.add_argument("--audit_output", type=Path, default=LABELS_DIR / "audit_metrics.json")
-    parser.add_argument("--n_audit", type=int, default=30)
-    parser.add_argument("--no_full_vlm", action="store_true")
-    parser.add_argument("--require_full_agreement", action="store_true")
+    parser.add_argument("--label_path", type=Path,
+                        default=LABELS_DIR / "labels.jsonl")
+    parser.add_argument("--plan_path", type=Path,
+                        default=Path("data/options/option_plans.jsonl"))
+    parser.add_argument("--query_path", type=Path,
+                        default=Path("data/queries/queries.jsonl"))
+    parser.add_argument("--profile_path", type=Path,
+                        default=PROFILES_DIR / "profiles.jsonl")
+    parser.add_argument("--image_path", type=Path,
+                        default=IMAGES_DIR / "collection_log.jsonl")
+    parser.add_argument("--output", type=Path,
+                        default=FINAL_DIR / "benchmark.jsonl")
+    parser.add_argument("--essentiality_output", type=Path,
+                        default=FINAL_DIR / "essentiality.json")
+    parser.add_argument("--limit", type=int, default=0)
+    parser.add_argument("--skip_blind", action="store_true")
+    parser.add_argument("--skip_captioner", action="store_true")
+    parser.add_argument("--skip_vlm", action="store_true")
     args = parser.parse_args()
-    run_pipeline(args.profile_path, args.query_path, args.plan_path,
-                  args.collection_path, args.label_path,
-                  args.final_output, args.audit_output,
-                  args.n_audit, not args.no_full_vlm,
-                  args.require_full_agreement)
+    run_pipeline(
+        args.label_path, args.plan_path, args.query_path, args.profile_path,
+        args.image_path, args.output, args.essentiality_output, args.limit,
+        run_blind=not args.skip_blind, run_captioner=not args.skip_captioner,
+        run_vlm=not args.skip_vlm,
+    )
 
 
 if __name__ == "__main__":

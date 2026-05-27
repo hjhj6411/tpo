@@ -1,18 +1,6 @@
 """
-POD-Bench utilities — unified provider abstraction.
-
-Single entry points:
-  - call_llm(prompt, stage=..., ...)        → text LLM (gpt5_mini OR vllm)
-  - call_vlm(prompt, images, stage=..., ...) → multimodal VLM
-
-PROVIDERS in configs/config.py maps each pipeline stage to a provider name,
-so flipping a stage from free vllm to paid gpt5_mini requires no code change.
-
-GPT-5 reasoning model quirks (handled here):
-  - 'max_completion_tokens' (not 'max_tokens')
-  - reasoning tokens count toward the cap; default 4096
-  - 'temperature' is not supported; we omit it
-  - Defensive content extraction handles empty content / refusals
+POD-Bench v2 utilities — unified provider abstraction.
+(Unchanged from v1 except minor cleanup)
 """
 
 import json
@@ -42,8 +30,8 @@ def resolve_provider(stage: str, override: Optional[str] = None) -> dict:
 
 
 def call_llm(prompt: str, stage: str, system: str = "",
-              max_tokens: Optional[int] = None, temperature: float = 0.3,
-              max_retries: int = 3, provider_override: Optional[str] = None) -> str:
+             max_tokens: Optional[int] = None, temperature: float = 0.3,
+             max_retries: int = 3, provider_override: Optional[str] = None) -> str:
     endpoint = resolve_provider(stage, provider_override)
     return _call_openai_compatible(
         endpoint=endpoint, prompt=prompt, system=system, images=None,
@@ -52,8 +40,8 @@ def call_llm(prompt: str, stage: str, system: str = "",
 
 
 def call_vlm(prompt: str, image_paths: list, stage: str, system: str = "",
-              max_tokens: Optional[int] = None, temperature: float = 0.0,
-              max_retries: int = 3, provider_override: Optional[str] = None) -> str:
+             max_tokens: Optional[int] = None, temperature: float = 0.0,
+             max_retries: int = 3, provider_override: Optional[str] = None) -> str:
     endpoint = resolve_provider(stage, provider_override)
     return _call_openai_compatible(
         endpoint=endpoint, prompt=prompt, system=system, images=image_paths,
@@ -62,7 +50,7 @@ def call_vlm(prompt: str, image_paths: list, stage: str, system: str = "",
 
 
 def _call_openai_compatible(endpoint, prompt, system="", images=None,
-                              max_tokens=None, temperature=0.3, max_retries=3):
+                            max_tokens=None, temperature=0.3, max_retries=3):
     kind = endpoint.get("kind", "openai_compat")
 
     if images:
@@ -72,7 +60,7 @@ def _call_openai_compatible(endpoint, prompt, system="", images=None,
             with open(img_path, "rb") as f:
                 b64 = base64.b64encode(f.read()).decode("utf-8")
             content.append({"type": "image_url",
-                              "image_url": {"url": f"data:image/jpeg;base64,{b64}"}})
+                            "image_url": {"url": f"data:image/jpeg;base64,{b64}"}})
         content.append({"type": "text", "text": prompt})
         user_msg = {"role": "user", "content": content}
     else:
@@ -128,7 +116,7 @@ def _call_openai_compatible(endpoint, prompt, system="", images=None,
             time.sleep(2 ** attempt)
 
     raise RuntimeError(f"LLM call failed after {max_retries} retries "
-                        f"({endpoint['_name']}): {last_err}")
+                       f"({endpoint['_name']}): {last_err}")
 
 
 def _extract_content(data):

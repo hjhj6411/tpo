@@ -1,106 +1,106 @@
-# POD-Bench v2: Preference Origin Disentanglement Benchmark
+# POD-Bench v2: Personalized Outfit Decision Benchmark
 
-A vision-essential benchmark diagnosing whether VLM personalization methods
-disentangle **intrinsic preference** from **situational TPO** context.
+A VLM personalization benchmark that tests whether vision-language models can recommend fashion items by jointly considering **user preferences** (likes/dislikes) and **TPO constraints** (Time, Place, Occasion).
 
-## What's New in v2
+## Key Design: Canonical Extreme Scenarios
 
-| Change | Reason |
-|---|---|
-| **One Axis Per Instance** (active_axis + fixed_attrs) | Clean per-axis diagnostic signal |
-| **Phase 1 = 3 axes** (color, pattern, garment_category) | material/fit/sleeve are mixed (hedonic ↔ utilitarian) |
-| **Per-axis OW indices** (OW_TPO, OW_Pref, OW_Neither) | Diagnoses *which* axis the model is failing on |
-| **Parent-ASIN variant search** for color/pattern | Same product, different color = structure preserved, no diffusion |
-| **Color-as-safety TPO exclusions** | mountain_hike, skiing, etc. excluded when active_axis=color |
-| **Provider abstraction** (PROVIDERS dict) | Flip stages from free vllm → paid gpt-5-mini per stage |
-| **Deterministic option planner** | Rule-based 4-option construction; no LLM hallucination at labels |
-| **15 users × 18 instances ≈ 270** | Statistical power vs original 5-user plan |
+Unlike v1 (random TPO sampling → ambiguous contrasts), v2 uses **60 curated canonical extreme scenarios** across 8 archetypes where TPO-compatible vs TPO-incompatible distinctions are **indisputable**:
 
-## Core Mechanism
+| Archetype | # | Example |
+|---|---|---|
+| Extreme Cold | 8 | Blizzard outdoor → parka ✓, shorts ✗ |
+| Extreme Heat | 8 | Scorching beach → tank top ✓, parka ✗ |
+| Ultra-Formal | 10 | Board meeting → suit ✓, hoodie ✗ |
+| Mourning/Somber | 5 | Funeral → black suit ✓, orange tank top ✗ |
+| Athletic | 8 | Gym training → t-shirt ✓, blazer ✗ |
+| Weather Extreme | 5 | Typhoon → windbreaker ✓, dress ✗ |
+| Semi-Formal Social | 10 | Gallery opening → blazer ✓, shorts ✗ |
+| Casual Outdoor | 6 | Park picnic → jeans ✓, suit jacket ✗ |
 
-4-option image MCQ on the `active_axis`:
+## Backward-Designed Profiles
 
-```
-                    matches preference (on active_axis)?
-                            YES        NO
-TPO match?  YES              A          B          (A is correct)
-            NO               C          D
-```
+7 preference archetypes × 3 variants = 21 users (20 used), each designed so likes/dislikes span multiple garment functional groups → maximizes scenario compatibility.
 
-Diagnostic signals (per active_axis):
-- B-bias (high `OW_tpo_only`) → TPO over-weighting (PCogAlign-style)
-- C-bias (high `OW_preference_only`) → preference over-weighting / mechanical FAE
-- D-bias (high `OW_neither`) → cognitive collapse on this axis
+## 4-Option Structure
+
+Each instance has 4 options along one active axis:
+- **A** (tpo_and_preference): liked value + TPO-compatible
+- **B** (tpo_only): non-preferred value + TPO-compatible
+- **C** (preference_only): liked value + TPO-violated
+- **D** (neither): non-preferred + TPO-violated
 
 ## Pipeline
 
 ```
-1. profile_generator → English MMPB-style profiles (PHASE1_AXES only)
-2. query_generator   → (query, active_axis, fixed_attrs, tpo_scenario)
-3. option_planner    → deterministic 4-option construction
-4. image_collector   → parent-ASIN variant + title + Google fallback
-5. label_verifier    → rule + 3-judge ensemble + α/κ
-6. quality_audit     → vision-essentiality + final assembly
-7. evaluator         → per-axis OW + position shuffle + variant ablation
+Stage 1: Profile Generation    (archetype → narrative LLM)
+Stage 2: Query Generation       (scenario × user compatibility matching)
+Stage 3: Option Planning        (deterministic A/B/C/D from scenario constraints)
+Stage 4: Image Collection       (Amazon catalog + Google fallback + VLM verification)
+Stage 5: Label Verification     (rule-based + 3-judge LLM ensemble)
+Stage 6: Quality Audit          (assembly + vision-essentiality gate)
+Stage 7: Evaluation             (VLM accuracy per-axis, per-archetype)
 ```
-
-## Provider Abstraction
-
-Every LLM/VLM call dispatches through `call_llm(stage=...)` / `call_vlm(stage=...)`.
-The `PROVIDERS` dict in `configs/config.py` maps each stage to a provider:
-
-```python
-PROVIDERS = {
-    "profile_generation":    {"provider": "vllm"},      # free
-    "query_generation":      {"provider": "vllm"},      # free
-    "option_planning":       {"provider": "vllm"},      # free (unused; deterministic)
-    "label_judge_primary":   {"provider": "vllm"},      # free
-    "label_judge_secondary": {"provider": "vllm_alt"},  # free
-    "label_judge_tertiary":  {"provider": "gpt5_mini"}, # paid (ensemble diversity)
-    "blind_solver":          {"provider": "vllm"},      # free
-    "captioner":             {"provider": "vllm_vlm"},  # free
-    "vlm_evaluator":         {"provider": "vllm_vlm"},  # free
-}
-```
-
-**Recommended workflow:**
-1. Set all stages to `vllm` and run the full pipeline (no API cost)
-2. Once happy, flip individual stages to `gpt5_mini` for final results
-
-CLI override:
-```bash
-python -m src.profile_generator --provider gpt5_mini --n_users 5
-PROVIDER=gpt5_mini bash scripts/run_pipeline.sh
-```
-
-## GPT-5-mini API Quirks (Handled)
-
-1. Uses `max_completion_tokens` (not `max_tokens`)
-2. Reasoning tokens count toward the cap; default 4096
-3. `temperature` is NOT supported (gpt-5 family); we omit it
-4. Defensive content extraction handles empty content / refusals / list-form content
 
 ## Quick Start
 
 ```bash
-unzip pod_bench.zip && cd pod_bench
+# Install dependencies
 pip install -r requirements.txt
 
-# Start local vLLM servers (see docs/SETUP.md)
+# Start vLLM server(s) — see docs/SETUP.md
+
+# Run full pipeline
 bash scripts/run_pipeline.sh
+
+# Run specific stage
+bash scripts/run_pipeline.sh --stage profiles
+bash scripts/run_pipeline.sh --stage queries
+bash scripts/run_pipeline.sh --stage options --limit 100
 ```
 
-## Output Structure
+## Expected Scale
+
+- 60 scenarios × ~102 axis-slots/user × 20 users × ~65-75% compatibility
+- → **~960–1,050 final instances**
+- Comparable to: MMPB (~500), NaturalBench (~900), BLINK (~3.8k)
+
+## Project Structure
 
 ```
-data/
-├── profiles/profiles.jsonl
-├── queries/queries.jsonl              # with active_axis + fixed_attrs
-├── options/option_plans.jsonl
-├── images/<query_id>/{A,B,C,D}.jpg
-├── labels/labels.jsonl
-├── labels/reliability_metrics.json
-├── labels/audit_metrics.json
-├── final/pod_bench.jsonl              # ← the benchmark
-└── evaluation/<provider>__<variant>/metrics_overall.json
+pod_bench_v2/
+├── configs/
+│   ├── config.py          # Central configuration
+│   ├── scenarios.py       # 60 canonical extreme scenarios
+│   └── profiles.py        # 7 preference archetypes × 3 variants
+├── src/
+│   ├── utils.py           # Provider abstraction (vLLM, OpenAI)
+│   ├── compatibility.py   # User × scenario compatibility matrix
+│   ├── profile_generator.py
+│   ├── query_generator.py
+│   ├── option_planner.py
+│   ├── image_collector.py
+│   ├── label_verifier.py
+│   ├── quality_audit.py
+│   └── evaluator.py
+├── scripts/
+│   └── run_pipeline.sh
+├── docs/
+│   └── SETUP.md
+└── data/                  # Generated at runtime
+    ├── profiles/
+    ├── queries/
+    ├── options/
+    ├── images/
+    ├── labels/
+    └── final/
+```
+
+## Citation
+
+```
+@misc{podbench2026,
+  title={POD-Bench: Personalized Outfit Decision Benchmark for Vision-Language Models},
+  author={VisAGI Lab},
+  year={2026}
+}
 ```
