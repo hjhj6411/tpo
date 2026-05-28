@@ -1,211 +1,214 @@
 """
-Query Generator v2 — Scenario-based matching.
+Query Generator — clean 2×2 version.
 
-Benchmark 2×2 structure:
-  A: preferred   color/pattern + TPO-compatible garment
-  B: nonpref     color/pattern + TPO-compatible garment
-  C: preferred   color/pattern + TPO-incompatible garment
-  D: nonpref     color/pattern + TPO-incompatible garment
-
-active_axis ∈ {color, pattern} ONLY.
-violation_axis = garment_category ALWAYS.
-
-fixed_attrs contains:
-  - garment_category: user_liked ∩ TPO-compatible  (used in A/B)
-  - the other non-active axis (color or pattern): from user likes
+Build query records only for active_axis in {color, pattern}.
+Garment category is not fixed here; planner chooses a neutral compatible/incompatible pair.
 """
 
 import argparse
 import random
 import sys
-from collections import Counter
 from pathlib import Path
 
-from .utils import call_llm, parse_json_list_response, save_jsonl, load_jsonl, log_step
-from .compatibility import get_compatible_instances
+from .utils import save_jsonl, load_jsonl, log_step
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from configs.config import QUERIES_DIR, PROFILES_DIR, PHASE1_CONFIG
-from configs.scenarios import get_scenario_by_id
+from configs.config import PROFILES_DIR, QUERIES_DIR
+from configs.scenarios import CANONICAL_SCENARIOS, get_scenario_by_id
+from .compatibility import get_compatible_instances, print_compatibility_report
+
+ALLOWED_ACTIVE_AXES = {"color", "pattern"}
+
+FALLBACK_AXIS_VALUES = {
+    "color": ["black", "white", "navy", "gray", "beige"],
+    "pattern": ["solid", "striped", "plaid"],
+}
 
 
-QUERY_SYSTEM = """You are a fashion query rewriter. Given an original query and context,
-rephrase it in a different natural style while preserving ALL situational details.
-Output ONLY a JSON list of 1 string: [\"rephrased query\"]"""
+def _profile_prefs(profile, axis):
+    sa = profile.get("structured_attributes", {})
+    ax_prefs = sa.get(axis, {})
+    return set(ax_prefs.get("likes", [])), set(ax_prefs.get("dislikes", []))
 
 
-def _pick_query_type(rng):
-    dist = PHASE1_CONFIG["query_type_distribution"]
-    r = rng.random()
-    cumulative = 0.0
-    for qt, prob in dist.items():
-        cumulative += prob
-        if r < cumulative:
-            return qt
-    return list(dist.keys())[-1]
+def _neutral_values(values, likes, dislikes):
+    return sorted(set(values) - likes - dislikes)
 
 
-def _pick_seed_query(scenario, query_type, rng):
-    seeds = scenario.get("query_seeds", {})
-    pool = seeds.get("explicit" if query_type == "explicit_tpo" else "implicit", [])
-    if not pool:
-        pool = [f"I need an outfit for {scenario['name']}. What should I wear?"]
-    return rng.choice(pool)
+def _sample_preference_neutral_value(profile, scenario, axis, rng):
+    if axis == "garment_category":
+        return None
 
+    likes, dislikes = _profile_prefs(profile, axis)
+    constraint = scenario.get(axis)
 
-def _rephrase_query(seed_text, scenario_name, provider_override=None):
-    prompt = (
-        f'Rephrase this fashion recommendation query in a different natural style.\n'
-        f'Keep ALL situational details intact.\n\n'
-        f'Original: "{seed_text}"\nContext: {scenario_name}\n\n'
-        f'Output JSON list: ["rephrased query"]'
-    )
-    try:
-        response = call_llm(prompt=prompt, stage="query_generation",
-                            system=QUERY_SYSTEM, provider_override=provider_override)
-        parsed = parse_json_list_response(response)
-        if parsed and isinstance(parsed, list) and parsed:
-            return str(parsed[0])
-    except Exception:
-        pass
-    return seed_text
+    if constraint and constraint.get("compatible"):
+        pool = _neutral_values(constraint["compatible"], likes, dislikes)
+        if pool:
+            return rng.choice(pool)
 
+    fallback_pool = _neutral_values(FALLBACK_AXIS_VALUES.get(axis, []), likes, dislikes)
+    if fallback_pool:
+        return rng.choice(fallback_pool)
 
-def _pick_from_likes(structured, axis, rng, fallbacks=None):
-    """
-    Pick a value from user's likes for the given axis.
-    Falls back to anything not in dislikes.
-    """
-    likes    = list(structured.get(axis, {}).get("likes", []))
-    dislikes = set(structured.get(axis, {}).get("dislikes", []))
-    safe = [v for v in likes if v not in dislikes]
-    if safe:
-        return rng.choice(safe)
-    if fallbacks:
-        safe2 = [v for v in fallbacks if v not in dislikes]
-        if safe2:
-            return rng.choice(safe2)
+    raw_pool = FALLBACK_AXIS_VALUES.get(axis, [])
+    if raw_pool:
+        return rng.choice(raw_pool)
+
     return None
 
 
-def sample_fixed_attrs(active_axis, instance, profile, rng):
-    """
-    Build fixed_attrs for A/B options.
-
-    Always contains:
-      garment_category: user_liked ∩ TPO-compatible  (from compatibility check)
-      <other non-active axis>: from user likes
-
-    INVARIANT: every value in fixed_attrs is in user's likes.
-    """
-    structured = profile["structured_attributes"]
-    fixed = {}
-
-    # garment_category: user liked AND TPO-compatible (pre-computed in compatibility)
-    liked_garments = instance["liked_garments"]
-    fixed["garment_category"] = rng.choice(liked_garments)
-
-    # the other non-active axis
-    if active_axis == "color":
-        fixed["pattern"] = _pick_from_likes(
-            structured, "pattern", rng,
-            fallbacks=["solid", "striped", "plaid"]
-        )
-    elif active_axis == "pattern":
-        fixed["color"] = _pick_from_likes(
-            structured, "color", rng,
-            fallbacks=["black", "white", "navy", "gray", "beige"]
-        )
-
-    return fixed
+def _extract_seed_pool(scenario, query_type):
+    seeds = scenario.get("query_seeds", {})
+    if isinstance(seeds, dict):
+        pool = seeds.get(query_type, [])
+        if pool:
+            return pool
+        alt = seeds.get("explicit", []) + seeds.get("implicit", [])
+        if alt:
+            return alt
+    elif isinstance(seeds, list):
+        if seeds:
+            return seeds
+    return []
 
 
-def generate_instances(profiles, limit=0, provider_override=None, rephrase=True):
-    compatible, stats = get_compatible_instances(profiles)
-    print(f"  Compatible instances: {len(compatible)}")
+def _render_fallback_query(scenario, query_type):
+    name = scenario.get("name", "").strip()
+    if query_type == "implicit":
+        if name:
+            return f"I have an event coming up: {name}. Any outfit suggestion?"
+        return "I have an event coming up. What should I wear?"
+    if name:
+        return f"For this situation — {name} — what should I wear?"
+    return "What should I wear for this situation?"
+
+
+def _build_query_text(scenario, rng, explicit_ratio=0.5):
+    query_type = "explicit" if rng.random() < explicit_ratio else "implicit"
+    pool = _extract_seed_pool(scenario, query_type)
+    if not pool:
+        pool = _extract_seed_pool(scenario, "explicit" if query_type == "implicit" else "implicit")
+    if pool:
+        return query_type, rng.choice(pool)
+    return query_type, _render_fallback_query(scenario, query_type)
+
+
+def _build_fixed_attrs(profile, scenario, active_axis, rng):
+    fixed_attrs = {}
+    for axis in ("color", "pattern"):
+        if axis == active_axis:
+            continue
+        val = _sample_preference_neutral_value(profile, scenario, axis, rng)
+        if val is not None:
+            fixed_attrs[axis] = val
+    return fixed_attrs
+
+
+def _make_query_id(user_id, scenario_id, active_axis, idx):
+    return f"{user_id}__{scenario_id}__{active_axis}__{idx:04d}"
+
+
+def build_queries(profiles, scenarios=None, seed=42, per_instance=1, explicit_ratio=0.5):
+    if scenarios is None:
+        scenarios = CANONICAL_SCENARIOS
+
+    scenario_map = {s["scenario_id"]: s for s in scenarios}
+    compatible_instances, stats = get_compatible_instances(profiles, scenarios)
+    queries = []
+
+    rng = random.Random(seed)
+    running_idx = 0
+
+    for inst in compatible_instances:
+        profile = next(p for p in profiles if p["user_id"] == inst["user_id"])
+        scenario = scenario_map[inst["scenario_id"]]
+        active_axis = inst["active_axis"]
+
+        if active_axis not in ALLOWED_ACTIVE_AXES:
+            continue
+
+        for _ in range(per_instance):
+            running_idx += 1
+            local_rng = random.Random((seed, running_idx).__hash__())
+
+            query_type, query_text = _build_query_text(
+                scenario, local_rng, explicit_ratio=explicit_ratio
+            )
+            fixed_attrs = _build_fixed_attrs(profile, scenario, active_axis, local_rng)
+            query_id = _make_query_id(
+                inst["user_id"], inst["scenario_id"], active_axis, running_idx
+            )
+
+            record = {
+                "query_id": query_id,
+                "user_id": inst["user_id"],
+                "scenario_id": inst["scenario_id"],
+                "active_axis": active_axis,
+                "liked_compatible": inst["liked_compatible"],
+                "disliked_compatible": inst["disliked_compatible"],
+                "neutral_compatible": inst["neutral_compatible"],
+                "compatible_garments": inst["compatible_garments"],
+                "incompatible_garments": inst["incompatible_garments"],
+                "query_type": query_type,
+                "query_text": query_text,
+                "fixed_attrs": fixed_attrs,
+            }
+            queries.append(record)
+
+    return queries, stats
+
+
+def run_pipeline(profile_path, output_path, force=False, seed=42, per_instance=1,
+                 explicit_ratio=0.5, limit=0):
+    log_step("Query Generator (clean 2×2)")
+    profiles = load_jsonl(profile_path)
+    print(f"  {len(profiles)} profiles loaded")
+
+    queries, stats = build_queries(
+        profiles,
+        scenarios=CANONICAL_SCENARIOS,
+        seed=seed,
+        per_instance=per_instance,
+        explicit_ratio=explicit_ratio,
+    )
+
+    print_compatibility_report(stats)
 
     if limit > 0:
-        compatible = compatible[:limit]
-
-    profiles_map = {p["user_id"]: p for p in profiles}
-    instances = []
-
-    for i, triple in enumerate(compatible):
-        uid  = triple["user_id"]
-        sid  = triple["scenario_id"]
-        axis = triple["active_axis"]
-        profile  = profiles_map[uid]
-        scenario = get_scenario_by_id(sid)
-
-        rng = random.Random(abs(hash(f"{uid}_{sid}_{axis}")) % 100000)
-        query_type = _pick_query_type(rng)
-        seed_text  = _pick_seed_query(scenario, query_type, rng)
-
-        if rephrase and rng.random() < 0.5:
-            query_text = _rephrase_query(seed_text, scenario["name"], provider_override)
-        else:
-            query_text = seed_text
-
-        fixed = sample_fixed_attrs(axis, triple, profile, rng)
-
-        query_id = f"{uid}_{sid}_{axis[:2]}"
-        instances.append({
-            "query_id":            query_id,
-            "user_id":             uid,
-            "scenario_id":         sid,
-            "domain":              "fashion",
-            "query_type":          query_type,
-            "query_text":          query_text,
-            "tpo_scenario":        scenario["tpo"],
-            "active_axis":         axis,
-            "fixed_attrs":         fixed,
-            "scenario_archetype":  scenario["archetype"],
-            "scenario_name":       scenario["name"],
-            # Values for option planner
-            "liked_compatible":    triple["liked_compatible"],
-            "disliked_compatible": triple["disliked_compatible"],
-            "neutral_compatible":  triple["neutral_compatible"],
-            "incompat_garments":   triple["incompat_garments"],
-        })
-
-        if (i + 1) % 100 == 0:
-            print(f"  [{i+1}/{len(compatible)}] generated")
-
-    return instances, stats
-
-
-def run_pipeline(profile_path, output_path, force=False, limit=0,
-                 provider=None, rephrase=True):
-    log_step(f"Query Generator v2 (provider={provider or 'default'})")
-    profiles = load_jsonl(profile_path)
-    print(f"  Loaded {len(profiles)} profiles")
+        queries = queries[:limit]
 
     if output_path.exists() and not force:
-        existing = load_jsonl(output_path)
-        print(f"  Already have {len(existing)} queries. Use --force to regenerate.")
+        print(f"  Output exists: {output_path}")
+        print("  Use --force to overwrite.")
         return
 
-    instances, stats = generate_instances(
-        profiles, limit=limit, provider_override=provider, rephrase=rephrase
-    )
-    save_jsonl(instances, output_path)
-    print(f"\n  ✓ Saved {len(instances)} query instances")
-    print(f"  axis dist:      {dict(Counter(q['active_axis'] for q in instances))}")
-    print(f"  qtype dist:     {dict(Counter(q['query_type'] for q in instances))}")
-    print(f"  archetype dist: {dict(Counter(q['scenario_archetype'] for q in instances))}")
+    save_jsonl(queries, output_path)
+    print(f"\n  ✓ Saved {len(queries)} queries to {output_path}")
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--profile_path", type=Path, default=PROFILES_DIR / "profiles.jsonl")
-    parser.add_argument("--output",       type=Path, default=QUERIES_DIR / "queries.jsonl")
-    parser.add_argument("--force",        action="store_true")
-    parser.add_argument("--limit",        type=int, default=0)
-    parser.add_argument("--provider",     type=str, default=None)
-    parser.add_argument("--no_rephrase",  action="store_true")
+    parser.add_argument("--profile_path", type=Path,
+                        default=PROFILES_DIR / "profiles.jsonl")
+    parser.add_argument("--output", type=Path,
+                        default=QUERIES_DIR / "queries.jsonl")
+    parser.add_argument("--force", action="store_true")
+    parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--per_instance", type=int, default=1)
+    parser.add_argument("--explicit_ratio", type=float, default=0.5)
+    parser.add_argument("--limit", type=int, default=0)
     args = parser.parse_args()
-    run_pipeline(args.profile_path, args.output, args.force, args.limit,
-                 args.provider, not args.no_rephrase)
+
+    run_pipeline(
+        profile_path=args.profile_path,
+        output_path=args.output,
+        force=args.force,
+        seed=args.seed,
+        per_instance=args.per_instance,
+        explicit_ratio=args.explicit_ratio,
+        limit=args.limit,
+    )
 
 
 if __name__ == "__main__":
