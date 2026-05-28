@@ -80,21 +80,36 @@ def _pick_liked_color(structured, rng):
     """
     Pick a color that is in user's likes.
     Fallback: anything not in dislikes.
-    fixed_attrs color MUST come from user likes so the narrative profile
-    is fully consistent with the option text.
     """
     col_likes = list(structured.get("color", {}).get("likes", []))
     col_dislikes = set(structured.get("color", {}).get("dislikes", []))
 
-    # 1st: user likes (narrative consistent)
     liked_safe = [c for c in col_likes if c not in col_dislikes]
     if liked_safe:
         return rng.choice(liked_safe)
 
-    # 2nd: anything not disliked
     safe = [c for c in ["black", "white", "navy", "gray", "beige"]
             if c not in col_dislikes]
     return rng.choice(safe or ["black"])
+
+
+def _pick_liked_pattern(structured, rng):
+    """
+    Pick a pattern that is in user's likes.
+    Fallback: anything not in dislikes, then 'solid'.
+    """
+    pat_likes = list(structured.get("pattern", {}).get("likes", []))
+    pat_dislikes = set(structured.get("pattern", {}).get("dislikes", []))
+
+    # 1st: user likes
+    liked_safe = [p for p in pat_likes if p not in pat_dislikes]
+    if liked_safe:
+        return rng.choice(liked_safe)
+
+    # 2nd: not disliked
+    safe = [p for p in ["solid", "striped", "plaid", "checked"]
+            if p not in pat_dislikes]
+    return rng.choice(safe or ["solid"])
 
 
 def _pick_liked_garment(structured, sc_compat_set, rng):
@@ -102,31 +117,25 @@ def _pick_liked_garment(structured, sc_compat_set, rng):
     Pick a garment_category that is in user's likes AND scenario compatible.
     Fallback chain:
       1. user likes ∩ scenario compatible
-      2. user likes only (ignore scenario compat)
+      2. user likes only
       3. scenario compatible not in dislikes
       4. any scenario compatible
-    fixed_attrs garment MUST come from user likes so the narrative profile
-    is fully consistent with the option text.
     """
     gc_likes = list(structured.get("garment_category", {}).get("likes", []))
     gc_dislikes = set(structured.get("garment_category", {}).get("dislikes", []))
 
-    # 1st: liked ∩ scenario compatible
     liked_compat = [g for g in gc_likes if g in sc_compat_set and g not in gc_dislikes]
     if liked_compat:
         return rng.choice(liked_compat)
 
-    # 2nd: liked only (scenario compat may not cover user's preferred garments)
     liked_safe = [g for g in gc_likes if g not in gc_dislikes]
     if liked_safe:
         return rng.choice(liked_safe)
 
-    # 3rd: scenario compatible not in dislikes
     safe_compat = [g for g in sc_compat_set if g not in gc_dislikes]
     if safe_compat:
         return rng.choice(safe_compat)
 
-    # 4th: any scenario compatible
     return rng.choice(sorted(sc_compat_set) or ["shirt"])
 
 
@@ -134,26 +143,23 @@ def sample_fixed_attrs(active_axis, profile, scenario, rng):
     """
     Choose fixed attributes for axes that are NOT the active_axis.
 
-    INVARIANT: fixed_attrs values must be in user's likes for every axis,
-    so the narrative profile is fully consistent with the option text and
+    INVARIANT: ALL fixed_attrs values must be in user's likes so the
+    narrative profile is fully consistent with the option text and
     LLMs reason only about the active_axis signal.
     """
     structured = profile["structured_attributes"]
     fixed = {}
 
     if active_axis == "garment_category":
-        # Fix color (from user likes) and pattern
         fixed["color"] = _pick_liked_color(structured, rng)
-        fixed["pattern"] = "solid"
+        fixed["pattern"] = _pick_liked_pattern(structured, rng)
 
     elif active_axis == "color":
-        # Fix garment_category (user likes ∩ scenario compatible) and pattern
         sc_compat = set(scenario["garment_category"]["compatible"])
         fixed["garment_category"] = _pick_liked_garment(structured, sc_compat, rng)
-        fixed["pattern"] = "solid"
+        fixed["pattern"] = _pick_liked_pattern(structured, rng)
 
     elif active_axis == "pattern":
-        # Fix garment_category (user likes ∩ scenario compatible) and color (user likes)
         sc_compat = set(scenario["garment_category"]["compatible"])
         fixed["garment_category"] = _pick_liked_garment(structured, sc_compat, rng)
         fixed["color"] = _pick_liked_color(structured, rng)
@@ -184,7 +190,6 @@ def generate_instances(profiles, limit=0, provider_override=None,
         query_type = _pick_query_type(rng)
         seed_text = _pick_seed_query(scenario, query_type, rng)
 
-        # Optionally rephrase for variation
         if rephrase and rng.random() < 0.5:
             query_text = _rephrase_query(seed_text, scenario["name"],
                                          provider_override)
@@ -206,7 +211,6 @@ def generate_instances(profiles, limit=0, provider_override=None,
             "fixed_attrs": fixed,
             "scenario_archetype": scenario["archetype"],
             "scenario_name": scenario["name"],
-            # Carry forward compatibility info for option planner
             "liked_compatible": triple["liked_compatible"],
             "disliked_compatible": triple["disliked_compatible"],
             "neutral_compatible": triple["neutral_compatible"],
