@@ -77,25 +77,49 @@ Output JSON list: ["rephrased query"]"""
     return seed_text
 
 
+def _pick_fixed_color(structured, rng):
+    """
+    Pick a color for fixed_attrs that aligns with user's narrative profile.
+
+    Priority:
+      1. User's liked colors (narrative says they like these → no confusion)
+      2. Neutral colors not in dislikes (fallback)
+      3. Any non-disliked color from the default list (last resort)
+    """
+    col_likes = list(structured.get("color", {}).get("likes", []))
+    col_dislikes = set(structured.get("color", {}).get("dislikes", []))
+
+    # 1st priority: liked colors (consistent with narrative)
+    liked_safe = [c for c in col_likes if c not in col_dislikes]
+    if liked_safe:
+        return rng.choice(liked_safe)
+
+    # 2nd priority: neutral (not in likes or dislikes)
+    neutral = [c for c in ["black", "white", "navy", "gray", "beige"]
+               if c not in col_likes and c not in col_dislikes]
+    if neutral:
+        return rng.choice(neutral)
+
+    # 3rd priority: anything not disliked
+    safe = [c for c in ["black", "white", "navy", "gray", "beige"]
+            if c not in col_dislikes]
+    return rng.choice(safe or ["black"])
+
+
 def sample_fixed_attrs(active_axis, profile, scenario, rng):
     """
     Choose fixed attributes for axes that are NOT the active_axis.
-    Fixed attrs should be preference-neutral (not in likes or dislikes)
-    to avoid confounding the active_axis signal.
+
+    Fixed attrs use user's liked values where possible so the narrative
+    profile is consistent with the option text, isolating the active_axis
+    signal for the LLM to reason about.
     """
     structured = profile["structured_attributes"]
     fixed = {}
 
     if active_axis == "garment_category":
-        # Fix color and pattern (neutral values)
-        col_likes = set(structured.get("color", {}).get("likes", []))
-        col_dislikes = set(structured.get("color", {}).get("dislikes", []))
-        neutral_colors = [c for c in ["black", "white", "navy", "gray", "beige"]
-                          if c not in col_likes and c not in col_dislikes]
-        if not neutral_colors:
-            neutral_colors = [c for c in ["black", "white", "navy", "gray", "beige"]
-                              if c not in col_dislikes]
-        fixed["color"] = rng.choice(neutral_colors or ["black"])
+        # Fix color (liked > neutral) and pattern
+        fixed["color"] = _pick_fixed_color(structured, rng)
         fixed["pattern"] = "solid"
 
     elif active_axis == "color":
@@ -122,15 +146,8 @@ def sample_fixed_attrs(active_axis, profile, scenario, rng):
         if not neutral_gc:
             neutral_gc = list(sc_compat)
         fixed["garment_category"] = rng.choice(neutral_gc)
-        # Fix color (neutral)
-        col_likes = set(structured.get("color", {}).get("likes", []))
-        col_dislikes = set(structured.get("color", {}).get("dislikes", []))
-        neutral_colors = [c for c in ["black", "white", "navy", "gray", "beige"]
-                          if c not in col_likes and c not in col_dislikes]
-        if not neutral_colors:
-            neutral_colors = [c for c in ["black", "white", "navy", "gray"]
-                              if c not in col_dislikes]
-        fixed["color"] = rng.choice(neutral_colors or ["black"])
+        # Fix color (liked > neutral)
+        fixed["color"] = _pick_fixed_color(structured, rng)
 
     return fixed
 
