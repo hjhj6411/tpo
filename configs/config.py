@@ -86,6 +86,8 @@ PROVIDERS = {
     "captioner":             {"provider": "vllm_vlm"},
     "vlm_evaluator":         {"provider": "vllm_vlm"},
     "image_verifier":        {"provider": "vllm_vlm"},
+    "text_only_eval":          {"provider": "vllm"},
+    "text_only_no_profile_eval":          {"provider": "vllm"},
 }
 
 PROVIDER_ENDPOINTS = {

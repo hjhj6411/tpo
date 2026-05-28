@@ -1,5 +1,5 @@
 conda activate pod
-
+Qwen/Qwen3-4B-Instruct-2507
 vllm serve Qwen/Qwen3-4B-Instruct-2507 \
   --tensor-parallel-size 4 \
   --max-model-len 30000 \
@@ -8,6 +8,7 @@ vllm serve Qwen/Qwen3-4B-Instruct-2507 \
   --trust-remote-code \
   --gpu-memory-utilization 0.95 
 
+Qwen/Qwen2.5-7B-Instruct
 
 AMAZON_META_DIR=/home1/hjhj6411/fashion/data/amazon/fashion_only \
 python -m src.image_collector --force --limit 5
