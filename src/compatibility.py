@@ -1,8 +1,13 @@
 """
-Compatibility — clean 2×2 version.
+Compatibility — user × scenario matching.
 
-Only color/pattern can be active axes.
-Garment category is always the TPO axis and must be preference-neutral.
+A (user, scenario, active_axis) triple is compatible iff:
+  1. user has ≥1 liked value IN the scenario's compatible set for that axis
+  2. user has ≥1 disliked (or non-preferred) value IN the same compatible set
+     (so that option B = "non-preferred + TPO-compatible" can be built)
+  3. scenario constrains that axis (has non-empty incompatible set)
+
+For pattern axis, "non-preferred" includes values not in likes (neutral).
 """
 
 import sys
@@ -12,76 +17,75 @@ from collections import defaultdict
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from configs.scenarios import CANONICAL_SCENARIOS, get_constrained_axes
 
-ALLOWED_ACTIVE_AXES = {"color", "pattern"}
-
 
 def _profile_prefs(profile, axis):
+    """Extract (likes_set, dislikes_set) for an axis from a profile."""
     sa = profile.get("structured_attributes", {})
     ax_prefs = sa.get(axis, {})
     return set(ax_prefs.get("likes", [])), set(ax_prefs.get("dislikes", []))
 
 
-def _neutral_values(values, likes, dislikes):
-    return sorted(set(values) - likes - dislikes)
-
-
 def check_axis_compatibility(profile, scenario, axis):
-    if axis not in ALLOWED_ACTIVE_AXES:
-        return {"compatible": False, "reason": "axis_not_supported"}
+    """
+    Returns:
+      {"compatible": bool,
+       "liked_compatible": [...],      # user likes ∩ scenario compatible
+       "disliked_compatible": [...],   # user dislikes ∩ scenario compatible
+       "neutral_compatible": [...],    # (not liked, not disliked) ∩ scenario compatible
+       "liked_incompatible": [...],    # user likes ∩ scenario incompatible
+       "disliked_incompatible": [...]} # user dislikes ∩ scenario incompatible
+    """
+    constraint = scenario.get(axis)
+    if constraint is None or not constraint.get("incompatible"):
+        return {"compatible": False, "reason": "axis_not_constrained"}
 
-    active_constraint = scenario.get(axis)
-    garment_constraint = scenario.get("garment_category")
-
-    if active_constraint is None or not active_constraint.get("incompatible"):
-        return {"compatible": False, "reason": "active_axis_not_constrained"}
-
-    if garment_constraint is None:
-        return {"compatible": False, "reason": "garment_constraint_missing"}
-
-    if not garment_constraint.get("compatible") or not garment_constraint.get("incompatible"):
-        return {"compatible": False, "reason": "garment_constraint_incomplete"}
+    compat_set = set(constraint["compatible"])
+    incompat_set = set(constraint["incompatible"])
 
     likes, dislikes = _profile_prefs(profile, axis)
-    compat_set = set(active_constraint["compatible"])
 
-    liked_compatible = sorted(likes & compat_set)
-    disliked_compatible = sorted(dislikes & compat_set)
-    neutral_compatible = _neutral_values(active_constraint["compatible"], likes, dislikes)
+    liked_compat = sorted(likes & compat_set)
+    disliked_compat = sorted(dislikes & compat_set)
+    neutral_compat = sorted(compat_set - likes - dislikes)
 
-    garment_likes, garment_dislikes = _profile_prefs(profile, "garment_category")
-    compatible_garments = _neutral_values(
-        garment_constraint["compatible"], garment_likes, garment_dislikes
-    )
-    incompatible_garments = _neutral_values(
-        garment_constraint["incompatible"], garment_likes, garment_dislikes
-    )
+    liked_incompat = sorted(likes & incompat_set)
+    disliked_incompat = sorted(dislikes & incompat_set)
 
-    has_A = len(liked_compatible) > 0
-    has_B = len(disliked_compatible) > 0 or len(neutral_compatible) > 0
-    has_clean_tpo_pair = len(compatible_garments) > 0 and len(incompatible_garments) > 0
+    # A option: need liked + compatible
+    has_A = len(liked_compat) > 0
+    # B option: need non-preferred + compatible
+    # "non-preferred" = disliked OR neutral (not in likes)
+    has_B = len(disliked_compat) > 0 or len(neutral_compat) > 0
 
     return {
-        "compatible": has_A and has_B and has_clean_tpo_pair,
-        "liked_compatible": liked_compatible,
-        "disliked_compatible": disliked_compatible,
-        "neutral_compatible": neutral_compatible,
-        "compatible_garments": compatible_garments,
-        "incompatible_garments": incompatible_garments,
+        "compatible": has_A and has_B,
+        "liked_compatible": liked_compat,
+        "disliked_compatible": disliked_compat,
+        "neutral_compatible": neutral_compat,
+        "liked_incompatible": liked_incompat,
+        "disliked_incompatible": disliked_incompat,
     }
 
 
 def build_compatibility_matrix(profiles, scenarios=None):
+    """
+    Build full compatibility matrix.
+
+    Returns:
+      matrix[user_id][scenario_id] = {
+          axis: check_result for each constrained axis
+      }
+
+    And summary stats.
+    """
     if scenarios is None:
         scenarios = CANONICAL_SCENARIOS
 
     matrix = {}
-    stats = {
-        "total_slots": 0,
-        "compatible_slots": 0,
-        "by_axis": defaultdict(lambda: {"total": 0, "compat": 0}),
-        "by_archetype": defaultdict(lambda: {"total": 0, "compat": 0}),
-        "by_user": defaultdict(lambda: {"total": 0, "compat": 0}),
-    }
+    stats = {"total_slots": 0, "compatible_slots": 0,
+             "by_axis": defaultdict(lambda: {"total": 0, "compat": 0}),
+             "by_archetype": defaultdict(lambda: {"total": 0, "compat": 0}),
+             "by_user": defaultdict(lambda: {"total": 0, "compat": 0})}
 
     for profile in profiles:
         uid = profile["user_id"]
@@ -89,7 +93,7 @@ def build_compatibility_matrix(profiles, scenarios=None):
 
         for sc in scenarios:
             sid = sc["scenario_id"]
-            constrained = [ax for ax in get_constrained_axes(sc) if ax in ALLOWED_ACTIVE_AXES]
+            constrained = get_constrained_axes(sc)
             matrix[uid][sid] = {}
 
             for axis in constrained:
@@ -114,6 +118,10 @@ def build_compatibility_matrix(profiles, scenarios=None):
 
 
 def get_compatible_instances(profiles, scenarios=None):
+    """
+    Enumerate all compatible (user_id, scenario_id, active_axis) triples.
+    Each triple becomes one benchmark instance.
+    """
     matrix, stats = build_compatibility_matrix(profiles, scenarios)
     instances = []
 
@@ -128,8 +136,8 @@ def get_compatible_instances(profiles, scenarios=None):
                         "liked_compatible": result["liked_compatible"],
                         "disliked_compatible": result["disliked_compatible"],
                         "neutral_compatible": result["neutral_compatible"],
-                        "compatible_garments": result["compatible_garments"],
-                        "incompatible_garments": result["incompatible_garments"],
+                        "liked_incompatible": result["liked_incompatible"],
+                        "disliked_incompatible": result["disliked_incompatible"],
                     })
 
     return instances, stats
@@ -139,19 +147,16 @@ def print_compatibility_report(stats):
     total = stats["total_slots"]
     compat = stats["compatible_slots"]
     rate = stats["compatibility_rate"]
-
     print(f"\n  Compatibility: {compat}/{total} = {rate:.1%}")
-    print("\n  By axis:")
+    print(f"\n  By axis:")
     for ax, s in stats["by_axis"].items():
         r = s["compat"] / max(s["total"], 1)
         print(f"    {ax:20s}: {s['compat']}/{s['total']} = {r:.1%}")
-
-    print("\n  By archetype:")
+    print(f"\n  By archetype:")
     for arch, s in stats["by_archetype"].items():
         r = s["compat"] / max(s["total"], 1)
         print(f"    {arch:25s}: {s['compat']}/{s['total']} = {r:.1%}")
-
-    print("\n  By user:")
+    print(f"\n  By user:")
     for uid, s in sorted(stats["by_user"].items()):
         r = s["compat"] / max(s["total"], 1)
         print(f"    {uid}: {s['compat']}/{s['total']} = {r:.1%}")
