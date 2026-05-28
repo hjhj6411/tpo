@@ -1,23 +1,19 @@
 """
-Image Collector v3 — FAISS Semantic Retrieval (FashionSigLIP primary).
+Image Collector v4 — Multi-Stage Filtered FAISS Retrieval.
 
-Changes from v2:
-  - AmazonCatalogIndex: keyword title_search / variant_search 제거
-    → FAISS inner-product ANN 검색으로 교체
-  - HomogeneityChecker.rank_candidates_by_clip 제거 (FAISS가 이미 의미 정렬)
-  - collect_for_plan: variant/title 두 브랜치 → semantic_search 단일 흐름
-  - Google fallback은 그대로 유지
-
-Quality gates (unchanged):
-  1. AttributeVerifier: VLM closed-set check
-  2. SetConsistencyVerifier: 4-option gender + framing consistency
-  3. HomogeneityChecker: FashionSigLIP pairwise distance
-  4. SSIM for color/pattern variants
+Changes from v3:
+  - AmazonCatalogIndex: per-garment sub-index 지원
+    ($FAISS_DIR/blazer/index.faiss + ids.json, ...)
+  - search(): garment_key 기반 sub-index 우선 검색
+    → 없으면 전체 인덱스 fallback
+  - collect_for_plan: 인터페이스 변경 없음
 
 오프라인 인덱스 빌드:
-  python scripts/build_faiss_index.py \
-    --meta-dir $AMAZON_META_DIR \
-    --output-dir $AMAZON_META_DIR/faiss
+  python scripts/build_faiss_index.py \\
+    --meta-dir $AMAZON_META_DIR \\
+    --output-dir $AMAZON_META_DIR/faiss \\
+    --clip-score-threshold 0.20 \\
+    --max-per-garment 30000
 """
 
 import argparse
@@ -54,7 +50,7 @@ MALE_TITLE_TOKENS = {"men", "mens", "men's", "male", "boy", "boys"}
 
 
 # ──────────────────────────────────────────────────────────────
-# Quality Gates (unchanged from v2)
+# Quality Gates (unchanged)
 # ──────────────────────────────────────────────────────────────
 
 class AttributeVerifier:
@@ -129,75 +125,49 @@ class AttributeVerifier:
 
 
 # ──────────────────────────────────────────────────────────────
-# AmazonCatalogIndex v3 — FAISS ANN
+# AmazonCatalogIndex v4 — per-garment sub-index
 # ──────────────────────────────────────────────────────────────
 
 class AmazonCatalogIndex:
     """
-    FAISS inner-product index over FashionSigLIP title embeddings.
+    Per-garment sub-index FAISS 검색.
 
-    오프라인 빌드: scripts/build_faiss_index.py
-    온라인 검색:   self.search(query_text, top_k)
+    인덱스 파일 구조 ($FAISS_DIR/):
+      blazer/  index.faiss + ids.json
+      coat/    index.faiss + ids.json
+      ...      (build_faiss_index.py Stage 0–3으로 사전 빌드)
 
-    인덱스 파일 구조 ($AMAZON_META_DIR/faiss/):
-      amazon_fashion.index  — FAISS IndexFlatIP (L2-normalized)
-      amazon_fashion_ids.json — [{"title":..., "image_url":..., "asin":..., ...}, ...]
+    search() 흐름:
+      1. plan attributes에서 garment_key 추출
+      2. $FAISS_DIR/{garment_key}/index.faiss 로드 (lazy)
+      3. 없으면 전체 인덱스 fallback (하위 호환)
     """
 
-    _FAISS_SUBDIR = "faiss"
-    _INDEX_FILE = "amazon_fashion.index"
-    _IDS_FILE = "amazon_fashion_ids.json"
-
     def __init__(self, meta_dir=None):
-        base = Path(
+        self._faiss_dir = Path(
             meta_dir
             or os.environ.get("AMAZON_META_DIR", "/home/hjhj6411/fashion/data/amazon")
-        )
-        self._faiss_dir = base / self._FAISS_SUBDIR
-        self._index = None
-        self._items = []       # list of dict: {title, image_url, asin, ...}
+        ) / "faiss"
+        self._garment_indexes: dict[str, tuple] = {}   # key → (faiss_index, items)
+        self._fallback_index = None
+        self._fallback_items = []
         self._model = None
         self._tokenizer = None
         self._device = None
-        self._loaded = False
+        self._model_loaded = False
 
     # ------------------------------------------------------------------
-    # Internal: lazy load index + model
+    # Internal loaders
     # ------------------------------------------------------------------
 
-    def _ensure_loaded(self):
-        if self._loaded:
+    def _load_model(self):
+        if self._model_loaded:
             return
-        self._loaded = True
-
-        index_path = self._faiss_dir / self._INDEX_FILE
-        ids_path = self._faiss_dir / self._IDS_FILE
-
-        if not index_path.exists() or not ids_path.exists():
-            print(
-                f"  [AmazonCatalogIndex] FAISS index not found at {self._faiss_dir}.\n"
-                f"  Run: python scripts/build_faiss_index.py --meta-dir $AMAZON_META_DIR\n"
-                f"  Falling back to empty index."
-            )
-            return
-
-        try:
-            import faiss
-            self._index = faiss.read_index(str(index_path))
-            with open(ids_path, encoding="utf-8") as f:
-                self._items = json.load(f)
-            print(f"  [AmazonCatalogIndex] Loaded {len(self._items):,} items from FAISS index.")
-        except Exception as e:
-            print(f"  [AmazonCatalogIndex] Failed to load index: {e}")
-            return
-
-        self._load_clip()
-
-    def _load_clip(self):
+        self._model_loaded = True
         try:
             import torch
             import open_clip
-            self._device = "cpu" #"cuda" if __import__("torch").cuda.is_available() else "cpu"
+            self._device = "cpu"
             model, _, _ = open_clip.create_model_and_transforms(
                 "hf-hub:Marqo/marqo-fashionSigLIP")
             self._model = model.to(self._device).eval()
@@ -206,34 +176,100 @@ class AmazonCatalogIndex:
         except Exception as e:
             print(f"  [AmazonCatalogIndex] FashionSigLIP unavailable: {e}")
 
+    def _load_garment_index(self, garment_key: str) -> bool:
+        """garment sub-index lazy load. 성공 시 True."""
+        if garment_key in self._garment_indexes:
+            return True
+
+        index_path = self._faiss_dir / garment_key / "index.faiss"
+        ids_path = self._faiss_dir / garment_key / "ids.json"
+
+        if not index_path.exists() or not ids_path.exists():
+            return False
+
+        try:
+            import faiss
+            idx = faiss.read_index(str(index_path))
+            with open(ids_path, encoding="utf-8") as f:
+                items = json.load(f)
+            self._garment_indexes[garment_key] = (idx, items)
+            print(f"  [AmazonCatalogIndex] Loaded sub-index [{garment_key}]: "
+                  f"{len(items):,} items")
+            return True
+        except Exception as e:
+            print(f"  [AmazonCatalogIndex] Failed to load [{garment_key}]: {e}")
+            return False
+
+    def _load_fallback_index(self):
+        """v3 스타일 전체 인덱스 fallback (하위 호환)."""
+        if self._fallback_index is not None:
+            return
+        index_path = self._faiss_dir / "amazon_fashion.index"
+        ids_path = self._faiss_dir / "amazon_fashion_ids.json"
+        if not index_path.exists():
+            return
+        try:
+            import faiss
+            self._fallback_index = faiss.read_index(str(index_path))
+            with open(ids_path, encoding="utf-8") as f:
+                self._fallback_items = json.load(f)
+            print(f"  [AmazonCatalogIndex] Fallback index loaded: "
+                  f"{len(self._fallback_items):,} items")
+        except Exception as e:
+            print(f"  [AmazonCatalogIndex] Fallback load failed: {e}")
+
+    def _encode_query(self, query: str) -> "np.ndarray | None":
+        """텍스트 쿼리 → L2-normalized float32 embedding."""
+        self._load_model()
+        if self._model is None:
+            return None
+        import torch
+        import faiss
+        tokens = self._tokenizer([query]).to(self._device)
+        with torch.no_grad():
+            q_emb = self._model.encode_text(tokens, normalize=True)\
+                               .cpu().numpy().astype("float32")
+        faiss.normalize_L2(q_emb)
+        return q_emb
+
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------
 
-    def search(self, query: str, top_k: int = 20) -> list[dict]:
+    def search(self, query: str, top_k: int = 20,
+               garment_key: str | None = None) -> list[dict]:
         """
-        텍스트 쿼리 → FashionSigLIP 인코딩 → FAISS ANN → top_k items.
-        인덱스/모델 미로드 시 빈 리스트 반환 (Google fallback이 처리).
+        텍스트 쿼리 → FAISS ANN → top_k items.
+
+        garment_key가 주어지면 해당 sub-index에서 검색 (Stage 0–3 필터 통과 풀).
+        없으면 전체 인덱스 fallback.
         """
-        self._ensure_loaded()
-        if self._index is None or self._model is None or not self._items:
+        q_emb = self._encode_query(query)
+        if q_emb is None:
             return []
 
-        import torch
         import faiss
 
-        tokens = self._tokenizer([query]).to(self._device)
-        with torch.no_grad():
-            q_emb = self._model.encode_text(tokens, normalize=True).cpu().numpy().astype("float32")
-        faiss.normalize_L2(q_emb)
+        # sub-index 우선
+        if garment_key and self._load_garment_index(garment_key):
+            idx, items = self._garment_indexes[garment_key]
+        else:
+            self._load_fallback_index()
+            if self._fallback_index is None:
+                print(f"  [AmazonCatalogIndex] No index found for [{garment_key}] "
+                      f"and no fallback. Build index first.")
+                return []
+            idx, items = self._fallback_index, self._fallback_items
 
-        k = min(top_k, self._index.ntotal)
-        _, indices = self._index.search(q_emb, k)
-        return [self._items[i] for i in indices[0] if 0 <= i < len(self._items)]
+        k = min(top_k, idx.ntotal)
+        if k == 0:
+            return []
+        _, indices = idx.search(q_emb, k)
+        return [items[i] for i in indices[0] if 0 <= i < len(items)]
 
 
 # ──────────────────────────────────────────────────────────────
-# HomogeneityChecker (rank_candidates_by_clip 제거)
+# HomogeneityChecker (unchanged)
 # ──────────────────────────────────────────────────────────────
 
 class HomogeneityChecker:
@@ -294,7 +330,7 @@ class HomogeneityChecker:
 
 
 # ──────────────────────────────────────────────────────────────
-# Utility helpers (unchanged)
+# Utility helpers
 # ──────────────────────────────────────────────────────────────
 
 def google_image_search(query, top_k=5):
@@ -347,7 +383,7 @@ def _try_download_verified(candidates, img_path, attrs, verifier, top_n=5):
 
 
 # ──────────────────────────────────────────────────────────────
-# Per-plan collection (v2 두 브랜치 → 단일 semantic_search 흐름)
+# Per-plan collection
 # ──────────────────────────────────────────────────────────────
 
 def collect_for_plan(plan, amazon: AmazonCatalogIndex, checker: HomogeneityChecker,
@@ -390,8 +426,11 @@ def collect_for_plan(plan, amazon: AmazonCatalogIndex, checker: HomogeneityCheck
             verifications[k] = {"passes": True, "model_gender": "unclear"}
             continue
 
-        # ① FAISS semantic search (keyword filter 없음, 전체 pool)
-        cands = amazon.search(query, top_k=20)
+        # garment_key 추출 (plan attributes → sub-index 선택)
+        garment_key = attrs.get("garment_category")  # e.g. "blazer", "coat"
+
+        # ① FAISS semantic search (per-garment sub-index)
+        cands = amazon.search(query, top_k=20, garment_key=garment_key)
         ok, src_title, vr = _try_download_verified(cands, img_path, attrs, verifier, top_n=10)
         src = "amazon_semantic"
 
@@ -439,11 +478,11 @@ def collect_for_plan(plan, amazon: AmazonCatalogIndex, checker: HomogeneityCheck
 
 
 # ──────────────────────────────────────────────────────────────
-# Pipeline runner (unchanged)
+# Pipeline runner
 # ──────────────────────────────────────────────────────────────
 
 def run_pipeline(plan_path, output_path, image_root, limit=0):
-    log_step("Image Collector v3 (FAISS semantic retrieval + Google fallback)")
+    log_step("Image Collector v4 (per-garment FAISS + multi-stage filter + Google fallback)")
     plans = load_jsonl(plan_path)
     print(f"  Loaded {len(plans)} plans")
 
