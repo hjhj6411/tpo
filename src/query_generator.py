@@ -1,4 +1,6 @@
 """
+2 STAGE
+
 Query Generator v2 — Scenario-based matching.
 
 For each compatible (user, scenario, active_axis) triple:

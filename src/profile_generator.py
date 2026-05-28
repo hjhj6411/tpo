@@ -1,4 +1,6 @@
 """
+1 STAGE
+
 Profile Generator v2 — Archetype-based, backward-designed from scenarios.
 
 Instead of random sampling, profiles are constructed from 7 preference

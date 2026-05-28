@@ -10,7 +10,14 @@ Given (profile, query) with scenario and active_axis:
 TPO violation:
   - For active_axis ∈ {color, pattern}: swap garment_category to scenario incompatible
   - For active_axis = garment_category: swap color to scenario incompatible (if constrained)
-    or use a neutral fallback violation garment
+    or use liked_incompatible garment for C, disliked_incompatible for D
+
+v2.1 fix:
+  When violation_axis == active_axis (garment_category with no secondary constraint):
+  - Option C requires liked_incompatible non-empty (user likes something that is TPO-incompatible)
+    → if empty, return None (skip instance; label would be wrong)
+  - Option D requires d_val not in user's likes
+    → prefer disliked_incompat; if falling back to violation_value, verify it is not liked
 """
 
 import argparse
@@ -52,7 +59,6 @@ def _pick_violation_value(query, scenario, violation_axis, rng):
         return rng.choice(constraint["incompatible"])
     # Fallback: for garment_category, use generally informal items
     if violation_axis == "garment_category":
-        # These are almost always TPO-incompatible in formal/cold scenarios
         fallbacks = ["shorts", "tank_top", "t_shirt"]
         return rng.choice(fallbacks)
     if violation_axis == "color":
@@ -68,12 +74,12 @@ def _choose_violation_axis(active_axis, scenario):
     """Decide which axis to violate for C/D options."""
     if active_axis in ("color", "pattern"):
         return "garment_category"
-    # active_axis == garment_category → prefer color if constrained, else garment fallback
+    # active_axis == garment_category → prefer color if constrained, else pattern, else self
     if scenario.get("color") and scenario["color"].get("incompatible"):
         return "color"
     if scenario.get("pattern") and scenario["pattern"].get("incompatible"):
         return "pattern"
-    # No secondary constraint → use garment_category itself with incompatible items
+    # No secondary constraint → violation on garment_category itself
     return "garment_category"
 
 
@@ -91,7 +97,11 @@ def attrs_to_search_query(attrs):
 
 
 def plan_options_for_query(profile, query):
-    """Build deterministic 4-option plan from scenario constraints."""
+    """
+    Build deterministic 4-option plan from scenario constraints.
+
+    Returns None if a valid 4-option 2×2 structure cannot be constructed.
+    """
     scenario = get_scenario_by_id(query["scenario_id"])
     if scenario is None:
         return None
@@ -100,64 +110,107 @@ def plan_options_for_query(profile, query):
     fixed_attrs = dict(query["fixed_attrs"])
     rng = random.Random(abs(hash(query["query_id"])) % 100000)
 
-    # Pick A and B values on the active axis
-    liked_v = _pick_liked_value(query, rng)
+    # ── Pick A and B values on the active axis ────────────
+    liked_v   = _pick_liked_value(query, rng)
     nonpref_v = _pick_nonpreferred_value(query, rng)
     if liked_v is None or nonpref_v is None:
         return None
     if liked_v == nonpref_v:
         return None
 
-    # Determine violation axis and violation value
+    # ── Determine violation axis and mode ────────────────
     violation_axis = _choose_violation_axis(active_axis, scenario)
-    violation_value = _pick_violation_value(query, scenario, violation_axis, rng)
-    if violation_value is None:
-        return None
 
-    # Build A/B/C/D attribute dicts
-    attrs_a = {**fixed_attrs, active_axis: liked_v}
-    attrs_b = {**fixed_attrs, active_axis: nonpref_v}
+    # ── Build C/D depending on whether violation_axis == active_axis ──
+    if violation_axis != active_axis:
+        # ── Normal case: C/D use different axis for violation ──
+        # e.g. active=color, violation=garment_category
+        violation_value = _pick_violation_value(query, scenario, violation_axis, rng)
+        if violation_value is None:
+            return None
 
-    if violation_axis == active_axis:
-        # For garment_category with no secondary color/pattern constraint:
-        # C/D use liked/nonpref garment but itself is from incompatible list
-        # This shouldn't happen normally — but handle gracefully
-        liked_incompat = query.get("liked_incompatible", [])
+        attrs_a = {**fixed_attrs, active_axis: liked_v}
+        attrs_b = {**fixed_attrs, active_axis: nonpref_v}
+        attrs_c = {**fixed_attrs, active_axis: liked_v,   violation_axis: violation_value}
+        attrs_d = {**fixed_attrs, active_axis: nonpref_v, violation_axis: violation_value}
+
+    else:
+        # ── Same-axis case: active_axis == violation_axis == garment_category ──
+        # C needs a garment the user LIKES that is in scenario's INCOMPATIBLE set.
+        # D needs a garment the user does NOT LIKE (disliked or neutral) that is incompatible.
+        liked_incompat    = query.get("liked_incompatible", [])
         disliked_incompat = query.get("disliked_incompatible", [])
-        c_val = rng.choice(liked_incompat) if liked_incompat else violation_value
-        d_val = rng.choice(disliked_incompat) if disliked_incompat else violation_value
+
+        # --- Guard: C requires liked_incompat non-empty ---
+        # Without it, C would use a non-liked garment → label would be "neither" not
+        # "preference_only", breaking the 2×2 structure.
+        if not liked_incompat:
+            return None
+
+        c_val = rng.choice(liked_incompat)
+
+        # --- D: prefer disliked_incompat; fallback to scenario incompatible ---
+        # but ensure d_val is NOT in the user's likes (would make D preference_only).
+        user_likes_set = set(query.get("liked_compatible", []) + liked_incompat)
+
+        if disliked_incompat:
+            d_candidates = disliked_incompat
+        else:
+            # Use full scenario incompatible, but exclude anything user likes
+            sc_incompat = scenario.get(active_axis, {}).get("incompatible", [])
+            d_candidates = [v for v in sc_incompat if v not in user_likes_set]
+
+        if not d_candidates:
+            return None
+
+        # Shuffle for reproducibility
+        d_candidates = sorted(d_candidates)
+        rng.shuffle(d_candidates)
+        d_val = d_candidates[0]
+
+        # c_val and d_val must differ
+        if c_val == d_val:
+            remaining = [v for v in d_candidates if v != c_val]
+            if not remaining:
+                return None
+            d_val = remaining[0]
+
+        violation_value = d_val  # record for plan metadata
+
+        attrs_a = {**fixed_attrs, active_axis: liked_v}
+        attrs_b = {**fixed_attrs, active_axis: nonpref_v}
         attrs_c = {**fixed_attrs, active_axis: c_val}
         attrs_d = {**fixed_attrs, active_axis: d_val}
-    else:
-        attrs_c = {**fixed_attrs, active_axis: liked_v,
-                   violation_axis: violation_value}
-        attrs_d = {**fixed_attrs, active_axis: nonpref_v,
-                   violation_axis: violation_value}
 
-    label_map = {"A": "tpo_and_preference", "B": "tpo_only",
-                 "C": "preference_only",     "D": "neither"}
+    # ── Assemble plan ─────────────────────────────────────
+    label_map = {
+        "A": "tpo_and_preference",
+        "B": "tpo_only",
+        "C": "preference_only",
+        "D": "neither",
+    }
     options = {}
     for k, attrs in [("A", attrs_a), ("B", attrs_b),
                      ("C", attrs_c), ("D", attrs_d)]:
         options[k] = {
-            "label": label_map[k],
-            "attributes": attrs,
+            "label":        label_map[k],
+            "attributes":   attrs,
             "search_query": attrs_to_search_query(attrs),
-            "rationale": _rationale(k, active_axis, attrs, violation_axis),
+            "rationale":    _rationale(k, active_axis, attrs, violation_axis),
         }
 
     return {
-        "query_id": query["query_id"],
-        "user_id": query["user_id"],
-        "scenario_id": query["scenario_id"],
-        "domain": "fashion",
-        "query_type": query["query_type"],
-        "active_axis": active_axis,
-        "fixed_attrs": fixed_attrs,
+        "query_id":       query["query_id"],
+        "user_id":        query["user_id"],
+        "scenario_id":    query["scenario_id"],
+        "domain":         "fashion",
+        "query_type":     query["query_type"],
+        "active_axis":    active_axis,
+        "fixed_attrs":    fixed_attrs,
         "violation_axis": violation_axis,
         "violation_value": violation_value,
-        "main_category": fixed_attrs.get("garment_category"),
-        "options": options,
+        "main_category":  fixed_attrs.get("garment_category"),
+        "options":        options,
     }
 
 
@@ -168,33 +221,39 @@ def _rationale(k, active_axis, attrs, violation_axis):
     if k == "B":
         return f"non-preferred {active_axis}={val}, TPO-compatible"
     if k == "C":
-        return (f"liked {active_axis}={val}, but {violation_axis}="
-                f"{attrs.get(violation_axis)} violates TPO")
+        vax_val = attrs.get(violation_axis)
+        if violation_axis == active_axis:
+            return f"liked {active_axis}={val}, but this garment violates TPO"
+        return f"liked {active_axis}={val}, but {violation_axis}={vax_val} violates TPO"
     if k == "D":
-        return (f"non-preferred {active_axis}={val}, AND {violation_axis}="
-                f"{attrs.get(violation_axis)} violates TPO")
+        vax_val = attrs.get(violation_axis)
+        if violation_axis == active_axis:
+            return f"non-preferred {active_axis}={val}, AND this garment violates TPO"
+        return (f"non-preferred {active_axis}={val}, "
+                f"AND {violation_axis}={vax_val} violates TPO")
     return ""
 
 
 def run_pipeline(profile_path, query_path, output_path, force=False, limit=0):
     log_step("Option Planner v2 (scenario-based deterministic)")
     profiles = {p["user_id"]: p for p in load_jsonl(profile_path)}
-    queries = load_jsonl(query_path)
+    queries  = load_jsonl(query_path)
     print(f"  {len(profiles)} profiles, {len(queries)} queries")
 
     if output_path.exists() and not force:
         existing = load_jsonl(output_path)
-        done = {p["query_id"] for p in existing}
+        done  = {p["query_id"] for p in existing}
         plans = existing
-        todo = [q for q in queries if q["query_id"] not in done]
+        todo  = [q for q in queries if q["query_id"] not in done]
         print(f"  Resuming: {len(done)} already planned")
     else:
         plans = []
-        todo = queries
+        todo  = queries
     if limit > 0:
         todo = todo[:limit]
 
     n_fail = 0
+    n_skip_no_liked_incompat = 0
     for i, query in enumerate(todo):
         if query["user_id"] not in profiles:
             continue
@@ -205,6 +264,10 @@ def run_pipeline(profile_path, query_path, output_path, force=False, limit=0):
             plan = plan_options_for_query(prof, query)
             if plan is None:
                 n_fail += 1
+                # Count the specific skip reason
+                if (query.get("active_axis") == "garment_category"
+                        and not query.get("liked_incompatible")):
+                    n_skip_no_liked_incompat += 1
                 continue
             plans.append(plan)
             if (i + 1) % 100 == 0:
@@ -214,19 +277,22 @@ def run_pipeline(profile_path, query_path, output_path, force=False, limit=0):
             n_fail += 1
 
     save_jsonl(plans, output_path)
-    print(f"\n  ✓ Saved {len(plans)} plans, {n_fail} failed")
+    print(f"\n  ✓ Saved {len(plans)} plans")
+    print(f"  Skipped: {n_fail} total "
+          f"(of which {n_skip_no_liked_incompat} skipped: "
+          f"same-axis, liked_incompat empty)")
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--profile_path", type=Path,
                         default=PROFILES_DIR / "profiles.jsonl")
-    parser.add_argument("--query_path", type=Path,
+    parser.add_argument("--query_path",   type=Path,
                         default=QUERIES_DIR / "queries.jsonl")
-    parser.add_argument("--output", type=Path,
+    parser.add_argument("--output",       type=Path,
                         default=OPTIONS_DIR / "option_plans.jsonl")
-    parser.add_argument("--force", action="store_true")
-    parser.add_argument("--limit", type=int, default=0)
+    parser.add_argument("--force",  action="store_true")
+    parser.add_argument("--limit",  type=int, default=0)
     args = parser.parse_args()
     run_pipeline(args.profile_path, args.query_path, args.output,
                  args.force, args.limit)

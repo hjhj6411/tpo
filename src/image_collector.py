@@ -1,12 +1,23 @@
 """
-Image Collector v2 — Parent-ASIN Variant Search.
-(Unchanged from v1 except imports point to new config layout)
+Image Collector v3 — FAISS Semantic Retrieval (FashionSigLIP primary).
 
-Quality gates:
+Changes from v2:
+  - AmazonCatalogIndex: keyword title_search / variant_search 제거
+    → FAISS inner-product ANN 검색으로 교체
+  - HomogeneityChecker.rank_candidates_by_clip 제거 (FAISS가 이미 의미 정렬)
+  - collect_for_plan: variant/title 두 브랜치 → semantic_search 단일 흐름
+  - Google fallback은 그대로 유지
+
+Quality gates (unchanged):
   1. AttributeVerifier: VLM closed-set check
   2. SetConsistencyVerifier: 4-option gender + framing consistency
   3. HomogeneityChecker: FashionSigLIP pairwise distance
   4. SSIM for color/pattern variants
+
+오프라인 인덱스 빌드:
+  python scripts/build_faiss_index.py \
+    --meta-dir $AMAZON_META_DIR \
+    --output-dir $AMAZON_META_DIR/faiss
 """
 
 import argparse
@@ -15,7 +26,6 @@ import json
 import os
 import sys
 import time
-from collections import defaultdict
 from pathlib import Path
 
 import numpy as np
@@ -26,6 +36,7 @@ from .utils import save_jsonl, load_jsonl, log_step, call_vlm, parse_json_respon
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from configs.config import IMAGES_DIR, OPTIONS_DIR, IMAGE_COLLECTION
+
 
 KNOWN_COLORS = [
     "red", "blue", "green", "yellow", "orange", "purple", "pink",
@@ -41,6 +52,10 @@ KNOWN_PATTERNS = [
 FEMININE_GARMENTS = {"blouse", "dress", "skirt", "sundress", "camisole"}
 MALE_TITLE_TOKENS = {"men", "mens", "men's", "male", "boy", "boys"}
 
+
+# ──────────────────────────────────────────────────────────────
+# Quality Gates (unchanged from v2)
+# ──────────────────────────────────────────────────────────────
 
 class AttributeVerifier:
     """VLM closed-set verification."""
@@ -113,109 +128,113 @@ class AttributeVerifier:
                 "note": "" if consistent else f"mixed genders: {sorted(unique)}"}
 
 
+# ──────────────────────────────────────────────────────────────
+# AmazonCatalogIndex v3 — FAISS ANN
+# ──────────────────────────────────────────────────────────────
+
 class AmazonCatalogIndex:
-    def __init__(self, index_path=None):
-        self.index_path = index_path or Path(
-            os.environ.get("AMAZON_META_DIR", "/home/hjhj6411/fashion/data/amazon"))
+    """
+    FAISS inner-product index over FashionSigLIP title embeddings.
+
+    오프라인 빌드: scripts/build_faiss_index.py
+    온라인 검색:   self.search(query_text, top_k)
+
+    인덱스 파일 구조 ($AMAZON_META_DIR/faiss/):
+      amazon_fashion.index  — FAISS IndexFlatIP (L2-normalized)
+      amazon_fashion_ids.json — [{"title":..., "image_url":..., "asin":..., ...}, ...]
+    """
+
+    _FAISS_SUBDIR = "faiss"
+    _INDEX_FILE = "amazon_fashion.index"
+    _IDS_FILE = "amazon_fashion_ids.json"
+
+    def __init__(self, meta_dir=None):
+        base = Path(
+            meta_dir
+            or os.environ.get("AMAZON_META_DIR", "/home/hjhj6411/fashion/data/amazon")
+        )
+        self._faiss_dir = base / self._FAISS_SUBDIR
+        self._index = None
+        self._items = []       # list of dict: {title, image_url, asin, ...}
+        self._model = None
+        self._tokenizer = None
+        self._device = None
         self._loaded = False
-        self._items = []
-        self._by_parent = defaultdict(list)
+
+    # ------------------------------------------------------------------
+    # Internal: lazy load index + model
+    # ------------------------------------------------------------------
 
     def _ensure_loaded(self):
         if self._loaded:
             return
         self._loaded = True
-        if not self.index_path.exists():
-            print(f"  Amazon catalog not found at {self.index_path}, skipping.")
+
+        index_path = self._faiss_dir / self._INDEX_FILE
+        ids_path = self._faiss_dir / self._IDS_FILE
+
+        if not index_path.exists() or not ids_path.exists():
+            print(
+                f"  [AmazonCatalogIndex] FAISS index not found at {self._faiss_dir}.\n"
+                f"  Run: python scripts/build_faiss_index.py --meta-dir $AMAZON_META_DIR\n"
+                f"  Falling back to empty index."
+            )
             return
-        meta_files = list(self.index_path.glob("meta_*.jsonl"))
-        if not meta_files:
-            meta_files = list(self.index_path.glob("*.jsonl"))
-        print(f"  Indexing {len(meta_files)} Amazon meta files...")
-        n = 0
-        for mf in meta_files:
-            try:
-                with open(mf, encoding="utf-8") as f:
-                    for line in f:
-                        try:
-                            item = json.loads(line)
-                            title = (item.get("title") or "").lower()
-                            images = item.get("images") or item.get("image") or []
-                            img_url = None
-                            if isinstance(images, list) and images:
-                                first = images[0]
-                                img_url = (first.get("large") or first.get("hi_res")
-                                           or first.get("thumb")) if isinstance(first, dict) else (first if isinstance(first, str) else None)
-                            elif isinstance(images, str):
-                                img_url = images
-                            parent = item.get("parent_asin")
-                            if title and img_url:
-                                rec = {"title": title, "image_url": img_url,
-                                       "category": item.get("main_category", ""),
-                                       "parent_asin": parent, "asin": item.get("asin")}
-                                self._items.append(rec)
-                                if parent:
-                                    self._by_parent[parent].append(rec)
-                                n += 1
-                        except Exception:
-                            continue
-            except Exception as e:
-                print(f"    Skipped {mf.name}: {e}")
-        print(f"  Indexed {n} items, {len(self._by_parent)} parent groups")
 
-    def title_search(self, query, top_k=10):
+        try:
+            import faiss
+            self._index = faiss.read_index(str(index_path))
+            with open(ids_path, encoding="utf-8") as f:
+                self._items = json.load(f)
+            print(f"  [AmazonCatalogIndex] Loaded {len(self._items):,} items from FAISS index.")
+        except Exception as e:
+            print(f"  [AmazonCatalogIndex] Failed to load index: {e}")
+            return
+
+        self._load_clip()
+
+    def _load_clip(self):
+        try:
+            import torch
+            import open_clip
+            self._device = "cpu" #"cuda" if __import__("torch").cuda.is_available() else "cpu"
+            model, _, _ = open_clip.create_model_and_transforms(
+                "hf-hub:Marqo/marqo-fashionSigLIP")
+            self._model = model.to(self._device).eval()
+            self._tokenizer = open_clip.get_tokenizer(
+                "hf-hub:Marqo/marqo-fashionSigLIP")
+        except Exception as e:
+            print(f"  [AmazonCatalogIndex] FashionSigLIP unavailable: {e}")
+
+    # ------------------------------------------------------------------
+    # Public API
+    # ------------------------------------------------------------------
+
+    def search(self, query: str, top_k: int = 20) -> list[dict]:
+        """
+        텍스트 쿼리 → FashionSigLIP 인코딩 → FAISS ANN → top_k items.
+        인덱스/모델 미로드 시 빈 리스트 반환 (Google fallback이 처리).
+        """
         self._ensure_loaded()
-        if not self._items:
+        if self._index is None or self._model is None or not self._items:
             return []
-        tokens = [t.lower() for t in query.split() if len(t) > 2]
-        if not tokens:
-            return []
-        garment_tokens = {
-            "blouse", "shirt", "jacket", "coat", "dress", "skirt",
-            "shorts", "pants", "jeans", "hoodie", "sweater", "blazer",
-            "tank", "t-shirt", "tshirt", "windbreaker", "parka", "trench",
-            "suit", "cardigan", "vest", "leggings",
-        }
-        required = [t for t in tokens if t in garment_tokens]
-        is_feminine_query = any(r in FEMININE_GARMENTS for r in required)
-        scored = []
-        for it in self._items:
-            if required and not any(r in it["title"] for r in required):
-                continue
-            if is_feminine_query:
-                if set(it["title"].split()) & MALE_TITLE_TOKENS:
-                    continue
-            score = sum(1 for t in tokens if t in it["title"])
-            if score >= max(1, len(tokens) // 2):
-                scored.append((score, it))
-        scored.sort(key=lambda x: -x[0])
-        return [s[1] for s in scored[:top_k]]
 
-    def variant_search(self, anchor_query, variant_tokens, top_k_groups=3):
-        self._ensure_loaded()
-        if not self._items or not self._by_parent:
-            return []
-        anchor_tokens = [t.lower() for t in anchor_query.split() if len(t) > 2]
-        var_lower = [v.lower() for v in variant_tokens]
-        candidate_parents = []
-        for parent, group in self._by_parent.items():
-            if len(group) < 2:
-                continue
-            scored = [(sum(1 for t in anchor_tokens if t in it["title"]), it) for it in group]
-            scored.sort(key=lambda x: -x[0])
-            if scored[0][0] < max(1, len(anchor_tokens) // 2):
-                continue
-            covered = {}
-            for vt in var_lower:
-                for _, it in scored:
-                    if vt in it["title"]:
-                        covered[vt] = it
-                        break
-            if len(covered) >= 2:
-                candidate_parents.append((len(covered), list(covered.values())))
-        candidate_parents.sort(key=lambda x: -x[0])
-        return [g[1] for g in candidate_parents[:top_k_groups]]
+        import torch
+        import faiss
 
+        tokens = self._tokenizer([query]).to(self._device)
+        with torch.no_grad():
+            q_emb = self._model.encode_text(tokens, normalize=True).cpu().numpy().astype("float32")
+        faiss.normalize_L2(q_emb)
+
+        k = min(top_k, self._index.ntotal)
+        _, indices = self._index.search(q_emb, k)
+        return [self._items[i] for i in indices[0] if 0 <= i < len(self._items)]
+
+
+# ──────────────────────────────────────────────────────────────
+# HomogeneityChecker (rank_candidates_by_clip 제거)
+# ──────────────────────────────────────────────────────────────
 
 class HomogeneityChecker:
     def __init__(self):
@@ -235,42 +254,21 @@ class HomogeneityChecker:
             self._clip, _, self._proc = open_clip.create_model_and_transforms(
                 "hf-hub:Marqo/marqo-fashionSigLIP")
             self._clip = self._clip.to(self._device).eval()
-            self._tokenizer = open_clip.get_tokenizer("hf-hub:Marqo/marqo-fashionSigLIP")
+            self._tokenizer = open_clip.get_tokenizer(
+                "hf-hub:Marqo/marqo-fashionSigLIP")
             self._torch = torch
         except Exception as e:
             print(f"  CLIP unavailable: {e}")
             self._clip = "DISABLED"
-
-    def rank_candidates_by_clip(self, candidates, attrs):
-        self._ensure_clip()
-        if self._clip == "DISABLED" or not candidates:
-            return candidates
-        try:
-            query = " ".join(filter(None, [
-                attrs.get("color", ""), attrs.get("pattern", ""),
-                attrs.get("garment_category", "").replace("_", " "),
-            ])).strip()
-            text_tokens = self._tokenizer([query]).to(self._device)
-            with self._torch.no_grad():
-                text_feat = self._clip.encode_text(text_tokens, normalize=True)
-            titles = [c.get("title", "")[:77] for c in candidates]
-            title_tokens = self._tokenizer(titles).to(self._device)
-            with self._torch.no_grad():
-                title_feats = self._clip.encode_text(title_tokens, normalize=True)
-            sims = (title_feats @ text_feat.T).squeeze(-1).cpu().numpy()
-            if sims.ndim == 0:
-                sims = np.array([float(sims)])
-            ranked = sorted(zip(candidates, sims.tolist()), key=lambda x: -x[1])
-            return [c for c, _ in ranked]
-        except Exception:
-            return candidates
 
     def clip_distances(self, image_paths):
         self._ensure_clip()
         if self._clip == "DISABLED" or len(image_paths) < 2:
             return {"mean_distance": 0.0, "max_distance": 0.0, "passed": True, "note": "skipped"}
         try:
-            imgs = self._torch.stack([self._proc(Image.open(p).convert("RGB")) for p in image_paths]).to(self._device)
+            imgs = self._torch.stack(
+                [self._proc(Image.open(p).convert("RGB")) for p in image_paths]
+            ).to(self._device)
             with self._torch.no_grad():
                 feats = self._clip.encode_image(imgs, normalize=True)
             sims = (feats @ feats.T).cpu().numpy()
@@ -279,9 +277,11 @@ class HomogeneityChecker:
             pairs = [dists[i, j] for i in range(n) for j in range(i + 1, n)]
             mean_d, max_d = float(np.mean(pairs)), float(np.max(pairs))
             th = IMAGE_COLLECTION["max_clip_distance_within_options"]
-            return {"mean_distance": mean_d, "max_distance": max_d, "passed": max_d <= th, "threshold": th}
+            return {"mean_distance": mean_d, "max_distance": max_d,
+                    "passed": max_d <= th, "threshold": th}
         except Exception as e:
-            return {"mean_distance": 0.0, "max_distance": 0.0, "passed": True, "note": f"failed: {e}"}
+            return {"mean_distance": 0.0, "max_distance": 0.0,
+                    "passed": True, "note": f"failed: {e}"}
 
     def ssim_pair(self, p1, p2):
         try:
@@ -293,16 +293,22 @@ class HomogeneityChecker:
             return -1.0
 
 
+# ──────────────────────────────────────────────────────────────
+# Utility helpers (unchanged)
+# ──────────────────────────────────────────────────────────────
+
 def google_image_search(query, top_k=5):
     api_key = os.environ.get("GOOGLE_API_KEY")
     cse_id = os.environ.get("GOOGLE_CSE_ID")
     if not api_key or not cse_id:
         return []
     try:
-        resp = requests.get("https://www.googleapis.com/customsearch/v1",
-                            params={"key": api_key, "cx": cse_id, "q": query,
-                                    "searchType": "image", "num": min(top_k, 10),
-                                    "safe": "active", "imgSize": "medium"}, timeout=20)
+        resp = requests.get(
+            "https://www.googleapis.com/customsearch/v1",
+            params={"key": api_key, "cx": cse_id, "q": query,
+                    "searchType": "image", "num": min(top_k, 10),
+                    "safe": "active", "imgSize": "medium"},
+            timeout=20)
         resp.raise_for_status()
         return [{"image_url": it.get("link"), "title": it.get("title", ""),
                  "source": "google"} for it in resp.json().get("items", [])]
@@ -340,101 +346,111 @@ def _try_download_verified(candidates, img_path, attrs, verifier, top_n=5):
     return False, "", {}
 
 
-def collect_for_plan(plan, amazon, checker, verifier, out_root):
+# ──────────────────────────────────────────────────────────────
+# Per-plan collection (v2 두 브랜치 → 단일 semantic_search 흐름)
+# ──────────────────────────────────────────────────────────────
+
+def collect_for_plan(plan, amazon: AmazonCatalogIndex, checker: HomogeneityChecker,
+                     verifier: AttributeVerifier, out_root: Path):
     query_id = plan["query_id"]
     out_dir = out_root / query_id
     out_dir.mkdir(parents=True, exist_ok=True)
-    result = {"query_id": query_id, "user_id": plan["user_id"],
-              "domain": "fashion", "active_axis": plan["active_axis"],
-              "main_category": plan.get("main_category"),
-              "options": {}, "all_collected": False,
-              "homogeneity": None, "structure_preserved": None, "set_consistency": None}
+
+    result = {
+        "query_id": query_id,
+        "user_id": plan["user_id"],
+        "domain": "fashion",
+        "active_axis": plan["active_axis"],
+        "main_category": plan.get("main_category"),
+        "options": {},
+        "all_collected": False,
+        "homogeneity": None,
+        "structure_preserved": None,
+        "set_consistency": None,
+    }
+
     active_axis = plan["active_axis"]
     image_paths = []
-    used_variant = False
     verifications = {}
 
-    # Variant search for color/pattern
-    if active_axis in ("color", "pattern"):
-        a_attrs = plan["options"]["A"]["attributes"]
-        anchor = a_attrs.get("garment_category", "").replace("_", " ")
-        var_tokens = [a_attrs.get(active_axis, ""),
-                      plan["options"]["B"]["attributes"].get(active_axis, "")]
-        groups = amazon.variant_search(anchor, var_tokens, top_k_groups=2)
-        if groups:
-            group = groups[0]
-            for k in "ABCD":
-                opt = plan["options"][k]
-                target_v = opt["attributes"][active_axis]
-                match = next((it for it in group if target_v in it["title"]), None)
-                if match:
-                    img_path = out_dir / f"{k}.jpg"
-                    if download_image(match["image_url"], img_path):
-                        vr = verifier.verify(img_path, opt["attributes"])
-                        if vr["passes"]:
-                            result["options"][k] = {
-                                "image_path": str(img_path), "source": "amazon_variant",
-                                "search_query": opt["search_query"],
-                                "source_title": match.get("title", "")[:100],
-                                "verification": vr}
-                            image_paths.append(img_path)
-                            verifications[k] = vr
-                            used_variant = True
-                        else:
-                            img_path.unlink(missing_ok=True)
-
-    # Title search fallback
     for k in "ABCD":
-        if k in result["options"]:
-            continue
         opt = plan["options"][k]
         attrs = opt["attributes"]
         query = opt["search_query"]
         img_path = out_dir / f"{k}.jpg"
+
+        # 캐시 히트
         if img_path.exists():
             image_paths.append(img_path)
-            result["options"][k] = {"image_path": str(img_path), "source": "cached",
-                                    "search_query": query}
+            result["options"][k] = {
+                "image_path": str(img_path),
+                "source": "cached",
+                "search_query": query,
+            }
             verifications[k] = {"passes": True, "model_gender": "unclear"}
             continue
-        cands = amazon.title_search(query, top_k=15)
-        cands = checker.rank_candidates_by_clip(cands, attrs)
-        ok, src_title, vr = _try_download_verified(cands, img_path, attrs, verifier, 8)
+
+        # ① FAISS semantic search (keyword filter 없음, 전체 pool)
+        cands = amazon.search(query, top_k=20)
+        ok, src_title, vr = _try_download_verified(cands, img_path, attrs, verifier, top_n=10)
+        src = "amazon_semantic"
+
+        # ② Google fallback
         if not ok:
             gcands = google_image_search(query, top_k=5)
             ok, src_title, vr = _try_download_verified(gcands, img_path, attrs, verifier, 5)
             src = "google" if ok else "FAILED"
-        else:
-            src = "amazon_title"
+
         if ok:
-            result["options"][k] = {"image_path": str(img_path), "source": src,
-                                    "search_query": query, "source_title": src_title, "verification": vr}
+            result["options"][k] = {
+                "image_path": str(img_path),
+                "source": src,
+                "search_query": query,
+                "source_title": src_title,
+                "verification": vr,
+            }
             image_paths.append(img_path)
             verifications[k] = vr
         else:
-            result["options"][k] = {"image_path": None, "source": "FAILED", "search_query": query}
+            result["options"][k] = {
+                "image_path": None,
+                "source": "FAILED",
+                "search_query": query,
+            }
 
     result["all_collected"] = len(image_paths) == 4
-    result["used_variant_search"] = used_variant
+
     if result["all_collected"]:
         result["set_consistency"] = verifier.check_set_consistency(verifications)
         result["homogeneity"] = checker.clip_distances(image_paths)
         if active_axis in ("color", "pattern"):
-            ssim_val = checker.ssim_pair(Path(result["options"]["A"]["image_path"]),
-                                         Path(result["options"]["B"]["image_path"]))
+            ssim_val = checker.ssim_pair(
+                Path(result["options"]["A"]["image_path"]),
+                Path(result["options"]["B"]["image_path"]),
+            )
             th = IMAGE_COLLECTION["min_ssim_for_color_variants"]
-            result["structure_preserved"] = {"ssim_A_vs_B": ssim_val, "threshold": th,
-                                             "passed": (ssim_val < 0) or (ssim_val >= th)}
+            result["structure_preserved"] = {
+                "ssim_A_vs_B": ssim_val,
+                "threshold": th,
+                "passed": (ssim_val < 0) or (ssim_val >= th),
+            }
+
     return result
 
 
+# ──────────────────────────────────────────────────────────────
+# Pipeline runner (unchanged)
+# ──────────────────────────────────────────────────────────────
+
 def run_pipeline(plan_path, output_path, image_root, limit=0):
-    log_step("Image Collector v2 (parent-ASIN variant + fallback)")
+    log_step("Image Collector v3 (FAISS semantic retrieval + Google fallback)")
     plans = load_jsonl(plan_path)
     print(f"  Loaded {len(plans)} plans")
+
     amazon = AmazonCatalogIndex()
     checker = HomogeneityChecker()
     verifier = AttributeVerifier()
+
     if output_path.exists():
         existing = load_jsonl(output_path)
         done = {r["query_id"] for r in existing}
@@ -444,8 +460,10 @@ def run_pipeline(plan_path, output_path, image_root, limit=0):
     else:
         results = []
         todo = plans
+
     if limit > 0:
         todo = todo[:limit]
+
     for i, plan in enumerate(todo):
         print(f"  [{i+1}/{len(todo)}] {plan['query_id']} ({plan['active_axis']})")
         try:
@@ -456,6 +474,7 @@ def run_pipeline(plan_path, output_path, image_root, limit=0):
         except Exception as e:
             print(f"    ERROR: {e}")
         time.sleep(0.5)
+
     save_jsonl(results, output_path)
     n_complete = sum(1 for r in results if r["all_collected"])
     print(f"\n  ✓ Saved {len(results)}: complete={n_complete}")
