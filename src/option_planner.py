@@ -1,23 +1,21 @@
 """
-Option Planner v2 — Scenario-based deterministic 4-option construction.
+Option Planner v2 — Deterministic 2×2 option construction.
 
-Given (profile, query) with scenario and active_axis:
-  A = liked active value + fixed attrs               (tpo_and_preference)
-  B = non-preferred active value + fixed attrs        (tpo_only)
-  C = liked active value + TPO-violated fixed attr    (preference_only)
-  D = non-preferred active value + TPO-violated fixed (neither)
+Benchmark structure:
+  A: preferred   color/pattern + TPO-compatible garment   (tpo_and_preference)
+  B: nonpref     color/pattern + TPO-compatible garment   (tpo_only)
+  C: preferred   color/pattern + TPO-incompatible garment (preference_only)
+  D: nonpref     color/pattern + TPO-incompatible garment (neither)
 
-TPO violation:
-  - For active_axis ∈ {color, pattern}: swap garment_category to scenario incompatible
-  - For active_axis = garment_category: swap color to scenario incompatible (if constrained)
-    or use liked_incompatible garment for C, disliked_incompatible for D
+Rules:
+  - active_axis ∈ {color, pattern} ONLY
+  - violation_axis = garment_category ALWAYS
+  - fixed_attrs[garment_category] = user_liked ∩ TPO-compatible  → used in A/B
+  - C/D: same active value as A/B, but garment replaced with TPO-incompatible value
+  - A≠C and B≠D guaranteed by different garment values (compat vs incompat)
+  - A≠B and C≠D guaranteed by different active_axis values (liked vs nonpref)
 
-v2.1 fix:
-  When violation_axis == active_axis (garment_category with no secondary constraint):
-  - Option C requires liked_incompatible non-empty (user likes something that is TPO-incompatible)
-    → if empty, return None (skip instance; label would be wrong)
-  - Option D requires d_val not in user's likes
-    → prefer disliked_incompat; if falling back to violation_value, verify it is not liked
+No same-axis violation logic. No _choose_violation_axis. Clean 2×2.
 """
 
 import argparse
@@ -33,60 +31,36 @@ from configs.scenarios import get_scenario_by_id
 
 
 def _pick_liked_value(query, rng):
-    """Pick a liked value that is in scenario's compatible set."""
-    liked_compat = query["liked_compatible"]
-    if liked_compat:
-        return rng.choice(liked_compat)
-    return None
+    """Option A/C: pick a liked value in scenario's compatible set."""
+    pool = query["liked_compatible"]
+    return rng.choice(pool) if pool else None
 
 
-def _pick_nonpreferred_value(query, rng):
-    """Pick a non-preferred value in scenario's compatible set.
+def _pick_nonpref_value(query, rng):
+    """Option B/D: pick a non-preferred value in scenario's compatible set.
     Prefer disliked; fall back to neutral."""
-    disliked_compat = query["disliked_compatible"]
-    neutral_compat = query["neutral_compatible"]
-    if disliked_compat:
-        return rng.choice(disliked_compat)
-    if neutral_compat:
-        return rng.choice(neutral_compat)
+    disliked = query["disliked_compatible"]
+    neutral  = query["neutral_compatible"]
+    if disliked:
+        return rng.choice(disliked)
+    if neutral:
+        return rng.choice(neutral)
     return None
 
 
-def _pick_violation_value(query, scenario, violation_axis, rng):
-    """Pick a value for violation_axis from the scenario's incompatible set."""
-    constraint = scenario.get(violation_axis)
-    if constraint and constraint.get("incompatible"):
-        return rng.choice(constraint["incompatible"])
-    # Fallback: for garment_category, use generally informal items
-    if violation_axis == "garment_category":
-        fallbacks = ["shorts", "tank_top", "t_shirt"]
-        return rng.choice(fallbacks)
-    if violation_axis == "color":
-        fallbacks = ["orange", "yellow"]
-        return rng.choice(fallbacks)
-    if violation_axis == "pattern":
-        fallbacks = ["graphic_print", "camouflage"]
-        return rng.choice(fallbacks)
-    return None
-
-
-def _choose_violation_axis(active_axis, scenario):
-    """Decide which axis to violate for C/D options."""
-    if active_axis in ("color", "pattern"):
-        return "garment_category"
-    # active_axis == garment_category → prefer color if constrained, else pattern, else self
-    if scenario.get("color") and scenario["color"].get("incompatible"):
-        return "color"
-    if scenario.get("pattern") and scenario["pattern"].get("incompatible"):
-        return "pattern"
-    # No secondary constraint → violation on garment_category itself
-    return "garment_category"
+def _pick_incompat_garment(query, fixed_garment, rng):
+    """
+    Pick a TPO-incompatible garment for C/D.
+    Must differ from the fixed (TPO-compatible) garment used in A/B.
+    """
+    pool = [g for g in query["incompat_garments"] if g != fixed_garment]
+    return rng.choice(pool) if pool else None
 
 
 def attrs_to_search_query(attrs):
     parts = []
     pattern = attrs.get("pattern")
-    color = attrs.get("color")
+    color   = attrs.get("color")
     garment = attrs.get("garment_category", "item")
     if pattern and pattern != "solid":
         parts.append(pattern.replace("_", " "))
@@ -96,149 +70,94 @@ def attrs_to_search_query(attrs):
     return " ".join(parts)
 
 
-def plan_options_for_query(profile, query):
+def plan_options_for_query(query):
     """
-    Build deterministic 4-option plan from scenario constraints.
-
-    Returns None if a valid 4-option 2×2 structure cannot be constructed.
+    Build deterministic 2×2 option plan.
+    Returns None if a valid plan cannot be constructed.
     """
-    scenario = get_scenario_by_id(query["scenario_id"])
-    if scenario is None:
-        return None
+    active_axis  = query["active_axis"]
+    fixed_attrs  = dict(query["fixed_attrs"])   # garment + other non-active axis
+    fixed_garment = fixed_attrs["garment_category"]
 
-    active_axis = query["active_axis"]
-    fixed_attrs = dict(query["fixed_attrs"])
     rng = random.Random(abs(hash(query["query_id"])) % 100000)
 
-    # ── Pick A and B values on the active axis ────────────
+    # ── Active axis values ────────────────────────────────
     liked_v   = _pick_liked_value(query, rng)
-    nonpref_v = _pick_nonpreferred_value(query, rng)
+    nonpref_v = _pick_nonpref_value(query, rng)
     if liked_v is None or nonpref_v is None:
         return None
     if liked_v == nonpref_v:
         return None
 
-    # ── Determine violation axis and mode ────────────────
-    violation_axis = _choose_violation_axis(active_axis, scenario)
+    # ── Violation garment for C/D ────────────────────────
+    incompat_garment = _pick_incompat_garment(query, fixed_garment, rng)
+    if incompat_garment is None:
+        return None
 
-    # ── Build C/D depending on whether violation_axis == active_axis ──
-    if violation_axis != active_axis:
-        # ── Normal case: C/D use different axis for violation ──
-        # e.g. active=color, violation=garment_category
-        violation_value = _pick_violation_value(query, scenario, violation_axis, rng)
-        if violation_value is None:
-            return None
+    # ── Build 4 options ──────────────────────────────────
+    # A/B: fixed garment (TPO-compatible)
+    # C/D: incompat garment (TPO-incompatible)
+    attrs_a = {**fixed_attrs,                                    active_axis: liked_v}
+    attrs_b = {**fixed_attrs,                                    active_axis: nonpref_v}
+    attrs_c = {**fixed_attrs, "garment_category": incompat_garment, active_axis: liked_v}
+    attrs_d = {**fixed_attrs, "garment_category": incompat_garment, active_axis: nonpref_v}
 
-        attrs_a = {**fixed_attrs, active_axis: liked_v}
-        attrs_b = {**fixed_attrs, active_axis: nonpref_v}
-        attrs_c = {**fixed_attrs, active_axis: liked_v,   violation_axis: violation_value}
-        attrs_d = {**fixed_attrs, active_axis: nonpref_v, violation_axis: violation_value}
-
-    else:
-        # ── Same-axis case: active_axis == violation_axis == garment_category ──
-        # C needs a garment the user LIKES that is in scenario's INCOMPATIBLE set.
-        # D needs a garment the user does NOT LIKE (disliked or neutral) that is incompatible.
-        liked_incompat    = query.get("liked_incompatible", [])
-        disliked_incompat = query.get("disliked_incompatible", [])
-
-        # --- Guard: C requires liked_incompat non-empty ---
-        # Without it, C would use a non-liked garment → label would be "neither" not
-        # "preference_only", breaking the 2×2 structure.
-        if not liked_incompat:
-            return None
-
-        c_val = rng.choice(liked_incompat)
-
-        # --- D: prefer disliked_incompat; fallback to scenario incompatible ---
-        # but ensure d_val is NOT in the user's likes (would make D preference_only).
-        user_likes_set = set(query.get("liked_compatible", []) + liked_incompat)
-
-        if disliked_incompat:
-            d_candidates = disliked_incompat
-        else:
-            # Use full scenario incompatible, but exclude anything user likes
-            sc_incompat = scenario.get(active_axis, {}).get("incompatible", [])
-            d_candidates = [v for v in sc_incompat if v not in user_likes_set]
-
-        if not d_candidates:
-            return None
-
-        # Shuffle for reproducibility
-        d_candidates = sorted(d_candidates)
-        rng.shuffle(d_candidates)
-        d_val = d_candidates[0]
-
-        # c_val and d_val must differ
-        if c_val == d_val:
-            remaining = [v for v in d_candidates if v != c_val]
-            if not remaining:
-                return None
-            d_val = remaining[0]
-
-        violation_value = d_val  # record for plan metadata
-
-        attrs_a = {**fixed_attrs, active_axis: liked_v}
-        attrs_b = {**fixed_attrs, active_axis: nonpref_v}
-        attrs_c = {**fixed_attrs, active_axis: c_val}
-        attrs_d = {**fixed_attrs, active_axis: d_val}
-
-    # ── Assemble plan ─────────────────────────────────────
     label_map = {
         "A": "tpo_and_preference",
         "B": "tpo_only",
         "C": "preference_only",
         "D": "neither",
     }
+
     options = {}
-    for k, attrs in [("A", attrs_a), ("B", attrs_b),
-                     ("C", attrs_c), ("D", attrs_d)]:
-        options[k] = {
-            "label":        label_map[k],
+    for key, attrs in [("A", attrs_a), ("B", attrs_b), ("C", attrs_c), ("D", attrs_d)]:
+        options[key] = {
+            "label":        label_map[key],
             "attributes":   attrs,
             "search_query": attrs_to_search_query(attrs),
-            "rationale":    _rationale(k, active_axis, attrs, violation_axis),
+            "rationale":    _rationale(key, active_axis, liked_v, nonpref_v,
+                                       fixed_garment, incompat_garment, attrs),
         }
 
     return {
-        "query_id":       query["query_id"],
-        "user_id":        query["user_id"],
-        "scenario_id":    query["scenario_id"],
-        "domain":         "fashion",
-        "query_type":     query["query_type"],
-        "active_axis":    active_axis,
-        "fixed_attrs":    fixed_attrs,
-        "violation_axis": violation_axis,
-        "violation_value": violation_value,
-        "main_category":  fixed_attrs.get("garment_category"),
-        "options":        options,
+        "query_id":         query["query_id"],
+        "user_id":          query["user_id"],
+        "scenario_id":      query["scenario_id"],
+        "domain":           "fashion",
+        "query_type":       query["query_type"],
+        "active_axis":      active_axis,
+        "violation_axis":   "garment_category",
+        "fixed_attrs":      fixed_attrs,
+        "liked_value":      liked_v,
+        "nonpref_value":    nonpref_v,
+        "compat_garment":   fixed_garment,
+        "incompat_garment": incompat_garment,
+        "options":          options,
     }
 
 
-def _rationale(k, active_axis, attrs, violation_axis):
-    val = attrs.get(active_axis)
-    if k == "A":
-        return f"liked {active_axis}={val}, TPO-compatible"
-    if k == "B":
-        return f"non-preferred {active_axis}={val}, TPO-compatible"
-    if k == "C":
-        vax_val = attrs.get(violation_axis)
-        if violation_axis == active_axis:
-            return f"liked {active_axis}={val}, but this garment violates TPO"
-        return f"liked {active_axis}={val}, but {violation_axis}={vax_val} violates TPO"
-    if k == "D":
-        vax_val = attrs.get(violation_axis)
-        if violation_axis == active_axis:
-            return f"non-preferred {active_axis}={val}, AND this garment violates TPO"
-        return (f"non-preferred {active_axis}={val}, "
-                f"AND {violation_axis}={vax_val} violates TPO")
+def _rationale(key, active_axis, liked_v, nonpref_v, compat_g, incompat_g, attrs):
+    active_val = attrs.get(active_axis)
+    garment    = attrs.get("garment_category")
+    if key == "A":
+        return (f"preferred {active_axis}={liked_v}, "
+                f"TPO-compatible garment={compat_g}")
+    if key == "B":
+        return (f"non-preferred {active_axis}={nonpref_v}, "
+                f"TPO-compatible garment={compat_g}")
+    if key == "C":
+        return (f"preferred {active_axis}={liked_v}, "
+                f"TPO-incompatible garment={incompat_g}")
+    if key == "D":
+        return (f"non-preferred {active_axis}={nonpref_v}, "
+                f"TPO-incompatible garment={incompat_g}")
     return ""
 
 
 def run_pipeline(profile_path, query_path, output_path, force=False, limit=0):
-    log_step("Option Planner v2 (scenario-based deterministic)")
-    profiles = {p["user_id"]: p for p in load_jsonl(profile_path)}
-    queries  = load_jsonl(query_path)
-    print(f"  {len(profiles)} profiles, {len(queries)} queries")
+    log_step("Option Planner v2 (2x2 deterministic)")
+    queries = load_jsonl(query_path)
+    print(f"  {len(queries)} queries")
 
     if output_path.exists() and not force:
         existing = load_jsonl(output_path)
@@ -249,25 +168,18 @@ def run_pipeline(profile_path, query_path, output_path, force=False, limit=0):
     else:
         plans = []
         todo  = queries
+
     if limit > 0:
         todo = todo[:limit]
 
     n_fail = 0
-    n_skip_no_liked_incompat = 0
     for i, query in enumerate(todo):
-        if query["user_id"] not in profiles:
-            continue
-        prof = profiles[query["user_id"]]
         if (i + 1) % 50 == 0:
             print(f"  [{i+1}/{len(todo)}] planning...")
         try:
-            plan = plan_options_for_query(prof, query)
+            plan = plan_options_for_query(query)
             if plan is None:
                 n_fail += 1
-                # Count the specific skip reason
-                if (query.get("active_axis") == "garment_category"
-                        and not query.get("liked_incompatible")):
-                    n_skip_no_liked_incompat += 1
                 continue
             plans.append(plan)
             if (i + 1) % 100 == 0:
@@ -278,19 +190,14 @@ def run_pipeline(profile_path, query_path, output_path, force=False, limit=0):
 
     save_jsonl(plans, output_path)
     print(f"\n  ✓ Saved {len(plans)} plans")
-    print(f"  Skipped: {n_fail} total "
-          f"(of which {n_skip_no_liked_incompat} skipped: "
-          f"same-axis, liked_incompat empty)")
+    print(f"  Skipped: {n_fail}")
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--profile_path", type=Path,
-                        default=PROFILES_DIR / "profiles.jsonl")
-    parser.add_argument("--query_path",   type=Path,
-                        default=QUERIES_DIR / "queries.jsonl")
-    parser.add_argument("--output",       type=Path,
-                        default=OPTIONS_DIR / "option_plans.jsonl")
+    parser.add_argument("--profile_path", type=Path, default=PROFILES_DIR / "profiles.jsonl")
+    parser.add_argument("--query_path",   type=Path, default=QUERIES_DIR  / "queries.jsonl")
+    parser.add_argument("--output",       type=Path, default=OPTIONS_DIR  / "option_plans.jsonl")
     parser.add_argument("--force",  action="store_true")
     parser.add_argument("--limit",  type=int, default=0)
     args = parser.parse_args()
