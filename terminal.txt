@@ -1,6 +1,6 @@
 conda activate pod
 Qwen/Qwen3-4B-Instruct-2507
-vllm serve Qwen/Qwen3-4B-Thinking-2507 \
+vllm serve Qwen/Qwen2.5-7B-Instruct \
   --tensor-parallel-size 4 \
   --max-model-len 5000 \
   --dtype bfloat16 \
