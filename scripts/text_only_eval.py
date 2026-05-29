@@ -47,12 +47,12 @@ You will be given:
 Your task:
 Select the single BEST option that best fits the query.
 
-Rules:
-- Consider garment_category, color, and pattern appropriateness for the context
-- Use only the information in the query and options
-- Output ONLY a single letter: A, B, C, or D
-- Do not explain. Do not write anything else.
-- Your entire response must be exactly one character: A, B, C, or D.
+OUTPUT FORMAT — CRITICAL:
+You MUST output EXACTLY one character: A, B, C, or D.
+Do NOT output any explanation, reasoning, punctuation, or whitespace.
+Do NOT write sentences. Do NOT write words.
+If you write anything other than a single letter, your response is INVALID.
+Your ENTIRE response must be one of: A  B  C  D
 """
 
 
@@ -65,15 +65,14 @@ You may be given:
 3. Four clothing options (A, B, C, D) described by text attributes only
 
 Your task:
-Select the single BEST option that best fits the query.
-If profile information is provided, also consider the user's preferences.
+Select the single BEST option that best fits both the query and the user's preferences.
 
-Rules:
-- Consider garment_category, color, and pattern appropriateness for the context
-- If profile information is present, consider whether the option matches the user's preferences
-- Output ONLY a single letter: A, B, C, or D
-- Do not explain. Do not write anything else.
-- Your entire response must be exactly one character: A, B, C, or D.
+OUTPUT FORMAT — CRITICAL:
+You MUST output EXACTLY one character: A, B, C, or D.
+Do NOT output any explanation, reasoning, punctuation, or whitespace.
+Do NOT write sentences. Do NOT write words.
+If you write anything other than a single letter, your response is INVALID.
+Your ENTIRE response must be one of: A  B  C  D
 """
 
 
@@ -194,9 +193,13 @@ def build_prompt(query, profile, shuffled_options, profile_mode="narrative"):
 === OPTIONS ===
 {option_block}
 
-Which option best fits the query?
-Answer with a single letter only. Do not write anything after it.
-Answer: """
+=== INSTRUCTION ===
+Respond with ONE letter only: A, B, C, or D.
+Do NOT write any explanation or reasoning.
+Do NOT write anything before or after the letter.
+Your complete response must be a single character.
+
+Answer:"""
         return prompt
 
     if profile_mode == "narrative":
@@ -216,9 +219,13 @@ Answer: """
 === OPTIONS ===
 {option_block}
 
-Which option best fits the user's query and preferences?
-Answer with a single letter only. Do not write anything after it.
-Answer: """
+=== INSTRUCTION ===
+Respond with ONE letter only: A, B, C, or D.
+Do NOT write any explanation or reasoning.
+Do NOT write anything before or after the letter.
+Your complete response must be a single character.
+
+Answer:"""
     return prompt
 
 
