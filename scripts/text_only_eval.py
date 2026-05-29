@@ -7,16 +7,19 @@ Unified Text-Only LLM Baseline Evaluation
 - narrative  : narrative profile만
 - all        : profile.jsonl의 주요 요소를 모두 노출
 
+
 동시에 아래 3개 점수를 모두 계산:
 - Strict accuracy   : 원래 정답 A를 맞췄는가
 - TPO accuracy      : TPO 축만 맞췄는가
 - Profile accuracy  : preference 축만 맞췄는가
+
 
 실행:
   python -m scripts.text_only_eval --profile-mode narrative
   python -m scripts.text_only_eval --profile-mode no
   python -m scripts.text_only_eval --profile-mode all --limit 50 --provider gpt5_mini
 """
+
 
 import argparse
 import json
@@ -25,10 +28,13 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 
+
 sys.path.insert(0, str(Path(__file__).parent.parent))
+
 
 from src.utils import call_llm, load_jsonl, save_jsonl, log_step
 from configs.config import OPTIONS_DIR, QUERIES_DIR, PROFILES_DIR
+
 
 
 SYSTEM_PROMPT_NO = """\
@@ -45,7 +51,8 @@ Rules:
 - Consider garment_category, color, and pattern appropriateness for the context
 - Use only the information in the query and options
 - Output ONLY a single letter: A, B, C, or D
-- Do not explain. Just output the letter.
+- Do not explain. Do not write anything else.
+- Your entire response must be exactly one character: A, B, C, or D.
 """
 
 
@@ -65,8 +72,10 @@ Rules:
 - Consider garment_category, color, and pattern appropriateness for the context
 - If profile information is present, consider whether the option matches the user's preferences
 - Output ONLY a single letter: A, B, C, or D
-- Do not explain. Just output the letter.
+- Do not explain. Do not write anything else.
+- Your entire response must be exactly one character: A, B, C, or D.
 """
+
 
 
 # ── Scoring semantics from original labels ──────────────────────────────
@@ -74,9 +83,11 @@ TPO_SCORE = {
     "A": 1, "B": 1, "C": 0, "D": 0
 }
 
+
 PROFILE_SCORE = {
     "A": 1, "B": 0, "C": 1, "D": 0
 }
+
 
 
 # ── Profile formatting ──────────────────────────────────────────────────
@@ -94,6 +105,7 @@ def profile_to_narrative(profile):
         if isinstance(val, str) and val.strip():
             return val.strip()
 
+
     meta = profile.get("metadata", {})
     for key in [
         "narrative_profile",
@@ -108,11 +120,14 @@ def profile_to_narrative(profile):
         if isinstance(val, str) and val.strip():
             return val.strip()
 
+
     return ""
+
 
 
 def profile_to_all_text(profile):
     parts = []
+
 
     ordered_keys = [
         "user_id",
@@ -125,15 +140,19 @@ def profile_to_all_text(profile):
         "narrative_profile",
     ]
 
+
     for key in ordered_keys:
         if key in profile:
             parts.append(f"{key}: {json.dumps(profile[key], ensure_ascii=False)}")
+
 
     for key, val in profile.items():
         if key not in ordered_keys:
             parts.append(f"{key}: {json.dumps(val, ensure_ascii=False)}")
 
+
     return "\n".join(parts)
+
 
 
 # ── Option rendering ────────────────────────────────────────────────────
@@ -141,6 +160,7 @@ def option_to_text(opt):
     text = opt.get("search_query")
     if text:
         return text
+
 
     a = opt.get("attributes", {})
     parts = []
@@ -151,7 +171,9 @@ def option_to_text(opt):
     if a.get("garment_category"):
         parts.append(a["garment_category"].replace("_", " "))
 
+
     return " ".join(parts).strip() or "unknown item"
+
 
 
 # ── Prompt ──────────────────────────────────────────────────────────────
@@ -172,7 +194,9 @@ def build_prompt(query, profile, shuffled_options, profile_mode="narrative"):
 === OPTIONS ===
 {option_block}
 
-Which option best fits the query? Output ONLY the letter (A/B/C/D):"""
+Which option best fits the query?
+Answer with a single letter only. Do not write anything after it.
+Answer: """
         return prompt
 
     if profile_mode == "narrative":
@@ -192,8 +216,11 @@ Which option best fits the query? Output ONLY the letter (A/B/C/D):"""
 === OPTIONS ===
 {option_block}
 
-Which option best fits the user's query and preferences? Output ONLY the letter (A/B/C/D):"""
+Which option best fits the user's query and preferences?
+Answer with a single letter only. Do not write anything after it.
+Answer: """
     return prompt
+
 
 
 def parse_answer(response: str):
@@ -204,19 +231,23 @@ def parse_answer(response: str):
     return None
 
 
+
 def evaluate(plans, queries_map, profiles_map,
              limit=0, provider=None, seed=42, verbose=False,
              profile_mode="narrative"):
     rng = random.Random(seed)
 
+
     if limit > 0:
         plans = plans[:limit]
+
 
     results = []
     strict_correct = 0
     tpo_correct = 0
     profile_correct = 0
     total = 0
+
 
     breakdown = defaultdict(lambda: {
         "strict_correct": 0,
@@ -225,6 +256,7 @@ def evaluate(plans, queries_map, profiles_map,
         "total": 0
     })
 
+
     if profile_mode == "no":
         system_prompt = SYSTEM_PROMPT_NO
         stage_name = "text_only_no_profile_eval"
@@ -232,26 +264,33 @@ def evaluate(plans, queries_map, profiles_map,
         system_prompt = SYSTEM_PROMPT_WITH_PROFILE
         stage_name = "text_only_eval"
 
+
     for i, plan in enumerate(plans):
         qid = plan["query_id"]
         uid = plan["user_id"]
 
+
         query = queries_map.get(qid)
         profile = profiles_map.get(uid, {})
+
 
         if query is None:
             continue
 
+
         option_items = list(plan["options"].items())   # [("A", {...}), ...]
         rng.shuffle(option_items)
 
+
         display_labels = ["A", "B", "C", "D"]
         shuffled = list(zip(display_labels, [opt for _, opt in option_items]))
+
 
         display_to_original = {
             disp_label: orig_label
             for disp_label, (orig_label, _) in zip(display_labels, option_items)
         }
+
 
         correct_display = None
         for disp_label, orig_label in display_to_original.items():
@@ -259,11 +298,14 @@ def evaluate(plans, queries_map, profiles_map,
                 correct_display = disp_label
                 break
 
+
         response = None
         predicted = None
         predicted_original = None
 
+
         prompt = build_prompt(query, profile, shuffled, profile_mode=profile_mode)
+
 
         try:
             response = call_llm(
@@ -277,23 +319,28 @@ def evaluate(plans, queries_map, profiles_map,
         except Exception as e:
             print(f"  [ERROR] {qid}: {e}")
 
+
         strict_hit = int(predicted_original == "A") if predicted_original else 0
         tpo_hit = TPO_SCORE.get(predicted_original, 0) if predicted_original else 0
         profile_hit = PROFILE_SCORE.get(predicted_original, 0) if predicted_original else 0
+
 
         strict_correct += strict_hit
         tpo_correct += tpo_hit
         profile_correct += profile_hit
         total += 1
 
+
         axis = plan.get("active_axis", "unknown")
         qtype = query.get("query_type", "unknown")
+
 
         for key in [f"axis:{axis}", f"qtype:{qtype}"]:
             breakdown[key]["total"] += 1
             breakdown[key]["strict_correct"] += strict_hit
             breakdown[key]["tpo_correct"] += tpo_hit
             breakdown[key]["profile_correct"] += profile_hit
+
 
         result_rec = {
             "query_id": qid,
@@ -312,6 +359,7 @@ def evaluate(plans, queries_map, profiles_map,
         }
         results.append(result_rec)
 
+
         if verbose or (i + 1) % 10 == 0:
             status = "✓" if strict_hit else "✗"
             print(
@@ -320,7 +368,9 @@ def evaluate(plans, queries_map, profiles_map,
                 f"axis={axis} qtype={qtype}"
             )
 
+
     return results, strict_correct, tpo_correct, profile_correct, total, breakdown
+
 
 
 def print_report(strict_correct, tpo_correct, profile_correct, total, breakdown):
@@ -328,12 +378,14 @@ def print_report(strict_correct, tpo_correct, profile_correct, total, breakdown)
     tpo_acc = tpo_correct / total * 100 if total > 0 else 0
     profile_acc = profile_correct / total * 100 if total > 0 else 0
 
+
     print("\n" + "=" * 50)
     print(f"  STRICT ACCURACY:   {strict_correct}/{total} = {strict_acc:.1f}%")
     print(f"  TPO ACCURACY:      {tpo_correct}/{total} = {tpo_acc:.1f}%")
     print(f"  PROFILE ACCURACY:  {profile_correct}/{total} = {profile_acc:.1f}%")
     print(f"  Random baseline:   25.0% strict")
     print("=" * 50)
+
 
     print("\n  ── By active_axis ──")
     for key in sorted(k for k in breakdown if k.startswith("axis:")):
@@ -344,6 +396,7 @@ def print_report(strict_correct, tpo_correct, profile_correct, total, breakdown)
         p = d["profile_correct"] / n * 100 if n else 0
         print(f"  {key:18s} strict={s:5.1f}%  tpo={t:5.1f}%  profile={p:5.1f}%  (n={n})")
 
+
     print("\n  ── By query_type ──")
     for key in sorted(k for k in breakdown if k.startswith("qtype:")):
         d = breakdown[key]
@@ -352,6 +405,7 @@ def print_report(strict_correct, tpo_correct, profile_correct, total, breakdown)
         t = d["tpo_correct"] / n * 100 if n else 0
         p = d["profile_correct"] / n * 100 if n else 0
         print(f"  {key:18s} strict={s:5.1f}%  tpo={t:5.1f}%  profile={p:5.1f}%  (n={n})")
+
 
 
 def main():
@@ -373,22 +427,28 @@ def main():
                         choices=["no", "narrative", "all"])
     args = parser.parse_args()
 
+
     if args.output == OPTIONS_DIR / "text_only_results.jsonl":
         args.output = OPTIONS_DIR / f"text_only_results_{args.profile_mode}.jsonl"
 
+
     log_step("Text-Only LLM Baseline Eval")
+
 
     plans = load_jsonl(args.plans)
     queries = load_jsonl(args.queries)
     profiles = load_jsonl(args.profiles)
 
+
     queries_map = {q["query_id"]: q for q in queries}
     profiles_map = {p["user_id"]: p for p in profiles}
+
 
     print(f"  Plans: {len(plans)}, Queries: {len(queries)}, Profiles: {len(profiles)}")
     print(f"  Profile mode: {args.profile_mode}")
     if args.limit:
         print(f"  Limit: {args.limit}")
+
 
     results, strict_correct, tpo_correct, profile_correct, total, breakdown = evaluate(
         plans, queries_map, profiles_map,
@@ -399,10 +459,13 @@ def main():
         profile_mode=args.profile_mode,
     )
 
+
     save_jsonl(results, args.output)
     print(f"\n  Saved {len(results)} result records → {args.output}")
 
+
     print_report(strict_correct, tpo_correct, profile_correct, total, breakdown)
+
 
 
 if __name__ == "__main__":
