@@ -15,7 +15,7 @@ Unified Text-Only LLM Baseline Evaluation
 실행:
   python -m scripts.text_only_eval --profile-mode narrative
   python -m scripts.text_only_eval --profile-mode no
-  python -m scripts.text_only_eval --profile-mode all --limit 50 --provider openai
+  python -m scripts.text_only_eval --profile-mode all --limit 50 --provider gpt5_mini
 """
 
 import argparse
@@ -31,12 +31,30 @@ from src.utils import call_llm, load_jsonl, save_jsonl, log_step
 from configs.config import OPTIONS_DIR, QUERIES_DIR, PROFILES_DIR
 
 
-SYSTEM_PROMPT = """\
+SYSTEM_PROMPT_NO = """\
+You are a fashion advisor.
+
+You will be given:
+1. A fashion query describing a situation or occasion
+2. Four clothing options (A, B, C, D) described by text attributes only
+
+Your task:
+Select the single BEST option that best fits the query.
+
+Rules:
+- Consider garment_category, color, and pattern appropriateness for the context
+- Use only the information in the query and options
+- Output ONLY a single letter: A, B, C, or D
+- Do not explain. Just output the letter.
+"""
+
+
+SYSTEM_PROMPT_WITH_PROFILE = """\
 You are a fashion advisor.
 
 You may be given:
 1. A user's fashion query (situation or preference)
-2. Optional user profile information
+2. User profile information
 3. Four clothing options (A, B, C, D) described by text attributes only
 
 Your task:
@@ -90,7 +108,7 @@ def profile_to_narrative(profile):
         if isinstance(val, str) and val.strip():
             return val.strip()
 
-    return "(no narrative profile)"
+    return ""
 
 
 def profile_to_all_text(profile):
@@ -207,6 +225,13 @@ def evaluate(plans, queries_map, profiles_map,
         "total": 0
     })
 
+    if profile_mode == "no":
+        system_prompt = SYSTEM_PROMPT_NO
+        stage_name = "text_only_no_profile_eval"
+    else:
+        system_prompt = SYSTEM_PROMPT_WITH_PROFILE
+        stage_name = "text_only_eval"
+
     for i, plan in enumerate(plans):
         qid = plan["query_id"]
         uid = plan["user_id"]
@@ -243,8 +268,8 @@ def evaluate(plans, queries_map, profiles_map,
         try:
             response = call_llm(
                 prompt=prompt,
-                stage="text_only_eval",
-                system=SYSTEM_PROMPT,
+                stage=stage_name,
+                system=system_prompt,
                 provider_override=provider,
             )
             predicted = parse_answer(response)
@@ -341,12 +366,15 @@ def main():
                         default=OPTIONS_DIR / "text_only_results.jsonl")
     parser.add_argument("--limit", type=int, default=0, help="0 = all")
     parser.add_argument("--provider", type=str, default=None,
-                        help="openai / anthropic / gemini")
+                        help="provider alias from config, e.g. vllm or gpt5_mini")
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--verbose", action="store_true")
     parser.add_argument("--profile-mode", type=str, default="narrative",
                         choices=["no", "narrative", "all"])
     args = parser.parse_args()
+
+    if args.output == OPTIONS_DIR / "text_only_results.jsonl":
+        args.output = OPTIONS_DIR / f"text_only_results_{args.profile_mode}.jsonl"
 
     log_step("Text-Only LLM Baseline Eval")
 

@@ -1,13 +1,15 @@
 conda activate pod
 Qwen/Qwen3-4B-Instruct-2507
-vllm serve Qwen/Qwen2.5-72B-Instruct \
+vllm serve Qwen/Qwen3-4B-Thinking-2507 \
   --tensor-parallel-size 4 \
-  --max-model-len 30000 \
+  --max-model-len 5000 \
   --dtype bfloat16 \
   --port 8000 \
   --trust-remote-code \
   --gpu-memory-utilization 0.95 
 
+   Qwen/Qwen2.5-72B-Instruct-AWQ 
+Qwen/Qwen3-4B-Thinking-2507
 Qwen/Qwen2.5-7B-Instruct
 meta-llama/Llama-3.1-8B-Instruct
 Qwen/Qwen2.5-72B-Instruct

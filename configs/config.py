@@ -111,7 +111,7 @@ PROVIDER_ENDPOINTS = {
     },
     "vllm": {
         "kind": "openai_compat",
-        "model_name": "meta-llama/Llama-3.1-8B-Instruct",
+        "model_name": "Qwen/Qwen3-4B-Thinking-2507",
         "api_base": "http://localhost:8000/v1",
         "uses_max_completion_tokens": False,
         "supports_temperature": True,
