@@ -56,6 +56,7 @@ python src/amazon_to_clip_corpus.py           # -> $WORK/amazon_urls.csv  (url,c
 
 ### B2. Download images into webdataset shards (img2dataset)
 ```bash
+export WORK=/home1/hjhj6411/fashion/clip_corpus
 img2dataset \
   --url_list $WORK/amazon_urls.csv \
   --input_format csv \
@@ -64,7 +65,9 @@ img2dataset \
   --output_format webdataset \
   --processes_count 16 --thread_count 64 \
   --image_size 384 --resize_mode keep_ratio \
-  --enable_wandb False
+  --enable_wandb False \
+  --distributor multiprocessing \
+  2>/dev/null
 ```
 
 ### B3. CLIP-embed the shards (clip-retrieval inference)
