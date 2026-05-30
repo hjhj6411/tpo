@@ -17,7 +17,7 @@ and writes a CSV with columns:  url, caption, asin, parent_asin, main_category, 
 
 Usage:
   python scripts/amazon_to_clip_corpus.py \
-    --meta-dir /home1/hjhj6411/fashion/data/amazon/fashion_only \
+    --meta-dir /home1/hjhj6411/pod_bench/data/amazon/fashion_only \
     --out ./corpus/amazon_fashion_urls.csv \
     --image-pref hi_res --max-items 300000 --clothing-only
 
@@ -113,7 +113,7 @@ def main():
     ap.add_argument("--meta-dir",
                     default=os.environ.get(
                         "AMAZON_META_DIR",
-                        "/home1/hjhj6411/fashion/data/amazon/fashion_only"))
+                        "/home1/hjhj6411/pod_bench/data/amazon/fashion_only"))
     ap.add_argument("--out", default="./corpus/amazon_fashion_urls.csv")
     ap.add_argument("--image-pref", default="hi_res",
                     choices=["hi_res", "large", "thumb"])

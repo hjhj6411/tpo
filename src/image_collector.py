@@ -444,7 +444,7 @@ def main():
     ap.add_argument("--plan_path", type=Path, default=OPTIONS_DIR / "option_plans.jsonl")
     ap.add_argument("--index_dir", type=Path,
                     default=Path(os.environ.get("AMAZON_META_DIR",
-                                 "/home/hjhj6411/fashion/data/amazon/fashion_only")) / "faiss")
+                                 "/home1/hjhj6411/pod_bench/data/amazon/fashion_only")) / "faiss")
     ap.add_argument("--output", type=Path, default=IMAGES_DIR / "collection_log.jsonl")
     ap.add_argument("--image_root", type=Path, default=IMAGES_DIR)
     ap.add_argument("--limit", type=int, default=0)

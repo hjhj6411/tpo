@@ -45,30 +45,61 @@ Standard rom1504/clip-retrieval pipeline. Run all of this in the `clip` env.
 `$WORK` is a scratch dir with space for images + embeddings + index.
 
 ### B1. URL list → from your Amazon metadata
-You already produce a CSV of (url, caption) with `amazon_to_clip_corpus.py`
-(columns: `url,caption`). Point img2dataset at it.
+You already generated this CSV (columns: `url,caption`) at
+`~/pod_bench/corpus/amazon_fashion_urls.csv` (~116 MB). No need to rebuild it.
+If you ever do rebuild: `python amazon_to_clip_corpus.py --out ~/pod_bench/corpus/amazon_fashion_urls.csv`
 
 ```bash
 conda activate clip
-export WORK=/home1/hjhj6411/fashion/clip_corpus
-python src/amazon_to_clip_corpus.py           # -> $WORK/amazon_urls.csv  (url,caption)
+export WORK=/home1/hjhj6411/pod_bench/data/clip_corpus
+export URLCSV=~/pod_bench/corpus/amazon_fashion_urls.csv
+head -2 $URLCSV          # confirm header is: url,caption
+wc -l $URLCSV            # number of products
 ```
 
 ### B2. Download images into webdataset shards (img2dataset)
+
+IMPORTANT — the download can stall after the first round of shards if the
+process pool dead-locks (seen as: the first `processes_count` shards appear
+almost instantly, then no further `.tar` files are written even though RAM,
+disk and bandwidth are all fine). This is a multiprocessing-distributor /
+oversubscription issue, NOT a resource issue. Avoid it with:
+  - a moderate `--processes_count` (8, not 16) so workers don't oversubscribe
+    a shared node,
+  - explicit `--timeout 10 --retries 1` so a slow/hanging URL batch fails fast
+    instead of blocking a worker forever,
+  - `--incremental incremental` so re-runs resume from completed shards,
+  - DO NOT pipe stderr to /dev/null — you need to see where it stalls.
+
+Clean start (first run):
 ```bash
-export WORK=/home1/hjhj6411/fashion/clip_corpus
+rm -rf $WORK/images          # only if restarting from scratch
 img2dataset \
-  --url_list $WORK/amazon_urls.csv \
+  --url_list $URLCSV \
   --input_format csv \
   --url_col url --caption_col caption \
   --output_folder $WORK/images \
   --output_format webdataset \
-  --processes_count 16 --thread_count 64 \
+  --processes_count 8 --thread_count 64 \
   --image_size 384 --resize_mode keep_ratio \
-  --enable_wandb False \
-  --distributor multiprocessing \
-  2>/dev/null
+  --timeout 10 --retries 1 \
+  --incremental incremental \
+  --enable_wandb False
 ```
+
+If it stalls anyway, kill and resume (completed shards are skipped):
+```bash
+pkill -f img2dataset ; sleep 3
+# re-run the SAME command; --incremental picks up where it left off
+```
+
+Sanity while it runs (separate shell, with $WORK exported there too):
+```bash
+echo "WORK=[$WORK]"                    # must NOT be empty
+watch -n 30 'ls $WORK/images/*.tar 2>/dev/null | wc -l'   # should climb
+```
+Note: each img2dataset run creates one `.tar` + one `.parquet` per shard. The
+`.parquet` holds per-URL status — use it for the success-rate check below.
 
 ### B3. CLIP-embed the shards (clip-retrieval inference)
 Use the SAME clip model end-to-end. ViT-L/14 matches LAION indices and the
@@ -97,11 +128,11 @@ Create `$WORK/indices_paths.json`:
 ```json
 {
   "pod_fashion": {
-    "indice_folder": "/home1/hjhj6411/fashion/clip_corpus/index",
+    "indice_folder": "/home1/hjhj6411/pod_bench/data/clip_corpus/index",
     "provide_safety_model": false,
     "enable_faiss_memory_mapping": true,
     "columns_to_return": ["url", "caption"],
-    "metadata_folder": "/home1/hjhj6411/fashion/clip_corpus/embeddings/metadata"
+    "metadata_folder": "/home1/hjhj6411/pod_bench/data/clip_corpus/embeddings/metadata"
   }
 }
 ```
