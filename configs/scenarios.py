@@ -1,23 +1,40 @@
 """
-POD-Bench v2 — Canonical Extreme Scenario Catalog (60 scenarios, 8 archetypes)
+POD-Bench v2 — Canonical Extreme Scenario Catalog (HARDCODED, 15 archetypes)
 
-Design: "Archetype x Specificity Gradient" (PCogAlignBench, SocialIQA, RVBench)
-Each scenario defines unambiguous TPO constraints with cross-cultural consensus.
+Design: "Archetype x Specificity Gradient" (PCogAlignBench, SocialIQA, RVBench).
+Every scenario encodes an INDISPUTABLE TPO contrast — the incompatible garments
+(and, for dress-coded archetypes, colors/patterns) are wrong on grounds of
+physical danger, functional impossibility, or near-universal social norm.
+
+15 archetypes (was 8). Two families:
+
+  PHYSICAL (garment is the only TPO-constrained axis; color/pattern are pure
+  preference axes via the relaxed compatibility check):
+    extreme_cold, extreme_heat, aquatic_water, athletic_indoor,
+    athletic_outdoor, rugged_outdoor, severe_weather, casual_leisure
+
+  DRESS-CODED (garment AND color AND/OR pattern carry TPO meaning):
+    business_professional, ultra_formal, judicial_civic, mourning_somber,
+    religious_modest, semi_formal_social, wedding_celebration
+
+WHY 15 archetypes now all produce instances
+--------------------------------------------
+In the clean 2x2 the active axis is color/pattern (PREFERENCE) and garment is
+the TPO axis. A physical scenario (e.g. blizzard) does not constrain color, so
+ANY liked color is situation-appropriate — color is then a *pure* preference
+probe while the garment alone carries TPO. This is the cleanest 2x2 instance and
+is what makes extreme_cold / heat / athletic / etc. contribute (they previously
+produced 0 because color/pattern were unconstrained). The relaxed
+`check_axis_compatibility` treats an unconstrained active axis as "all values
+TPO-compatible". Dress-coded archetypes are unchanged (their color/pattern
+constraints still restrict A/B to compatible values).
 
 Instance generation:
-  scenario x constrained_axis x compatible_user -> one benchmark instance
-
-v2.1 changes (compatibility fix):
-  - athletic scenarios: gc_compat expanded with hoodie, sweater, jacket
-    (all are physically compatible with exercise; only formal/structured
-     garments remain in gc_incompat)
-  - formal/mourning/semi-formal scenarios: pa_compat expanded with
-    checkered, plaid (both are accepted in business-casual contexts)
-  - cold scenarios: gc_compat expanded with sweater, hoodie where missing
+  scenario x active_axis(color|pattern) x compatible_user -> one benchmark instance
 """
 
 # ═══════════════════════════════════════════════════════════
-#  Helper to build scenario dicts compactly
+#  Helper to build scenario dicts compactly (same signature as v2.0)
 # ═══════════════════════════════════════════════════════════
 
 def _sc(sid, arch, name, tpo,
@@ -32,235 +49,510 @@ def _sc(sid, arch, name, tpo,
                              "incompatible": gc_incompat},
         "justification": justification,
     }
-    if co_compat or co_incompat:
-        sc["color"] = {"compatible": co_compat, "incompatible": co_incompat}
-    else:
-        sc["color"] = None
-    if pa_compat or pa_incompat:
-        sc["pattern"] = {"compatible": pa_compat, "incompatible": pa_incompat}
-    else:
-        sc["pattern"] = None
+    sc["color"] = ({"compatible": co_compat, "incompatible": co_incompat}
+                   if (co_compat or co_incompat) else None)
+    sc["pattern"] = ({"compatible": pa_compat, "incompatible": pa_incompat}
+                     if (pa_compat or pa_incompat) else None)
     sc["query_seeds"] = {"explicit": q_explicit or [], "implicit": q_implicit or []}
     return sc
 
 
 # ═══════════════════════════════════════════════════════════
-#  ARCHETYPE REGISTRY
+#  ARCHETYPE REGISTRY (15)
 # ═══════════════════════════════════════════════════════════
 
 SCENARIO_ARCHETYPES = {
-    "extreme_cold":       "Extreme Cold / Winter",
-    "extreme_heat":       "Extreme Heat / Summer",
-    "ultra_formal":       "Ultra-Formal / Ceremonial",
-    "mourning_somber":    "Mourning / Somber / Sacred",
-    "athletic_physical":  "Athletic / Physical Activity",
-    "weather_extreme":    "Severe Weather Events",
-    "semi_formal_social": "Semi-Formal Social",
-    "casual_outdoor":     "Casual Outdoor / Leisure",
+    # physical (color/pattern unconstrained → pure-preference active axis)
+    "extreme_cold":          "Extreme Cold / Winter",
+    "extreme_heat":          "Extreme Heat / Summer",
+    "aquatic_water":         "Water & Swimming",
+    "athletic_indoor":       "Indoor Athletic / Gym",
+    "athletic_outdoor":      "Outdoor Athletic / Field Sports",
+    "rugged_outdoor":        "Rugged Outdoor / Hiking & Camping",
+    "severe_weather":        "Severe Weather Events",
+    "casual_leisure":        "Casual Leisure / Everyday Outing",
+    # dress-coded (garment + color/pattern carry TPO)
+    "business_professional": "Business / Professional",
+    "ultra_formal":          "Ultra-Formal / Ceremonial",
+    "judicial_civic":        "Judicial / Civic / Official",
+    "mourning_somber":       "Mourning / Somber",
+    "religious_modest":      "Religious / Sacred / Modest",
+    "semi_formal_social":    "Semi-Formal Social",
+    "wedding_celebration":   "Wedding / Celebration",
 }
 
+# shared garment palettes for physical archetypes (kept consistent so the
+# TPO contrast is identical across scenarios within an archetype)
+_COLD_C  = ["parka", "coat", "trench_coat", "jacket", "sweater", "windbreaker", "hoodie"]
+_COLD_I  = ["shorts", "tank_top", "t_shirt", "dress", "skirt"]
+_HEAT_C  = ["t_shirt", "tank_top", "shorts"]
+_HEAT_I  = ["parka", "coat", "trench_coat", "sweater", "suit_jacket", "blazer"]
+_WATER_C = ["t_shirt", "tank_top", "shorts"]
+_WATER_I = ["coat", "blazer", "suit_jacket", "parka", "sweater", "trench_coat", "dress"]
+_GYM_C   = ["t_shirt", "tank_top", "shorts", "hoodie", "sweater"]
+_GYM_I   = ["suit_jacket", "blazer", "coat", "dress", "trench_coat", "parka"]
+_FIELD_C = ["t_shirt", "tank_top", "shorts", "jacket", "windbreaker", "hoodie"]
+_FIELD_I = ["coat", "blazer", "suit_jacket", "dress", "parka", "trench_coat"]
+_RUGGED_C = ["jacket", "windbreaker", "hoodie", "jeans", "t_shirt", "sweater", "parka"]
+_RUGGED_I = ["suit_jacket", "blazer", "dress", "skirt", "blouse"]
+_STORM_C = ["windbreaker", "jacket", "coat", "parka"]
+_STORM_I = ["dress", "tank_top", "shorts", "skirt"]
+_CASUAL_C = ["t_shirt", "shorts", "hoodie", "jeans", "sweater", "jacket"]
+_CASUAL_I = ["suit_jacket", "blazer", "trench_coat"]
+
+
 # ═══════════════════════════════════════════════════════════
-#  CANONICAL SCENARIOS (60 total)
+#  CANONICAL SCENARIOS
 # ═══════════════════════════════════════════════════════════
 
 CANONICAL_SCENARIOS = [
 
-    # ── ARCHETYPE 1: EXTREME COLD (8) ─────────────────────
-    # gc_compat expanded: sweater added where missing (worn under outerwear)
+    # ════════ 1. EXTREME COLD (4) — physical ════════
     _sc("cold_blizzard_outdoor", "extreme_cold",
         "Blizzard & Sub-zero Outdoor All-day",
         {"time": {"season": "winter", "weather": "snowy"},
          "place": {"indoor_outdoor": "outdoor"},
-         "occasion": {"formality_required": "casual"}},
-        gc_compat=["parka", "coat", "trench_coat", "sweater", "jacket"],
-        gc_incompat=["shorts", "tank_top", "t_shirt", "dress", "skirt"],
+         "occasion": {"activity": "travel", "formality_required": "very_casual"}},
+        gc_compat=_COLD_C, gc_incompat=_COLD_I,
         q_explicit=[
             "It's going to be a blizzard with sub-zero temperatures and I'll be outside all day. What should I wear?",
-            "Heavy snow and freezing winds are forecast — I need an outfit for spending the whole day outdoors.",
+            "Heavy snow and freezing winds are forecast and I'll be outdoors for hours. What outfit makes sense?",
         ],
         q_implicit=[
-            "I'm heading to a winter festival in the mountains this weekend. Outfit advice?",
-            "Going to an outdoor holiday market during the snowstorm — what should I wear?",
+            "I'm heading to a winter festival up in the mountains this weekend. Any outfit advice?",
+            "Spending the whole day at an outdoor holiday market in January. What should I throw on?",
         ],
-        justification="Sub-zero blizzard makes light clothing a hypothermia risk."),
+        justification="Sub-zero blizzard makes light/exposed clothing a hypothermia risk."),
 
-    _sc("cold_winter_wedding_outdoor", "extreme_cold",
-        "Outdoor Winter Wedding (Guest)",
-        {"time": {"season": "winter", "weather": "cold"},
-         "place": {"venue": "wedding_venue", "indoor_outdoor": "outdoor"},
-         "occasion": {"activity": "ceremony_attendance", "formality_required": "formal"}},
-        gc_compat=["coat", "trench_coat", "blazer", "sweater"],
-        gc_incompat=["shorts", "tank_top", "t_shirt", "hoodie"],
-        co_compat=["black", "navy", "gray", "beige", "blue", "purple"],
-        co_incompat=["orange", "yellow"],
-        pa_compat=["solid", "striped", "checkered"],
-        pa_incompat=["camouflage", "graphic_print", "animal_print"],
-        q_explicit=["Attending an outdoor winter wedding ceremony — it's below freezing. What should I wear?"],
-        q_implicit=["My friend's getting married at an outdoor venue in January. Outfit advice?"],
-        justification="Outdoor winter ceremony requires warmth + formality."),
-
-    _sc("cold_dawn_commute", "extreme_cold",
-        "Freezing Winter Dawn Commute",
-        {"time": {"season": "winter", "weather": "cold", "time_of_day": "morning"},
-         "place": {"indoor_outdoor": "outdoor"},
-         "occasion": {"activity": "travel"}},
-        gc_compat=["coat", "parka", "trench_coat", "jacket", "sweater"],
-        gc_incompat=["shorts", "tank_top", "t_shirt"],
-        q_explicit=["It's freezing at dawn and I have a long walk to the station. What should I wear?"],
-        q_implicit=["I need to commute across town early on a bitter winter morning. Outfit?"],
-        justification="Walking in freezing dawn temperatures in shorts/tank top is impractical."),
-
-    _sc("cold_ski_resort_town", "extreme_cold",
-        "Ski Resort Town Sightseeing",
+    _sc("cold_polar_expedition", "extreme_cold",
+        "Polar / Arctic Expedition Day",
         {"time": {"season": "winter", "weather": "snowy"},
-         "place": {"indoor_outdoor": "mixed"},
-         "occasion": {"activity": "travel", "formality_required": "casual"}},
-        gc_compat=["parka", "coat", "jacket", "sweater", "windbreaker", "hoodie"],
-        gc_incompat=["shorts", "tank_top", "dress", "skirt"],
-        q_explicit=["I'm walking around a snowy ski resort town all day. What should I wear?"],
-        q_implicit=["Heading to a mountain resort village for a weekend trip. Outfit advice?"],
-        justification="Snowy mountain town makes exposed-skin clothing impractical."),
-
-    _sc("cold_military_memorial", "extreme_cold",
-        "Outdoor Winter Military Memorial Ceremony",
-        {"time": {"season": "winter", "weather": "cold"},
-         "place": {"indoor_outdoor": "outdoor"},
-         "occasion": {"activity": "ceremony_attendance", "formality_required": "formal"}},
-        gc_compat=["coat", "trench_coat", "blazer"],
-        gc_incompat=["shorts", "tank_top", "hoodie", "t_shirt"],
-        co_compat=["black", "navy", "gray"],
-        co_incompat=["orange", "yellow", "pink", "red"],
-        pa_compat=["solid"],
-        pa_incompat=["graphic_print", "camouflage", "animal_print", "floral"],
-        q_explicit=["Attending an outdoor military memorial in winter. What should I wear?"],
-        q_implicit=["Going to a veteran's memorial ceremony this January. Outfit?"],
-        justification="Military memorials demand dark formal attire; casual/bright is disrespectful + freezing."),
-
-    _sc("cold_outdoor_camping", "extreme_cold",
-        "Winter Wilderness Camping",
-        {"time": {"season": "winter", "weather": "cold"},
          "place": {"indoor_outdoor": "outdoor"},
          "occasion": {"activity": "travel", "formality_required": "very_casual"}},
-        gc_compat=["parka", "coat", "sweater", "jacket", "hoodie", "windbreaker"],
-        gc_incompat=["shorts", "tank_top", "t_shirt", "dress", "blazer"],
-        q_explicit=["I'm going winter camping in sub-zero weather. What should I wear?"],
-        q_implicit=["Heading out for a wilderness camping trip in January. Outfit advice?"],
-        justification="Winter camping with minimal clothing is a survival hazard."),
+        gc_compat=_COLD_C, gc_incompat=_COLD_I,
+        q_explicit=[
+            "I'm joining an arctic expedition and will be outdoors in extreme cold all day. What should I wear?",
+            "Going out onto the polar ice in freezing wind for the whole day. What's the right outfit?",
+        ],
+        q_implicit=[
+            "Booked a trip to a polar research base for some fieldwork. What do I pack to wear?",
+            "Heading way up north for a glacier trek next week. Outfit thoughts?",
+        ],
+        justification="Polar exposure without heavy insulation causes frostbite/hypothermia."),
 
-    _sc("cold_ice_festival", "extreme_cold",
-        "Outdoor Ice Sculpture Festival",
+    _sc("cold_ski_slope", "extreme_cold",
+        "All-day Skiing on the Slopes",
         {"time": {"season": "winter", "weather": "snowy"},
          "place": {"indoor_outdoor": "outdoor"},
-         "occasion": {"activity": "casual_outing", "formality_required": "casual"}},
-        gc_compat=["parka", "coat", "jacket", "sweater", "hoodie", "windbreaker"],
-        gc_incompat=["shorts", "tank_top", "t_shirt", "skirt"],
-        q_explicit=["I'll be walking around an ice sculpture festival outdoors in freezing weather. Outfit?"],
-        q_implicit=["Going to the ice festival this weekend. What should I wear?"],
-        justification="Hours outdoors viewing ice sculptures in freezing weather rules out light clothing."),
+         "occasion": {"activity": "exercise", "formality_required": "very_casual"}},
+        gc_compat=_COLD_C, gc_incompat=_COLD_I,
+        q_explicit=[
+            "I'll be skiing on the slopes all day in freezing alpine weather. What should I wear?",
+            "Spending the day on a snowy mountain skiing in sub-zero temps. Outfit advice?",
+        ],
+        q_implicit=[
+            "Got a lift pass for the resort tomorrow and I'll be on the mountain till dark. What should I wear?",
+            "First time hitting the slopes this season. What outfit makes sense?",
+        ],
+        justification="Skiing in alpine cold rules out exposed-skin clothing."),
 
-    _sc("cold_new_year_countdown", "extreme_cold",
-        "Outdoor New Year's Eve Countdown (Winter City)",
-        {"time": {"season": "winter", "weather": "cold", "time_of_day": "night"},
+    _sc("cold_ice_fishing", "extreme_cold",
+        "Frozen-Lake Ice Fishing",
+        {"time": {"season": "winter", "weather": "cold"},
          "place": {"indoor_outdoor": "outdoor"},
-         "occasion": {"activity": "social_gathering", "formality_required": "casual"}},
-        gc_compat=["parka", "coat", "jacket", "sweater", "hoodie", "windbreaker"],
-        gc_incompat=["shorts", "tank_top", "t_shirt"],
-        q_explicit=["Going to an outdoor New Year countdown — it'll be freezing at midnight. Outfit?"],
-        q_implicit=["Heading downtown for the New Year's Eve ball drop event. What should I wear?"],
-        justification="Standing outdoors at midnight in winter cold requires heavy layering."),
+         "occasion": {"activity": "casual_outing", "formality_required": "very_casual"}},
+        gc_compat=_COLD_C, gc_incompat=_COLD_I,
+        q_explicit=[
+            "Sitting out on a frozen lake ice fishing for hours in sub-zero cold. What should I wear?",
+            "I'll be still on the ice in freezing wind all morning. What's the warmest sensible outfit?",
+        ],
+        q_implicit=[
+            "Going ice fishing with my uncle this weekend. What should I wear?",
+            "Planning a quiet day out on the frozen lake. Outfit advice?",
+        ],
+        justification="Hours motionless on ice in freezing air requires maximum insulation."),
 
-    # ── ARCHETYPE 2: EXTREME HEAT (8) ─────────────────────
+    # ════════ 2. EXTREME HEAT (4) — physical ════════
     _sc("heat_beach_day", "extreme_heat",
         "Scorching Beach Day",
         {"time": {"season": "summer", "weather": "hot_humid"},
          "place": {"venue": "beach", "indoor_outdoor": "outdoor"},
          "occasion": {"activity": "casual_outing", "formality_required": "very_casual"}},
-        gc_compat=["shorts", "tank_top", "t_shirt"],
-        gc_incompat=["parka", "coat", "trench_coat", "sweater", "blazer"],
-        q_explicit=["It's 38°C and I'm heading to the beach for the whole day. What should I wear?"],
-        q_implicit=["Planning a beach day this weekend in the peak of summer. Outfit?"],
+        gc_compat=_HEAT_C, gc_incompat=_HEAT_I,
+        q_explicit=[
+            "It's 38°C and I'm heading to the beach for the whole day. What should I wear?",
+            "Brutal heat today and I'll be on the sand for hours. What outfit makes sense?",
+        ],
+        q_implicit=[
+            "Planning a beach day this weekend at the peak of summer. Outfit?",
+            "Meeting friends down by the shore tomorrow afternoon. What should I wear?",
+        ],
         justification="Heavy outerwear at a scorching beach causes heatstroke risk."),
 
-    _sc("heat_tropical_pool_party", "extreme_heat",
+    _sc("heat_desert_trek", "extreme_heat",
+        "Desert Trek (Peak Summer)",
+        {"time": {"season": "summer", "weather": "hot_humid"},
+         "place": {"indoor_outdoor": "outdoor"},
+         "occasion": {"activity": "travel", "formality_required": "very_casual"}},
+        gc_compat=_HEAT_C, gc_incompat=_HEAT_I,
+        q_explicit=[
+            "Trekking across a desert in 42°C heat. What should I wear?",
+            "Out in the open desert under blazing sun all day. What's the right outfit?",
+        ],
+        q_implicit=[
+            "Spending the day exploring Dubai in August. Outfit advice?",
+            "Doing a guided tour through the dunes next week. What should I wear?",
+        ],
+        justification="42°C desert heat in a parka/coat is a heatstroke emergency."),
+
+    _sc("heat_tropical_resort", "extreme_heat",
         "Tropical Resort Pool Party",
         {"time": {"season": "summer", "weather": "hot_humid"},
          "place": {"indoor_outdoor": "outdoor"},
          "occasion": {"activity": "social_gathering", "formality_required": "very_casual"}},
-        gc_compat=["shorts", "tank_top", "t_shirt"],
-        gc_incompat=["parka", "coat", "trench_coat", "sweater", "suit_jacket"],
-        q_explicit=["Pool party at a tropical resort in sweltering heat. What should I wear?"],
-        q_implicit=["Friends are throwing a poolside get-together at the resort. Outfit?"],
-        justification="Parka or suit jacket at a tropical pool party is absurd."),
+        gc_compat=_HEAT_C, gc_incompat=_HEAT_I,
+        q_explicit=[
+            "Pool party at a tropical resort in sweltering heat. What should I wear?",
+            "It's humid and boiling and I'm headed to a poolside party. Outfit?",
+        ],
+        q_implicit=[
+            "Friends are throwing a poolside get-together at the resort. What should I wear?",
+            "Spending the afternoon lounging by the resort pool. Outfit advice?",
+        ],
+        justification="Parka/suit jacket at a tropical pool party is physically unbearable."),
 
-    _sc("heat_outdoor_festival", "extreme_heat",
+    _sc("heat_summer_festival", "extreme_heat",
         "Midsummer Outdoor Music Festival",
         {"time": {"season": "summer", "weather": "hot_humid"},
          "place": {"indoor_outdoor": "outdoor"},
          "occasion": {"activity": "social_gathering", "formality_required": "very_casual"}},
-        gc_compat=["t_shirt", "tank_top", "shorts"],
-        gc_incompat=["coat", "parka", "trench_coat", "sweater"],
-        q_explicit=["Going to an all-day outdoor music festival in 35°C heat. Outfit advice?"],
-        q_implicit=["Attending a summer music festival from noon to midnight. What should I wear?"],
+        gc_compat=_HEAT_C, gc_incompat=_HEAT_I,
+        q_explicit=[
+            "Going to an all-day outdoor music festival in 35°C heat. What should I wear?",
+            "Standing in a festival crowd under the sun from noon to night. Outfit advice?",
+        ],
+        q_implicit=[
+            "Got tickets to a summer festival this weekend. What should I wear?",
+            "Spending Saturday at an open-air concert downtown. Outfit?",
+        ],
         justification="All-day outdoor festival in extreme heat makes heavy outerwear a health hazard."),
 
-    _sc("heat_desert_sightseeing", "extreme_heat",
-        "Desert City Sightseeing (Peak Summer)",
-        {"time": {"season": "summer", "weather": "hot_humid"},
-         "place": {"indoor_outdoor": "outdoor"},
-         "occasion": {"activity": "travel", "formality_required": "casual"}},
-        gc_compat=["t_shirt", "shorts", "tank_top"],
-        gc_incompat=["parka", "coat", "sweater", "trench_coat"],
-        q_explicit=["Touring a desert city in 42°C heat. What should I wear?"],
-        q_implicit=["Spending the day exploring Dubai in August. Outfit advice?"],
-        justification="42°C desert heat in a parka/coat is a heatstroke emergency."),
+    # ════════ 3. AQUATIC / WATER (3) — physical ════════
+    _sc("water_swim_session", "aquatic_water",
+        "Swimming Pool Lap Session",
+        {"place": {"venue": "pool", "indoor_outdoor": "indoor"},
+         "occasion": {"activity": "exercise", "formality_required": "very_casual"}},
+        gc_compat=_WATER_C, gc_incompat=_WATER_I,
+        q_explicit=[
+            "Heading to the pool for a lap-swimming session. What should I wear?",
+            "Going to swim laps for an hour at the pool. What's the right outfit?",
+        ],
+        q_implicit=[
+            "Starting regular swim training this week. What should I bring to wear?",
+            "Joined the local pool for morning swims. Outfit advice?",
+        ],
+        justification="A parka/blazer/dress to swim laps is absurd and waterlogged-dangerous."),
 
-    _sc("heat_summer_bbq", "extreme_heat",
-        "Backyard Summer Barbecue",
-        {"time": {"season": "summer", "weather": "sunny"},
-         "place": {"indoor_outdoor": "outdoor"},
-         "occasion": {"activity": "social_gathering", "formality_required": "very_casual"}},
-        gc_compat=["t_shirt", "shorts", "tank_top"],
-        gc_incompat=["parka", "coat", "sweater", "suit_jacket", "trench_coat"],
-        q_explicit=["Friends invited me to a backyard BBQ on a hot summer afternoon. Outfit?"],
-        q_implicit=["Heading to a cookout at a friend's place this sunny weekend. What should I wear?"],
-        justification="Heavy winter outerwear at a casual summer BBQ is universally out of place."),
-
-    _sc("heat_tropical_beach_wedding", "extreme_heat",
-        "Tropical Beach Wedding (Guest)",
-        {"time": {"season": "summer", "weather": "hot_humid"},
-         "place": {"venue": "beach", "indoor_outdoor": "outdoor"},
-         "occasion": {"activity": "ceremony_attendance", "formality_required": "smart_casual"}},
-        gc_compat=["shirt", "blouse", "dress"],
-        gc_incompat=["parka", "coat", "hoodie", "sweater"],
-        q_explicit=["Attending a beach wedding in tropical heat. What should I wear?"],
-        q_implicit=["Friend's getting married at a seaside venue in Bali. Outfit advice?"],
-        justification="Parka to a tropical beach wedding is physically unbearable and socially absurd."),
-
-    _sc("heat_water_park", "extreme_heat",
+    _sc("water_park_day", "aquatic_water",
         "Water Park Visit (Peak Summer)",
         {"time": {"season": "summer", "weather": "hot_humid"},
          "place": {"indoor_outdoor": "outdoor"},
          "occasion": {"activity": "casual_outing", "formality_required": "very_casual"}},
-        gc_compat=["t_shirt", "shorts", "tank_top"],
-        gc_incompat=["coat", "parka", "sweater", "blazer", "trench_coat"],
-        q_explicit=["Taking the family to a water park in scorching heat. What should I wear?"],
-        q_implicit=["Spending the day at the water park this weekend. Outfit?"],
-        justification="Coat/parka at a water park in summer heat is nonsensical."),
+        gc_compat=_WATER_C, gc_incompat=_WATER_I,
+        q_explicit=[
+            "Taking the family to a water park in scorching heat. What should I wear?",
+            "Spending the day going down water slides in the sun. Outfit?",
+        ],
+        q_implicit=[
+            "Day out at the water park this weekend. What should I wear?",
+            "Kids want to hit the aqua park tomorrow. Outfit advice?",
+        ],
+        justification="Coat/parka/dress at a water park in summer heat is nonsensical and unsafe."),
 
-    _sc("heat_rooftop_party", "extreme_heat",
-        "Rooftop Summer Party (Evening)",
-        {"time": {"season": "summer", "weather": "hot_humid", "time_of_day": "evening"},
+    _sc("water_poolside_lounge", "aquatic_water",
+        "Resort Poolside Lounging",
+        {"time": {"season": "summer", "weather": "hot_humid"},
+         "place": {"venue": "pool", "indoor_outdoor": "outdoor"},
+         "occasion": {"activity": "casual_outing", "formality_required": "very_casual"}},
+        gc_compat=_WATER_C, gc_incompat=_WATER_I,
+        q_explicit=[
+            "Lounging poolside all afternoon in the heat, going in and out of the water. What should I wear?",
+            "Spending a hot day by the pool with frequent dips. Outfit?",
+        ],
+        q_implicit=[
+            "Relaxing by the hotel pool tomorrow afternoon. What should I wear?",
+            "Booked a cabana by the pool for the day. Outfit advice?",
+        ],
+        justification="Heavy structured garments by a pool in summer heat are impractical and get soaked."),
+
+    # ════════ 4. ATHLETIC INDOOR (3) — physical ════════
+    _sc("gym_weight_training", "athletic_indoor",
+        "Gym Weight Training",
+        {"place": {"venue": "gym", "indoor_outdoor": "indoor"},
+         "occasion": {"activity": "exercise", "formality_required": "very_casual"}},
+        gc_compat=_GYM_C, gc_incompat=_GYM_I,
+        q_explicit=[
+            "Heading to the gym for a heavy weight-training session. What should I wear?",
+            "Doing barbell and machine work at the gym today. What's the right outfit?",
+        ],
+        q_implicit=[
+            "Got a lifting session after work today. What should I wear?",
+            "Starting a strength program at the gym this week. Outfit advice?",
+        ],
+        justification="Weight training in a suit/coat/dress restricts movement and damages garments."),
+
+    _sc("gym_yoga_class", "athletic_indoor",
+        "Yoga / Pilates Class",
+        {"place": {"venue": "gym", "indoor_outdoor": "indoor"},
+         "occasion": {"activity": "exercise", "formality_required": "very_casual"}},
+        gc_compat=_GYM_C, gc_incompat=_GYM_I,
+        q_explicit=[
+            "I have a yoga class tonight with lots of stretching and floor poses. What should I wear?",
+            "Going to a Pilates session focused on full-body mobility. Outfit?",
+        ],
+        q_implicit=[
+            "Starting yoga this week. What's appropriate to wear?",
+            "Signed up for a mat-based fitness class. What should I wear?",
+        ],
+        justification="Yoga requires full-body flexibility; blazers/coats/dresses physically prevent poses."),
+
+    _sc("gym_indoor_basketball", "athletic_indoor",
+        "Indoor Basketball / Futsal",
+        {"place": {"venue": "gym", "indoor_outdoor": "indoor"},
+         "occasion": {"activity": "exercise", "formality_required": "very_casual"}},
+        gc_compat=_GYM_C, gc_incompat=_GYM_I,
+        q_explicit=[
+            "Playing indoor basketball tonight with lots of running and jumping. What should I wear?",
+            "Got a futsal match on an indoor court this evening. Outfit?",
+        ],
+        q_implicit=[
+            "Joining a pick-up league at the indoor court. What's right to wear?",
+            "Friends booked the gym court for a game tonight. Outfit advice?",
+        ],
+        justification="Court sport in a blazer/coat/dress restricts movement and risks injury."),
+
+    # ════════ 5. ATHLETIC OUTDOOR (3) — physical ════════
+    _sc("field_road_run", "athletic_outdoor",
+        "Long-distance Road Run",
+        {"place": {"indoor_outdoor": "outdoor"},
+         "occasion": {"activity": "exercise", "formality_required": "very_casual"}},
+        gc_compat=_FIELD_C, gc_incompat=_FIELD_I,
+        q_explicit=[
+            "Running a half-marathon this weekend. What should I wear?",
+            "Going out for a long training run on the road today. Outfit?",
+        ],
+        q_implicit=[
+            "Training for my first marathon. What's the right thing to wear?",
+            "Building up my distance with weekend runs. Outfit advice?",
+        ],
+        justification="Running distance in a coat/blazer/dress is physically impossible and overheating."),
+
+    _sc("field_tennis_match", "athletic_outdoor",
+        "Outdoor Tennis Match",
+        {"place": {"indoor_outdoor": "outdoor"},
+         "occasion": {"activity": "exercise", "formality_required": "very_casual"}},
+        gc_compat=_FIELD_C, gc_incompat=_FIELD_I,
+        q_explicit=[
+            "Tennis match on an outdoor court this afternoon. What should I wear?",
+            "Playing a couple of sets in the sun today. Outfit?",
+        ],
+        q_implicit=[
+            "Joined a weekend tennis club. What should I wear on court?",
+            "Booked a court with a friend for tomorrow. Outfit advice?",
+        ],
+        justification="Playing tennis in a coat/parka/dress is physically impossible."),
+
+    _sc("field_soccer_match", "athletic_outdoor",
+        "Outdoor Soccer Match",
+        {"place": {"indoor_outdoor": "outdoor"},
+         "occasion": {"activity": "exercise", "formality_required": "very_casual"}},
+        gc_compat=_FIELD_C, gc_incompat=_FIELD_I,
+        q_explicit=[
+            "Playing a full soccer match on grass this weekend. What should I wear?",
+            "Out on the pitch running for 90 minutes today. Outfit?",
+        ],
+        q_implicit=[
+            "Joined a Sunday-league soccer team. What should I wear to play?",
+            "Friends organized a kickabout at the park field. Outfit advice?",
+        ],
+        justification="Running a soccer match in a coat/blazer/dress is impossible and tears garments."),
+
+    # ════════ 6. RUGGED OUTDOOR (3) — physical ════════
+    _sc("rugged_mountain_hike", "rugged_outdoor",
+        "Day Hike on Rough Mountain Trail",
+        {"place": {"indoor_outdoor": "outdoor"},
+         "occasion": {"activity": "travel", "formality_required": "very_casual"}},
+        gc_compat=_RUGGED_C, gc_incompat=_RUGGED_I,
+        q_explicit=[
+            "Hiking a rough mountain trail all day with steep, rocky sections. What should I wear?",
+            "Doing a long day hike over uneven terrain. What's the right outfit?",
+        ],
+        q_implicit=[
+            "Planning a mountain hike with friends this weekend. Outfit advice?",
+            "Heading up the ridge trail on Saturday. What should I wear?",
+        ],
+        justification="A suit/blazer/dress/skirt on a rugged hike is impractical and easily damaged."),
+
+    _sc("rugged_wilderness_camping", "rugged_outdoor",
+        "Wilderness Camping Trip",
+        {"place": {"indoor_outdoor": "outdoor"},
+         "occasion": {"activity": "travel", "formality_required": "very_casual"}},
+        gc_compat=_RUGGED_C, gc_incompat=_RUGGED_I,
+        q_explicit=[
+            "Camping in the backcountry for the weekend, setting up tents and gathering wood. What should I wear?",
+            "Roughing it outdoors for two days of camping. Outfit?",
+        ],
+        q_implicit=[
+            "Planning a camping trip out in the woods with friends. What should I wear?",
+            "Heading off-grid to a campsite this weekend. Outfit advice?",
+        ],
+        justification="Camping chores in a blazer/suit/dress are impractical and ruin the garment."),
+
+    _sc("rugged_trail_scramble", "rugged_outdoor",
+        "Rocky Trail Scramble",
+        {"place": {"indoor_outdoor": "outdoor"},
+         "occasion": {"activity": "travel", "formality_required": "very_casual"}},
+        gc_compat=_RUGGED_C, gc_incompat=_RUGGED_I,
+        q_explicit=[
+            "Scrambling over boulders and rough rock on a trail today. What should I wear?",
+            "Doing a hands-on rocky scramble route. What's the right outfit?",
+        ],
+        q_implicit=[
+            "Going bouldering along a rugged trail this weekend. Outfit advice?",
+            "Tackling a steep, rocky route with a group. What should I wear?",
+        ],
+        justification="A rocky scramble in formal/delicate clothing is a safety hazard."),
+
+    # ════════ 7. SEVERE WEATHER (4) — physical ════════
+    _sc("weather_typhoon", "severe_weather",
+        "Typhoon / Hurricane Errands",
+        {"time": {"weather": "rainy", "wind": "extreme"},
          "place": {"indoor_outdoor": "outdoor"},
-         "occasion": {"activity": "social_gathering", "formality_required": "casual"}},
-        gc_compat=["t_shirt", "shirt", "shorts", "blouse"],
-        gc_incompat=["parka", "coat", "sweater", "trench_coat"],
-        q_explicit=["Going to a rooftop party on a hot summer evening. What should I wear?"],
-        q_implicit=["Friends are hosting a rooftop get-together downtown tonight. Outfit?"],
-        justification="Summer rooftop party; heavy winter outerwear is uncomfortable."),
+         "occasion": {"activity": "errands"}},
+        gc_compat=_STORM_C, gc_incompat=_STORM_I,
+        q_explicit=[
+            "A typhoon is hitting and I have to go out for urgent errands. What should I wear?",
+            "Driving rain and violent wind outside and I must head out. Outfit?",
+        ],
+        q_implicit=[
+            "Need to run essential errands during the big storm. What should I wear?",
+            "The storm's bad but I have to get to the store. Outfit advice?",
+        ],
+        justification="Typhoon-force wind and rain makes exposed-skin/delicate clothing dangerous."),
 
-    # ── ARCHETYPE 3: ULTRA-FORMAL (10) ────────────────────
-    # pa_compat: checkered, plaid added (accepted business-casual patterns)
-    _sc("formal_corporate_board", "ultra_formal",
+    _sc("weather_hailstorm", "severe_weather",
+        "Hailstorm Outdoor Exposure",
+        {"time": {"weather": "hail"},
+         "place": {"indoor_outdoor": "outdoor"},
+         "occasion": {"activity": "errands"}},
+        gc_compat=_STORM_C, gc_incompat=_STORM_I,
+        q_explicit=[
+            "There's a hailstorm and I have to walk home through it. What should I wear?",
+            "Hail is coming down and I need to be outside briefly. What's the right outfit?",
+        ],
+        q_implicit=[
+            "Caught out in sudden hail last time — what should I wear when it happens again?",
+            "Forecast says hail and I still need to head out. Outfit advice?",
+        ],
+        justification="Hailstones on bare skin cause injury; protective outerwear is essential."),
+
+    _sc("weather_dust_storm", "severe_weather",
+        "Sandstorm / Dust Storm Outdoor",
+        {"time": {"weather": "windy", "air": "dust"},
+         "place": {"indoor_outdoor": "outdoor"},
+         "occasion": {"activity": "errands"}},
+        gc_compat=_STORM_C, gc_incompat=_STORM_I,
+        q_explicit=[
+            "A dust storm is rolling in and I need to cross town. What should I wear?",
+            "Thick blowing sand outside and I have to be out in it. Outfit?",
+        ],
+        q_implicit=[
+            "Living in a desert city during sandstorm season — what should I wear outdoors?",
+            "The air's full of blowing dust and I need to head out. Outfit advice?",
+        ],
+        justification="Sand/dust on bare skin causes abrasion; full coverage is needed."),
+
+    _sc("weather_freezing_rain", "severe_weather",
+        "Freezing Rain / Ice Storm Commute",
+        {"time": {"season": "winter", "weather": "rainy"},
+         "place": {"indoor_outdoor": "outdoor"},
+         "occasion": {"activity": "travel"}},
+        gc_compat=_STORM_C, gc_incompat=["dress", "tank_top", "shorts", "skirt", "t_shirt"],
+        q_explicit=[
+            "Freezing rain and icy roads, and I'm walking to work. What should I wear?",
+            "An ice storm is making my commute treacherous and wet. Outfit?",
+        ],
+        q_implicit=[
+            "The roads are iced over and I still have to get across town. What should I wear?",
+            "Sleety, freezing commute ahead this morning. Outfit advice?",
+        ],
+        justification="Freezing rain plus sub-zero wind chill makes light clothing hypothermia-inducing."),
+
+    # ════════ 8. CASUAL LEISURE (4) — physical ════════
+    _sc("casual_park_picnic", "casual_leisure",
+        "Weekend Park Picnic",
+        {"time": {"season": "spring", "weather": "sunny"},
+         "place": {"venue": "park", "indoor_outdoor": "outdoor"},
+         "occasion": {"activity": "casual_outing", "formality_required": "very_casual"}},
+        gc_compat=_CASUAL_C, gc_incompat=_CASUAL_I,
+        q_explicit=[
+            "Having a relaxed picnic at the park on a sunny afternoon. What should I wear?",
+            "Sitting on the grass with friends for a casual park hangout. Outfit?",
+        ],
+        q_implicit=[
+            "Meeting friends at the park for a lazy Sunday. What should I wear?",
+            "Packing a basket for an afternoon in the park. Outfit advice?",
+        ],
+        justification="A suit jacket/blazer/trench coat at a casual park picnic is universally over-dressed."),
+
+    _sc("casual_farmers_market", "casual_leisure",
+        "Weekend Farmers' Market",
+        {"time": {"season": "spring", "weather": "sunny"},
+         "place": {"indoor_outdoor": "outdoor"},
+         "occasion": {"activity": "casual_outing", "formality_required": "very_casual"}},
+        gc_compat=_CASUAL_C, gc_incompat=_CASUAL_I,
+        q_explicit=[
+            "Strolling a weekend farmers' market for a couple of hours. What should I wear?",
+            "Wandering the outdoor market stalls on a casual Saturday. Outfit?",
+        ],
+        q_implicit=[
+            "Heading to the local market for produce this morning. What should I wear?",
+            "Casual morning browsing the market. Outfit advice?",
+        ],
+        justification="A suit/blazer at a casual farmers' market is over-dressed."),
+
+    _sc("casual_amusement_park", "casual_leisure",
+        "Amusement Park All-Day Visit",
+        {"place": {"indoor_outdoor": "outdoor"},
+         "occasion": {"activity": "casual_outing", "formality_required": "very_casual"}},
+        gc_compat=_CASUAL_C, gc_incompat=["suit_jacket", "blazer", "trench_coat", "coat"],
+        q_explicit=[
+            "Spending the whole day at an amusement park going on rides. What should I wear?",
+            "On my feet all day at a theme park with lots of rides. Outfit?",
+        ],
+        q_implicit=[
+            "Taking the family to the theme park this weekend. What should I wear?",
+            "Day out at the amusement park tomorrow. Outfit advice?",
+        ],
+        justification="Formal wear at an amusement park restricts rides and movement."),
+
+    _sc("casual_zoo_day", "casual_leisure",
+        "Family Day at the Zoo",
+        {"place": {"indoor_outdoor": "outdoor"},
+         "occasion": {"activity": "casual_outing", "formality_required": "very_casual"}},
+        gc_compat=_CASUAL_C, gc_incompat=["suit_jacket", "blazer", "trench_coat"],
+        q_explicit=[
+            "Walking around the zoo all day with the family. What should I wear?",
+            "A full day of walking outdoors at the zoo. Outfit?",
+        ],
+        q_implicit=[
+            "Taking the kids to the zoo this weekend. What should I wear?",
+            "Day trip to the zoo tomorrow. Outfit advice?",
+        ],
+        justification="Formal attire for a full day of walking at the zoo is impractical and over-dressed."),
+
+    # ════════ 9. BUSINESS / PROFESSIONAL (4) — dress-coded ════════
+    _sc("biz_corporate_board", "business_professional",
         "Corporate Board Meeting",
         {"time": {"time_of_day": "daytime"},
          "place": {"venue": "office", "indoor_outdoor": "indoor"},
@@ -271,9 +563,121 @@ CANONICAL_SCENARIOS = [
         co_incompat=["orange", "yellow", "pink"],
         pa_compat=["solid", "striped", "checkered", "plaid"],
         pa_incompat=["graphic_print", "camouflage", "animal_print"],
-        q_explicit=["I have a corporate board meeting today. The dress code is strictly formal. What should I wear?"],
-        q_implicit=["Presenting to the executive board this afternoon. Outfit advice?"],
-        justification="Hoodie/shorts at a corporate board meeting is universally inappropriate."),
+        q_explicit=[
+            "I have a corporate board meeting today and the dress code is strictly formal. What should I wear?",
+            "Presenting to the executive board in a formal boardroom this afternoon. What should I wear?",
+        ],
+        q_implicit=[
+            "Big meeting with the company's senior leadership this afternoon. Outfit advice?",
+            "I'm sitting in with the directors at headquarters today. What should I wear?",
+        ],
+        justification="Hoodie/shorts and loud colors/prints at a corporate board meeting are universally inappropriate."),
+
+    _sc("biz_investor_pitch", "business_professional",
+        "Investor Pitch Presentation",
+        {"time": {"time_of_day": "daytime"},
+         "place": {"venue": "office", "indoor_outdoor": "indoor"},
+         "occasion": {"activity": "work_meeting", "formality_required": "business_casual"}},
+        gc_compat=["blazer", "shirt", "suit_jacket", "blouse"],
+        gc_incompat=["hoodie", "shorts", "tank_top", "t_shirt"],
+        co_compat=["black", "navy", "gray", "white", "beige"],
+        co_incompat=["orange", "yellow", "pink"],
+        pa_compat=["solid", "striped", "checkered", "plaid"],
+        pa_incompat=["graphic_print", "camouflage", "animal_print"],
+        q_explicit=[
+            "Pitching to venture capital investors today; formal business attire is expected. What should I wear?",
+            "Presenting our funding pitch to investors in a few hours. What should I wear?",
+        ],
+        q_implicit=[
+            "Big meeting with the VCs tomorrow morning to raise our round. Outfit advice?",
+            "Trying to win over serious investors at a meeting tomorrow. What should I wear?",
+        ],
+        justification="Investor pitches demand credibility; casual wear and loud prints undermine professional trust."),
+
+    _sc("biz_job_interview", "business_professional",
+        "Formal Job Interview",
+        {"time": {"time_of_day": "daytime"},
+         "place": {"venue": "office", "indoor_outdoor": "indoor"},
+         "occasion": {"activity": "work_meeting", "formality_required": "business_casual"}},
+        gc_compat=["blazer", "shirt", "blouse", "suit_jacket"],
+        gc_incompat=["hoodie", "shorts", "tank_top", "t_shirt"],
+        co_compat=["black", "navy", "gray", "white", "beige"],
+        co_incompat=["orange", "yellow", "pink"],
+        pa_compat=["solid", "striped", "checkered", "plaid"],
+        pa_incompat=["graphic_print", "camouflage", "animal_print"],
+        q_explicit=[
+            "I have an in-person job interview at a corporate office tomorrow. What should I wear?",
+            "Interviewing for a professional role at their headquarters tomorrow. What should I wear?",
+        ],
+        q_implicit=[
+            "Final-round interview with the hiring panel next week. Outfit advice?",
+            "Meeting the team that decides if I get the job tomorrow. What should I wear?",
+        ],
+        justification="Hoodie/shorts and loud prints to a formal interview signal disrespect for the opportunity."),
+
+    _sc("biz_client_meeting", "business_professional",
+        "Client Meeting / Business Dinner",
+        {"time": {"time_of_day": "evening"},
+         "place": {"venue": "restaurant", "indoor_outdoor": "indoor"},
+         "occasion": {"activity": "work_meeting", "formality_required": "business_casual"}},
+        gc_compat=["blazer", "shirt", "suit_jacket", "blouse"],
+        gc_incompat=["hoodie", "shorts", "tank_top", "t_shirt"],
+        co_compat=["black", "navy", "gray", "white", "beige"],
+        co_incompat=["orange", "yellow", "pink"],
+        pa_compat=["solid", "striped", "checkered", "plaid"],
+        pa_incompat=["graphic_print", "camouflage", "animal_print"],
+        q_explicit=[
+            "Business dinner with an important client tonight; professional attire expected. What should I wear?",
+            "Meeting a key client over dinner to represent the firm. What should I wear?",
+        ],
+        q_implicit=[
+            "Taking our biggest client out to dinner tonight. Outfit advice?",
+            "Dinner with the client whose account I manage. What should I wear?",
+        ],
+        justification="Business meetings represent the company; casual wear and loud prints are a professional failure."),
+
+    # ════════ 10. ULTRA-FORMAL / CEREMONIAL (4) — dress-coded ════════
+    _sc("formal_black_tie_gala", "ultra_formal",
+        "Black-Tie Gala",
+        {"time": {"time_of_day": "evening"},
+         "place": {"indoor_outdoor": "indoor"},
+         "occasion": {"activity": "social_gathering", "formality_required": "formal"}},
+        gc_compat=["suit_jacket", "blazer", "dress"],
+        gc_incompat=["hoodie", "shorts", "tank_top", "t_shirt"],
+        co_compat=["black", "navy", "gray", "white"],
+        co_incompat=["orange", "yellow", "pink", "red"],
+        pa_compat=["solid", "striped"],
+        pa_incompat=["graphic_print", "camouflage", "animal_print", "floral"],
+        q_explicit=[
+            "Attending a black-tie gala tonight with a strict formal dress code. What should I wear?",
+            "Invited to a formal evening ball — black tie. What should I wear?",
+        ],
+        q_implicit=[
+            "Got an invitation to a glamorous evening fundraiser at a grand hotel. Outfit advice?",
+            "Big formal evening event downtown tonight. What should I wear?",
+        ],
+        justification="Black-tie events have an explicit dress code that excludes casual and loud clothing."),
+
+    _sc("formal_opera_premiere", "ultra_formal",
+        "Opera / Ballet Premiere",
+        {"time": {"time_of_day": "evening"},
+         "place": {"venue": "concert_hall", "indoor_outdoor": "indoor"},
+         "occasion": {"activity": "ceremony_attendance", "formality_required": "formal"}},
+        gc_compat=["suit_jacket", "blazer", "dress", "shirt"],
+        gc_incompat=["hoodie", "shorts", "tank_top", "t_shirt"],
+        co_compat=["black", "navy", "gray", "white"],
+        co_incompat=["orange", "yellow", "pink", "red"],
+        pa_compat=["solid", "striped"],
+        pa_incompat=["graphic_print", "camouflage", "animal_print", "floral"],
+        q_explicit=[
+            "Attending an opera premiere tonight; they enforce a formal dress code. What should I wear?",
+            "Going to opening night at the opera house with a dress code. What should I wear?",
+        ],
+        q_implicit=[
+            "Have tickets to the gala opening night at the opera. Outfit advice?",
+            "Premiere performance at the grand concert hall tonight. What should I wear?",
+        ],
+        justification="Opera/ballet premieres with dress codes prohibit casual and loud attire."),
 
     _sc("formal_national_award", "ultra_formal",
         "National Award Ceremony (Recipient)",
@@ -281,132 +685,107 @@ CANONICAL_SCENARIOS = [
          "place": {"indoor_outdoor": "indoor"},
          "occasion": {"activity": "ceremony_attendance", "formality_required": "formal"}},
         gc_compat=["suit_jacket", "blazer", "dress"],
-        gc_incompat=["hoodie", "shorts", "tank_top", "t_shirt", "windbreaker"],
+        gc_incompat=["hoodie", "shorts", "tank_top", "t_shirt"],
         co_compat=["black", "navy", "gray", "white"],
-        co_incompat=["orange", "yellow"],
+        co_incompat=["orange", "yellow", "pink", "red"],
         pa_compat=["solid", "striped"],
-        pa_incompat=["camouflage", "graphic_print", "animal_print"],
-        q_explicit=["I'm receiving a national award tonight at a formal ceremony. What should I wear?"],
-        q_implicit=["Attending an award ceremony at the national hall. Outfit?"],
-        justification="Receiving a national award in a hoodie/shorts disrespects the institution."),
+        pa_incompat=["graphic_print", "camouflage", "animal_print", "floral"],
+        q_explicit=[
+            "I'm receiving a national award tonight at a formal ceremony on stage. What should I wear?",
+            "Being honored at a formal national award ceremony this evening. What should I wear?",
+        ],
+        q_implicit=[
+            "I'm being recognized on stage at a prestigious ceremony tonight. Outfit advice?",
+            "Accepting a major honor at the national hall this evening. What should I wear?",
+        ],
+        justification="Receiving a national award in a hoodie/shorts or loud prints disrespects the institution."),
 
-    _sc("formal_diplomatic_reception", "ultra_formal",
-        "Diplomatic Reception",
+    _sc("formal_state_banquet", "ultra_formal",
+        "Head-of-State Banquet",
         {"time": {"time_of_day": "evening"},
          "place": {"indoor_outdoor": "indoor"},
          "occasion": {"activity": "social_gathering", "formality_required": "formal"}},
-        gc_compat=["suit_jacket", "blazer", "dress", "shirt", "blouse"],
-        gc_incompat=["hoodie", "shorts", "tank_top", "t_shirt", "windbreaker"],
-        co_compat=["black", "navy", "gray", "white", "beige"],
-        co_incompat=["orange", "yellow", "pink"],
-        pa_compat=["solid", "striped", "checkered"],
-        pa_incompat=["graphic_print", "camouflage", "animal_print"],
-        q_explicit=["Attending a diplomatic reception tonight. Formal dress code. What should I wear?"],
-        q_implicit=["Invited to an embassy reception. Outfit advice?"],
-        justification="Diplomatic receptions have strict dress codes; casual wear is a protocol violation."),
-
-    _sc("formal_opera_ballet", "ultra_formal",
-        "Opera / Ballet Premiere (Dress Code)",
-        {"time": {"time_of_day": "evening"},
-         "place": {"venue": "concert_hall", "indoor_outdoor": "indoor"},
-         "occasion": {"formality_required": "formal"}},
-        gc_compat=["suit_jacket", "blazer", "dress", "shirt"],
+        gc_compat=["suit_jacket", "blazer", "dress"],
         gc_incompat=["hoodie", "shorts", "tank_top", "t_shirt"],
         co_compat=["black", "navy", "gray", "white"],
-        co_incompat=["orange", "yellow"],
+        co_incompat=["orange", "yellow", "pink", "red"],
         pa_compat=["solid", "striped"],
-        pa_incompat=["camouflage", "graphic_print"],
-        q_explicit=["Attending the opera premiere tonight — they enforce a dress code. What should I wear?"],
-        q_implicit=["Going to opening night at the ballet. Outfit?"],
-        justification="Opera/ballet premieres with dress codes prohibit casual attire."),
+        pa_incompat=["graphic_print", "camouflage", "animal_print", "floral"],
+        q_explicit=[
+            "Invited to a state banquet hosted by a head of state, strict formal protocol. What should I wear?",
+            "Attending a formal banquet at the presidential residence. What should I wear?",
+        ],
+        q_implicit=[
+            "Got a formal invitation to dine at the presidential palace. Outfit advice?",
+            "Attending an official banquet with dignitaries this evening. What should I wear?",
+        ],
+        justification="State banquets enforce strict formal protocol; casual or loud attire is unacceptable."),
 
-    _sc("formal_court_appearance", "ultra_formal",
+    # ════════ 11. JUDICIAL / CIVIC / OFFICIAL (3) — dress-coded ════════
+    _sc("civic_court_appearance", "judicial_civic",
         "Court Appearance",
         {"time": {"time_of_day": "daytime"},
          "place": {"indoor_outdoor": "indoor"},
          "occasion": {"formality_required": "formal"}},
         gc_compat=["suit_jacket", "blazer", "shirt", "blouse"],
         gc_incompat=["hoodie", "shorts", "tank_top", "t_shirt"],
-        co_compat=["black", "navy", "gray", "white"],
+        co_compat=["black", "navy", "gray"],
         co_incompat=["orange", "yellow", "pink", "red"],
         pa_compat=["solid", "striped"],
-        pa_incompat=["graphic_print", "camouflage", "animal_print"],
-        q_explicit=["I have a court appearance tomorrow. What should I wear?"],
-        q_implicit=["Need to appear before a judge next week. Outfit advice?"],
-        justification="Court appearances require formal dress; casual wear may constitute contempt."),
+        pa_incompat=["graphic_print", "camouflage", "animal_print", "floral"],
+        q_explicit=[
+            "I have to appear in court tomorrow before a judge. What should I wear?",
+            "Appearing in a courtroom for a formal hearing tomorrow. What should I wear?",
+        ],
+        q_implicit=[
+            "I've been called before a judge next week. Outfit advice?",
+            "Have to show up at the courthouse for my hearing. What should I wear?",
+        ],
+        justification="Court appearances require conservative formal dress; casual/loud wear may constitute contempt."),
 
-    _sc("formal_fellowship_interview", "ultra_formal",
-        "Scholarship / Fellowship Interview",
+    _sc("civic_supreme_argument", "judicial_civic",
+        "High-Court Oral Argument",
         {"time": {"time_of_day": "daytime"},
-         "place": {"venue": "office", "indoor_outdoor": "indoor"},
-         "occasion": {"activity": "work_meeting", "formality_required": "business_casual"}},
-        gc_compat=["blazer", "shirt", "blouse", "suit_jacket"],
-        gc_incompat=["hoodie", "shorts", "tank_top"],
-        co_compat=["black", "navy", "gray", "white", "beige"],
-        co_incompat=["orange", "yellow"],
-        pa_compat=["solid", "striped", "checkered", "plaid"],
-        pa_incompat=["graphic_print", "camouflage"],
-        q_explicit=["I have a fellowship interview tomorrow at a university. What should I wear?"],
-        q_implicit=["Interviewing for a research grant in person. Outfit?"],
-        justification="Hoodie/shorts to a formal interview signals disrespect for the opportunity."),
-
-    _sc("formal_fine_dining", "ultra_formal",
-        "Fine Dining Restaurant (Dress Code)",
-        {"time": {"time_of_day": "evening"},
-         "place": {"venue": "restaurant", "indoor_outdoor": "indoor"},
-         "occasion": {"formality_required": "formal"}},
-        gc_compat=["blazer", "suit_jacket", "shirt", "dress", "blouse"],
-        gc_incompat=["hoodie", "shorts", "tank_top", "t_shirt", "windbreaker"],
-        pa_compat=["solid", "striped", "checkered"],
-        pa_incompat=["camouflage", "graphic_print"],
-        q_explicit=["Dinner at a Michelin-starred restaurant with a strict dress code. What should I wear?"],
-        q_implicit=["Reservation at the city's top fine-dining spot tonight. Outfit?"],
-        justification="Fine dining with dress codes will refuse entry to guests in hoodies/shorts."),
-
-    _sc("formal_graduation_ceremony", "ultra_formal",
-        "University Graduation Ceremony (Guest)",
-        {"place": {"indoor_outdoor": "indoor"},
-         "occasion": {"activity": "ceremony_attendance", "formality_required": "business_casual"}},
-        gc_compat=["blazer", "shirt", "blouse", "dress", "suit_jacket"],
-        gc_incompat=["hoodie", "shorts", "tank_top"],
-        pa_compat=["solid", "striped", "checkered", "plaid"],
-        pa_incompat=["camouflage", "graphic_print"],
-        q_explicit=["Attending my sister's graduation ceremony. What should I wear?"],
-        q_implicit=["Going to a university commencement next week. Outfit?"],
-        justification="Graduation ceremonies are formal occasions; casual wear disrespects graduates."),
-
-    _sc("formal_investor_pitch", "ultra_formal",
-        "Investor Pitch Presentation",
-        {"time": {"time_of_day": "daytime"},
-         "place": {"venue": "office", "indoor_outdoor": "indoor"},
-         "occasion": {"activity": "work_meeting", "formality_required": "business_casual"}},
-        gc_compat=["blazer", "shirt", "suit_jacket", "blouse"],
-        gc_incompat=["hoodie", "shorts", "tank_top", "t_shirt"],
-        co_compat=["black", "navy", "gray", "white"],
-        co_incompat=["orange", "yellow"],
-        pa_compat=["solid", "striped", "checkered", "plaid"],
-        pa_incompat=["graphic_print", "camouflage", "animal_print"],
-        q_explicit=["Pitching to venture capital investors today. Formal business attire expected. What should I wear?"],
-        q_implicit=["Big investor meeting tomorrow morning. Outfit advice?"],
-        justification="Investor pitches demand credibility; casual wear undermines professional trust."),
-
-    _sc("formal_embassy_event", "ultra_formal",
-        "Embassy Cultural Event",
-        {"time": {"time_of_day": "evening"},
          "place": {"indoor_outdoor": "indoor"},
-         "occasion": {"activity": "social_gathering", "formality_required": "formal"}},
-        gc_compat=["blazer", "suit_jacket", "dress", "shirt", "blouse"],
+         "occasion": {"formality_required": "formal"}},
+        gc_compat=["suit_jacket", "blazer", "shirt", "blouse"],
         gc_incompat=["hoodie", "shorts", "tank_top", "t_shirt"],
-        co_compat=["black", "navy", "gray", "white", "beige"],
-        co_incompat=["orange", "yellow"],
+        co_compat=["black", "navy", "gray"],
+        co_incompat=["orange", "yellow", "pink", "red"],
         pa_compat=["solid", "striped"],
-        pa_incompat=["camouflage", "graphic_print", "animal_print"],
-        q_explicit=["Attending a cultural event at the embassy tonight. Formal dress required. Outfit?"],
-        q_implicit=["Invited to an embassy cultural evening. What should I wear?"],
-        justification="Embassy events follow diplomatic dress norms; casual attire is a protocol breach."),
+        pa_incompat=["graphic_print", "camouflage", "animal_print", "floral"],
+        q_explicit=[
+            "Presenting an oral argument before the high court. What should I wear?",
+            "Arguing a case at the highest court next month. What should I wear?",
+        ],
+        q_implicit=[
+            "I'm the attorney appearing at the top court next month. Outfit advice?",
+            "Standing before the senior bench to argue a case soon. What should I wear?",
+        ],
+        justification="High-court proceedings demand the most conservative formal attire."),
 
-    # ── ARCHETYPE 4: MOURNING / SOMBER (5) ────────────────
-    # pa_compat: kept strictly solid (cultural consensus; checkered inappropriate at funerals)
+    _sc("civic_govt_hearing", "judicial_civic",
+        "Government / Parliamentary Hearing",
+        {"time": {"time_of_day": "daytime"},
+         "place": {"indoor_outdoor": "indoor"},
+         "occasion": {"activity": "ceremony_attendance", "formality_required": "formal"}},
+        gc_compat=["suit_jacket", "blazer", "shirt", "blouse"],
+        gc_incompat=["hoodie", "shorts", "tank_top", "t_shirt"],
+        co_compat=["black", "navy", "gray"],
+        co_incompat=["orange", "yellow", "pink", "red"],
+        pa_compat=["solid", "striped"],
+        pa_incompat=["graphic_print", "camouflage", "animal_print", "floral"],
+        q_explicit=[
+            "Testifying at a formal government hearing on the record. What should I wear?",
+            "Appearing before a parliamentary committee to give testimony. What should I wear?",
+        ],
+        q_implicit=[
+            "I've been summoned to speak before a legislative committee. Outfit advice?",
+            "Giving official testimony at a public hearing next week. What should I wear?",
+        ],
+        justification="Official government hearings follow conservative formal norms; casual/loud attire is improper."),
+
+    # ════════ 12. MOURNING / SOMBER (4) — dress-coded ════════
     _sc("mourn_funeral", "mourning_somber",
         "Funeral Service",
         {"place": {"indoor_outdoor": "mixed"},
@@ -417,9 +796,15 @@ CANONICAL_SCENARIOS = [
         co_incompat=["orange", "yellow", "pink", "red", "green"],
         pa_compat=["solid"],
         pa_incompat=["graphic_print", "camouflage", "animal_print", "floral", "polka_dot"],
-        q_explicit=["I'm attending a funeral and need to dress appropriately. What should I wear?"],
-        q_implicit=["Need an outfit for a memorial service this weekend. Advice?"],
-        justification="Funerals universally demand dark, somber attire; bright/casual clothing is disrespectful."),
+        q_explicit=[
+            "I'm attending a funeral and need to dress respectfully and somberly. What should I wear?",
+            "Going to a funeral service this week; dark, formal dress expected. What should I wear?",
+        ],
+        q_implicit=[
+            "I have to say goodbye to a relative at the service this weekend. Outfit advice?",
+            "Attending the burial of a close family friend. What should I wear?",
+        ],
+        justification="Funerals universally demand dark, somber attire; bright/casual/loud clothing is disrespectful."),
 
     _sc("mourn_memorial", "mourning_somber",
         "Memorial / Remembrance Service",
@@ -428,198 +813,141 @@ CANONICAL_SCENARIOS = [
         gc_compat=["suit_jacket", "blazer", "coat", "shirt", "dress"],
         gc_incompat=["shorts", "tank_top", "hoodie", "t_shirt"],
         co_compat=["black", "navy", "gray"],
-        co_incompat=["orange", "yellow", "pink", "red"],
+        co_incompat=["orange", "yellow", "pink", "red", "green"],
         pa_compat=["solid"],
-        pa_incompat=["graphic_print", "camouflage", "animal_print", "floral"],
-        q_explicit=["Attending a remembrance service for a colleague. What should I wear?"],
-        q_implicit=["Going to a memorial ceremony next week. Outfit?"],
-        justification="Memorial services share funeral solemnity; bright festive attire is disrespectful."),
-
-    _sc("mourn_conservative_worship", "mourning_somber",
-        "Conservative Religious Worship Service",
-        {"place": {"indoor_outdoor": "indoor"},
-         "occasion": {"formality_required": "business_casual"}},
-        gc_compat=["shirt", "blouse", "blazer", "dress", "sweater"],
-        gc_incompat=["shorts", "tank_top", "t_shirt"],
-        co_compat=["black", "navy", "gray", "white", "beige"],
-        co_incompat=["orange", "yellow"],
-        pa_compat=["solid", "striped"],
-        pa_incompat=["graphic_print", "camouflage", "animal_print"],
-        q_explicit=["Attending a conservative religious service. Modesty required. What should I wear?"],
-        q_implicit=["Going to church/temple with a traditional congregation. Outfit advice?"],
-        justification="Conservative religious services have modesty norms; tank tops/shorts widely prohibited."),
+        pa_incompat=["graphic_print", "camouflage", "animal_print", "floral", "polka_dot"],
+        q_explicit=[
+            "Attending a memorial remembrance service for a colleague. What should I wear?",
+            "Going to a solemn remembrance ceremony this week. What should I wear?",
+        ],
+        q_implicit=[
+            "There's a service to honor someone who passed, and I'm attending. Outfit advice?",
+            "Going to a remembrance gathering for a late mentor. What should I wear?",
+        ],
+        justification="Memorial services share funeral solemnity; bright/festive attire is disrespectful."),
 
     _sc("mourn_vigil", "mourning_somber",
         "Candlelight Vigil",
         {"time": {"time_of_day": "night"},
          "place": {"indoor_outdoor": "outdoor"},
-         "occasion": {"formality_required": "smart_casual"}},
-        gc_compat=["coat", "jacket", "shirt", "sweater", "blazer"],
-        gc_incompat=["shorts", "tank_top"],
-        co_compat=["black", "navy", "gray", "white"],
-        co_incompat=["orange", "yellow", "pink", "red"],
-        pa_compat=["solid", "striped"],
-        pa_incompat=["graphic_print", "camouflage", "animal_print"],
-        q_explicit=["Attending a candlelight vigil tonight. What should I wear?"],
-        q_implicit=["Going to a community vigil. Outfit advice?"],
-        justification="Candlelight vigils are solemn; bright festive colors are inappropriate."),
+         "occasion": {"activity": "ceremony_attendance", "formality_required": "smart_casual"}},
+        gc_compat=["coat", "jacket", "shirt", "sweater", "blazer", "blouse"],
+        gc_incompat=["shorts", "tank_top", "hoodie", "t_shirt"],
+        co_compat=["black", "navy", "gray"],
+        co_incompat=["orange", "yellow", "pink", "red", "green"],
+        pa_compat=["solid"],
+        pa_incompat=["graphic_print", "camouflage", "animal_print", "floral", "polka_dot"],
+        q_explicit=[
+            "Attending a candlelight vigil tonight to mourn and pay respects. What should I wear?",
+            "Going to a solemn evening vigil; subdued dress expected. What should I wear?",
+        ],
+        q_implicit=[
+            "There's a community gathering tonight to grieve a tragedy. Outfit advice?",
+            "Joining a quiet evening tribute with candles tonight. What should I wear?",
+        ],
+        justification="Candlelight vigils are solemn; bright/festive colors and loud prints are inappropriate."),
 
     _sc("mourn_condolence_visit", "mourning_somber",
         "Condolence Visit to Bereaved Family",
         {"place": {"indoor_outdoor": "indoor"},
-         "occasion": {"formality_required": "smart_casual"}},
-        gc_compat=["shirt", "blouse", "blazer", "sweater", "coat"],
-        gc_incompat=["shorts", "tank_top", "hoodie"],
-        co_compat=["black", "navy", "gray", "beige"],
-        co_incompat=["orange", "yellow", "pink", "red"],
+         "occasion": {"activity": "ceremony_attendance", "formality_required": "smart_casual"}},
+        gc_compat=["shirt", "blouse", "blazer", "sweater", "coat", "dress"],
+        gc_incompat=["shorts", "tank_top", "hoodie", "t_shirt"],
+        co_compat=["black", "navy", "gray"],
+        co_incompat=["orange", "yellow", "pink", "red", "green"],
+        pa_compat=["solid"],
+        pa_incompat=["graphic_print", "camouflage", "animal_print", "floral", "polka_dot"],
+        q_explicit=[
+            "Visiting a grieving family to offer my condolences in person. What should I wear?",
+            "Paying respects at a bereaved family's home; subdued dress. What should I wear?",
+        ],
+        q_implicit=[
+            "Going to sit with a friend whose parent just passed. Outfit advice?",
+            "Visiting a household in mourning to offer support. What should I wear?",
+        ],
+        justification="Visiting a grieving family in bright party colors or loud prints is universally insensitive."),
+
+    # ════════ 13. RELIGIOUS / MODEST (3) — dress-coded ════════
+    _sc("relig_conservative_worship", "religious_modest",
+        "Conservative Religious Worship Service",
+        {"place": {"indoor_outdoor": "indoor"},
+         "occasion": {"activity": "ceremony_attendance", "formality_required": "business_casual"}},
+        gc_compat=["shirt", "blouse", "blazer", "dress", "sweater", "coat"],
+        gc_incompat=["tank_top", "shorts", "t_shirt", "hoodie"],
+        co_compat=["black", "navy", "gray", "white", "beige"],
+        co_incompat=["orange", "yellow", "pink"],
         pa_compat=["solid", "striped"],
-        pa_incompat=["graphic_print", "animal_print", "floral"],
-        q_explicit=["Visiting a bereaved family to offer condolences. What should I wear?"],
-        q_implicit=["Paying respects to a friend's family. Outfit?"],
-        justification="Visiting a grieving family in bright party colors is universally insensitive."),
+        pa_incompat=["graphic_print", "camouflage", "animal_print"],
+        q_explicit=[
+            "Attending a conservative religious service where modest dress is required. What should I wear?",
+            "Going to worship with a traditional congregation; modesty expected. What should I wear?",
+        ],
+        q_implicit=[
+            "Joining a friend's family for their weekly service at a traditional congregation. Outfit advice?",
+            "Attending a religious service known for its strict modesty norms. What should I wear?",
+        ],
+        justification="Conservative worship has modesty norms; tank tops/shorts and loud prints are widely prohibited."),
 
-    # ── ARCHETYPE 5: ATHLETIC (8) ─────────────────────────
-    # KEY FIX: gc_compat expanded with hoodie, sweater, jacket
-    # These are legitimately worn for exercise (warm-up, outdoor sports, pre/post gym).
-    # gc_incompat retains only structured formal garments that physically prevent movement.
-    _sc("athletic_gym_weights", "athletic_physical",
-        "Gym Weight Training",
-        {"place": {"venue": "gym", "indoor_outdoor": "indoor"},
-         "occasion": {"activity": "exercise", "formality_required": "very_casual"}},
-        gc_compat=["t_shirt", "tank_top", "shorts", "hoodie", "sweater"],
-        gc_incompat=["suit_jacket", "blazer", "coat", "dress", "trench_coat"],
-        q_explicit=["Heading to the gym for weight training. What should I wear?"],
-        q_implicit=["Got a gym session after work today. Outfit?"],
-        justification="Weight training in a suit/dress is physically restrictive and damages garments."),
+    _sc("relig_temple_ceremony", "religious_modest",
+        "Temple Ceremony / Sacred Site Visit",
+        {"place": {"venue": "temple", "indoor_outdoor": "mixed"},
+         "occasion": {"activity": "ceremony_attendance", "formality_required": "business_casual"}},
+        gc_compat=["shirt", "blouse", "blazer", "dress", "sweater", "coat"],
+        gc_incompat=["tank_top", "shorts", "t_shirt", "hoodie"],
+        co_compat=["black", "navy", "gray", "white", "beige"],
+        co_incompat=["orange", "yellow", "pink"],
+        pa_compat=["solid", "striped"],
+        pa_incompat=["graphic_print", "camouflage", "animal_print"],
+        q_explicit=[
+            "Visiting a sacred temple where shoulders and knees must be covered. What should I wear?",
+            "Attending a temple ceremony with strict modesty rules. What should I wear?",
+        ],
+        q_implicit=[
+            "Touring some historic religious sites that enforce a covered dress code. Outfit advice?",
+            "Invited to a ceremony at a temple this weekend. What should I wear?",
+        ],
+        justification="Sacred sites require covered, modest attire; exposed/loud clothing is prohibited."),
 
-    _sc("athletic_yoga", "athletic_physical",
-        "Yoga / Pilates Class",
-        {"place": {"venue": "gym", "indoor_outdoor": "indoor"},
-         "occasion": {"activity": "exercise", "formality_required": "very_casual"}},
-        gc_compat=["t_shirt", "tank_top", "shorts", "hoodie"],
-        gc_incompat=["coat", "blazer", "suit_jacket", "parka", "trench_coat", "dress"],
-        q_explicit=["I have a yoga class tonight. What should I wear?"],
-        q_implicit=["Starting Pilates this week. What's appropriate?"],
-        justification="Yoga requires full-body flexibility; blazers/coats physically prevent poses."),
-
-    _sc("athletic_marathon", "athletic_physical",
-        "Marathon / Long-distance Running",
-        {"place": {"indoor_outdoor": "outdoor"},
-         "occasion": {"activity": "exercise", "formality_required": "very_casual"}},
-        gc_compat=["t_shirt", "tank_top", "shorts", "jacket", "windbreaker"],
-        gc_incompat=["coat", "blazer", "suit_jacket", "dress", "parka", "trench_coat"],
-        q_explicit=["Running a half-marathon this weekend. What should I wear?"],
-        q_implicit=["Training for my first marathon — what's the right outfit?"],
-        justification="Running 42km in a coat/blazer is physically impossible and dangerous."),
-
-    _sc("athletic_indoor_sports", "athletic_physical",
-        "Indoor Team Sports (Basketball / Futsal)",
-        {"place": {"venue": "gym", "indoor_outdoor": "indoor"},
-         "occasion": {"activity": "exercise", "formality_required": "very_casual"}},
-        gc_compat=["t_shirt", "shorts", "tank_top", "hoodie"],
-        gc_incompat=["blazer", "suit_jacket", "coat", "dress", "trench_coat"],
-        q_explicit=["Playing indoor basketball tonight. What should I wear?"],
-        q_implicit=["Joining a futsal league — what's the right outfit for practice?"],
-        justification="Team sports in a blazer/dress restricts movement and risks injury."),
-
-    _sc("athletic_rock_climbing", "athletic_physical",
-        "Indoor Rock Climbing",
+    _sc("relig_solemn_observance", "religious_modest",
+        "Solemn Religious Observance",
         {"place": {"indoor_outdoor": "indoor"},
-         "occasion": {"activity": "exercise", "formality_required": "very_casual"}},
-        gc_compat=["t_shirt", "shorts", "tank_top", "hoodie", "jacket"],
-        gc_incompat=["coat", "blazer", "suit_jacket", "dress", "parka"],
-        q_explicit=["Going indoor rock climbing. What should I wear?"],
-        q_implicit=["Friend invited me to the climbing gym. Outfit advice?"],
-        justification="Rock climbing in a coat/dress is a safety hazard."),
+         "occasion": {"activity": "ceremony_attendance", "formality_required": "business_casual"}},
+        gc_compat=["shirt", "blouse", "blazer", "dress", "sweater", "coat"],
+        gc_incompat=["tank_top", "shorts", "t_shirt", "hoodie"],
+        co_compat=["black", "navy", "gray", "white", "beige"],
+        co_incompat=["orange", "yellow", "pink"],
+        pa_compat=["solid", "striped"],
+        pa_incompat=["graphic_print", "camouflage", "animal_print"],
+        q_explicit=[
+            "Attending a solemn religious observance where modest, subdued dress is expected. What should I wear?",
+            "Going to an important religious holy-day service with modesty norms. What should I wear?",
+        ],
+        q_implicit=[
+            "Joining a major holy-day gathering at the congregation. Outfit advice?",
+            "Attending a significant religious observance with my family. What should I wear?",
+        ],
+        justification="Solemn observances require modest, subdued attire; exposed/loud clothing is improper."),
 
-    _sc("athletic_swimming", "athletic_physical",
-        "Swimming Pool Lap Session",
-        {"place": {"indoor_outdoor": "indoor"},
-         "occasion": {"activity": "exercise", "formality_required": "very_casual"}},
-        gc_compat=["t_shirt", "shorts", "tank_top"],
-        gc_incompat=["coat", "blazer", "suit_jacket", "parka", "sweater", "trench_coat"],
-        q_explicit=["Heading to the pool for lap swimming. What should I wear?"],
-        q_implicit=["Starting regular swimming sessions. What to bring?"],
-        justification="Wearing a parka/blazer to swim laps is absurd."),
+    # ════════ 14. SEMI-FORMAL SOCIAL (4) — dress-coded ════════
+    _sc("social_gallery_opening", "semi_formal_social",
+        "Art Gallery Opening / Vernissage",
+        {"time": {"time_of_day": "evening"},
+         "place": {"venue": "art_gallery", "indoor_outdoor": "indoor"},
+         "occasion": {"activity": "social_gathering", "formality_required": "smart_casual"}},
+        gc_compat=["blazer", "shirt", "blouse", "dress"],
+        gc_incompat=["hoodie", "shorts", "tank_top"],
+        pa_compat=["solid", "striped", "checkered", "plaid", "floral"],
+        pa_incompat=["camouflage", "graphic_print"],
+        q_explicit=[
+            "Attending an art gallery opening tonight; smart-casual minimum. What should I wear?",
+            "Going to a vernissage at a downtown gallery this evening. What should I wear?",
+        ],
+        q_implicit=[
+            "Got invited to the launch of a new exhibition tonight. Outfit advice?",
+            "Heading to an opening reception at the art gallery. What should I wear?",
+        ],
+        justification="Gallery openings are smart-casual; shorts/hoodie and loud prints signal disinterest."),
 
-    _sc("athletic_tennis", "athletic_physical",
-        "Tennis Match",
-        {"place": {"indoor_outdoor": "outdoor"},
-         "occasion": {"activity": "exercise", "formality_required": "very_casual"}},
-        gc_compat=["t_shirt", "shorts", "tank_top", "jacket", "windbreaker"],
-        gc_incompat=["coat", "blazer", "suit_jacket", "parka", "dress", "trench_coat"],
-        q_explicit=["Tennis match this afternoon. What should I wear?"],
-        q_implicit=["Joined a weekend tennis club — what to wear on court?"],
-        justification="Playing tennis in a coat/parka is physically impossible."),
-
-    _sc("athletic_dance_class", "athletic_physical",
-        "Dance Class (Contemporary / Hip-hop)",
-        {"place": {"indoor_outdoor": "indoor"},
-         "occasion": {"activity": "exercise", "formality_required": "very_casual"}},
-        gc_compat=["t_shirt", "tank_top", "shorts", "hoodie", "sweater"],
-        gc_incompat=["coat", "blazer", "suit_jacket", "parka", "trench_coat"],
-        q_explicit=["Taking a hip-hop dance class tonight. What should I wear?"],
-        q_implicit=["Signed up for contemporary dance lessons. Outfit advice?"],
-        justification="Dance class requires full-body mobility; outerwear prevents movement."),
-
-    # ── ARCHETYPE 6: WEATHER EXTREME (5) ──────────────────
-    _sc("weather_typhoon", "weather_extreme",
-        "Typhoon / Hurricane Errands",
-        {"time": {"weather": "rainy"},
-         "place": {"indoor_outdoor": "outdoor"},
-         "occasion": {"activity": "errands"}},
-        gc_compat=["windbreaker", "coat", "parka", "jacket"],
-        gc_incompat=["dress", "tank_top", "shorts", "skirt"],
-        q_explicit=["A typhoon is hitting and I have to go out for errands. What should I wear?"],
-        q_implicit=["Need to run essential errands during the storm. Outfit?"],
-        justification="Typhoon-force wind and rain makes exposed-skin clothing dangerous."),
-
-    _sc("weather_monsoon", "weather_extreme",
-        "Monsoon Season All-Day Outdoor Work",
-        {"time": {"season": "summer", "weather": "rainy"},
-         "place": {"indoor_outdoor": "outdoor"},
-         "occasion": {"activity": "errands"}},
-        gc_compat=["windbreaker", "jacket"],
-        gc_incompat=["dress", "tank_top", "blazer", "suit_jacket"],
-        q_explicit=["Working outside all day during monsoon rains. What should I wear?"],
-        q_implicit=["Field work during the rainy season. What's the right outfit?"],
-        justification="Working outdoors in monsoon downpour in a dress/blazer is impractical."),
-
-    _sc("weather_hailstorm", "weather_extreme",
-        "Hailstorm Emergency Evacuation",
-        {"time": {"weather": "cold"},
-         "place": {"indoor_outdoor": "outdoor"},
-         "occasion": {"activity": "errands"}},
-        gc_compat=["coat", "jacket", "parka", "windbreaker"],
-        gc_incompat=["tank_top", "shorts", "t_shirt", "dress"],
-        q_explicit=["Hailstorm warning — need to walk home. What should I wear?"],
-        q_implicit=["Caught outside during a sudden hailstorm. What to wear next time?"],
-        justification="Hailstones on bare skin cause injury; protective outerwear essential."),
-
-    _sc("weather_freezing_rain", "weather_extreme",
-        "Freezing Rain / Ice Storm Commute",
-        {"time": {"season": "winter", "weather": "rainy"},
-         "place": {"indoor_outdoor": "outdoor"},
-         "occasion": {"activity": "travel"}},
-        gc_compat=["coat", "parka", "jacket", "windbreaker"],
-        gc_incompat=["shorts", "tank_top", "t_shirt", "dress"],
-        q_explicit=["Freezing rain and icy roads — walking to work. What should I wear?"],
-        q_implicit=["Ice storm making my commute treacherous. Outfit?"],
-        justification="Freezing rain + sub-zero wind chill makes light clothing hypothermia-inducing."),
-
-    _sc("weather_dust_storm", "weather_extreme",
-        "Sandstorm / Dust Storm Outdoor",
-        {"time": {"weather": "windy"},
-         "place": {"indoor_outdoor": "outdoor"},
-         "occasion": {"activity": "errands"}},
-        gc_compat=["windbreaker", "jacket", "coat"],
-        gc_incompat=["tank_top", "shorts", "dress", "skirt"],
-        q_explicit=["Dust storm rolling in and I need to cross town. What should I wear?"],
-        q_implicit=["Living in a desert city — sandstorm season. What to wear outdoors?"],
-        justification="Sand/dust exposure on bare skin causes abrasion; full coverage needed."),
-
-    # ── ARCHETYPE 7: SEMI-FORMAL SOCIAL (10) ──────────────
-    # pa_compat: checkered, plaid added (smart-casual acceptable)
     _sc("social_alumni_dinner", "semi_formal_social",
         "University Alumni Formal Dinner",
         {"time": {"time_of_day": "evening"},
@@ -627,24 +955,17 @@ CANONICAL_SCENARIOS = [
          "occasion": {"activity": "social_gathering", "formality_required": "business_casual"}},
         gc_compat=["blazer", "shirt", "blouse", "dress"],
         gc_incompat=["hoodie", "shorts", "tank_top"],
-        pa_compat=["solid", "striped", "checkered", "plaid"],
-        pa_incompat=["camouflage", "graphic_print"],
-        q_explicit=["Alumni formal dinner tonight at a hotel ballroom. What should I wear?"],
-        q_implicit=["Going to my university alumni reunion dinner. Outfit?"],
-        justification="Alumni formal dinners have dress codes; hoodies/shorts would be turned away."),
-
-    _sc("social_gallery_opening", "semi_formal_social",
-        "Art Gallery Opening / Vernissage",
-        {"time": {"time_of_day": "evening"},
-         "place": {"venue": "art_gallery", "indoor_outdoor": "indoor"},
-         "occasion": {"activity": "social_gathering", "formality_required": "smart_casual"}},
-        gc_compat=["blazer", "shirt", "blouse", "dress"],
-        gc_incompat=["shorts", "tank_top", "hoodie"],
         pa_compat=["solid", "striped", "checkered", "plaid", "floral"],
         pa_incompat=["camouflage", "graphic_print"],
-        q_explicit=["Attending an art gallery opening tonight. What should I wear?"],
-        q_implicit=["Got invited to a vernissage at a downtown gallery. Outfit?"],
-        justification="Gallery openings are smart-casual events; shorts/hoodie signal disinterest."),
+        q_explicit=[
+            "Alumni formal dinner tonight in a hotel ballroom; smart attire expected. What should I wear?",
+            "Going to a formal alumni reunion dinner this evening. What should I wear?",
+        ],
+        q_implicit=[
+            "My old university is hosting a reunion dinner and I'm going. Outfit advice?",
+            "Catching up with classmates at a fancy reunion dinner. What should I wear?",
+        ],
+        justification="Alumni formal dinners have dress codes; hoodies/shorts and loud prints are out of place."),
 
     _sc("social_company_gala", "semi_formal_social",
         "Company Annual Gala / Holiday Party",
@@ -653,179 +974,115 @@ CANONICAL_SCENARIOS = [
          "occasion": {"activity": "social_gathering", "formality_required": "business_casual"}},
         gc_compat=["blazer", "shirt", "blouse", "dress", "suit_jacket"],
         gc_incompat=["hoodie", "shorts", "tank_top", "t_shirt"],
+        co_compat=["black", "navy", "gray", "white", "beige"],
+        co_incompat=["orange", "yellow"],
         pa_compat=["solid", "striped", "checkered", "plaid"],
-        pa_incompat=["camouflage", "graphic_print"],
-        q_explicit=["Company annual gala tonight. Smart-casual expected. What should I wear?"],
-        q_implicit=["Going to the office holiday party. Outfit advice?"],
-        justification="Company galas have implicit dress codes; casual wear harms professional reputation."),
+        pa_incompat=["camouflage", "graphic_print", "animal_print"],
+        q_explicit=[
+            "Company annual gala tonight; smart-casual to semi-formal expected. What should I wear?",
+            "Going to the office year-end gala this evening. What should I wear?",
+        ],
+        q_implicit=[
+            "Our company's big end-of-year party is tonight. Outfit advice?",
+            "Heading to the firm's annual celebration dinner. What should I wear?",
+        ],
+        justification="Company galas have implicit dress codes; casual wear and loud prints harm professional standing."),
 
     _sc("social_first_date_upscale", "semi_formal_social",
-        "First Date at Upscale Restaurant",
+        "First Date at an Upscale Restaurant",
         {"time": {"time_of_day": "evening"},
          "place": {"venue": "restaurant", "indoor_outdoor": "indoor"},
          "occasion": {"activity": "first_date", "formality_required": "smart_casual"}},
         gc_compat=["shirt", "blouse", "blazer", "dress"],
         gc_incompat=["hoodie", "shorts", "tank_top"],
-        pa_compat=["solid", "striped", "floral", "checkered"],
+        pa_compat=["solid", "striped", "floral", "checkered", "plaid"],
         pa_incompat=["camouflage", "graphic_print"],
-        q_explicit=["First date at an upscale restaurant tonight. What should I wear?"],
-        q_implicit=["Dinner date at a nice restaurant. Outfit advice?"],
-        justification="Showing up to an upscale restaurant date in a hoodie/shorts signals disrespect."),
+        q_explicit=[
+            "First date at an upscale restaurant tonight; I want to look put-together. What should I wear?",
+            "Dinner date at a nice, dressy restaurant this evening. What should I wear?",
+        ],
+        q_implicit=[
+            "Taking someone I like to a really nice restaurant tonight. Outfit advice?",
+            "Big first date at a fancy spot downtown tonight. What should I wear?",
+        ],
+        justification="An upscale restaurant date in a hoodie/shorts or loud prints signals disrespect."),
 
-    _sc("social_business_dinner", "semi_formal_social",
-        "Business Dinner with Client",
-        {"time": {"time_of_day": "evening"},
-         "place": {"venue": "restaurant", "indoor_outdoor": "indoor"},
-         "occasion": {"activity": "work_meeting", "formality_required": "business_casual"}},
-        gc_compat=["blazer", "shirt", "suit_jacket", "blouse"],
-        gc_incompat=["hoodie", "shorts", "tank_top", "t_shirt"],
-        co_compat=["black", "navy", "gray", "white", "beige"],
-        co_incompat=["orange", "yellow"],
-        pa_compat=["solid", "striped", "checkered", "plaid"],
-        pa_incompat=["graphic_print", "camouflage", "animal_print"],
-        q_explicit=["Business dinner with an important client. Professional attire expected. What should I wear?"],
-        q_implicit=["Taking a client out for dinner. Outfit?"],
-        justification="Business dinners represent the company; casual wear is a professional failure."),
-
-    _sc("social_wedding_reception", "semi_formal_social",
-        "Indoor Wedding Reception (Guest)",
+    # ════════ 15. WEDDING / CELEBRATION (3) — dress-coded ════════
+    _sc("wedding_reception", "wedding_celebration",
+        "Wedding Reception (Guest)",
         {"place": {"venue": "wedding_venue", "indoor_outdoor": "indoor"},
          "occasion": {"activity": "ceremony_attendance", "formality_required": "smart_casual"}},
         gc_compat=["blazer", "suit_jacket", "dress", "shirt", "blouse"],
         gc_incompat=["hoodie", "shorts", "tank_top", "t_shirt"],
-        co_compat=["navy", "beige", "blue", "gray", "green", "purple"],
+        co_compat=["navy", "beige", "blue", "gray", "green", "purple", "black"],
         co_incompat=["orange", "yellow"],
         pa_compat=["solid", "striped", "floral", "checkered"],
         pa_incompat=["camouflage", "graphic_print", "animal_print"],
-        q_explicit=["Attending a wedding reception at a hotel ballroom. What should I wear?"],
-        q_implicit=["Friend's wedding reception next Saturday. Outfit?"],
-        justification="Wearing shorts/hoodie to a wedding reception insults the couple."),
+        q_explicit=[
+            "Attending a wedding reception in a hotel ballroom; smart attire expected. What should I wear?",
+            "Going to a friend's wedding reception this weekend. What should I wear?",
+        ],
+        q_implicit=[
+            "My friend is getting married and I'm going to the reception next Saturday. Outfit advice?",
+            "Invited to celebrate a couple at their reception dinner. What should I wear?",
+        ],
+        justification="Wearing shorts/hoodie or loud prints to a wedding reception insults the couple."),
 
-    _sc("social_charity_auction", "semi_formal_social",
-        "Charity Auction Gala",
-        {"time": {"time_of_day": "evening"},
-         "place": {"indoor_outdoor": "indoor"},
-         "occasion": {"activity": "social_gathering", "formality_required": "formal"}},
-        gc_compat=["suit_jacket", "blazer", "dress"],
-        gc_incompat=["hoodie", "shorts", "tank_top", "t_shirt"],
-        co_compat=["black", "navy", "gray", "white"],
-        co_incompat=["orange", "yellow"],
-        pa_compat=["solid", "striped"],
-        pa_incompat=["camouflage", "graphic_print", "animal_print"],
-        q_explicit=["Attending a charity auction gala tonight. Black-tie. What should I wear?"],
-        q_implicit=["Invited to a charity fundraiser. Outfit advice?"],
-        justification="Charity galas are formal fundraising events; casual wear is out of place."),
-
-    _sc("social_theater_premiere", "semi_formal_social",
-        "Theater Premiere Night",
-        {"time": {"time_of_day": "evening"},
-         "place": {"venue": "concert_hall", "indoor_outdoor": "indoor"},
-         "occasion": {"formality_required": "business_casual"}},
-        gc_compat=["blazer", "shirt", "dress", "blouse"],
-        gc_incompat=["hoodie", "shorts", "tank_top", "t_shirt"],
-        pa_compat=["solid", "striped", "checkered", "plaid"],
-        pa_incompat=["camouflage", "graphic_print"],
-        q_explicit=["Theater premiere tonight — smart-casual minimum. What should I wear?"],
-        q_implicit=["Going to opening night at the theater. Outfit?"],
-        justification="Theater premieres expect smart-casual minimum; hoodies/shorts are inappropriate."),
-
-    _sc("social_wine_tasting", "semi_formal_social",
-        "Wine Tasting Event at Vineyard",
-        {"place": {"indoor_outdoor": "mixed"},
-         "occasion": {"activity": "social_gathering", "formality_required": "smart_casual"}},
-        gc_compat=["shirt", "blouse", "blazer", "dress"],
-        gc_incompat=["hoodie", "tank_top", "shorts"],
-        pa_compat=["solid", "striped", "checkered", "plaid", "floral"],
-        pa_incompat=["camouflage", "graphic_print"],
-        q_explicit=["Attending a wine tasting at a vineyard. What should I wear?"],
-        q_implicit=["Invited to a vineyard tour and tasting. Outfit advice?"],
-        justification="Wine tasting events are semi-formal social occasions; hoodies/shorts are out of place."),
-
-    _sc("social_book_launch", "semi_formal_social",
-        "Book Launch Party",
-        {"time": {"time_of_day": "evening"},
-         "place": {"indoor_outdoor": "indoor"},
-         "occasion": {"activity": "social_gathering", "formality_required": "smart_casual"}},
-        gc_compat=["shirt", "blouse", "blazer", "dress"],
-        gc_incompat=["hoodie", "tank_top", "shorts"],
-        pa_compat=["solid", "striped", "checkered", "floral"],
-        pa_incompat=["camouflage", "graphic_print"],
-        q_explicit=["Going to a friend's book launch party. What should I wear?"],
-        q_implicit=["Invited to a literary event at a bookstore bar. Outfit?"],
-        justification="Book launch parties are smart-casual cultural events."),
-
-    # ── ARCHETYPE 8: CASUAL OUTDOOR (6) ───────────────────
-    _sc("casual_park_picnic", "casual_outdoor",
-        "Weekend Park Picnic",
+    _sc("wedding_garden_ceremony", "wedding_celebration",
+        "Garden Wedding Ceremony (Guest)",
         {"time": {"season": "spring", "weather": "sunny"},
-         "place": {"venue": "park", "indoor_outdoor": "outdoor"},
-         "occasion": {"activity": "casual_outing", "formality_required": "very_casual"}},
-        gc_compat=["t_shirt", "shorts", "dress", "hoodie", "jeans", "sweater"],
-        gc_incompat=["suit_jacket", "blazer", "trench_coat"],
-        q_explicit=["Picnic at the park on a sunny afternoon. What should I wear?"],
-        q_implicit=["Meeting friends at the park for a lazy Sunday. Outfit?"],
-        justification="Suit jacket to a park picnic is universally over-dressed."),
+         "place": {"venue": "wedding_venue", "indoor_outdoor": "outdoor"},
+         "occasion": {"activity": "ceremony_attendance", "formality_required": "smart_casual"}},
+        gc_compat=["blazer", "suit_jacket", "dress", "shirt", "blouse"],
+        gc_incompat=["hoodie", "shorts", "tank_top", "t_shirt"],
+        co_compat=["navy", "beige", "blue", "gray", "green", "purple", "black"],
+        co_incompat=["orange", "yellow"],
+        pa_compat=["solid", "striped", "floral", "checkered"],
+        pa_incompat=["camouflage", "graphic_print", "animal_print"],
+        q_explicit=[
+            "Attending an outdoor garden wedding ceremony as a guest. What should I wear?",
+            "Going to a daytime garden wedding; smart attire expected. What should I wear?",
+        ],
+        q_implicit=[
+            "A couple I know is marrying in a garden this spring and I'm invited. Outfit advice?",
+            "Heading to a lovely outdoor wedding at a botanical venue. What should I wear?",
+        ],
+        justification="A garden wedding still expects smart guest attire; shorts/hoodie and loud prints are out of place."),
 
-    _sc("casual_amusement_park", "casual_outdoor",
-        "Amusement Park All-Day Visit",
-        {"place": {"indoor_outdoor": "outdoor"},
-         "occasion": {"activity": "casual_outing", "formality_required": "very_casual"}},
-        gc_compat=["t_shirt", "shorts", "hoodie", "jeans", "sweater", "jacket"],
-        gc_incompat=["suit_jacket", "blazer", "trench_coat", "coat", "dress"],
-        q_explicit=["Spending the whole day at an amusement park. What should I wear?"],
-        q_implicit=["Taking the family to the theme park. Outfit advice?"],
-        justification="Formal wear at amusement parks restricts rides and movement."),
-
-    _sc("casual_flea_market", "casual_outdoor",
-        "Weekend Flea Market Browse",
-        {"place": {"indoor_outdoor": "outdoor"},
-         "occasion": {"activity": "casual_outing", "formality_required": "very_casual"}},
-        gc_compat=["t_shirt", "hoodie", "jeans", "shorts", "sweater", "jacket"],
-        gc_incompat=["suit_jacket", "blazer", "trench_coat"],
-        q_explicit=["Browsing a flea market this weekend. What should I wear?"],
-        q_implicit=["Heading to the weekend market for vintage finds. Outfit?"],
-        justification="A suit at a flea market is universally overdressed."),
-
-    _sc("casual_camping_spring", "casual_outdoor",
-        "Spring / Autumn Camping Trip",
-        {"time": {"season": "spring"},
-         "place": {"indoor_outdoor": "outdoor"},
-         "occasion": {"activity": "travel", "formality_required": "very_casual"}},
-        gc_compat=["hoodie", "jacket", "jeans", "t_shirt", "sweater", "windbreaker"],
-        gc_incompat=["suit_jacket", "blazer", "dress", "trench_coat"],
-        q_explicit=["Going camping for the weekend in mild spring weather. What should I wear?"],
-        q_implicit=["Planning an outdoor camping trip with friends. Outfit?"],
-        justification="Camping in a blazer/suit is impractical and damages the garment."),
-
-    _sc("casual_dog_park", "casual_outdoor",
-        "Dog Park Morning Walk",
-        {"time": {"time_of_day": "morning"},
-         "place": {"venue": "park", "indoor_outdoor": "outdoor"},
-         "occasion": {"activity": "casual_outing", "formality_required": "very_casual"}},
-        gc_compat=["t_shirt", "hoodie", "jeans", "shorts", "sweater", "jacket"],
-        gc_incompat=["suit_jacket", "blazer", "trench_coat", "dress"],
-        q_explicit=["Taking my dog to the park for a morning walk. What should I wear?"],
-        q_implicit=["Daily dog walk routine — what's a good outfit?"],
-        justification="Walking a dog in a suit/formal dress is universally impractical."),
-
-    _sc("casual_street_food_festival", "casual_outdoor",
-        "Street Food Festival",
-        {"place": {"venue": "city_street", "indoor_outdoor": "outdoor"},
-         "occasion": {"activity": "casual_outing", "formality_required": "very_casual"}},
-        gc_compat=["t_shirt", "hoodie", "jeans", "shorts", "sweater", "jacket"],
-        gc_incompat=["suit_jacket", "blazer", "trench_coat"],
-        q_explicit=["Going to a street food festival this weekend. What should I wear?"],
-        q_implicit=["Food truck rally downtown tonight. Outfit?"],
-        justification="Eating street food in a suit is overdressed and stain-prone."),
+    _sc("wedding_anniversary_party", "wedding_celebration",
+        "Milestone Anniversary / Engagement Celebration",
+        {"time": {"time_of_day": "evening"},
+         "place": {"indoor_outdoor": "indoor"},
+         "occasion": {"activity": "social_gathering", "formality_required": "smart_casual"}},
+        gc_compat=["blazer", "suit_jacket", "dress", "shirt", "blouse"],
+        gc_incompat=["hoodie", "shorts", "tank_top", "t_shirt"],
+        co_compat=["navy", "beige", "blue", "gray", "green", "purple", "black"],
+        co_incompat=["orange", "yellow"],
+        pa_compat=["solid", "striped", "floral", "checkered"],
+        pa_incompat=["camouflage", "graphic_print", "animal_print"],
+        q_explicit=[
+            "Attending a milestone anniversary celebration dinner; smart attire expected. What should I wear?",
+            "Going to an engagement celebration party this evening. What should I wear?",
+        ],
+        q_implicit=[
+            "My parents' big anniversary party is this weekend and I'm attending. Outfit advice?",
+            "Celebrating a couple's engagement at a nice venue tonight. What should I wear?",
+        ],
+        justification="Milestone celebrations expect smart attire; shorts/hoodie and loud prints are out of place."),
 ]
 
 
 # ═══════════════════════════════════════════════════════════
-#  HELPERS
+#  HELPERS  (unchanged API)
 # ═══════════════════════════════════════════════════════════
 
 def get_constrained_axes(scenario):
-    """Which axes does this scenario constrain?"""
+    """Which axes does this scenario *explicitly* constrain (non-empty incompatible)?
+
+    NOTE: under the relaxed compatibility check, color/pattern can be ACTIVE axes
+    even when this returns only ['garment_category'] for a physical scenario.
+    This helper is kept for reporting / count_axis_slots only.
+    """
     axes = []
     for ax in ("garment_category", "color", "pattern"):
         c = scenario.get(ax)
@@ -859,8 +1116,11 @@ def count_axis_slots():
 
 
 if __name__ == "__main__":
-    total, by_axis = count_axis_slots()
+    from collections import Counter
     print(f"Scenarios: {len(CANONICAL_SCENARIOS)}")
-    print(f"Axis slots/user: {total}")
-    for ax, n in by_axis.items():
-        print(f"  {ax}: {n}")
+    print(f"Archetypes: {len(SCENARIO_ARCHETYPES)}")
+    by_arch = Counter(s["archetype"] for s in CANONICAL_SCENARIOS)
+    for arch in SCENARIO_ARCHETYPES:
+        print(f"  {arch:24s}: {by_arch.get(arch, 0)} scenarios")
+    total, by_axis = count_axis_slots()
+    print(f"Explicitly-constrained axis slots/user: {total} {by_axis}")

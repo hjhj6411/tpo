@@ -312,15 +312,28 @@ def main():
     if solid_tot:
         print(f"    pattern 'always-solid' baseline = {solid_hit / solid_tot:.3f}")
 
-    # ── value-balanced subset ──────────────────────────────────────────
-    balanced_vals = {ax: {v for v in (set(freqA[ax]) | set(freqB[ax]))
-                          if freqA[ax][v] > 0 and freqB[ax][v] > 0}
-                     for ax in set(freqA) | set(freqB)}
-    balanced_ids = [qid for ax, a, b, qid in inst_meta
-                    if a in balanced_vals[ax] and b in balanced_vals[ax]]
-    print("\n  Value-balanced subset (both A-val and B-val occur in BOTH roles):")
-    print(f"    {len(balanced_ids)}/{len(inst_meta)} instances "
-          f"({len(balanced_ids)/max(len(inst_meta),1):.0%}) -> cleaner strict-accuracy pool")
+    # ── counterbalanced subset (matched-orientation pairs) ─────────────
+    # Presence in both roles is NOT enough (solid has nB=35>0 yet liked_rate=0.90).
+    # A value-prior is only neutralized when each value plays A and B EQUALLY.
+    # For each unordered pair {x,y}, keep min(#(A=x,B=y), #(A=y,B=x)) of each
+    # orientation -> blind value-prior == 50% on the resulting subset by construction.
+    orient = defaultdict(lambda: defaultdict(list))   # axis -> frozenset{x,y} -> [(qid, a_val)]
+    for ax, a, b, qid in inst_meta:
+        orient[ax][frozenset((a, b))].append((qid, a))
+    cb_ids = []
+    for ax, pairs in orient.items():
+        for pair, items in pairs.items():
+            if len(pair) < 2:
+                continue
+            x, y = tuple(pair)
+            xy = [qid for qid, a in items if a == x]   # A == x
+            yx = [qid for qid, a in items if a == y]   # A == y
+            m = min(len(xy), len(yx))
+            cb_ids += xy[:m] + yx[:m]
+    print("\n  Counterbalanced subset (each value plays A and B equally;")
+    print("  blind value-prior == 50% by construction -> confound-free strict pool):")
+    print(f"    {len(cb_ids)}/{len(inst_meta)} instances "
+          f"({len(cb_ids)/max(len(inst_meta),1):.0%})")
 
     # ── write report ───────────────────────────────────────────────────
     out = Path(args.out)
@@ -334,15 +347,15 @@ def main():
         "blind_exploit_acc": {ax: blind_by_axis[ax][0] / max(blind_by_axis[ax][1], 1)
                               for ax in blind_by_axis},
         "liked_rate": liked_rate,
-        "value_balanced_subset_size": len(balanced_ids),
+        "counterbalanced_subset_size": len(cb_ids),
         "distribution": {k: dict(v) for k, v in by.items()},
     }
     with open(out, "w", encoding="utf-8") as f:
         json.dump(report, f, ensure_ascii=False, indent=2)
-    with open(out.with_suffix(".balanced_ids.json"), "w", encoding="utf-8") as f:
-        json.dump(balanced_ids, f)
+    with open(out.with_suffix(".counterbalanced_ids.json"), "w", encoding="utf-8") as f:
+        json.dump(cb_ids, f)
     print(f"\n  ✓ report -> {out}")
-    print(f"  ✓ balanced ids -> {out.with_suffix('.balanced_ids.json')}\n")
+    print(f"  ✓ counterbalanced ids -> {out.with_suffix('.counterbalanced_ids.json')}\n")
 
 
 if __name__ == "__main__":
