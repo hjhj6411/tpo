@@ -1,13 +1,14 @@
 conda activate pod
 Qwen/Qwen3-4B-Instruct-2507
-vllm serve Qwen/Qwen3-4B-Instruct-2507 \
+vllm serve Qwen/Qwen3-30B-A3B  \
   --tensor-parallel-size 4 \
   --max-model-len 5000 \
   --dtype bfloat16 \
   --port 8000 \
   --trust-remote-code \
   --gpu-memory-utilization 0.95 
-
+Qwen/Qwen3-30B-A3B
+google/gemma-4-E4B-it
    Qwen/Qwen2.5-72B-Instruct-AWQ 
 Qwen/Qwen3-4B-Thinking-2507
 Qwen/Qwen2.5-7B-Instruct
@@ -17,3 +18,13 @@ Qwen/Qwen2.5-72B-Instruct
 
 AMAZON_META_DIR=/home1/hjhj6411/fashion/data/amazon/fashion_only \
 python -m src.image_collector --force --limit 5
+
+
+vllm serve Qwen/Qwen3-30B-A3B  \
+  --tensor-parallel-size 4 \
+  --max-model-len 5000 \
+  --dtype bfloat16 \
+  --port 8000 \
+  --trust-remote-code \
+  --gpu-memory-utilization 0.95 \
+  --default-chat-template-kwargs '{"enable_thinking": false}'

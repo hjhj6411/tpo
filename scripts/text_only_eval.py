@@ -7,12 +7,10 @@ Unified Text-Only LLM Baseline Evaluation
 - narrative  : narrative profile만
 - all        : profile.jsonl의 주요 요소를 모두 노출
 
-
 동시에 아래 3개 점수를 모두 계산:
 - Strict accuracy   : 원래 정답 A를 맞췄는가
 - TPO accuracy      : TPO 축만 맞췄는가
 - Profile accuracy  : preference 축만 맞췄는가
-
 
 실행:
   python -m scripts.text_only_eval --profile-mode narrative
@@ -20,21 +18,19 @@ Unified Text-Only LLM Baseline Evaluation
   python -m scripts.text_only_eval --profile-mode all --limit 50 --provider gpt5_mini
 """
 
-
 import argparse
 import json
 import random
+import re
 import sys
+import concurrent.futures as cf
 from collections import defaultdict
 from pathlib import Path
 
-
 sys.path.insert(0, str(Path(__file__).parent.parent))
-
 
 from src.utils import call_llm, load_jsonl, save_jsonl, log_step
 from configs.config import OPTIONS_DIR, QUERIES_DIR, PROFILES_DIR
-
 
 
 SYSTEM_PROMPT_NO = """\
@@ -54,7 +50,6 @@ Do NOT write sentences. Do NOT write words.
 If you write anything other than a single letter, your response is INVALID.
 Your ENTIRE response must be one of: A  B  C  D
 """
-
 
 SYSTEM_PROMPT_WITH_PROFILE = """\
 You are a fashion advisor.
@@ -76,82 +71,56 @@ Your ENTIRE response must be one of: A  B  C  D
 """
 
 
-
 # ── Scoring semantics from original labels ──────────────────────────────
 TPO_SCORE = {
     "A": 1, "B": 1, "C": 0, "D": 0
 }
-
 
 PROFILE_SCORE = {
     "A": 1, "B": 0, "C": 1, "D": 0
 }
 
 
-
 # ── Profile formatting ──────────────────────────────────────────────────
 def profile_to_narrative(profile):
     for key in [
-        "narrative_profile",
-        "narrative",
-        "profile_text",
-        "description",
-        "user_profile",
-        "profile",
-        "text",
+        "narrative_profile", "narrative", "profile_text", "description",
+        "user_profile", "profile", "text",
     ]:
         val = profile.get(key)
         if isinstance(val, str) and val.strip():
             return val.strip()
 
-
     meta = profile.get("metadata", {})
     for key in [
-        "narrative_profile",
-        "narrative",
-        "profile_text",
-        "description",
-        "user_profile",
-        "profile",
-        "text",
+        "narrative_profile", "narrative", "profile_text", "description",
+        "user_profile", "profile", "text",
     ]:
         val = meta.get(key)
         if isinstance(val, str) and val.strip():
             return val.strip()
 
-
     return ""
-
 
 
 def profile_to_all_text(profile):
     parts = []
 
-
     ordered_keys = [
-        "user_id",
-        "domain",
-        "preference_archetype",
-        "variant_index",
-        "structured_attributes",
-        "likes_keywords",
-        "dislikes_keywords",
+        "user_id", "domain", "preference_archetype", "variant_index",
+        "structured_attributes", "likes_keywords", "dislikes_keywords",
         "narrative_profile",
     ]
-
 
     for key in ordered_keys:
         if key in profile:
             parts.append(f"{key}: {json.dumps(profile[key], ensure_ascii=False)}")
 
-
     for key, val in profile.items():
         if key not in ordered_keys:
             parts.append(f"{key}: {json.dumps(val, ensure_ascii=False)}")
 
-
     return "\n".join(parts)
-
 
 
 # ── Option rendering ────────────────────────────────────────────────────
@@ -159,7 +128,6 @@ def option_to_text(opt):
     text = opt.get("search_query")
     if text:
         return text
-
 
     a = opt.get("attributes", {})
     parts = []
@@ -170,9 +138,7 @@ def option_to_text(opt):
     if a.get("garment_category"):
         parts.append(a["garment_category"].replace("_", " "))
 
-
     return " ".join(parts).strip() or "unknown item"
-
 
 
 # ── Prompt ──────────────────────────────────────────────────────────────
@@ -229,40 +195,39 @@ Answer:"""
     return prompt
 
 
-
 def parse_answer(response: str):
+    """엄격 파서: 첫 줄이 정확히 한 글자인 경우만 인정."""
     response = (response or "").strip()
-    for ch in response:
-        if ch in "ABCDabcd":
-            return ch.upper()
+
+    # 전체가 한 글자
+    if re.fullmatch(r"[ABCDabcd]", response):
+        return response.upper()
+
+    # 첫 줄이 한 글자 (thinking 토큰 제거 후에도 대비)
+    first_line = response.splitlines()[0].strip() if response else ""
+    if re.fullmatch(r"[ABCDabcd]", first_line):
+        return first_line.upper()
+
     return None
 
+
+def _call_one(prompt, system_prompt, stage_name, provider):
+    """call_llm 원본 시그니처 그대로 호출. 추가 kwargs 없음."""
+    return call_llm(
+        prompt=prompt,
+        stage=stage_name,
+        system=system_prompt,
+        provider_override=provider,
+    )
 
 
 def evaluate(plans, queries_map, profiles_map,
              limit=0, provider=None, seed=42, verbose=False,
-             profile_mode="narrative"):
+             profile_mode="narrative", concurrency=1):
     rng = random.Random(seed)
-
 
     if limit > 0:
         plans = plans[:limit]
-
-
-    results = []
-    strict_correct = 0
-    tpo_correct = 0
-    profile_correct = 0
-    total = 0
-
-
-    breakdown = defaultdict(lambda: {
-        "strict_correct": 0,
-        "tpo_correct": 0,
-        "profile_correct": 0,
-        "total": 0
-    })
-
 
     if profile_mode == "no":
         system_prompt = SYSTEM_PROMPT_NO
@@ -271,85 +236,59 @@ def evaluate(plans, queries_map, profiles_map,
         system_prompt = SYSTEM_PROMPT_WITH_PROFILE
         stage_name = "text_only_eval"
 
-
-    for i, plan in enumerate(plans):
+    # ── 모든 job 미리 준비 ─────────────────────────────────────────────
+    jobs = []
+    for plan in plans:
         qid = plan["query_id"]
         uid = plan["user_id"]
-
-
         query = queries_map.get(qid)
         profile = profiles_map.get(uid, {})
-
-
         if query is None:
             continue
 
-
-        option_items = list(plan["options"].items())   # [("A", {...}), ...]
+        option_items = list(plan["options"].items())
         rng.shuffle(option_items)
-
 
         display_labels = ["A", "B", "C", "D"]
         shuffled = list(zip(display_labels, [opt for _, opt in option_items]))
-
-
         display_to_original = {
-            disp_label: orig_label
-            for disp_label, (orig_label, _) in zip(display_labels, option_items)
+            d: o for d, (o, _) in zip(display_labels, option_items)
         }
-
-
-        correct_display = None
-        for disp_label, orig_label in display_to_original.items():
-            if orig_label == "A":
-                correct_display = disp_label
-                break
-
-
-        response = None
-        predicted = None
-        predicted_original = None
-
-
+        correct_display = next(
+            (d for d, o in display_to_original.items() if o == "A"), None
+        )
         prompt = build_prompt(query, profile, shuffled, profile_mode=profile_mode)
 
+        jobs.append((plan, query, prompt, display_to_original, correct_display))
 
+    results = []
+    strict_correct = tpo_correct = profile_correct = total = 0
+    breakdown = defaultdict(lambda: {
+        "strict_correct": 0, "tpo_correct": 0, "profile_correct": 0, "total": 0
+    })
+
+    # ── 병렬(concurrency>1) 또는 순차(concurrency=1) 실행 ─────────────
+    def process(idx, job):
+        plan, query, prompt, display_to_original, correct_display = job
+        qid = plan["query_id"]
+        uid = plan["user_id"]
+        axis = plan.get("active_axis", "unknown")
+        qtype = query.get("query_type", "unknown")
+
+        response = predicted = predicted_original = None
         try:
-            response = call_llm(
-                prompt=prompt,
-                stage=stage_name,
-                system=system_prompt,
-                provider_override=provider,
-            )
+            response = _call_one(prompt, system_prompt, stage_name, provider)
             predicted = parse_answer(response)
             predicted_original = display_to_original.get(predicted)
         except Exception as e:
             print(f"  [ERROR] {qid}: {e}")
 
-
         strict_hit = int(predicted_original == "A") if predicted_original else 0
         tpo_hit = TPO_SCORE.get(predicted_original, 0) if predicted_original else 0
         profile_hit = PROFILE_SCORE.get(predicted_original, 0) if predicted_original else 0
 
-
-        strict_correct += strict_hit
-        tpo_correct += tpo_hit
-        profile_correct += profile_hit
-        total += 1
-
-
-        axis = plan.get("active_axis", "unknown")
-        qtype = query.get("query_type", "unknown")
-
-
-        for key in [f"axis:{axis}", f"qtype:{qtype}"]:
-            breakdown[key]["total"] += 1
-            breakdown[key]["strict_correct"] += strict_hit
-            breakdown[key]["tpo_correct"] += tpo_hit
-            breakdown[key]["profile_correct"] += profile_hit
-
-
-        result_rec = {
+        rec = {
+            "_idx": idx,
             "query_id": qid,
             "user_id": uid,
             "active_axis": axis,
@@ -364,20 +303,49 @@ def evaluate(plans, queries_map, profiles_map,
             "profile_score": profile_hit,
             "raw_response": response,
         }
-        results.append(result_rec)
+        return rec, strict_hit, tpo_hit, profile_hit, axis, qtype
 
+    if concurrency > 1:
+        with cf.ThreadPoolExecutor(max_workers=concurrency) as ex:
+            futures = {ex.submit(process, i, job): i for i, job in enumerate(jobs)}
+            done_count = 0
+            for fut in cf.as_completed(futures):
+                rec, sh, th, ph, axis, qtype = fut.result()
+                results.append(rec)
+                strict_correct += sh; tpo_correct += th; profile_correct += ph; total += 1
+                for key in [f"axis:{axis}", f"qtype:{qtype}"]:
+                    breakdown[key]["total"] += 1
+                    breakdown[key]["strict_correct"] += sh
+                    breakdown[key]["tpo_correct"] += th
+                    breakdown[key]["profile_correct"] += ph
+                done_count += 1
+                if verbose or done_count % 10 == 0:
+                    status = "✓" if sh else "✗"
+                    print(f"  [{done_count:3d}/{len(jobs)}] {status} pred={rec['predicted']} "
+                          f"orig={rec['predicted_original']} ans={rec['correct_display']} | "
+                          f"axis={axis} qtype={qtype}")
+    else:
+        for i, job in enumerate(jobs):
+            rec, sh, th, ph, axis, qtype = process(i, job)
+            results.append(rec)
+            strict_correct += sh; tpo_correct += th; profile_correct += ph; total += 1
+            for key in [f"axis:{axis}", f"qtype:{qtype}"]:
+                breakdown[key]["total"] += 1
+                breakdown[key]["strict_correct"] += sh
+                breakdown[key]["tpo_correct"] += th
+                breakdown[key]["profile_correct"] += ph
+            if verbose or (i + 1) % 10 == 0:
+                status = "✓" if sh else "✗"
+                print(f"  [{i+1:3d}/{len(jobs)}] {status} pred={rec['predicted']} "
+                      f"orig={rec['predicted_original']} ans={rec['correct_display']} | "
+                      f"axis={axis} qtype={qtype}")
 
-        if verbose or (i + 1) % 10 == 0:
-            status = "✓" if strict_hit else "✗"
-            print(
-                f"  [{i+1:3d}/{len(plans)}] {status} "
-                f"pred={predicted} orig={predicted_original} ans={correct_display} | "
-                f"axis={axis} qtype={qtype}"
-            )
-
+    # 원래 순서 복원 후 _idx 제거
+    results.sort(key=lambda x: x["_idx"])
+    for r in results:
+        r.pop("_idx")
 
     return results, strict_correct, tpo_correct, profile_correct, total, breakdown
-
 
 
 def print_report(strict_correct, tpo_correct, profile_correct, total, breakdown):
@@ -385,14 +353,12 @@ def print_report(strict_correct, tpo_correct, profile_correct, total, breakdown)
     tpo_acc = tpo_correct / total * 100 if total > 0 else 0
     profile_acc = profile_correct / total * 100 if total > 0 else 0
 
-
     print("\n" + "=" * 50)
     print(f"  STRICT ACCURACY:   {strict_correct}/{total} = {strict_acc:.1f}%")
     print(f"  TPO ACCURACY:      {tpo_correct}/{total} = {tpo_acc:.1f}%")
     print(f"  PROFILE ACCURACY:  {profile_correct}/{total} = {profile_acc:.1f}%")
     print(f"  Random baseline:   25.0% strict")
     print("=" * 50)
-
 
     print("\n  ── By active_axis ──")
     for key in sorted(k for k in breakdown if k.startswith("axis:")):
@@ -403,7 +369,6 @@ def print_report(strict_correct, tpo_correct, profile_correct, total, breakdown)
         p = d["profile_correct"] / n * 100 if n else 0
         print(f"  {key:18s} strict={s:5.1f}%  tpo={t:5.1f}%  profile={p:5.1f}%  (n={n})")
 
-
     print("\n  ── By query_type ──")
     for key in sorted(k for k in breakdown if k.startswith("qtype:")):
         d = breakdown[key]
@@ -412,7 +377,6 @@ def print_report(strict_correct, tpo_correct, profile_correct, total, breakdown)
         t = d["tpo_correct"] / n * 100 if n else 0
         p = d["profile_correct"] / n * 100 if n else 0
         print(f"  {key:18s} strict={s:5.1f}%  tpo={t:5.1f}%  profile={p:5.1f}%  (n={n})")
-
 
 
 def main():
@@ -432,30 +396,27 @@ def main():
     parser.add_argument("--verbose", action="store_true")
     parser.add_argument("--profile-mode", type=str, default="narrative",
                         choices=["no", "narrative", "all"])
+    parser.add_argument("--concurrency", type=int, default=1,
+                        help="병렬 요청 수. vllm은 32, gpt5_mini는 1~8 권장")
     args = parser.parse_args()
-
 
     if args.output == OPTIONS_DIR / "text_only_results.jsonl":
         args.output = OPTIONS_DIR / f"text_only_results_{args.profile_mode}.jsonl"
 
-
     log_step("Text-Only LLM Baseline Eval")
-
 
     plans = load_jsonl(args.plans)
     queries = load_jsonl(args.queries)
     profiles = load_jsonl(args.profiles)
 
-
     queries_map = {q["query_id"]: q for q in queries}
     profiles_map = {p["user_id"]: p for p in profiles}
 
-
     print(f"  Plans: {len(plans)}, Queries: {len(queries)}, Profiles: {len(profiles)}")
     print(f"  Profile mode: {args.profile_mode}")
+    print(f"  Concurrency: {args.concurrency}")
     if args.limit:
         print(f"  Limit: {args.limit}")
-
 
     results, strict_correct, tpo_correct, profile_correct, total, breakdown = evaluate(
         plans, queries_map, profiles_map,
@@ -464,15 +425,13 @@ def main():
         seed=args.seed,
         verbose=args.verbose,
         profile_mode=args.profile_mode,
+        concurrency=args.concurrency,
     )
-
 
     save_jsonl(results, args.output)
     print(f"\n  Saved {len(results)} result records → {args.output}")
 
-
     print_report(strict_correct, tpo_correct, profile_correct, total, breakdown)
-
 
 
 if __name__ == "__main__":

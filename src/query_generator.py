@@ -144,6 +144,8 @@ def build_queries(profiles, scenarios=None, seed=42, per_instance=1, explicit_ra
                 "query_id": query_id,
                 "user_id": inst["user_id"],
                 "scenario_id": inst["scenario_id"],
+                "scenario_archetype": scenario.get("archetype"),   # ← 추가
+                "scenario_name": scenario.get("name"),   
                 "active_axis": active_axis,
                 "liked_compatible": inst["liked_compatible"],
                 "disliked_compatible": inst["disliked_compatible"],

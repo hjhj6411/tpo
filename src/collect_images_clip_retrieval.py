@@ -19,7 +19,7 @@ Install:
     pip install clip-retrieval
 
 Quick test (no infra):
-    python scripts/collect_images_clip_retrieval.py --backend hosted --limit 5 --verify lenient
+    python src/collect_images_clip_retrieval.py --backend hosted --limit 5 --verify lenient
 
 Self-hosted (after `clip-retrieval back --port 1234 ...`):
     python scripts/collect_images_clip_retrieval.py --backend local \
