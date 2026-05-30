@@ -13,3 +13,10 @@ build/
 *.jpeg
 *.png
 *.log
+
+# large data artifacts (never commit)
+corpus/
+data/amazon/
+data/images/
+*.csv
+*.faiss

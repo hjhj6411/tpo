@@ -16,11 +16,11 @@ meta-llama/Llama-3.1-8B-Instruct
 Qwen/Qwen2.5-72B-Instruct
 
 
-AMAZON_META_DIR=/home1/hjhj6411/fashion/data/amazon/fashion_only \
+AMAZON_META_DIR=/home1/hjhj6411/pod_bench/data/amazon/fashion_only
 python -m src.image_collector --force --limit 5
 
 
-vllm serve Qwen/Qwen3-30B-A3B  \
+vllm serve Qwen/Qwen3.6-27B  \
   --tensor-parallel-size 4 \
   --max-model-len 5000 \
   --dtype bfloat16 \
