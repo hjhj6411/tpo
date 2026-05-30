@@ -51,7 +51,7 @@ You already produce a CSV of (url, caption) with `amazon_to_clip_corpus.py`
 ```bash
 conda activate clip
 export WORK=/home1/hjhj6411/fashion/clip_corpus
-python amazon_to_clip_corpus.py            # -> $WORK/amazon_urls.csv  (url,caption)
+python -m src.amazon_to_clip_corpus            # -> $WORK/amazon_urls.csv  (url,caption)
 ```
 
 ### B2. Download images into webdataset shards (img2dataset)
