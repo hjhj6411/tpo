@@ -1,13 +1,22 @@
-# POD-Bench v2 requirements
-# Core
+# POD-Bench requirements
+# Install: pip install -r requirements.txt
+
+# ── Core ────────────────────────────────────────────────────────────────
 requests>=2.28
 numpy>=1.24
 Pillow>=9.0
+tqdm>=4.64
 
-# Image quality / CLIP (optional, for image_collector)
-# Install if using image collection pipeline:
+# ── OpenAI-compatible API (gpt-4.1-nano, gpt-4.1-mini, vLLM 등) ────────
+openai>=1.0
+
+# ── Tokenizer (비용 추정용, tiktoken) ───────────────────────────────────
+tiktoken>=0.7
+
+# ── Image collection pipeline (optional) ────────────────────────────────
+# text_only_eval 만 쓴다면 아래 두 줄은 불필요
 # open_clip_torch>=2.20
 # scikit-image>=0.20
 
-# Provider-specific (optional)
-# openai>=1.0  # for GPT-5 judge stages
+# ── CLIP retrieval backend (optional, collect_images_clip_retrieval.py) ─
+# pip install clip-retrieval  (별도 설치)
