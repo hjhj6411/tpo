@@ -24,6 +24,12 @@ Quality gates:
     homogeneity is enforced WITHIN the {A,B} and {C,D} pairs only (same garment,
     differ on the active axis) -- never across the A<->C garment gap.
 
+--rewrite modes:
+  on  : use vllm LLM to rewrite each search_query into a CLIP-optimised phrase
+        before sending to KNN. Improves recall for hard patterns (graphic, polka
+        dot, camouflage, etc.).  Adds ~1 LLM call per option per candidate pass.
+  off : original augment() behaviour (simple suffix append, no LLM call).
+
 Install (in the clip env, see SETUP_CLIP_ENV.md):
     conda create -n clip python=3.10 -y && conda activate clip
     pip install clip-retrieval img2dataset autofaiss requests pillow scikit-image
@@ -32,8 +38,8 @@ Quick test (no infra, hosted LAION):
     python src/collect_images_clip_retrieval.py --backend hosted --limit 5 --verify off
 
 Self-hosted (after `clip-retrieval back --port 1234 ...`):
-    python src/collect_images_clip_retrieval.py --backend local \
-        --client-url http://127.0.0.1:1234/knn-service --indice-name pod_fashion \
+    python src/collect_images_clip_retrieval.py --backend local \\
+        --client-url http://127.0.0.1:1234/knn-service --indice-name pod_fashion \\
         --limit 50 --verify lenient
 
 --verify modes:
@@ -53,10 +59,67 @@ import requests
 from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from src.utils import save_jsonl, load_jsonl, log_step, call_vlm, parse_json_response
+from src.utils import save_jsonl, load_jsonl, log_step, call_llm, call_vlm, parse_json_response
 from configs.config import IMAGES_DIR, OPTIONS_DIR, IMAGE_COLLECTION
 
 UA = {"User-Agent": "Mozilla/5.0 (compatible; POD-Bench/2.0)"}
+
+
+# ============================================================
+#  Query rewriting (Direction A)
+# ============================================================
+
+_REWRITE_SYSTEM = """\
+You are a fashion image-search expert.
+Your job: rewrite a fashion product description into a short, vivid phrase
+that maximises recall when used as a CLIP text query against a fashion image index.
+
+Rules:
+- Output ONLY the rewritten query string. No explanation, no punctuation other
+  than what belongs in the query itself.
+- Keep it under 20 words.
+- Prefer concrete visual descriptors (color, texture, garment shape, key pattern
+  features) over abstract terms.
+- Always append: fashion product photo, plain background
+- For patterns, include the most visually distinctive feature:
+    graphic print  -> front graphic print tee, bold logo, plain background
+    polka dot      -> round dot pattern fabric, polka dot, plain background
+    plaid/checkered-> plaid tartan grid pattern, plain background
+    camouflage     -> military camo pattern fabric, army green, plain background
+    striped        -> horizontal/vertical stripes clothing, plain background
+    floral         -> floral print flower pattern clothing, plain background
+"""
+
+
+def rewrite_query(raw_query: str, provider: str = "vllm") -> str:
+    """
+    Use the vllm LLM to rewrite raw_query into a CLIP-optimised search phrase.
+    Falls back to the original augment() result if the LLM call fails.
+
+    Designed to be called once per option per collection run. The result is
+    cached on the option dict (key 'rewritten_query') so it is only computed
+    once per plan execution, even across retry passes.
+    """
+    try:
+        result = call_llm(
+            prompt=f"Rewrite this fashion search query for CLIP image retrieval:\n{raw_query}",
+            stage="query_rewrite",
+            system=_REWRITE_SYSTEM,
+            max_tokens=60,
+            temperature=0.2,
+            provider_override=provider,
+        )
+        rewritten = result.strip().strip('"').strip("'")
+        if rewritten:
+            return rewritten
+    except Exception as e:
+        print(f"    [rewrite] LLM call failed, falling back: {e}")
+    return augment(raw_query)
+
+
+def augment(search_query: str) -> str:
+    """Original lightweight prompt engineering (no LLM). Used as fallback."""
+    return f"{search_query}, fashion product photo, plain background"
 
 
 # ============================================================
@@ -161,8 +224,6 @@ class AttributeVerifier:
                       system=VERIFY_SYSTEM, max_tokens=300, temperature=0.0,
                       provider_override=self.provider)
             if self.vlm_url:
-                # only pass base_url when we actually want per-GPU routing, and
-                # tolerate a call_vlm signature that doesn't accept it.
                 try:
                     resp = call_vlm(prompt, base_url=self.vlm_url, **kw)
                 except TypeError:
@@ -222,16 +283,12 @@ class KnnRetriever:
         self._client = None
 
         if backend == "hosted":
-            # NOTE: the public LAION knn-service (knn.laion.ai) was taken offline
-            # on 2023-12-19 and has not been restored. 'hosted' is kept only for
-            # completeness / private mirrors; it will NOT work against LAION.
             url = "https://knn.laion.ai/knn-service"
             indice_name = indice_name or "laion5B-L-14"
             print("  [knn] WARNING: hosted LAION knn-service is discontinued "
                   "(offline since 2023-12-19). Use --backend local.")
         else:
             url = client_url
-        # fallback HTTP url must match the chosen backend, NOT the local default
         self._http_url = url
         try:
             from clip_retrieval.clip_client import ClipClient, Modality
@@ -273,20 +330,10 @@ class KnnRetriever:
         return out
 
 
-def augment(search_query):
-    """Light prompt engineering to bias retrieval toward clean product shots."""
-    return f"{search_query}, fashion product photo, plain background"
-
-
 # ============================================================
 #  Per-plan collection
 # ============================================================
 
-# Visual-equivalence groups for pattern names. The benchmark's discriminative
-# axis is "this pattern vs a different pattern", NOT fine label distinctions
-# like checkered-vs-plaid (which are visually near-identical). We normalize the
-# VLM's free-text `seen_pattern` into a canonical group and compare on that,
-# which recovers many false rejects without admitting wrong patterns.
 _PATTERN_GROUPS = {
     "solid": {"solid", "plain", "none", "ribbed", "knit", "no pattern", "unpatterned"},
     "striped": {"striped", "stripe", "stripes", "pinstripe", "pinstriped",
@@ -304,50 +351,33 @@ _PATTERN_GROUPS = {
 
 
 def _canon_pattern(text):
-    """Map a free-text pattern description to a canonical group key, or None."""
     if not text:
         return None
     t = text.strip().lower()
-    # direct membership first
     for grp, members in _PATTERN_GROUPS.items():
         if t in members:
             return grp
-    # substring fallback: try the most specific (longest) members first so that
-    # e.g. "animal print (leopard)" matches "leopard"/"animal print" before the
-    # generic "print" (graphic_print), and "graphic print of a daisy" matches
-    # "graphic print" before the generic "daisy"/"flower".
-    candidates = []  # (member_length, group, member)
+    candidates = []
     for grp, members in _PATTERN_GROUPS.items():
         for m in members:
             if m in t:
                 candidates.append((len(m), grp, m))
     if not candidates:
         return None
-    # strong keywords win regardless of length
     for kw, grp in (("leopard", "animal_print"), ("animal", "animal_print"),
                     ("camo", "camouflage"), ("polka", "polka_dot"),
                     ("plaid", "checkered"), ("tartan", "checkered"),
                     ("stripe", "striped"), ("floral", "floral")):
         if kw in t:
             return grp
-    candidates.sort(reverse=True)  # longest member first
+    candidates.sort(reverse=True)
     return candidates[0][1]
 
 
 def _pattern_matches(target_pattern, vr, require_full_coverage=False):
-    """True if the image's pattern is in the same visual group as requested.
-    Uses the VLM's seen_pattern text first (more reliable than its boolean),
-    falling back to the boolean pattern_match if the text can't be canonicalized.
-
-    require_full_coverage: on pattern-axis instances, a garment whose pattern
-    only covers part of the body (e.g. checked sleeves on a solid-body tee) is
-    NOT a valid instance of that pattern -> reject. This kills the case-3
-    ambiguity ('beige check t-shirt' that is really a solid tee with check trim).
-    """
     if not target_pattern:
         return True
     tgt = _canon_pattern(target_pattern.replace("_", " "))
-    # a non-solid target with only partial coverage is a mislabel -> reject
     if require_full_coverage and tgt not in (None, "solid"):
         cov = (vr.get("pattern_coverage") or "").strip().lower()
         if cov and cov != "full":
@@ -355,40 +385,25 @@ def _pattern_matches(target_pattern, vr, require_full_coverage=False):
     seen = _canon_pattern(vr.get("seen_pattern", ""))
     if tgt is not None and seen is not None:
         return tgt == seen
-    # text inconclusive -> trust the VLM's own boolean
     return bool(vr.get("pattern_match"))
 
 
 def _verify_pass(vr, mode, active_axis=None, target_pattern=None):
-    """Axis-aware verification.
-
-    The attribute that is the instance's discriminative axis MUST match, since a
-    wrong value there destroys the item's validity (e.g. a 'pattern' instance
-    whose image shows the wrong pattern). garment+color are always required;
-    the active axis adds its own requirement on top. Pattern matching uses
-    visual-equivalence groups (checkered~plaid etc.) via _pattern_matches.
-      - mode 'off'     : accept anything (smoke test)
-      - mode 'lenient' : garment + color, PLUS active-axis attribute
-      - mode 'strict'  : garment + color + pattern (all three)
-    """
     if mode == "off":
         return True
     g, c = vr.get("garment_match"), vr.get("color_match")
     full_cov = (active_axis == "pattern")
     if mode == "strict":
         return bool(g and c and _pattern_matches(target_pattern, vr, full_cov))
-    # lenient + axis-aware
     base = bool(g and c)
     if active_axis == "pattern":
         return base and _pattern_matches(target_pattern, vr, require_full_coverage=True)
     if active_axis == "color":
-        return base  # color already required; pattern free
+        return base
     return base
 
 
 def _gender_ok(vr, target_gender):
-    """True if this image's model gender is compatible with the locked target.
-    'unclear' is always compatible (can't introduce a gender confound)."""
     if target_gender is None:
         return True
     g = vr.get("model_gender", "unclear")
@@ -396,23 +411,19 @@ def _gender_ok(vr, target_gender):
 
 
 def _norm_title(t):
-    """Normalize a product title for duplicate detection across options."""
     return " ".join((t or "").lower().split())[:80]
 
 
 def _download_one(cands, img_path, attrs, verifier, mode, top_n=24,
                   active_axis=None, target_gender=None, used_titles=None):
-    """Try candidates in order; accept the first that passes verification,
-    is gender-compatible, and is NOT a duplicate of an already-chosen option.
+    """Try candidates in order; accept the first that passes verification.
 
     Returns (ok, title, verification_dict).
-    used_titles: set of normalized titles already used in THIS instance ->
-                 prevents A/B/C/D from being the same product (case 1).
 
-    Gender rule: an image is accepted only if its model_gender is 'unclear' or
-    equals target_gender. We NEVER accept the opposite concrete gender, because
-    that reintroduces the set-consistency confound (a man's blazer in an
-    otherwise-women set). target_gender=None means no lock yet (first option).
+    NOTE (Direction B hook): this function currently returns on the FIRST
+    passing candidate. To implement top-k best-pick in the future, change
+    the logic here to collect up to `best_of` passing candidates and then
+    call a VLM ranking step before selecting.
     """
     used_titles = used_titles if used_titles is not None else set()
     tmp = Path(str(img_path) + ".tmp.jpg")
@@ -420,7 +431,7 @@ def _download_one(cands, img_path, attrs, verifier, mode, top_n=24,
     for cand in cands[:top_n]:
         title = cand.get("title", "")
         if _norm_title(title) in used_titles:
-            continue  # case 1: skip a product already chosen for another option
+            continue
         if not download_image(cand["image_url"], tmp):
             continue
         if mode == "off":
@@ -435,17 +446,31 @@ def _download_one(cands, img_path, attrs, verifier, mode, top_n=24,
 
 
 def _resolve_option(k, opt, attrs, knn, verifier, out_dir, mode, use_google,
-                    top_k, active_axis, target_gender, used_titles):
-    """Resolve a single option image with escalating effort, ALWAYS respecting
-    the instance gender lock (an opposite-gender image is never accepted, which
-    is what keeps set_consistency intact):
-      pass 1: requested mode + gender lock + dedup
-      pass 2 (only if mode==strict): relax strict -> lenient -- req 2
-      pass 3: Google fallback (if enabled)
+                    top_k, active_axis, target_gender, used_titles,
+                    rewrite=True, rewrite_provider="vllm"):
+    """Resolve a single option image.
+
+    Query flow:
+      1. rewrite_query() via LLM (if rewrite=True) -> KNN search
+      2. If mode==strict and step 1 fails: relax to lenient, same candidates
+      3. Google fallback (if use_google)
+
+    The rewritten query is stored back onto opt['rewritten_query'] so it is
+    logged in the output and not recomputed on retry passes.
     Returns (ok, source, title, vr, img_path).
     """
     img_path = out_dir / f"{k}.jpg"
-    q = augment(opt["search_query"])
+
+    # Build (and cache) the CLIP query for this option
+    if rewrite:
+        if "rewritten_query" not in opt:
+            opt["rewritten_query"] = rewrite_query(
+                opt["search_query"], provider=rewrite_provider
+            )
+        q = opt["rewritten_query"]
+    else:
+        q = augment(opt["search_query"])
+
     cands = knn.search(q, top_k=top_k, garment_key=attrs.get("garment_category"))
 
     ok, title, vr = _download_one(cands, img_path, attrs, verifier, mode,
@@ -455,7 +480,7 @@ def _resolve_option(k, opt, attrs, knn, verifier, out_dir, mode, use_google,
     if ok:
         return True, "clip_retrieval", title, vr, img_path
 
-    if mode == "strict":  # req 2: relax the bar, but keep the gender lock
+    if mode == "strict":
         ok, title, vr = _download_one(cands, img_path, attrs, verifier, "lenient",
                                       active_axis=active_axis,
                                       target_gender=target_gender,
@@ -476,11 +501,9 @@ def _resolve_option(k, opt, attrs, knn, verifier, out_dir, mode, use_google,
 
 
 def _attempt_instance(plan, knn, verifier, out_dir, mode, use_google, top_k,
-                      active_axis, forced_gender, skip_incomplete):
-    """One full A->B->C->D pass at a fixed gender preference.
-    forced_gender: 'man'/'woman' to lock from the start, or None to let A decide.
-    Returns (options_dict, paths, verifs, target_gender, failed_key|None).
-    """
+                      active_axis, forced_gender, skip_incomplete,
+                      rewrite, rewrite_provider):
+    """One full A->B->C->D pass at a fixed gender preference."""
     options, paths, verifs = {}, {}, {}
     used_titles = set()
     target_gender = forced_gender
@@ -490,7 +513,8 @@ def _attempt_instance(plan, knn, verifier, out_dir, mode, use_google, top_k,
         img_path = out_dir / f"{k}.jpg"
         ok, src, title, vr, img_path = _resolve_option(
             k, opt, attrs, knn, verifier, out_dir, mode, use_google,
-            top_k, active_axis, target_gender, used_titles)
+            top_k, active_axis, target_gender, used_titles,
+            rewrite=rewrite, rewrite_provider=rewrite_provider)
         if ok:
             paths[k] = img_path
             verifs[k] = vr
@@ -501,17 +525,20 @@ def _attempt_instance(plan, knn, verifier, out_dir, mode, use_google, top_k,
                     target_gender = g
             options[k] = {"image_path": str(img_path), "source": src,
                           "search_query": opt["search_query"],
+                          "rewritten_query": opt.get("rewritten_query"),
                           "source_title": title, "verification": vr}
         else:
             options[k] = {"image_path": None, "source": "FAILED",
-                          "search_query": opt["search_query"]}
+                          "search_query": opt["search_query"],
+                          "rewritten_query": opt.get("rewritten_query")}
             if skip_incomplete:
                 return options, paths, verifs, target_gender, k
     return options, paths, verifs, target_gender, None
 
 
 def collect_for_plan(plan, knn, checker, verifier, out_root, mode, use_google,
-                     top_k=50, skip_incomplete=True):
+                     top_k=50, skip_incomplete=True,
+                     rewrite=True, rewrite_provider="vllm"):
     qid = plan["query_id"]
     out_dir = Path(out_root) / qid
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -524,7 +551,6 @@ def collect_for_plan(plan, knn, checker, verifier, out_root, mode, use_google,
               "homogeneity_AB": None, "homogeneity_CD": None,
               "structure_preserved": None, "set_consistency": None}
 
-    # Fast path: any already-cached images mean we don't re-collect this instance.
     if all((out_dir / f"{k}.jpg").exists() for k in "ABCD"):
         paths = {k: out_dir / f"{k}.jpg" for k in "ABCD"}
         verifs = {k: {"passes": True, "model_gender": "unclear"} for k in "ABCD"}
@@ -538,23 +564,19 @@ def collect_for_plan(plan, knn, checker, verifier, out_root, mode, use_google,
         result["structure_preserved"] = result["homogeneity_AB"]
         return result
 
-    # Attempt at the natural gender (A decides). If it fails on a concrete-gender
-    # instance, retry the WHOLE instance forcing the opposite gender (req 4) --
-    # this satisfies "if you can't complete it as man, try woman" WITHOUT ever
-    # mixing genders inside one completed set (which would break set_consistency).
     options, paths, verifs, locked_gender, failed_key = _attempt_instance(
         plan, knn, verifier, out_dir, mode, use_google, top_k,
-        active_axis, None, skip_incomplete)
+        active_axis, None, skip_incomplete, rewrite, rewrite_provider)
 
     if failed_key is not None and locked_gender in ("man", "woman"):
         other = "woman" if locked_gender == "man" else "man"
         _cleanup_partial(out_dir, paths)
         opts2, paths2, verifs2, g2, fk2 = _attempt_instance(
             plan, knn, verifier, out_dir, mode, use_google, top_k,
-            active_axis, other, skip_incomplete)
-        if fk2 is None:                 # the opposite-gender pass completed
+            active_axis, other, skip_incomplete, rewrite, rewrite_provider)
+        if fk2 is None:
             options, paths, verifs, failed_key = opts2, paths2, verifs2, None
-        else:                           # neither gender worked -> keep first attempt's log
+        else:
             _cleanup_partial(out_dir, paths2)
 
     result["options"] = options
@@ -574,7 +596,6 @@ def collect_for_plan(plan, knn, checker, verifier, out_root, mode, use_google,
 
 
 def _cleanup_partial(out_dir, paths):
-    """Delete the images of a skipped (incomplete) instance to save disk."""
     for p in list(paths.values()):
         try:
             Path(p).unlink(missing_ok=True)
@@ -584,18 +605,16 @@ def _cleanup_partial(out_dir, paths):
 
 def run(plan_path, output_path, image_root, backend, client_url, indice_name,
         limit, mode, use_google, top_k, vlm_urls=None, workers=1,
-        skip_incomplete=True):
+        skip_incomplete=True, rewrite=True, rewrite_provider="vllm"):
     log_step(f"Image Collection via clip-retrieval "
-             f"(backend={backend}, verify={mode}, workers={workers})")
+             f"(backend={backend}, verify={mode}, workers={workers}, "
+             f"rewrite={'on' if rewrite else 'off'})")
     plans = load_jsonl(plan_path)
     print(f"  Loaded {len(plans)} plans")
 
     knn = KnnRetriever(backend, client_url, indice_name)
     checker = HomogeneityChecker()
 
-    # one verifier per VLM endpoint (round-robin across worker threads).
-    # vlm_urls is a list like ["http://127.0.0.1:8002/v1", ".../8003/v1", ...],
-    # one per GPU. If empty, a single default verifier is used.
     vlm_urls = vlm_urls or [None]
     verifiers = [AttributeVerifier(vlm_url=u) for u in vlm_urls]
 
@@ -611,6 +630,10 @@ def run(plan_path, output_path, image_root, backend, client_url, indice_name,
         todo = todo[:limit]
     print(f"  To collect: {len(todo)} instances across "
           f"{len(vlm_urls)} VLM endpoint(s)")
+    if rewrite:
+        print(f"  Query rewriting: ON (provider={rewrite_provider})")
+    else:
+        print(f"  Query rewriting: OFF (using augment() fallback)")
 
     import threading
     from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -618,9 +641,10 @@ def run(plan_path, output_path, image_root, backend, client_url, indice_name,
 
     def worker(idx_plan):
         idx, plan = idx_plan
-        verifier = verifiers[idx % len(verifiers)]   # round-robin -> spreads GPUs
+        verifier = verifiers[idx % len(verifiers)]
         return collect_for_plan(plan, knn, checker, verifier, image_root,
-                                mode, use_google, top_k, skip_incomplete)
+                                mode, use_google, top_k, skip_incomplete,
+                                rewrite=rewrite, rewrite_provider=rewrite_provider)
 
     n_workers = max(1, workers)
     if n_workers == 1:
@@ -658,13 +682,12 @@ def run(plan_path, output_path, image_root, backend, client_url, indice_name,
     n_skip = sum(1 for r in results if r.get("skipped"))
     print(f"\n  Saved {len(results)}: complete={n_done} "
           f"({n_done/max(len(results),1):.0%}), skipped={n_skip}")
-    # source + failed-pattern breakdown (only over options that were attempted)
     src_counter, fail_patterns = {}, {}
     for r in results:
         for k in "ABCD":
             o = r["options"].get(k)
             if not o:
-                continue  # option never reached (instance abandoned early)
+                continue
             s = o.get("source", "?")
             src_counter[s] = src_counter.get(s, 0) + 1
             if s == "FAILED":
@@ -677,8 +700,6 @@ def run(plan_path, output_path, image_root, backend, client_url, indice_name,
 
 
 def selftest(backend, client_url, indice_name, top_k):
-    """Fire ONE KNN query and print results, to validate the backend end-to-end
-    before launching a full collection run."""
     print(f"=== KNN self-test (backend={backend}, indice={indice_name}) ===")
     knn = KnnRetriever(backend, client_url, indice_name)
     q = augment("navy wool coat")
@@ -706,18 +727,17 @@ def main():
     ap.add_argument("--verify", choices=["strict", "lenient", "off"], default="lenient")
     ap.add_argument("--google", action="store_true", help="enable Google image fallback")
     ap.add_argument("--vlm-urls", default="",
-                    help="comma-separated vLLM endpoints, one per GPU, e.g. "
-                         "'http://127.0.0.1:8002/v1,http://127.0.0.1:8003/v1'. "
-                         "Work is round-robined across them for multi-GPU use.")
+                    help="comma-separated vLLM endpoints, one per GPU")
     ap.add_argument("--workers", type=int, default=1,
-                    help="parallel instance workers (set >= number of vLLM "
-                         "endpoints to keep all GPUs busy)")
-    ap.add_argument("--no-skip-incomplete", action="store_true",
-                    help="keep partial instances instead of skipping when an "
-                         "option can't be filled (default: skip for speed)")
-    ap.add_argument("--selftest", action="store_true",
-                    help="fire one KNN query and exit (validate the backend)")
+                    help="parallel instance workers")
+    ap.add_argument("--no-skip-incomplete", action="store_true")
+    ap.add_argument("--selftest", action="store_true")
     ap.add_argument("--force", action="store_true")
+    ap.add_argument("--rewrite", choices=["on", "off"], default="on",
+                    help="LLM query rewriting for better CLIP recall (default: on). "
+                         "Use --rewrite off to restore original augment() behaviour.")
+    ap.add_argument("--rewrite-provider", default="vllm",
+                    help="provider alias for the rewrite LLM (default: vllm)")
     args = ap.parse_args()
     if args.selftest:
         selftest(args.backend, args.client_url, args.indice_name, args.top_k)
@@ -728,7 +748,9 @@ def main():
     run(args.plan_path, args.output, args.image_root, args.backend, args.client_url,
         args.indice_name, args.limit, args.verify, args.google, args.top_k,
         vlm_urls=vlm_urls, workers=args.workers,
-        skip_incomplete=not args.no_skip_incomplete)
+        skip_incomplete=not args.no_skip_incomplete,
+        rewrite=(args.rewrite == "on"),
+        rewrite_provider=args.rewrite_provider)
 
 
 if __name__ == "__main__":
