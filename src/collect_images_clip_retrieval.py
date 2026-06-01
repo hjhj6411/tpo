@@ -4,59 +4,51 @@ collect_images_clip_retrieval.py
 --------------------------------
 Image collection for POD-Bench options via rom1504/clip-retrieval KNN service.
 
-Agentic collection loop (CollectionAgent)
------------------------------------------
-Every plan goes through up to MAX_AGENT_ATTEMPTS passes. After each attempt
-the agent diagnoses which of three failure modes occurred and adjusts the
-next attempt accordingly:
+Two agent modes
+---------------
+CollectionAgent (default, --react off)
+  Rule-based Thought: _infer_cause(), _check_duplicates(), _flag_hard_patterns()
+  Fast, deterministic, no extra LLM calls.
 
-  Case 1 – DUPLICATE
-    Same product image selected for two different options (high SSIM).
-    Action: REWRITE_QUERY with negative hint derived from the duplicate's
-            VLM caption, forcing the next KNN query away from it.
-    Active on: pattern axis only (color axis rarely duplicates meaningfully).
+ReActCollectionAgent (--react on)
+  LLM-based Thought following the ReAct paradigm (Yao et al., 2022).
+  After every Action+Observation the LLM reads the full trajectory and decides
+  the next Action.  Trajectories are logged per-option for analysis.
 
-  Case 2 – MISSING
-    One or more options could not be filled (FAILED). The agent inspects
-    per-candidate verification logs to determine the dominant failure cause:
-      garment_mismatch  -> rewrite garment term more explicitly
-      color_mismatch    -> rewrite color + garment, drop pattern emphasis
-      no_candidates     -> RELAX_CONSTRAINT then Google fallback
-      pattern_ambiguous -> upgrade to strict pattern query
-    Active on: all axes.
+  Trajectory loop per option (up to --react-steps N, default 4):
+    Thought  : LLM reasons over goal + observations so far
+    Action   : one of rewrite / relax / google / accept / give_up
+    Observation: VLM verify result, serialised as text
+    ... repeat ...
 
-  Case 3 – PATTERN_AMBIGUITY
-    Detected pre-emptively for hard patterns (checkered, polka_dot,
-    graphic_print, camouflage) when active_axis=="pattern".
-    Also triggered post-hoc when collected images have pattern_coverage!='full'.
-    Active on: pattern axis only.
+  Falls back to CollectionAgent behaviour if LLM call fails.
 
-Axis-based agent config
------------------------
-  color          : rewrite=off, no duplicate check, no pattern check, 1 attempt
-  pattern        : rewrite=on,  duplicate check,    pattern check,    3 attempts
-  garment_category: rewrite=on, no duplicate check, no pattern check, 2 attempts
+Axis-based agent config (shared by both agents)
+-------------------------------------------------
+  color           : rewrite=off, no dup check, no pattern check, 1 attempt
+  pattern         : rewrite=on,  dup check,    pattern check,    3 attempts
+  garment_category: rewrite=on,  no dup check, no pattern check, 2 attempts
 
 Scenario-aware verification
----------------------------
-AttributeVerifier.verify() now accepts an optional scenario_context string.
-When provided (typically the plan's scenario description + option role A/B/C/D),
-the VLM is asked to also judge whether the image "fits" the scenario as a
-soft signal. This does NOT change the pass/fail gate (garment+color+pattern
-remain the hard criteria) but the judgment is logged in the verification dict
-for downstream analysis.
+----------------------------
+  AttributeVerifier injects scenario/TPO context as soft signal.
+  scenario_fit logged but NEVER blocks pass/fail gate.
 
 CLI flags
----------
-  --rewrite on|off
+----------
+  --rewrite on|off          (default: on)
   --rewrite-provider ALIAS  (default: vllm_vlm)
-  --agent-attempts N        (default: 3)
+  --agent-attempts N        outer attempt loop  (default: 3)
   --verify strict|lenient|off
-  --scenario-verify on|off  inject scenario context into VLM verify (default: on)
+  --scenario-verify on|off  (default: on)
+  --react on|off            use ReActCollectionAgent (default: off)
+  --react-steps N           max Thought-Action-Obs steps per option (default: 4)
+  --react-provider ALIAS    LLM for ReAct Thought (default: vllm)
 """
 
 import argparse
 import io
+import json
 import os
 import sys
 import time
@@ -75,25 +67,18 @@ UA = {"User-Agent": "Mozilla/5.0 (compatible; POD-Bench/2.0)"}
 _HARD_PATTERNS  = {"checkered", "plaid", "polka_dot", "graphic_print", "camouflage"}
 _DUPLICATE_SSIM = 0.82
 
-# Per-axis agent behaviour
 AXIS_AGENT_CONFIG = {
     "color": {
-        "rewrite":            False,
-        "check_duplicate":    False,
-        "check_pattern_cov":  False,
-        "max_attempts":       1,
+        "rewrite": False, "check_duplicate": False,
+        "check_pattern_cov": False, "max_attempts": 1,
     },
     "pattern": {
-        "rewrite":            True,
-        "check_duplicate":    True,
-        "check_pattern_cov":  True,
-        "max_attempts":       3,
+        "rewrite": True, "check_duplicate": True,
+        "check_pattern_cov": True, "max_attempts": 3,
     },
     "garment_category": {
-        "rewrite":            True,
-        "check_duplicate":    False,
-        "check_pattern_cov":  False,
-        "max_attempts":       2,
+        "rewrite": True, "check_duplicate": False,
+        "check_pattern_cov": False, "max_attempts": 2,
     },
 }
 _DEFAULT_AXIS_CONFIG = {
@@ -116,7 +101,7 @@ Rules:
 - Keep it under 20 words.
 - Prefer concrete visual descriptors (color, texture, garment shape, pattern features).
 - Always end with: fashion product photo, plain background
-- For hard patterns use the most visually distinctive description:
+- For hard patterns:
     graphic print  -> bold front graphic logo print tee
     polka dot      -> round dot pattern covering full garment body
     plaid/checkered-> large plaid tartan grid covering full garment body
@@ -263,22 +248,17 @@ def _build_verify_prompt(attrs, active_axis, scenario_context=""):
     color   = attrs.get("color") or ""
     pattern = (attrs.get("pattern") or "").replace("_", " ")
     target  = f"garment={garment}; color={color}; pattern={pattern or 'solid/plain'}"
-
     axis_hint = ""
     if active_axis == "pattern":
         axis_hint = (" KEY axis is PATTERN: pattern_match=true ONLY if pattern "
                      "covers MAJORITY of garment body (pattern_coverage='full').")
-
     scenario_block = ""
     if scenario_context:
         scenario_block = (
-            f"\n\nSCENARIO CONTEXT (soft signal only — does NOT affect garment/color/pattern gates):\n"
-            f"{scenario_context}\n"
-            f"Judge scenario_fit as 'good' if the garment style/formality suits this scenario, "
-            f"'poor' if it clearly clashes, 'neutral' otherwise. "
-            f"Provide a one-sentence reason in scenario_fit_reason."
+            f"\n\nSCENARIO CONTEXT (soft signal only):\n{scenario_context}\n"
+            f"Judge scenario_fit as 'good'/'neutral'/'poor'. "
+            f"One-sentence reason in scenario_fit_reason."
         )
-
     return (
         f"Target: {target}\n"
         f"Judge the main garment only. Report seen values and match booleans.{axis_hint}"
@@ -287,13 +267,6 @@ def _build_verify_prompt(attrs, active_axis, scenario_context=""):
 
 
 class AttributeVerifier:
-    """
-    VLM closed-set verification.
-
-    scenario_verify: if True, injects scenario context into the prompt.
-    The scenario_fit field is LOGGED ONLY — it never blocks pass/fail.
-    """
-
     def __init__(self, provider_override=None, vlm_url=None, scenario_verify=True):
         self.provider        = provider_override
         self.vlm_url         = vlm_url
@@ -341,11 +314,6 @@ class HomogeneityChecker:
 #  Scenario context builder
 # ============================================================
 
-# Option roles based on label semantics:
-#   A = tpo_and_preference (correct: matches both TPO and preference)
-#   B = tpo_only           (TPO ok, preference mismatch)
-#   C = preference_only    (preference ok, TPO violation)
-#   D = neither            (violates both)
 _OPTION_ROLES = {
     "A": "appropriate for BOTH the occasion/TPO and the user's personal preference (ideal choice)",
     "B": "appropriate for the occasion/TPO only (user preference NOT satisfied)",
@@ -355,28 +323,19 @@ _OPTION_ROLES = {
 
 
 def build_scenario_context(plan, option_key):
-    """
-    Construct a concise scenario description string for the VLM verifier.
-    Includes: scenario archetype, TPO event type (if available), and option role.
-    Returns empty string if plan has no scenario info (safe fallback).
-    """
     parts = []
     archetype = plan.get("scenario_archetype") or ""
     if archetype:
         parts.append(f"Scenario archetype: {archetype}")
-
-    # Try common field names for the TPO event description
-    for field in ("scenario_description", "tpo_description",
-                  "occasion", "tpo_context", "event"):
+    for field in ("scenario_description", "tpo_description", "occasion",
+                  "tpo_context", "event"):
         val = plan.get(field) or ""
         if val:
             parts.append(f"Occasion: {val}")
             break
-
     role = _OPTION_ROLES.get(option_key, "")
     if role:
         parts.append(f"This image is option {option_key}: {role}")
-
     return "  ".join(parts)
 
 
@@ -386,12 +345,11 @@ def build_scenario_context(plan, option_key):
 
 class KnnRetriever:
     def __init__(self, backend, client_url, indice_name, num_images=20):
-        self.backend      = backend
-        self.indice_name  = indice_name
-        self._client      = None
-        url               = ("https://knn.laion.ai/knn-service"
-                             if backend == "hosted" else client_url)
-        self._http_url    = url
+        self.backend     = backend
+        self.indice_name = indice_name
+        self._client     = None
+        url = "https://knn.laion.ai/knn-service" if backend == "hosted" else client_url
+        self._http_url   = url
         try:
             from clip_retrieval.clip_client import ClipClient, Modality
             self._client = ClipClient(
@@ -440,7 +398,7 @@ _PATTERN_GROUPS = {
     "striped":       {"striped", "stripe", "stripes", "pinstripe", "pinstriped",
                      "vertical stripes", "horizontal stripes", "vertical stripe"},
     "checkered":     {"checkered", "checked", "check", "plaid", "tartan", "gingham",
-                     "buffalo plaid", "houndstooth", "lattice", "latticed"},
+                     "buffalo plaid", "houndstooth", "lattice"},
     "floral":        {"floral", "flower", "flowers", "flower print", "daisy"},
     "polka_dot":     {"polka dot", "polka dots", "polka-dot", "dotted", "dots", "dot"},
     "graphic_print": {"graphic print", "graphic", "print", "printed", "graphic tee",
@@ -520,12 +478,6 @@ def _norm_title(t):
 def _download_one(cands, img_path, attrs, verifier, mode, top_n=24,
                   active_axis=None, target_gender=None, used_titles=None,
                   reject_paths=None, scenario_context=""):
-    """
-    Try candidates in order; return (ok, title, vr, vr_log).
-    vr_log: list of (title, vr) for ALL verified candidates (for Case-2 diagnosis).
-    reject_paths: existing image paths; SSIM >= _DUPLICATE_SSIM -> skip (Case-1 guard).
-    scenario_context: passed through to verifier for scenario_fit logging.
-    """
     used_titles  = used_titles  if used_titles  is not None else set()
     reject_paths = reject_paths if reject_paths is not None else set()
     tmp          = Path(str(img_path) + ".tmp.jpg")
@@ -538,8 +490,6 @@ def _download_one(cands, img_path, attrs, verifier, mode, top_n=24,
             continue
         if not download_image(cand["image_url"], tmp):
             continue
-
-        # Case-1 duplicate guard
         dup = False
         for rp in reject_paths:
             if ssim_score(tmp, rp) >= _DUPLICATE_SSIM:
@@ -549,11 +499,9 @@ def _download_one(cands, img_path, attrs, verifier, mode, top_n=24,
         if dup:
             tmp.unlink(missing_ok=True)
             continue
-
         if mode == "off":
             tmp.rename(img_path)
             return True, title, {"passes": True, "model_gender": "unclear"}, vr_log
-
         vr = verifier.verify(tmp, attrs, active_axis=active_axis,
                               scenario_context=scenario_context)
         vr_log.append((title, vr))
@@ -569,14 +517,17 @@ def _resolve_option(k, opt, attrs, knn, verifier, out_dir, mode, use_google,
                     top_k, active_axis, target_gender, used_titles,
                     rewrite=True, rewrite_provider="vllm_vlm",
                     avoid_caption="", rewrite_cause="",
-                    reject_paths=None, scenario_context=""):
+                    reject_paths=None, scenario_context="",
+                    forced_query=None):
     """
-    Resolve one option image.
-    Returns (ok, source, title, vr, img_path, vr_log).
+    forced_query: if set (by ReAct agent), skip rewrite and use this query directly.
     """
     img_path = out_dir / f"{k}.jpg"
 
-    if rewrite:
+    if forced_query:
+        q = forced_query
+        opt["rewritten_query"] = q
+    elif rewrite:
         cache_key = f"rewritten_query__{avoid_caption[:30]}_{rewrite_cause}"
         if cache_key not in opt:
             opt[cache_key] = rewrite_query(
@@ -593,10 +544,8 @@ def _resolve_option(k, opt, attrs, knn, verifier, out_dir, mode, use_google,
     cands = knn.search(q, top_k=top_k)
     ok, title, vr, vr_log = _download_one(
         cands, img_path, attrs, verifier, mode,
-        active_axis=active_axis,
-        target_gender=target_gender,
-        used_titles=used_titles,
-        reject_paths=reject_paths,
+        active_axis=active_axis, target_gender=target_gender,
+        used_titles=used_titles, reject_paths=reject_paths,
         scenario_context=scenario_context,
     )
     if ok:
@@ -627,54 +576,42 @@ def _resolve_option(k, opt, attrs, knn, verifier, out_dir, mode, use_google,
 
 
 # ============================================================
-#  CollectionAgent
+#  CollectionAgent  (rule-based Thought)
 # ============================================================
 
 class CollectionAgent:
     """
-    Agentic wrapper with three failure-case handlers.
-
-    Axis-aware: uses AXIS_AGENT_CONFIG to disable unnecessary logic per axis.
-    Scenario-aware: passes scenario context to AttributeVerifier for soft
-    scenario_fit logging (does not affect hard pass/fail gate).
+    Rule-based agentic loop.
+    Case 1: SSIM duplicate detection + negative-hint rewrite.
+    Case 2: vr_log diagnosis -> targeted rewrite.
+    Case 3: hard pattern pre-flight + post-hoc coverage check.
     """
 
     def __init__(self, knn, verifier, checker, mode, use_google, top_k,
-                 rewrite, rewrite_provider, max_attempts=3,
-                 scenario_verify=True):
-        self.knn             = knn
-        self.verifier        = verifier
-        self.checker         = checker
-        self.mode            = mode
-        self.use_google      = use_google
-        self.top_k           = top_k
-        self.rewrite         = rewrite
+                 rewrite, rewrite_provider, max_attempts=3, scenario_verify=True):
+        self.knn              = knn
+        self.verifier         = verifier
+        self.checker          = checker
+        self.mode             = mode
+        self.use_google       = use_google
+        self.top_k            = top_k
+        self.rewrite          = rewrite
         self.rewrite_provider = rewrite_provider
-        self.max_attempts    = max_attempts
-        self.scenario_verify = scenario_verify
-
-    # ----------------------------------------------------------------
-    # Axis config helpers
-    # ----------------------------------------------------------------
+        self.max_attempts     = max_attempts
+        self.scenario_verify  = scenario_verify
 
     def _axis_cfg(self, active_axis):
         cfg = AXIS_AGENT_CONFIG.get(active_axis, _DEFAULT_AXIS_CONFIG)
-        # CLI --rewrite off overrides axis config
         if not self.rewrite:
             cfg = dict(cfg, rewrite=False)
-        # CLI --agent-attempts overrides max_attempts only if user raised it
         return cfg
 
     def _effective_attempts(self, axis_cfg):
         return min(self.max_attempts, axis_cfg["max_attempts"])
 
-    # ----------------------------------------------------------------
-    # Public entry
-    # ----------------------------------------------------------------
-
     def collect(self, plan, out_root):
-        qid        = plan["query_id"]
-        out_dir    = Path(out_root) / qid
+        qid         = plan["query_id"]
+        out_dir     = Path(out_root) / qid
         out_dir.mkdir(parents=True, exist_ok=True)
         active_axis = plan["active_axis"]
         axis_cfg    = self._axis_cfg(active_axis)
@@ -694,35 +631,30 @@ class CollectionAgent:
         if all((out_dir / f"{k}.jpg").exists() for k in "ABCD"):
             return self._finalise_cached(plan, out_dir, result)
 
-        # Case 3 pre-flight (pattern axis only)
         if axis_cfg["check_pattern_cov"]:
             hard_keys = self._flag_hard_patterns(plan, active_axis)
             if hard_keys:
-                print(f"    [agent] Case3 pre-flag hard pattern keys={hard_keys}")
+                print(f"    [agent] Case3 pre-flag keys={hard_keys}")
                 result["agent_actions"].append(
                     {"case": 3, "trigger": "pre-flight", "keys": hard_keys})
 
-        override      = {}   # {k: {avoid_caption, cause}}
+        override = {}
         locked_gender = None
         options = paths = verifs = {}
         failed_key = None
 
         for attempt in range(1, attempts + 1):
             result["agent_attempts"] = attempt
-            print(f"    [agent] attempt {attempt}/{attempts} "
-                  f"qid={qid} axis={active_axis}")
+            print(f"    [agent] attempt {attempt}/{attempts} qid={qid} axis={active_axis}")
 
             options, paths, verifs, locked_gender, failed_key = \
-                self._attempt(plan, out_dir, active_axis, locked_gender,
-                              override, axis_cfg)
+                self._attempt(plan, out_dir, active_axis, locked_gender, override, axis_cfg)
 
-            # Gender retry
             if failed_key is not None and locked_gender in ("man", "woman"):
                 other = "woman" if locked_gender == "man" else "man"
                 _cleanup_partial(out_dir, paths)
                 opts2, paths2, verifs2, g2, fk2 = \
-                    self._attempt(plan, out_dir, active_axis, other,
-                                  override, axis_cfg)
+                    self._attempt(plan, out_dir, active_axis, other, override, axis_cfg)
                 if fk2 is None:
                     options, paths, verifs, failed_key = opts2, paths2, verifs2, None
                     locked_gender = g2
@@ -732,46 +664,32 @@ class CollectionAgent:
             all_ok = (failed_key is None) and len(paths) == 4
 
             if all_ok:
-                # Case 1: duplicate check (pattern axis only)
                 if axis_cfg["check_duplicate"]:
                     dup_actions = self._check_duplicates(paths, options, plan)
                     if dup_actions:
                         result["agent_actions"] += dup_actions
                         _cleanup_partial(out_dir, paths)
                         for act in dup_actions:
-                            override[act["key"]] = {
-                                "avoid_caption": act["avoid_caption"], "cause": ""}
-                        print(f"    [agent] Case1 dup retry "
-                              f"{[a['key'] for a in dup_actions]}")
+                            override[act["key"]] = {"avoid_caption": act["avoid_caption"], "cause": ""}
                         if attempt < attempts:
                             continue
 
-                # Case 3 post-hoc (pattern axis only)
                 if axis_cfg["check_pattern_cov"]:
-                    cov_actions = self._check_pattern_coverage(
-                        verifs, plan, active_axis)
+                    cov_actions = self._check_pattern_coverage(verifs, plan, active_axis)
                     if cov_actions and attempt < attempts:
                         result["agent_actions"] += cov_actions
                         _cleanup_partial(out_dir, paths)
                         for act in cov_actions:
-                            override[act["key"]] = {
-                                "avoid_caption": "", "cause": "pattern_ambiguous"}
-                        print(f"    [agent] Case3 cov retry "
-                              f"{[a['key'] for a in cov_actions]}")
+                            override[act["key"]] = {"avoid_caption": "", "cause": "pattern_ambiguous"}
                         continue
                 break
-
             else:
-                # Case 2: diagnose missing
                 miss_actions = self._diagnose_missing(options, plan)
                 result["agent_actions"] += miss_actions
                 if attempt < attempts and miss_actions:
                     _cleanup_partial(out_dir, paths)
                     for act in miss_actions:
-                        override[act["key"]] = {
-                            "avoid_caption": "", "cause": act["cause"]}
-                    print(f"    [agent] Case2 missing retry "
-                          f"{[(a['key'], a['cause']) for a in miss_actions]}")
+                        override[act["key"]] = {"avoid_caption": "", "cause": act["cause"]}
                     continue
                 break
 
@@ -783,20 +701,13 @@ class CollectionAgent:
 
         result["all_collected"] = True
         result["set_consistency"] = self.verifier.check_set_consistency(verifs)
-        result["homogeneity_AB"] = self.checker.pair_homogeneity(
-            paths["A"], paths["B"])
-        result["homogeneity_CD"] = self.checker.pair_homogeneity(
-            paths["C"], paths["D"])
+        result["homogeneity_AB"]  = self.checker.pair_homogeneity(paths["A"], paths["B"])
+        result["homogeneity_CD"]  = self.checker.pair_homogeneity(paths["C"], paths["D"])
         if active_axis in ("color", "pattern"):
             result["structure_preserved"] = result["homogeneity_AB"]
         return result
 
-    # ----------------------------------------------------------------
-    # Single attempt
-    # ----------------------------------------------------------------
-
-    def _attempt(self, plan, out_dir, active_axis, forced_gender,
-                 override, axis_cfg):
+    def _attempt(self, plan, out_dir, active_axis, forced_gender, override, axis_cfg):
         options, paths, verifs = {}, {}, {}
         used_titles   = set()
         target_gender = forced_gender
@@ -807,15 +718,10 @@ class CollectionAgent:
             attrs = opt["attributes"]
             ov    = override.get(k, {})
             reject_paths = set(str(p) for p in paths.values())
-
-            # Build scenario context for this specific option key
-            sc_ctx = ""
-            if self.scenario_verify:
-                sc_ctx = build_scenario_context(plan, k)
+            sc_ctx = build_scenario_context(plan, k) if self.scenario_verify else ""
 
             ok, src, title, vr, img_path, vr_log = _resolve_option(
-                k, opt, attrs,
-                self.knn, self.verifier, out_dir,
+                k, opt, attrs, self.knn, self.verifier, out_dir,
                 self.mode, self.use_google, self.top_k,
                 active_axis, target_gender, used_titles,
                 rewrite=axis_cfg["rewrite"],
@@ -828,7 +734,7 @@ class CollectionAgent:
             opt["_last_vr_log"] = vr_log
 
             if ok:
-                paths[k]  = img_path
+                paths[k] = img_path
                 verifs[k] = vr
                 used_titles.add(_norm_title(title))
                 if target_gender is None:
@@ -836,19 +742,15 @@ class CollectionAgent:
                     if g in ("man", "woman"):
                         target_gender = g
                 options[k] = {
-                    "image_path":      str(img_path),
-                    "source":          src,
-                    "search_query":    opt["search_query"],
+                    "image_path": str(img_path), "source": src,
+                    "search_query": opt["search_query"],
                     "rewritten_query": opt.get("rewritten_query"),
-                    "source_title":    title,
-                    "verification":    vr,
-                    # scenario_fit is inside vr already
+                    "source_title": title, "verification": vr,
                 }
             else:
                 options[k] = {
-                    "image_path":      None,
-                    "source":          "FAILED",
-                    "search_query":    opt["search_query"],
+                    "image_path": None, "source": "FAILED",
+                    "search_query": opt["search_query"],
                     "rewritten_query": opt.get("rewritten_query"),
                 }
                 failed_key = k
@@ -856,13 +758,9 @@ class CollectionAgent:
 
         return options, paths, verifs, target_gender, failed_key
 
-    # ----------------------------------------------------------------
-    # Case 1
-    # ----------------------------------------------------------------
-
     def _check_duplicates(self, paths, options, plan):
         actions = []
-        keys    = list(paths.keys())
+        keys = list(paths.keys())
         for i in range(len(keys)):
             for j in range(i + 1, len(keys)):
                 ka, kb = keys[i], keys[j]
@@ -870,23 +768,12 @@ class CollectionAgent:
                 if s >= _DUPLICATE_SSIM:
                     vr_ka = options[ka].get("verification", {})
                     avoid = (
-                        f"{vr_ka.get('seen_color','')} "
-                        f"{vr_ka.get('seen_pattern','')} "
-                        f"{vr_ka.get('seen_garment','')} "
-                        f"\u2014 {options[ka].get('source_title','')}"
+                        f"{vr_ka.get('seen_color','')} {vr_ka.get('seen_pattern','')} "
+                        f"{vr_ka.get('seen_garment','')} — {options[ka].get('source_title','')}"
                     ).strip()
-                    print(f"    [agent] Case1: {ka}\u2194{kb} "
-                          f"SSIM={s:.3f}>={_DUPLICATE_SSIM}")
-                    actions.append({
-                        "case": 1, "key": kb,
-                        "ssim": round(s, 3),
-                        "avoid_caption": avoid,
-                    })
+                    actions.append({"case": 1, "key": kb, "ssim": round(s, 3),
+                                    "avoid_caption": avoid})
         return actions
-
-    # ----------------------------------------------------------------
-    # Case 2
-    # ----------------------------------------------------------------
 
     def _diagnose_missing(self, options, plan):
         actions = []
@@ -895,7 +782,6 @@ class CollectionAgent:
                 continue
             vr_log = plan["options"][k].get("_last_vr_log", [])
             cause  = self._infer_cause(vr_log)
-            print(f"    [agent] Case2: option {k} FAILED cause={cause}")
             actions.append({"case": 2, "key": k, "cause": cause})
         return actions
 
@@ -903,30 +789,19 @@ class CollectionAgent:
     def _infer_cause(vr_log):
         if not vr_log:
             return "no_candidates"
-        garment_fails = sum(1 for _, vr in vr_log
-                            if not vr.get("garment_match"))
-        color_fails   = sum(1 for _, vr in vr_log
-                            if vr.get("garment_match")
-                            and not vr.get("color_match"))
-        pattern_fails = sum(1 for _, vr in vr_log
-                            if vr.get("garment_match")
-                            and vr.get("color_match")
-                            and not vr.get("pattern_match"))
-        cov_fails     = sum(1 for _, vr in vr_log
-                            if vr.get("pattern_match")
-                            and (vr.get("pattern_coverage") or "") not in ("full", ""))
-        counts = {
-            "garment_mismatch":  garment_fails,
-            "color_mismatch":    color_fails,
-            "pattern_ambiguous": pattern_fails + cov_fails,
-            "no_candidates":     0,
-        }
+        g_fail = sum(1 for _, vr in vr_log if not vr.get("garment_match"))
+        c_fail = sum(1 for _, vr in vr_log
+                     if vr.get("garment_match") and not vr.get("color_match"))
+        p_fail = sum(1 for _, vr in vr_log
+                     if vr.get("garment_match") and vr.get("color_match")
+                     and not vr.get("pattern_match"))
+        cov_fail = sum(1 for _, vr in vr_log
+                       if vr.get("pattern_match")
+                       and (vr.get("pattern_coverage") or "") not in ("full", ""))
+        counts = {"garment_mismatch": g_fail, "color_mismatch": c_fail,
+                  "pattern_ambiguous": p_fail + cov_fail, "no_candidates": 0}
         best = max(counts, key=counts.get)
         return best if counts[best] > 0 else "no_candidates"
-
-    # ----------------------------------------------------------------
-    # Case 3
-    # ----------------------------------------------------------------
 
     @staticmethod
     def _flag_hard_patterns(plan, active_axis):
@@ -948,48 +823,417 @@ class CollectionAgent:
                 continue
             cov = (vr.get("pattern_coverage") or "").strip().lower()
             if cov and cov != "full":
-                print(f"    [agent] Case3: option {k} "
-                      f"pattern_coverage={cov}, retry")
                 actions.append({"case": 3, "key": k, "pattern_coverage": cov})
         return actions
-
-    # ----------------------------------------------------------------
-    # Cached fast path
-    # ----------------------------------------------------------------
 
     def _finalise_cached(self, plan, out_dir, result):
         paths  = {k: out_dir / f"{k}.jpg" for k in "ABCD"}
         verifs = {k: {"passes": True, "model_gender": "unclear"} for k in "ABCD"}
         for k in "ABCD":
             result["options"][k] = {
-                "image_path":   str(paths[k]),
-                "source":       "cached",
+                "image_path": str(paths[k]), "source": "cached",
                 "search_query": plan["options"][k]["search_query"],
             }
         result["all_collected"] = True
         result["set_consistency"] = self.verifier.check_set_consistency(verifs)
-        result["homogeneity_AB"]  = self.checker.pair_homogeneity(
-            paths["A"], paths["B"])
-        result["homogeneity_CD"]  = self.checker.pair_homogeneity(
-            paths["C"], paths["D"])
+        result["homogeneity_AB"]  = self.checker.pair_homogeneity(paths["A"], paths["B"])
+        result["homogeneity_CD"]  = self.checker.pair_homogeneity(paths["C"], paths["D"])
         result["structure_preserved"] = result["homogeneity_AB"]
         return result
 
 
 # ============================================================
-#  Backward-compat wrapper
+#  ReAct system prompts
 # ============================================================
+
+_REACT_SYSTEM = """\
+You are an expert fashion image retrieval agent following the ReAct framework.
+You receive a GOAL (what image to find), then a TRAJECTORY of past
+Thought-Action-Observation steps.
+
+Your job: output the NEXT Thought and Action as JSON.
+
+Available actions:
+  rewrite   : rewrite the CLIP search query to fix the observed problem.
+               Provide new_query (str, max 20 words).
+  relax     : accept lenient verification (garment+color only, no pattern gate).
+               No extra args.
+  google    : fall back to Google image search with the original query.
+               No extra args.
+  accept    : the last observation passes all gates. Save and move on.
+               No extra args.
+  give_up   : exhausted all strategies. Skip this option.
+               No extra args.
+
+Output ONLY this JSON (no markdown, no explanation):
+{"thought": "...", "action": "rewrite|relax|google|accept|give_up",
+ "new_query": "..."}
+
+Rules:
+- new_query is required only when action=="rewrite"; omit otherwise.
+- Thought should be 1-3 sentences: what went wrong and why this action fixes it.
+- Do NOT repeat a query that was already tried in this trajectory.
+- If garment_match and color_match are both true but pattern_coverage is partial,
+  always try rewrite with explicit "all-over pattern covering full garment body".
+- If 3+ rewrites failed, prefer relax or google before give_up.
+- Always end rewritten queries with: fashion product photo, plain background
+"""
+
+
+def _fmt_vr(vr: dict) -> str:
+    """Serialise a VLM verification result into a compact readable string."""
+    if not vr:
+        return "(no result)"
+    fields = [
+        f"garment={vr.get('seen_garment','?')}",
+        f"color={vr.get('seen_color','?')}",
+        f"pattern={vr.get('seen_pattern','?')}",
+        f"coverage={vr.get('pattern_coverage','?')}",
+        f"garment_match={vr.get('garment_match','?')}",
+        f"color_match={vr.get('color_match','?')}",
+        f"pattern_match={vr.get('pattern_match','?')}",
+        f"scenario_fit={vr.get('scenario_fit','n/a')}",
+    ]
+    return "  ".join(fields)
+
+
+def _build_react_prompt(goal: str, trajectory: list[dict]) -> str:
+    lines = [f"GOAL: {goal}", ""]
+    for i, step in enumerate(trajectory):
+        lines.append(f"--- Step {i+1} ---")
+        if "thought" in step:
+            lines.append(f"Thought: {step['thought']}")
+        if "action" in step:
+            act_str = step["action"]
+            if step.get("new_query"):
+                act_str += f"  query={step['new_query']!r}"
+            lines.append(f"Action: {act_str}")
+        if "observation" in step:
+            lines.append(f"Observation: {step['observation']}")
+    lines.append("")
+    lines.append("What is the next Thought and Action? Output JSON only.")
+    return "\n".join(lines)
+
+
+# ============================================================
+#  ReActCollectionAgent
+# ============================================================
+
+class ReActCollectionAgent(CollectionAgent):
+    """
+    Replaces rule-based Thought with an LLM-driven Thought-Action-Observation
+    loop per option, following the ReAct paradigm (Yao et al., 2022).
+
+    For each option key (A/B/C/D), the agent runs up to `react_steps` iterations:
+      1. Build trajectory text from all previous steps
+      2. Call LLM -> get {thought, action, new_query}
+      3. Execute action (rewrite KNN query / relax verify / google / accept / give_up)
+      4. Append Observation (VLM verify result) to trajectory
+      5. Repeat
+
+    On any LLM failure, falls back to parent CollectionAgent._attempt() for that option.
+    Full trajectories are saved in collection_log.jsonl under "react_trajectory".
+    """
+
+    def __init__(self, *args, react_steps: int = 4,
+                 react_provider: str = "vllm", **kwargs):
+        super().__init__(*args, **kwargs)
+        self.react_steps    = react_steps
+        self.react_provider = react_provider
+
+    # ----------------------------------------------------------------
+    # Override collect() to use ReAct per-option loop
+    # ----------------------------------------------------------------
+
+    def collect(self, plan, out_root):
+        qid         = plan["query_id"]
+        out_dir     = Path(out_root) / qid
+        out_dir.mkdir(parents=True, exist_ok=True)
+        active_axis = plan["active_axis"]
+        axis_cfg    = self._axis_cfg(active_axis)
+
+        result = {
+            "query_id": qid, "user_id": plan["user_id"], "domain": "fashion",
+            "active_axis": active_axis,
+            "main_category":      plan.get("main_category"),
+            "scenario_archetype": plan.get("scenario_archetype"),
+            "options": {}, "all_collected": False, "skipped": False,
+            "homogeneity_AB": None, "homogeneity_CD": None,
+            "structure_preserved": None, "set_consistency": None,
+            "agent_attempts": 1, "agent_actions": [],
+            "react_trajectories": {},
+        }
+
+        if all((out_dir / f"{k}.jpg").exists() for k in "ABCD"):
+            return self._finalise_cached(plan, out_dir, result)
+
+        options, paths, verifs = {}, {}, {}
+        used_titles   = set()
+        target_gender = None
+        failed_key    = None
+
+        for k in "ABCD":
+            opt   = plan["options"][k]
+            attrs = opt["attributes"]
+            reject_paths = set(str(p) for p in paths.values())
+            sc_ctx = build_scenario_context(plan, k) if self.scenario_verify else ""
+
+            ok, vr, img_path, trajectory = self._react_option(
+                k, opt, attrs, out_dir, active_axis, target_gender,
+                used_titles, reject_paths, sc_ctx, axis_cfg,
+            )
+
+            result["react_trajectories"][k] = trajectory
+
+            if ok:
+                paths[k]  = img_path
+                verifs[k] = vr
+                title = trajectory[-1].get("source_title", "")
+                used_titles.add(_norm_title(title))
+                if target_gender is None:
+                    g = vr.get("model_gender", "unclear")
+                    if g in ("man", "woman"):
+                        target_gender = g
+                options[k] = {
+                    "image_path": str(img_path),
+                    "source":     trajectory[-1].get("source", "clip_retrieval"),
+                    "search_query":    opt["search_query"],
+                    "rewritten_query": opt.get("rewritten_query"),
+                    "source_title":    title,
+                    "verification":    vr,
+                }
+            else:
+                options[k] = {
+                    "image_path": None, "source": "FAILED",
+                    "search_query": opt["search_query"],
+                    "rewritten_query": opt.get("rewritten_query"),
+                }
+                failed_key = k
+                break
+
+        result["options"] = options
+        if failed_key is not None or len(paths) < 4:
+            result["skipped"] = True
+            _cleanup_partial(out_dir, paths)
+            return result
+
+        result["all_collected"] = True
+        result["set_consistency"] = self.verifier.check_set_consistency(verifs)
+        result["homogeneity_AB"]  = self.checker.pair_homogeneity(paths["A"], paths["B"])
+        result["homogeneity_CD"]  = self.checker.pair_homogeneity(paths["C"], paths["D"])
+        if active_axis in ("color", "pattern"):
+            result["structure_preserved"] = result["homogeneity_AB"]
+        return result
+
+    # ----------------------------------------------------------------
+    # Per-option ReAct loop
+    # ----------------------------------------------------------------
+
+    def _react_option(self, k, opt, attrs, out_dir, active_axis,
+                      target_gender, used_titles, reject_paths,
+                      sc_ctx, axis_cfg):
+        """
+        Run up to self.react_steps Thought-Action-Observation iterations for
+        a single option key.  Returns (ok, vr, img_path, trajectory).
+        """
+        garment = (attrs.get("garment_category") or "").replace("_", " ")
+        color   = attrs.get("color") or ""
+        pattern = (attrs.get("pattern") or "").replace("_", " ")
+        goal = (
+            f"Option {k}: find a clean product photo of a "
+            f"{color} {pattern} {garment}. "
+            f"active_axis={active_axis}. "
+            f"{sc_ctx}"
+        ).strip()
+
+        trajectory    = []
+        img_path      = out_dir / f"{k}.jpg"
+        tried_queries = set()
+        current_query = (
+            rewrite_query(opt["search_query"], provider=self.rewrite_provider)
+            if axis_cfg["rewrite"]
+            else augment(opt["search_query"])
+        )
+        tried_queries.add(current_query)
+        current_mode  = self.mode
+        use_google    = False
+
+        for step in range(1, self.react_steps + 1):
+            print(f"      [react] option={k} step={step}/{self.react_steps} "
+                  f"query={current_query[:60]!r}")
+
+            # --- Action: search + download + verify ---
+            if use_google:
+                cands = google_image_search(opt["search_query"], top_k=8)
+                src_tag = "google"
+            else:
+                cands = self.knn.search(current_query, top_k=self.top_k)
+                src_tag = "clip_retrieval"
+
+            ok, title, vr, vr_log = _download_one(
+                cands, img_path, attrs, self.verifier, current_mode,
+                active_axis=active_axis, target_gender=target_gender,
+                used_titles=used_titles, reject_paths=reject_paths,
+                scenario_context=sc_ctx,
+            )
+            opt["_last_vr_log"] = vr_log
+
+            # --- Observation ---
+            if ok:
+                obs = f"PASS  {_fmt_vr(vr)}"
+            elif vr_log:
+                best_vr = vr_log[-1][1]
+                obs = f"FAIL  best_candidate: {_fmt_vr(best_vr)}"
+            else:
+                obs = "FAIL  no_downloadable_candidates"
+
+            traj_step = {
+                "step":         step,
+                "query":        current_query,
+                "action":       "google" if use_google else "rewrite",
+                "observation":  obs,
+                "source":       src_tag,
+                "source_title": title,
+            }
+
+            if ok:
+                # Verify passes -> accept
+                traj_step["thought"] = "Observation passes all gates. Accepting."
+                traj_step["action"]  = "accept"
+                trajectory.append(traj_step)
+                opt["rewritten_query"] = current_query
+                return True, vr, img_path, trajectory
+
+            trajectory.append(traj_step)
+
+            if step == self.react_steps:
+                # Budget exhausted
+                trajectory.append({"step": step + 1, "thought": "Budget exhausted.",
+                                    "action": "give_up"})
+                break
+
+            # --- Thought: ask LLM for next action ---
+            react_decision = self._llm_think(goal, trajectory)
+
+            if react_decision is None:
+                # LLM failed: fall back to rule-based for remainder
+                print(f"      [react] LLM think failed at step {step}, "
+                      f"falling back to rule-based for option {k}")
+                fb_ok, fb_src, fb_title, fb_vr, fb_path, fb_log = _resolve_option(
+                    k, opt, attrs, self.knn, self.verifier, out_dir,
+                    self.mode, self.use_google, self.top_k,
+                    active_axis, target_gender, used_titles,
+                    rewrite=axis_cfg["rewrite"],
+                    rewrite_provider=self.rewrite_provider,
+                    reject_paths=reject_paths,
+                    scenario_context=sc_ctx,
+                )
+                trajectory.append({"step": step + 1, "thought": "LLM fallback.",
+                                    "action": "fallback", "source": fb_src})
+                return fb_ok, fb_vr, fb_path, trajectory
+
+            thought     = react_decision.get("thought", "")
+            next_action = react_decision.get("action", "rewrite")
+            new_query   = react_decision.get("new_query", "")
+
+            print(f"      [react] Thought: {thought[:100]}")
+            print(f"      [react] Action : {next_action}"
+                  + (f" | query={new_query[:60]!r}" if new_query else ""))
+
+            # Append Thought to last traj step (retroactively)
+            trajectory[-1]["thought"] = thought
+            trajectory[-1]["next_action"] = next_action
+
+            if next_action == "accept":
+                # LLM decided to accept even though gates failed — honour it
+                return True, vr_log[-1][1] if vr_log else {}, img_path, trajectory
+
+            if next_action == "give_up":
+                trajectory.append({"step": step + 1, "thought": thought,
+                                    "action": "give_up"})
+                break
+
+            if next_action == "relax":
+                current_mode = "lenient"
+                # Keep same query, just relax gates next iteration
+                continue
+
+            if next_action == "google":
+                use_google = True
+                continue
+
+            # next_action == "rewrite"
+            if new_query and new_query not in tried_queries:
+                current_query = new_query
+                tried_queries.add(current_query)
+                opt["rewritten_query"] = current_query
+                use_google    = False
+                current_mode  = self.mode   # reset mode on new query
+            else:
+                # Duplicate query suggested — try relax instead
+                print(f"      [react] query already tried, auto-relax")
+                current_mode = "lenient"
+
+        return False, {}, img_path, trajectory
+
+    # ----------------------------------------------------------------
+    # LLM Thought call
+    # ----------------------------------------------------------------
+
+    def _llm_think(self, goal: str, trajectory: list[dict]) -> dict | None:
+        """
+        Call the ReAct LLM with the current trajectory.
+        Returns parsed {thought, action, new_query} or None on failure.
+        """
+        prompt = _build_react_prompt(goal, trajectory)
+        try:
+            raw = call_llm(
+                prompt=prompt,
+                stage="react_agent",
+                system=_REACT_SYSTEM,
+                max_tokens=200,
+                temperature=0.3,
+                provider_override=self.react_provider,
+            )
+            parsed = parse_json_response(raw)
+            if parsed and "action" in parsed:
+                return parsed
+        except Exception as e:
+            print(f"      [react] _llm_think error: {e}")
+        return None
+
+
+# ============================================================
+#  Factory + backward-compat wrapper
+# ============================================================
+
+def make_agent(knn, verifier, checker, mode, use_google, top_k,
+               rewrite, rewrite_provider, max_attempts, scenario_verify,
+               react=False, react_steps=4, react_provider="vllm"):
+    """Return the appropriate agent based on --react flag."""
+    kwargs = dict(
+        knn=knn, verifier=verifier, checker=checker,
+        mode=mode, use_google=use_google, top_k=top_k,
+        rewrite=rewrite, rewrite_provider=rewrite_provider,
+        max_attempts=max_attempts, scenario_verify=scenario_verify,
+    )
+    if react:
+        return ReActCollectionAgent(
+            **kwargs, react_steps=react_steps, react_provider=react_provider)
+    return CollectionAgent(**kwargs)
+
 
 def collect_for_plan(plan, knn, checker, verifier, out_root, mode, use_google,
                      top_k=50, skip_incomplete=True,
                      rewrite=True, rewrite_provider="vllm_vlm",
-                     max_agent_attempts=3, scenario_verify=True):
-    agent = CollectionAgent(
+                     max_agent_attempts=3, scenario_verify=True,
+                     react=False, react_steps=4, react_provider="vllm"):
+    agent = make_agent(
         knn=knn, verifier=verifier, checker=checker,
         mode=mode, use_google=use_google, top_k=top_k,
         rewrite=rewrite, rewrite_provider=rewrite_provider,
-        max_attempts=max_agent_attempts,
-        scenario_verify=scenario_verify,
+        max_attempts=max_agent_attempts, scenario_verify=scenario_verify,
+        react=react, react_steps=react_steps, react_provider=react_provider,
     )
     return agent.collect(plan, out_root)
 
@@ -1009,24 +1253,24 @@ def _cleanup_partial(out_dir, paths):
 def run(plan_path, output_path, image_root, backend, client_url, indice_name,
         limit, mode, use_google, top_k, vlm_urls=None, workers=1,
         skip_incomplete=True, rewrite=True, rewrite_provider="vllm_vlm",
-        max_agent_attempts=3, scenario_verify=True):
+        max_agent_attempts=3, scenario_verify=True,
+        react=False, react_steps=4, react_provider="vllm"):
     log_step(
-        f"Image Collection (backend={backend}, verify={mode}, "
-        f"workers={workers}, rewrite={'on' if rewrite else 'off'}, "
-        f"agent_attempts={max_agent_attempts}, "
-        f"scenario_verify={'on' if scenario_verify else 'off'})"
+        f"Image Collection (backend={backend}, verify={mode}, workers={workers}, "
+        f"rewrite={'on' if rewrite else 'off'}, agent_attempts={max_agent_attempts}, "
+        f"scenario_verify={'on' if scenario_verify else 'off'}, "
+        f"react={'on' if react else 'off'}"
+        + (f", react_steps={react_steps}" if react else "")
+        + ")"
     )
     plans = load_jsonl(plan_path)
     print(f"  Loaded {len(plans)} plans")
 
     knn     = KnnRetriever(backend, client_url, indice_name)
     checker = HomogeneityChecker()
-
     vlm_urls  = vlm_urls or [None]
-    verifiers = [
-        AttributeVerifier(vlm_url=u, scenario_verify=scenario_verify)
-        for u in vlm_urls
-    ]
+    verifiers = [AttributeVerifier(vlm_url=u, scenario_verify=scenario_verify)
+                 for u in vlm_urls]
 
     if Path(output_path).exists():
         existing = load_jsonl(output_path)
@@ -1053,13 +1297,13 @@ def run(plan_path, output_path, image_root, backend, client_url, indice_name,
             rewrite=rewrite, rewrite_provider=rewrite_provider,
             max_agent_attempts=max_agent_attempts,
             scenario_verify=scenario_verify,
+            react=react, react_steps=react_steps, react_provider=react_provider,
         )
 
     n_workers = max(1, workers)
     if n_workers == 1:
         for i, plan in enumerate(todo):
-            print(f"  [{i+1}/{len(todo)}] {plan['query_id']} "
-                  f"({plan['active_axis']})")
+            print(f"  [{i+1}/{len(todo)}] {plan['query_id']} ({plan['active_axis']})")
             try:
                 results.append(worker((i, plan)))
                 if (i + 1) % 10 == 0:
@@ -1069,8 +1313,7 @@ def run(plan_path, output_path, image_root, backend, client_url, indice_name,
             time.sleep(0.05)
     else:
         with ThreadPoolExecutor(max_workers=n_workers) as ex:
-            futs   = {ex.submit(worker, (i, p)): p
-                      for i, p in enumerate(todo)}
+            futs   = {ex.submit(worker, (i, p)): p for i, p in enumerate(todo)}
             done_n = 0
             for fut in as_completed(futs):
                 p = futs[fut]
@@ -1079,28 +1322,24 @@ def run(plan_path, output_path, image_root, backend, client_url, indice_name,
                     with lock:
                         results.append(r)
                         done_n += 1
-                        tag   = ("OK"   if r["all_collected"]
-                                 else ("SKIP" if r.get("skipped") else "PARTIAL"))
-                        n_acts = len(r.get("agent_actions", []))
+                        tag = ("OK" if r["all_collected"]
+                               else ("SKIP" if r.get("skipped") else "PARTIAL"))
+                        n_traj = len(r.get("react_trajectories", {}))
                         print(f"  [{done_n}/{len(todo)}] {p['query_id']} "
                               f"({p['active_axis']}) -> {tag} "
-                              f"[att={r.get('agent_attempts',1)}, "
-                              f"acts={n_acts}]")
+                              f"[att={r.get('agent_attempts',1)}"
+                              + (f", traj_opts={n_traj}" if react else "") + "]")
                         if done_n % 10 == 0:
                             save_jsonl(results, output_path)
                 except Exception as e:
                     print(f"    ERROR {p['query_id']}: {e}")
 
     save_jsonl(results, output_path)
-    n_done  = sum(1 for r in results if r.get("all_collected"))
-    n_skip  = sum(1 for r in results if r.get("skipped"))
-    n_acts  = sum(len(r.get("agent_actions", [])) for r in results)
-    cases   = Counter(
-        a["case"] for r in results for a in r.get("agent_actions", []))
+    n_done = sum(1 for r in results if r.get("all_collected"))
+    n_skip = sum(1 for r in results if r.get("skipped"))
     print(f"\n  Saved {len(results)}: complete={n_done} "
           f"({n_done/max(len(results),1):.0%}), skipped={n_skip}")
-    print(f"  Agent actions total={n_acts}, by case: {dict(cases)}")
-    src_counter, fail_patterns = {}, {}
+    src_counter = {}
     for r in results:
         for k in "ABCD":
             o = r["options"].get(k)
@@ -1108,13 +1347,7 @@ def run(plan_path, output_path, image_root, backend, client_url, indice_name,
                 continue
             s = o.get("source", "?")
             src_counter[s] = src_counter.get(s, 0) + 1
-            if s == "FAILED":
-                kw = (o.get("search_query", "").split() or ["?"])[0]
-                fail_patterns[kw] = fail_patterns.get(kw, 0) + 1
     print("  source breakdown:", src_counter)
-    if fail_patterns:
-        print("  FAILED by leading query word:",
-              dict(sorted(fail_patterns.items(), key=lambda x: -x[1])))
 
 
 def selftest(backend, client_url, indice_name, top_k):
@@ -1129,30 +1362,35 @@ def selftest(backend, client_url, indice_name, top_k):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--backend",        choices=["hosted", "local"], default="local")
-    ap.add_argument("--client-url",     default="http://127.0.0.1:1234/knn-service")
-    ap.add_argument("--indice-name",    default="pod_fashion")
-    ap.add_argument("--plan_path",      type=Path,
+    ap.add_argument("--backend",          choices=["hosted", "local"], default="local")
+    ap.add_argument("--client-url",       default="http://127.0.0.1:1234/knn-service")
+    ap.add_argument("--indice-name",      default="pod_fashion")
+    ap.add_argument("--plan_path",        type=Path,
                     default=OPTIONS_DIR / "option_plans.jsonl")
-    ap.add_argument("--output",         type=Path,
+    ap.add_argument("--output",           type=Path,
                     default=IMAGES_DIR / "collection_log.jsonl")
-    ap.add_argument("--image_root",     type=Path, default=IMAGES_DIR)
-    ap.add_argument("--limit",          type=int,  default=0)
-    ap.add_argument("--top_k",          type=int,  default=50)
-    ap.add_argument("--verify",         choices=["strict", "lenient", "off"],
+    ap.add_argument("--image_root",       type=Path, default=IMAGES_DIR)
+    ap.add_argument("--limit",            type=int,  default=0)
+    ap.add_argument("--top_k",            type=int,  default=50)
+    ap.add_argument("--verify",           choices=["strict", "lenient", "off"],
                     default="lenient")
-    ap.add_argument("--google",         action="store_true")
-    ap.add_argument("--vlm-urls",       default="")
-    ap.add_argument("--workers",        type=int,  default=1)
+    ap.add_argument("--google",           action="store_true")
+    ap.add_argument("--vlm-urls",         default="")
+    ap.add_argument("--workers",          type=int,  default=1)
     ap.add_argument("--no-skip-incomplete", action="store_true")
-    ap.add_argument("--selftest",       action="store_true")
-    ap.add_argument("--force",          action="store_true")
-    ap.add_argument("--rewrite",        choices=["on", "off"], default="on")
+    ap.add_argument("--selftest",         action="store_true")
+    ap.add_argument("--force",            action="store_true")
+    ap.add_argument("--rewrite",          choices=["on", "off"], default="on")
     ap.add_argument("--rewrite-provider", default="vllm_vlm")
-    ap.add_argument("--agent-attempts", type=int,  default=3)
-    ap.add_argument("--scenario-verify", choices=["on", "off"], default="on",
-                    help="inject scenario/TPO context into VLM verify prompt "
-                         "for soft scenario_fit logging (default: on)")
+    ap.add_argument("--agent-attempts",   type=int,  default=3)
+    ap.add_argument("--scenario-verify",  choices=["on", "off"], default="on")
+    # ReAct flags
+    ap.add_argument("--react",            choices=["on", "off"], default="off",
+                    help="use ReActCollectionAgent (LLM-driven Thought loop)")
+    ap.add_argument("--react-steps",      type=int,  default=4,
+                    help="max Thought-Action-Obs steps per option (default: 4)")
+    ap.add_argument("--react-provider",   default="vllm",
+                    help="provider alias for ReAct Thought LLM (default: vllm)")
     args = ap.parse_args()
 
     if args.selftest:
@@ -1171,6 +1409,9 @@ def main():
         rewrite_provider=args.rewrite_provider,
         max_agent_attempts=args.agent_attempts,
         scenario_verify=(args.scenario_verify == "on"),
+        react=(args.react == "on"),
+        react_steps=args.react_steps,
+        react_provider=args.react_provider,
     )
 
 
