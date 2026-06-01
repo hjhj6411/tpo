@@ -2,22 +2,38 @@
 POD-Bench v2 central configuration — Canonical Extreme Scenario edition
 
 Key changes from v1:
-  - TPO_ATTR_INCOMPATIBILITIES removed → CANONICAL_SCENARIOS in scenarios.py
-  - Random TPO sampling removed → scenario-based matching
+  - TPO_ATTR_INCOMPATIBILITIES removed -> CANONICAL_SCENARIOS in scenarios.py
+  - Random TPO sampling removed -> scenario-based matching
   - Profile generation: archetype-based, backward-designed from scenarios
   - Option planner: uses scenario compatible/incompatible sets directly
+
+Variant isolation:
+  Set POD_VARIANT=siglip (or any tag) to redirect all data paths to
+  data_<variant>/ instead of data/.  This lets ViT and FashionSigLIP
+  runs coexist without touching each other's files.
+
+  Examples:
+    POD_VARIANT=siglip python src/collect_images_clip_retrieval.py ...
+    POD_VARIANT=siglip python src/run_pipeline.py ...
+
+  Unset (or POD_VARIANT='') -> original data/ layout (ViT run, unchanged).
 """
 
+import os
 from pathlib import Path
 
 ROOT = Path(__file__).parent.parent
-DATA_DIR = ROOT / "data"
+
+# ── Variant-aware data root ───────────────────────────────
+_VARIANT = os.environ.get("POD_VARIANT", "").strip()
+DATA_DIR = ROOT / (f"data_{_VARIANT}" if _VARIANT else "data")
+
 PROFILES_DIR = DATA_DIR / "profiles"
-QUERIES_DIR = DATA_DIR / "queries"
-OPTIONS_DIR = DATA_DIR / "options"
-IMAGES_DIR = DATA_DIR / "images"
-LABELS_DIR = DATA_DIR / "labels"
-FINAL_DIR = DATA_DIR / "final"
+QUERIES_DIR  = DATA_DIR / "queries"
+OPTIONS_DIR  = DATA_DIR / "options"
+IMAGES_DIR   = DATA_DIR / "images"
+LABELS_DIR   = DATA_DIR / "labels"
+FINAL_DIR    = DATA_DIR / "final"
 
 for d in [PROFILES_DIR, QUERIES_DIR, OPTIONS_DIR, IMAGES_DIR, LABELS_DIR, FINAL_DIR]:
     d.mkdir(parents=True, exist_ok=True)
@@ -76,21 +92,19 @@ PHASE1_CONFIG = {
 
 # ── Provider abstraction ──────────────────────────────────
 PROVIDERS = {
-    "profile_generation":       {"provider": "vllm"},
-    "query_generation":         {"provider": "vllm"},
-    "option_planning":          {"provider": "vllm"},
-    "label_judge_primary":      {"provider": "vllm"},
-    "label_judge_secondary":    {"provider": "vllm_alt"},
-    "label_judge_tertiary":     {"provider": "gpt5_mini"},
-    "blind_solver":             {"provider": "vllm"},
-    "captioner":                {"provider": "vllm_vlm"},
-    "vlm_evaluator":            {"provider": "vllm_vlm"},
-    "image_verifier":           {"provider": "vllm_vlm"},
-    "text_only_eval":           {"provider": "vllm"},
-    "text_only_no_profile_eval":{"provider": "vllm"},
-    # query_rewrite: LLM rewrites search_query into a CLIP-optimised phrase.
-    # Reuses the main vllm endpoint (text-only call, no vision required).
-    "query_rewrite":            {"provider": "vllm"},
+    "profile_generation":        {"provider": "vllm"},
+    "query_generation":          {"provider": "vllm"},
+    "option_planning":           {"provider": "vllm"},
+    "label_judge_primary":       {"provider": "vllm"},
+    "label_judge_secondary":     {"provider": "vllm_alt"},
+    "label_judge_tertiary":      {"provider": "gpt5_mini"},
+    "blind_solver":              {"provider": "vllm"},
+    "captioner":                 {"provider": "vllm_vlm"},
+    "vlm_evaluator":             {"provider": "vllm_vlm"},
+    "image_verifier":            {"provider": "vllm_vlm"},
+    "text_only_eval":            {"provider": "vllm"},
+    "text_only_no_profile_eval": {"provider": "vllm"},
+    "query_rewrite":             {"provider": "vllm"},
 }
 
 PROVIDER_ENDPOINTS = {
