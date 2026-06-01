@@ -340,7 +340,7 @@ def evaluate(plans, queries_map, profiles_map,
                     breakdown[key]["tpo_correct"] += th
                     breakdown[key]["profile_correct"] += ph
                 done_count += 1
-                if verbose or done_count % 10 == 0:
+                if verbose or done_count % 500 == 0:
                     status = "✓" if sh else "✗"
                     print(f"  [{done_count:3d}/{len(jobs)}] {status} pred={rec['predicted']} "
                           f"orig={rec['predicted_original']} ans={rec['correct_display']} | "

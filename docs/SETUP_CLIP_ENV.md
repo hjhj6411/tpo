@@ -146,7 +146,7 @@ clip-retrieval back \
   --port 1234 \
   --indices-paths $WORK/indices_paths.json \
   --enable_faiss_memory_mapping True \
-  --clip_model "ViT-L-14/openai"
+  --clip_model "ViT-L/14"
 ```
 Leave this running (tmux/screen). Note the flag is `--enable_faiss_memory_mapping`
 (not "enableaiss"), and `--clip_model` MUST equal the one used in B3.
