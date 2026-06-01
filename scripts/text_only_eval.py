@@ -14,9 +14,14 @@ Unified Text-Only LLM Baseline Evaluation
 
 --concurrency 32
 실행:
+  # 단일 모드
   python -m scripts.text_only_eval --profile-mode narrative --concurrency 32
   python -m scripts.text_only_eval --profile-mode no
   python -m scripts.text_only_eval --profile-mode all --limit 50 --provider gpt5_mini
+
+  # --profile-mode 생략 → no / narrative / all 3개 모두 순차 실행
+  python -m scripts.text_only_eval --concurrency 32
+  python -m scripts.text_only_eval --provider gpt5_mini --limit 50
 """
 
 import argparse
@@ -31,7 +36,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.utils import call_llm, load_jsonl, save_jsonl, log_step
-from configs.config import OPTIONS_DIR, QUERIES_DIR, PROFILES_DIR
+from configs.config import OPTIONS_DIR, QUERIES_DIR, PROFILES_DIR, PROVIDERS, PROVIDER_ENDPOINTS
 
 
 SYSTEM_PROMPT_NO = """\
@@ -222,6 +227,21 @@ def _call_one(prompt, system_prompt, stage_name, provider):
     )
 
 
+# ── Model name resolution ───────────────────────────────────────────────
+def resolve_model_name(provider_override, profile_mode):
+    """현재 실험에 사용되는 모델명을 config에서 읽어 반환."""
+    # provider_override가 명시된 경우 직접 조회
+    if provider_override:
+        ep = PROVIDER_ENDPOINTS.get(provider_override, {})
+        return ep.get("model_name", provider_override)
+
+    # stage 이름으로 PROVIDERS → PROVIDER_ENDPOINTS 체인 조회
+    stage = "text_only_no_profile_eval" if profile_mode == "no" else "text_only_eval"
+    provider_alias = PROVIDERS.get(stage, {}).get("provider", "vllm")
+    ep = PROVIDER_ENDPOINTS.get(provider_alias, {})
+    return ep.get("model_name", provider_alias)
+
+
 def evaluate(plans, queries_map, profiles_map,
              limit=0, provider=None, seed=42, verbose=False,
              profile_mode="narrative", concurrency=1):
@@ -349,17 +369,22 @@ def evaluate(plans, queries_map, profiles_map,
     return results, strict_correct, tpo_correct, profile_correct, total, breakdown
 
 
-def print_report(strict_correct, tpo_correct, profile_correct, total, breakdown):
+def print_report(strict_correct, tpo_correct, profile_correct, total, breakdown,
+                 profile_mode=None, model_name=None):
     strict_acc = strict_correct / total * 100 if total > 0 else 0
     tpo_acc = tpo_correct / total * 100 if total > 0 else 0
     profile_acc = profile_correct / total * 100 if total > 0 else 0
 
-    print("\n" + "=" * 50)
+    print("\n" + "=" * 60)
+    if profile_mode:
+        print(f"  PROFILE MODE:      {profile_mode}")
+    if model_name:
+        print(f"  MODEL:             {model_name}")
     print(f"  STRICT ACCURACY:   {strict_correct}/{total} = {strict_acc:.1f}%")
     print(f"  TPO ACCURACY:      {tpo_correct}/{total} = {tpo_acc:.1f}%")
     print(f"  PROFILE ACCURACY:  {profile_correct}/{total} = {profile_acc:.1f}%")
     print(f"  Random baseline:   25.0% strict")
-    print("=" * 50)
+    print("=" * 60)
 
     print("\n  ── By active_axis ──")
     for key in sorted(k for k in breakdown if k.startswith("axis:")):
@@ -380,6 +405,23 @@ def print_report(strict_correct, tpo_correct, profile_correct, total, breakdown)
         print(f"  {key:18s} strict={s:5.1f}%  tpo={t:5.1f}%  profile={p:5.1f}%  (n={n})")
 
 
+def print_combined_summary(all_summaries):
+    """3개 모드 실행 후 비교 summary table 출력."""
+    print("\n" + "=" * 60)
+    print("  ══ COMBINED SUMMARY ══")
+    print(f"  {'mode':<12} {'model':<32} {'strict':>7} {'tpo':>7} {'profile':>9}")
+    print("  " + "-" * 56)
+    for s in all_summaries:
+        mode   = s["profile_mode"]
+        model  = (s["model_name"] or "?")[:31]
+        total  = s["total"]
+        strict = s["strict_correct"] / total * 100 if total else 0
+        tpo    = s["tpo_correct"]    / total * 100 if total else 0
+        prof   = s["profile_correct"]/ total * 100 if total else 0
+        print(f"  {mode:<12} {model:<32} {strict:6.1f}%  {tpo:6.1f}%  {prof:7.1f}%")
+    print("=" * 60)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--plans", type=Path,
@@ -395,44 +437,74 @@ def main():
                         help="provider alias from config, e.g. vllm or gpt5_mini")
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--verbose", action="store_true")
-    parser.add_argument("--profile-mode", type=str, default="narrative",
-                        choices=["no", "narrative", "all"])
+    parser.add_argument("--profile-mode", type=str, default=None,
+                        choices=["no", "narrative", "all"],
+                        help="생략 시 no / narrative / all 3개 모두 순차 실행")
     parser.add_argument("--concurrency", type=int, default=1,
                         help="병렬 요청 수. vllm은 32, gpt5_mini는 1~8 권장")
     args = parser.parse_args()
 
-    if args.output == OPTIONS_DIR / "text_only_results.jsonl":
-        args.output = OPTIONS_DIR / f"text_only_results_{args.profile_mode}.jsonl"
-
     log_step("Text-Only LLM Baseline Eval")
 
-    plans = load_jsonl(args.plans)
-    queries = load_jsonl(args.queries)
+    plans    = load_jsonl(args.plans)
+    queries  = load_jsonl(args.queries)
     profiles = load_jsonl(args.profiles)
 
-    queries_map = {q["query_id"]: q for q in queries}
-    profiles_map = {p["user_id"]: p for p in profiles}
+    queries_map  = {q["query_id"]: q for q in queries}
+    profiles_map = {p["user_id"]:  p for p in profiles}
 
     print(f"  Plans: {len(plans)}, Queries: {len(queries)}, Profiles: {len(profiles)}")
-    print(f"  Profile mode: {args.profile_mode}")
     print(f"  Concurrency: {args.concurrency}")
     if args.limit:
         print(f"  Limit: {args.limit}")
 
-    results, strict_correct, tpo_correct, profile_correct, total, breakdown = evaluate(
-        plans, queries_map, profiles_map,
-        limit=args.limit,
-        provider=args.provider,
-        seed=args.seed,
-        verbose=args.verbose,
-        profile_mode=args.profile_mode,
-        concurrency=args.concurrency,
-    )
+    # 실행할 모드 목록 결정
+    modes_to_run = [args.profile_mode] if args.profile_mode else ["no", "narrative", "all"]
+    run_all = (args.profile_mode is None)
 
-    save_jsonl(results, args.output)
-    print(f"\n  Saved {len(results)} result records → {args.output}")
+    all_summaries = []
 
-    print_report(strict_correct, tpo_correct, profile_correct, total, breakdown)
+    for mode in modes_to_run:
+        model_name = resolve_model_name(args.provider, mode)
+
+        print(f"\n{'─' * 60}")
+        print(f"  ▶ profile-mode = {mode}  |  model = {model_name}")
+        print(f"{'─' * 60}")
+
+        # output 경로: 단일 모드면 기존 로직, 전체 실행이면 항상 mode별 파일
+        if run_all or args.output == OPTIONS_DIR / "text_only_results.jsonl":
+            out_path = OPTIONS_DIR / f"text_only_results_{mode}.jsonl"
+        else:
+            out_path = args.output
+
+        results, strict_correct, tpo_correct, profile_correct, total, breakdown = evaluate(
+            plans, queries_map, profiles_map,
+            limit=args.limit,
+            provider=args.provider,
+            seed=args.seed,
+            verbose=args.verbose,
+            profile_mode=mode,
+            concurrency=args.concurrency,
+        )
+
+        save_jsonl(results, out_path)
+        print(f"\n  Saved {len(results)} result records → {out_path}")
+
+        print_report(strict_correct, tpo_correct, profile_correct, total, breakdown,
+                     profile_mode=mode, model_name=model_name)
+
+        all_summaries.append({
+            "profile_mode":    mode,
+            "model_name":      model_name,
+            "strict_correct":  strict_correct,
+            "tpo_correct":     tpo_correct,
+            "profile_correct": profile_correct,
+            "total":           total,
+        })
+
+    # 3개 모두 돌렸을 때만 combined summary 출력
+    if run_all:
+        print_combined_summary(all_summaries)
 
 
 if __name__ == "__main__":
