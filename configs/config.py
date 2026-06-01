@@ -76,18 +76,21 @@ PHASE1_CONFIG = {
 
 # ── Provider abstraction ──────────────────────────────────
 PROVIDERS = {
-    "profile_generation":    {"provider": "vllm"},
-    "query_generation":      {"provider": "vllm"},
-    "option_planning":       {"provider": "vllm"},
-    "label_judge_primary":   {"provider": "vllm"},
-    "label_judge_secondary": {"provider": "vllm_alt"},
-    "label_judge_tertiary":  {"provider": "gpt5_mini"},
-    "blind_solver":          {"provider": "vllm"},
-    "captioner":             {"provider": "vllm_vlm"},
-    "vlm_evaluator":         {"provider": "vllm_vlm"},
-    "image_verifier":        {"provider": "vllm_vlm"},
-    "text_only_eval":          {"provider": "vllm"},
-    "text_only_no_profile_eval":          {"provider": "vllm"},
+    "profile_generation":       {"provider": "vllm"},
+    "query_generation":         {"provider": "vllm"},
+    "option_planning":          {"provider": "vllm"},
+    "label_judge_primary":      {"provider": "vllm"},
+    "label_judge_secondary":    {"provider": "vllm_alt"},
+    "label_judge_tertiary":     {"provider": "gpt5_mini"},
+    "blind_solver":             {"provider": "vllm"},
+    "captioner":                {"provider": "vllm_vlm"},
+    "vlm_evaluator":            {"provider": "vllm_vlm"},
+    "image_verifier":           {"provider": "vllm_vlm"},
+    "text_only_eval":           {"provider": "vllm"},
+    "text_only_no_profile_eval":{"provider": "vllm"},
+    # query_rewrite: LLM rewrites search_query into a CLIP-optimised phrase.
+    # Reuses the main vllm endpoint (text-only call, no vision required).
+    "query_rewrite":            {"provider": "vllm"},
 }
 
 PROVIDER_ENDPOINTS = {
