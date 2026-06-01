@@ -32,7 +32,8 @@ Axis-based agent config (shared by both agents)
 Scenario-aware verification
 ----------------------------
   AttributeVerifier injects scenario/TPO context as soft signal.
-  scenario_fit logged but NEVER blocks pass/fail gate.
+  scenario_fit=poor for option A triggers a rewrite (hard block for A only).
+  scenario_fit for B/C/D is logged but never blocks pass/fail gate.
 
 CLI flags
 ----------
@@ -66,6 +67,19 @@ UA = {"User-Agent": "Mozilla/5.0 (compatible; POD-Bench/2.0)"}
 
 _HARD_PATTERNS  = {"checkered", "plaid", "polka_dot", "graphic_print", "camouflage"}
 _DUPLICATE_SSIM = 0.82
+
+# Garment types that should NEVER be accepted as valid fashion product shots
+_EXCLUDED_GARMENT_KEYWORDS = {
+    "swimdress", "swimsuit", "bikini", "one piece swim", "tankini",
+    "robe", "bathrobe", "kimono robe", "pajama", "pyjama", "nightgown",
+    "nightwear", "sleepwear", "lingerie", "underwear", "bra",
+}
+
+# Garment types that indicate a graphic/logo print context rather than structural pattern
+_GRAPHIC_CONTEXT_KEYWORDS = {
+    "graphic tee", "graphic t-shirt", "logo tee", "slogan tee",
+    "printed tee", "novelty print", "picture print",
+}
 
 AXIS_AGENT_CONFIG = {
     "color": {
@@ -127,6 +141,7 @@ _REWRITE_CAUSE_HINTS = {
     "color_mismatch":    "Focus on the exact color; drop pattern emphasis temporarily.",
     "pattern_ambiguous": "Require the pattern to cover the FULL garment body; add 'all-over pattern'.",
     "no_candidates":     "Use simpler, broader terms; drop unusual modifiers.",
+    "scenario_fit_poor": "Find a garment more appropriate for the weather/occasion; adjust warmth/style level.",
 }
 
 
@@ -225,10 +240,26 @@ VERIFY_SYSTEM = f"""You are a precise fashion product-image inspector.
 You are given ONE product image and a target description.
 Inspect the MAIN garment (the largest/most prominent clothing item).
 
-IMPORTANT:
-- PATTERN must cover the MAJORITY of the garment body to count.
-  If pattern appears only on sleeves/trim/cuffs the garment is 'solid'.
-- Choose seen_pattern from: {_PATTERN_VOCAB}.
+PATTERN RULES (strictly enforced):
+1. A pattern is ONLY valid if it covers the MAJORITY (>50%) of the garment BODY.
+   - If the pattern appears only on sleeves, cuffs, trim, collar, or a small chest graphic,
+     report seen_pattern='solid' and pattern_coverage='none' or 'partial'.
+2. Checkered/plaid/tartan/gingham counts as 'checkered' ONLY when the grid lines
+   cover the full garment body — NOT when it appears as a small graphic or pocket detail.
+3. A logo, text, slogan, or illustrated picture that covers most of the front body
+   should be reported as 'graphic_print', NOT 'checkered' or 'striped'.
+4. pattern_coverage values:
+   - 'full'    : pattern visible on >50% of garment body area
+   - 'partial' : pattern on <50% of body (sleeves only, hem only, small chest, etc.)
+   - 'none'    : no discernible pattern on body
+5. pattern_match = true ONLY IF seen_pattern matches target AND pattern_coverage = 'full'.
+
+GARMENT TYPE RULES:
+- If the main garment is a swimsuit, swimdress, bikini, tankini, robe, bathrobe,
+  pajama, nightgown, or lingerie — report it accurately. DO NOT reclassify these
+  as 'tank top', 'dress', or 'coat'.
+
+Choose seen_pattern from: {_PATTERN_VOCAB}.
 
 Output ONLY JSON:
 {{"seen_garment": "...", "seen_color": "...", "seen_pattern": "<vocab word>",
@@ -251,7 +282,8 @@ def _build_verify_prompt(attrs, active_axis, scenario_context=""):
     axis_hint = ""
     if active_axis == "pattern":
         axis_hint = (" KEY axis is PATTERN: pattern_match=true ONLY if pattern "
-                     "covers MAJORITY of garment body (pattern_coverage='full').")
+                     "covers MAJORITY of garment body (pattern_coverage='full'). "
+                     "Swimwear, robes, and nightwear must be reported as-is.")
     scenario_block = ""
     if scenario_context:
         scenario_block = (
@@ -408,14 +440,40 @@ _PATTERN_GROUPS = {
                      "cheetah", "zebra", "snake", "snakeskin", "tiger"},
 }
 
+# Context phrases that indicate a checkered/plaid keyword should be treated as
+# graphic_print rather than structural checkered pattern
+_GRAPHIC_OVERRIDE_PHRASES = {
+    "heart", "gnome", "novelty", "cartoon", "picture", "illustration",
+    "patch", "embroidery", "icon", "badge", "logo graphic",
+}
+
 
 def _canon_pattern(text):
+    """
+    Canonicalise a free-form pattern string to one of the _PATTERN_GROUPS keys.
+
+    Override rule: if 'plaid' or 'checkered' keywords appear but the surrounding
+    context also contains graphic/novelty indicator words, the pattern is
+    reclassified as 'graphic_print' (e.g. "plaid heart graphic tee").
+    """
     if not text:
         return None
     t = text.strip().lower()
+
+    # Exact match first
     for grp, members in _PATTERN_GROUPS.items():
         if t in members:
             return grp
+
+    # --- graphic_print override ---
+    # If the text contains plaid/checkered keywords BUT also contains a graphic
+    # context word, treat it as graphic_print (not structural checkered).
+    _plaid_kw = {"plaid", "checkered", "check", "tartan", "gingham"}
+    if any(pk in t for pk in _plaid_kw):
+        if any(gk in t for gk in _GRAPHIC_OVERRIDE_PHRASES):
+            return "graphic_print"
+
+    # Substring match — collect all candidate groups
     candidates = []
     for grp, members in _PATTERN_GROUPS.items():
         for m in members:
@@ -423,14 +481,30 @@ def _canon_pattern(text):
                 candidates.append((len(m), grp, m))
     if not candidates:
         return None
-    for kw, grp in (("leopard", "animal_print"), ("animal", "animal_print"),
-                    ("camo", "camouflage"), ("polka", "polka_dot"),
-                    ("plaid", "checkered"), ("tartan", "checkered"),
-                    ("stripe", "striped"), ("floral", "floral")):
+
+    # Priority shortcuts (most specific wins)
+    priority = [
+        ("leopard",  "animal_print"),
+        ("animal",   "animal_print"),
+        ("camo",     "camouflage"),
+        ("polka",    "polka_dot"),
+        ("plaid",    "checkered"),
+        ("tartan",   "checkered"),
+        ("stripe",   "striped"),
+        ("floral",   "floral"),
+    ]
+    for kw, grp in priority:
         if kw in t:
             return grp
+
     candidates.sort(reverse=True)
     return candidates[0][1]
+
+
+def _is_excluded_garment(vr: dict) -> bool:
+    """Return True if the verified garment is swimwear/nightwear/robe."""
+    seen = (vr.get("seen_garment") or "").lower()
+    return any(kw in seen for kw in _EXCLUDED_GARMENT_KEYWORDS)
 
 
 def _pattern_matches(target_pattern, vr, require_full_coverage=False):
@@ -447,9 +521,31 @@ def _pattern_matches(target_pattern, vr, require_full_coverage=False):
     return bool(vr.get("pattern_match"))
 
 
-def _verify_pass(vr, mode, active_axis=None, target_pattern=None):
+def _verify_pass(vr, mode, active_axis=None, target_pattern=None,
+                 option_key=None):
+    """
+    Return True if the verification result passes all gates.
+
+    Extra gates added:
+    1. Swimwear / nightwear / robe garments always fail regardless of other matches.
+    2. scenario_fit=poor for option A (the 'ideal' option) causes a fail so the
+       agent will seek a more appropriate garment.
+    """
     if mode == "off":
         return True
+
+    # Gate 1: reject swimwear / nightwear / robes
+    if _is_excluded_garment(vr):
+        print(f"    [gate] excluded garment type: {vr.get('seen_garment')!r}")
+        return False
+
+    # Gate 2: option A must have at least neutral scenario_fit
+    if option_key == "A":
+        fit = (vr.get("scenario_fit") or "n/a").lower()
+        if fit == "poor":
+            print(f"    [gate] option A scenario_fit=poor — rejecting")
+            return False
+
     g, c = vr.get("garment_match"), vr.get("color_match")
     full_cov = (active_axis == "pattern")
     if mode == "strict":
@@ -477,7 +573,7 @@ def _norm_title(t):
 
 def _download_one(cands, img_path, attrs, verifier, mode, top_n=24,
                   active_axis=None, target_gender=None, used_titles=None,
-                  reject_paths=None, scenario_context=""):
+                  reject_paths=None, scenario_context="", option_key=None):
     used_titles  = used_titles  if used_titles  is not None else set()
     reject_paths = reject_paths if reject_paths is not None else set()
     tmp          = Path(str(img_path) + ".tmp.jpg")
@@ -505,7 +601,8 @@ def _download_one(cands, img_path, attrs, verifier, mode, top_n=24,
         vr = verifier.verify(tmp, attrs, active_axis=active_axis,
                               scenario_context=scenario_context)
         vr_log.append((title, vr))
-        if _verify_pass(vr, mode, active_axis, target_pat) and _gender_ok(vr, target_gender):
+        if (_verify_pass(vr, mode, active_axis, target_pat, option_key=option_key)
+                and _gender_ok(vr, target_gender)):
             tmp.rename(img_path)
             return True, title, vr, vr_log
         tmp.unlink(missing_ok=True)
@@ -546,7 +643,7 @@ def _resolve_option(k, opt, attrs, knn, verifier, out_dir, mode, use_google,
         cands, img_path, attrs, verifier, mode,
         active_axis=active_axis, target_gender=target_gender,
         used_titles=used_titles, reject_paths=reject_paths,
-        scenario_context=scenario_context,
+        scenario_context=scenario_context, option_key=k,
     )
     if ok:
         return True, "clip_retrieval", title, vr, img_path, vr_log
@@ -556,7 +653,7 @@ def _resolve_option(k, opt, attrs, knn, verifier, out_dir, mode, use_google,
             cands, img_path, attrs, verifier, "lenient",
             active_axis=active_axis, target_gender=target_gender,
             used_titles=used_titles, reject_paths=reject_paths,
-            scenario_context=scenario_context)
+            scenario_context=scenario_context, option_key=k)
         vr_log += vr_log2
         if ok:
             return True, "clip_retrieval(relaxed)", title, vr, img_path, vr_log
@@ -567,7 +664,7 @@ def _resolve_option(k, opt, attrs, knn, verifier, out_dir, mode, use_google,
             gcands, img_path, attrs, verifier, mode, top_n=8,
             active_axis=active_axis, target_gender=target_gender,
             used_titles=used_titles, reject_paths=reject_paths,
-            scenario_context=scenario_context)
+            scenario_context=scenario_context, option_key=k)
         vr_log += vr_log2
         if ok:
             return True, "google", title, vr, img_path, vr_log
@@ -875,6 +972,10 @@ Rules:
 - Do NOT repeat a query that was already tried in this trajectory.
 - If garment_match and color_match are both true but pattern_coverage is partial,
   always try rewrite with explicit "all-over pattern covering full garment body".
+- If seen_garment is swimwear/robe/nightwear, rewrite to explicitly request
+  the correct garment type (e.g. "coat", "jacket") and exclude swimwear.
+- If option A has scenario_fit=poor, rewrite to emphasise weather/occasion
+  appropriateness (e.g. "warm insulated coat for extreme cold").
 - If 3+ rewrites failed, prefer relax or google before give_up.
 - Always end rewritten queries with: fashion product photo, plain background
 """
@@ -1035,6 +1136,11 @@ class ReActCollectionAgent(CollectionAgent):
         """
         Run up to self.react_steps Thought-Action-Observation iterations for
         a single option key.  Returns (ok, vr, img_path, trajectory).
+
+        BUG FIX: traj_step["thought"] is now populated ONLY after the LLM call
+        for FAIL steps, not pre-assigned from the ok-branch string.
+        The ok-branch sets thought="Observation passes all gates. Accepting."
+        directly, and returns immediately — so there is no bleed.
         """
         garment = (attrs.get("garment_category") or "").replace("_", " ")
         color   = attrs.get("color") or ""
@@ -1074,11 +1180,11 @@ class ReActCollectionAgent(CollectionAgent):
                 cands, img_path, attrs, self.verifier, current_mode,
                 active_axis=active_axis, target_gender=target_gender,
                 used_titles=used_titles, reject_paths=reject_paths,
-                scenario_context=sc_ctx,
+                scenario_context=sc_ctx, option_key=k,
             )
             opt["_last_vr_log"] = vr_log
 
-            # --- Observation ---
+            # --- Observation string ---
             if ok:
                 obs = f"PASS  {_fmt_vr(vr)}"
             elif vr_log:
@@ -1087,6 +1193,22 @@ class ReActCollectionAgent(CollectionAgent):
             else:
                 obs = "FAIL  no_downloadable_candidates"
 
+            if ok:
+                # ---- ACCEPT branch: thought is set here, NOT shared with FAIL path ----
+                traj_step = {
+                    "step":         step,
+                    "query":        current_query,
+                    "thought":      "Observation passes all gates. Accepting.",
+                    "action":       "accept",
+                    "observation":  obs,
+                    "source":       src_tag,
+                    "source_title": title,
+                }
+                trajectory.append(traj_step)
+                opt["rewritten_query"] = current_query
+                return True, vr, img_path, trajectory
+
+            # ---- FAIL branch: append step WITHOUT thought; LLM fills it in below ----
             traj_step = {
                 "step":         step,
                 "query":        current_query,
@@ -1094,16 +1216,9 @@ class ReActCollectionAgent(CollectionAgent):
                 "observation":  obs,
                 "source":       src_tag,
                 "source_title": title,
+                # NOTE: "thought" intentionally absent here;
+                # it is set below after the LLM call (trajectory[-1]["thought"] = thought)
             }
-
-            if ok:
-                # Verify passes -> accept
-                traj_step["thought"] = "Observation passes all gates. Accepting."
-                traj_step["action"]  = "accept"
-                trajectory.append(traj_step)
-                opt["rewritten_query"] = current_query
-                return True, vr, img_path, trajectory
-
             trajectory.append(traj_step)
 
             if step == self.react_steps:
@@ -1140,8 +1255,8 @@ class ReActCollectionAgent(CollectionAgent):
             print(f"      [react] Action : {next_action}"
                   + (f" | query={new_query[:60]!r}" if new_query else ""))
 
-            # Append Thought to last traj step (retroactively)
-            trajectory[-1]["thought"] = thought
+            # Attach LLM thought + next_action to the FAIL step we just appended
+            trajectory[-1]["thought"]     = thought
             trajectory[-1]["next_action"] = next_action
 
             if next_action == "accept":
@@ -1155,7 +1270,6 @@ class ReActCollectionAgent(CollectionAgent):
 
             if next_action == "relax":
                 current_mode = "lenient"
-                # Keep same query, just relax gates next iteration
                 continue
 
             if next_action == "google":
