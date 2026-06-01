@@ -12,8 +12,9 @@ Unified Text-Only LLM Baseline Evaluation
 - TPO accuracy      : TPO 축만 맞췄는가
 - Profile accuracy  : preference 축만 맞췄는가
 
+--concurrency 32
 실행:
-  python -m scripts.text_only_eval --profile-mode narrative
+  python -m scripts.text_only_eval --profile-mode narrative --concurrency 32
   python -m scripts.text_only_eval --profile-mode no
   python -m scripts.text_only_eval --profile-mode all --limit 50 --provider gpt5_mini
 """

@@ -183,13 +183,19 @@ class KnnRetriever:
         self.indice_name = indice_name
         self.num_images = num_images
         self._client = None
-        self._http_url = client_url
 
         if backend == "hosted":
+            # NOTE: the public LAION knn-service (knn.laion.ai) was taken offline
+            # on 2023-12-19 and has not been restored. 'hosted' is kept only for
+            # completeness / private mirrors; it will NOT work against LAION.
             url = "https://knn.laion.ai/knn-service"
             indice_name = indice_name or "laion5B-L-14"
+            print("  [knn] WARNING: hosted LAION knn-service is discontinued "
+                  "(offline since 2023-12-19). Use --backend local.")
         else:
             url = client_url
+        # fallback HTTP url must match the chosen backend, NOT the local default
+        self._http_url = url
         try:
             from clip_retrieval.clip_client import ClipClient, Modality
             self._client = ClipClient(
@@ -198,7 +204,6 @@ class KnnRetriever:
             print(f"  [knn] ClipClient ready (backend={backend}, indice={indice_name})")
         except Exception as e:
             print(f"  [knn] ClipClient unavailable ({e}); falling back to raw HTTP")
-            self._http_url = url
 
     def search(self, query, top_k=20, garment_key=None):
         out = []
@@ -240,16 +245,111 @@ def augment(search_query):
 #  Per-plan collection
 # ============================================================
 
-def _verify_pass(vr, mode):
+# Visual-equivalence groups for pattern names. The benchmark's discriminative
+# axis is "this pattern vs a different pattern", NOT fine label distinctions
+# like checkered-vs-plaid (which are visually near-identical). We normalize the
+# VLM's free-text `seen_pattern` into a canonical group and compare on that,
+# which recovers many false rejects without admitting wrong patterns.
+_PATTERN_GROUPS = {
+    "solid": {"solid", "plain", "none", "ribbed", "knit", "no pattern", "unpatterned"},
+    "striped": {"striped", "stripe", "stripes", "pinstripe", "pinstriped",
+                "vertical stripes", "horizontal stripes", "vertical stripe"},
+    "checkered": {"checkered", "checked", "check", "plaid", "tartan", "gingham",
+                  "buffalo plaid", "houndstooth", "lattice", "latticed"},
+    "floral": {"floral", "flower", "flowers", "flower print", "daisy"},
+    "polka_dot": {"polka dot", "polka dots", "polka-dot", "dotted", "dots", "dot"},
+    "graphic_print": {"graphic print", "graphic", "print", "printed", "graphic tee",
+                      "logo", "text", "slogan", "printed graphic"},
+    "camouflage": {"camouflage", "camo", "military"},
+    "animal_print": {"animal print", "animal", "leopard", "leopard print",
+                     "cheetah", "zebra", "snake", "snakeskin", "tiger"},
+}
+
+
+def _canon_pattern(text):
+    """Map a free-text pattern description to a canonical group key, or None."""
+    if not text:
+        return None
+    t = text.strip().lower()
+    # direct membership first
+    for grp, members in _PATTERN_GROUPS.items():
+        if t in members:
+            return grp
+    # substring fallback: try the most specific (longest) members first so that
+    # e.g. "animal print (leopard)" matches "leopard"/"animal print" before the
+    # generic "print" (graphic_print), and "graphic print of a daisy" matches
+    # "graphic print" before the generic "daisy"/"flower".
+    candidates = []  # (member_length, group, member)
+    for grp, members in _PATTERN_GROUPS.items():
+        for m in members:
+            if m in t:
+                candidates.append((len(m), grp, m))
+    if not candidates:
+        return None
+    # strong keywords win regardless of length
+    for kw, grp in (("leopard", "animal_print"), ("animal", "animal_print"),
+                    ("camo", "camouflage"), ("polka", "polka_dot"),
+                    ("plaid", "checkered"), ("tartan", "checkered"),
+                    ("stripe", "striped"), ("floral", "floral")):
+        if kw in t:
+            return grp
+    candidates.sort(reverse=True)  # longest member first
+    return candidates[0][1]
+
+
+def _pattern_matches(target_pattern, vr):
+    """True if the image's pattern is in the same visual group as requested.
+    Uses the VLM's seen_pattern text first (more reliable than its boolean),
+    falling back to the boolean pattern_match if the text can't be canonicalized."""
+    if not target_pattern:
+        return True
+    tgt = _canon_pattern(target_pattern.replace("_", " "))
+    seen = _canon_pattern(vr.get("seen_pattern", ""))
+    if tgt is not None and seen is not None:
+        return tgt == seen
+    # text inconclusive -> trust the VLM's own boolean
+    return bool(vr.get("pattern_match"))
+
+
+def _verify_pass(vr, mode, active_axis=None, target_pattern=None):
+    """Axis-aware verification.
+
+    The attribute that is the instance's discriminative axis MUST match, since a
+    wrong value there destroys the item's validity (e.g. a 'pattern' instance
+    whose image shows the wrong pattern). garment+color are always required;
+    the active axis adds its own requirement on top. Pattern matching uses
+    visual-equivalence groups (checkered~plaid etc.) via _pattern_matches.
+      - mode 'off'     : accept anything (smoke test)
+      - mode 'lenient' : garment + color, PLUS active-axis attribute
+      - mode 'strict'  : garment + color + pattern (all three)
+    """
     if mode == "off":
         return True
-    if mode == "lenient":
-        return bool(vr.get("garment_match") and vr.get("color_match"))
-    return bool(vr.get("passes"))  # strict
+    g, c = vr.get("garment_match"), vr.get("color_match")
+    if mode == "strict":
+        return bool(g and c and _pattern_matches(target_pattern, vr))
+    # lenient + axis-aware
+    base = bool(g and c)
+    if active_axis == "pattern":
+        return base and _pattern_matches(target_pattern, vr)
+    if active_axis == "color":
+        return base  # color already required; pattern free
+    return base
 
 
-def _download_one(cands, img_path, attrs, verifier, mode, top_n=10):
+def _gender_ok(vr, target_gender):
+    """True if this image's model gender is compatible with the locked target.
+    'unclear' is always compatible (can't introduce a gender confound)."""
+    if target_gender is None:
+        return True
+    g = vr.get("model_gender", "unclear")
+    return g == "unclear" or g == target_gender
+
+
+def _download_one(cands, img_path, attrs, verifier, mode, top_n=16,
+                  active_axis=None, target_gender=None):
     tmp = Path(str(img_path) + ".tmp.jpg")
+    target_pattern = attrs.get("pattern")
     for cand in cands[:top_n]:
         if not download_image(cand["image_url"], tmp):
             continue
@@ -257,14 +357,15 @@ def _download_one(cands, img_path, attrs, verifier, mode, top_n=10):
             tmp.rename(img_path)
             return True, cand.get("title", ""), {"passes": True, "model_gender": "unclear"}
         vr = verifier.verify(tmp, attrs)
-        if _verify_pass(vr, mode):
+        if (_verify_pass(vr, mode, active_axis, target_pattern)
+                and _gender_ok(vr, target_gender)):
             tmp.rename(img_path)
             return True, cand.get("title", ""), vr
         tmp.unlink(missing_ok=True)
     return False, "", {}
 
 
-def collect_for_plan(plan, knn, checker, verifier, out_root, mode, use_google, top_k=20):
+def collect_for_plan(plan, knn, checker, verifier, out_root, mode, use_google, top_k=50):
     qid = plan["query_id"]
     out_dir = Path(out_root) / qid
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -278,6 +379,7 @@ def collect_for_plan(plan, knn, checker, verifier, out_root, mode, use_google, t
               "structure_preserved": None, "set_consistency": None}
 
     paths, verifs = {}, {}
+    target_gender = None  # locked by the first successfully-collected option
     for k in "ABCD":
         opt = plan["options"][k]
         attrs = opt["attributes"]
@@ -291,12 +393,15 @@ def collect_for_plan(plan, knn, checker, verifier, out_root, mode, use_google, t
 
         q = augment(opt["search_query"])
         cands = knn.search(q, top_k=top_k, garment_key=attrs.get("garment_category"))
-        ok, title, vr = _download_one(cands, img_path, attrs, verifier, mode)
+        ok, title, vr = _download_one(cands, img_path, attrs, verifier, mode,
+                                      active_axis=active_axis,
+                                      target_gender=target_gender)
         src = "clip_retrieval"
         if not ok and use_google:
             ok, title, vr = _download_one(
                 google_image_search(opt["search_query"], top_k=5),
-                img_path, attrs, verifier, mode, top_n=5)
+                img_path, attrs, verifier, mode, top_n=5,
+                active_axis=active_axis, target_gender=target_gender)
             src = "google" if ok else "FAILED"
         elif not ok:
             src = "FAILED"
@@ -304,6 +409,11 @@ def collect_for_plan(plan, knn, checker, verifier, out_root, mode, use_google, t
         if ok:
             paths[k] = img_path
             verifs[k] = vr
+            # lock the instance's gender on the first concrete (non-unclear) read
+            if target_gender is None:
+                g = vr.get("model_gender", "unclear")
+                if g in ("man", "woman"):
+                    target_gender = g
             result["options"][k] = {"image_path": str(img_path), "source": src,
                                     "search_query": opt["search_query"],
                                     "source_title": title, "verification": vr}
@@ -364,20 +474,42 @@ def run(plan_path, output_path, image_root, backend, client_url, indice_name,
     print("  source breakdown:", src_counter)
 
 
+def selftest(backend, client_url, indice_name, top_k):
+    """Fire ONE KNN query and print results, to validate the backend end-to-end
+    before launching a full collection run."""
+    print(f"=== KNN self-test (backend={backend}, indice={indice_name}) ===")
+    knn = KnnRetriever(backend, client_url, indice_name)
+    q = augment("navy wool coat")
+    cands = knn.search(q, top_k=top_k)
+    print(f"  query: {q!r}")
+    print(f"  got {len(cands)} candidates")
+    for i, c in enumerate(cands[:5]):
+        print(f"   [{i}] {c.get('source')} | {c.get('title','')[:60]} | {c['image_url'][:90]}")
+    if not cands:
+        print("  -> 0 candidates. Check that `clip-retrieval back` is running on "
+              "the given --client-url and that --indice-name matches indices_paths.json.")
+    return len(cands)
+
+
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--backend", choices=["hosted", "local"], default="hosted")
+    ap.add_argument("--backend", choices=["hosted", "local"], default="local")
     ap.add_argument("--client-url", default="http://127.0.0.1:1234/knn-service")
-    ap.add_argument("--indice-name", default=None)
+    ap.add_argument("--indice-name", default="pod_fashion")
     ap.add_argument("--plan_path", type=Path, default=OPTIONS_DIR / "option_plans.jsonl")
     ap.add_argument("--output", type=Path, default=IMAGES_DIR / "collection_log.jsonl")
     ap.add_argument("--image_root", type=Path, default=IMAGES_DIR)
     ap.add_argument("--limit", type=int, default=0)
-    ap.add_argument("--top_k", type=int, default=20)
+    ap.add_argument("--top_k", type=int, default=50)
     ap.add_argument("--verify", choices=["strict", "lenient", "off"], default="lenient")
     ap.add_argument("--google", action="store_true", help="enable Google image fallback")
+    ap.add_argument("--selftest", action="store_true",
+                    help="fire one KNN query and exit (validate the backend)")
     ap.add_argument("--force", action="store_true")
     args = ap.parse_args()
+    if args.selftest:
+        selftest(args.backend, args.client_url, args.indice_name, args.top_k)
+        return
     if args.force and Path(args.output).exists():
         Path(args.output).unlink()
     run(args.plan_path, args.output, args.image_root, args.backend, args.client_url,

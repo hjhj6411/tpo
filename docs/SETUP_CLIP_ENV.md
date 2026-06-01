@@ -107,12 +107,13 @@ hosted service; if you prefer fashion-tuned retrieval you can swap the model,
 but keep inference and `back` on the SAME model string.
 
 ```bash
+export WORK=/home1/hjhj6411/pod_bench/data/clip_corpus
 clip-retrieval inference \
-  --input_dataset "$WORK/images/{00000..NNNNN}.tar" \
+  --input_dataset "$WORK/images/{00000..00065}.tar" \
   --output_folder $WORK/embeddings \
   --input_format webdataset \
   --enable_metadata True \
-  --clip_model "ViT-L-14/openai"
+  --clip_model "ViT-L/14"
 ```
 
 ### B4. Build the FAISS index (autofaiss via clip-retrieval index)
