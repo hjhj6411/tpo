@@ -146,7 +146,7 @@ PROVIDER_ENDPOINTS = {
     },
     "vllm_vlm": {
         "kind": "openai_compat",
-        "model_name": "Qwen/Qwen3-VL-4B-Instruct",
+        "model_name": "Qwen/Qwen3-VL-30B-A3B-Instruct",
         "api_base": "http://localhost:8002/v1",
         "uses_max_completion_tokens": False,
         "supports_temperature": True,

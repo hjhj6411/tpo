@@ -240,19 +240,49 @@ VERIFY_SYSTEM = f"""You are a precise fashion product-image inspector.
 You are given ONE product image and a target description.
 Inspect the MAIN garment (the largest/most prominent clothing item).
 
+PATTERN COVERAGE — THE SINGLE MOST IMPORTANT RULE:
+A pattern counts ONLY when it is spread across the WHOLE garment body,
+NOT when it sits on a small or localized region.
+- VALID (report the pattern): the motif repeats over the MAJORITY (>50%) of the
+  garment's torso/body area — front and visible sides — so the garment "reads"
+  as that pattern from across a room.
+- INVALID (report seen_pattern='solid'): the pattern appears ONLY on a localized
+  part — sleeves only, cuffs, collar, trim, hem, pocket, waistband, a single
+  chest logo/graphic, or one decorative panel. Localized = NOT a pattern.
+- If you are unsure whether coverage exceeds half the body, treat it as NOT full
+  (report 'partial') and set pattern_match=false.
+
+GARMENT VISIBILITY & FRAMING RULE (decide this BEFORE judging color/pattern):
+- You must judge the TARGET garment type (e.g. coat, shirt). It has to be CLEARLY
+  and LARGELY visible — occupying a substantial central portion of the image.
+- REJECT (garment_match=false, garment_visibility='minimal') when ANY holds:
+    * the target garment is absent, OR
+    * it appears only as a thin strip / small sliver at an edge of the frame, OR
+    * the image is dominated by a face, head, hair, HAT, bag, shoes, jewelry, or
+      another accessory, so the target garment cannot be reliably assessed.
+  A headshot/portrait where the garment is only marginally visible is NOT usable —
+  reject it. A hat/bag/etc. is an ACCESSORY, never the target garment.
+- A normal product shot — the garment worn full/upper body, on a mannequin, or
+  flat-lay filling the frame — is 'clear' and PASSES (a face being present is fine,
+  as long as the garment itself is prominently shown).
+- If unsure whether the garment is prominent enough, treat it as 'partial' and set
+  garment_match=false.
+
 PATTERN RULES (strictly enforced):
-1. A pattern is ONLY valid if it covers the MAJORITY (>50%) of the garment BODY.
-   - If the pattern appears only on sleeves, cuffs, trim, collar, or a small chest graphic,
-     report seen_pattern='solid' and pattern_coverage='none' or 'partial'.
+1. seen_pattern is the pattern covering the garment BODY. Ignore patterns confined
+   to sleeves/cuffs/trim/collar/hem/pocket or a small chest graphic — those are
+   'partial' or 'none', and seen_pattern must then be 'solid'.
 2. Checkered/plaid/tartan/gingham counts as 'checkered' ONLY when the grid lines
-   cover the full garment body — NOT when it appears as a small graphic or pocket detail.
+   cover the full garment body — NOT a small graphic, panel, or pocket detail.
 3. A logo, text, slogan, or illustrated picture that covers most of the front body
-   should be reported as 'graphic_print', NOT 'checkered' or 'striped'.
-4. pattern_coverage values:
-   - 'full'    : pattern visible on >50% of garment body area
-   - 'partial' : pattern on <50% of body (sleeves only, hem only, small chest, etc.)
-   - 'none'    : no discernible pattern on body
-5. pattern_match = true ONLY IF seen_pattern matches target AND pattern_coverage = 'full'.
+   is 'graphic_print', NOT 'checkered' or 'striped'.
+4. pattern_coverage values (judge over the garment BODY only, excluding
+   sleeves/collar/trim):
+   - 'full'    : pattern repeats over >50% of the garment body area
+   - 'partial' : pattern on <50% of the body (sleeves only, hem only, small chest, panel)
+   - 'none'    : no discernible pattern on the body
+5. pattern_match = true ONLY IF seen_pattern matches the target AND
+   pattern_coverage = 'full'.
 
 GARMENT TYPE RULES:
 - If the main garment is a swimsuit, swimdress, bikini, tankini, robe, bathrobe,
@@ -264,6 +294,7 @@ Choose seen_pattern from: {_PATTERN_VOCAB}.
 Output ONLY JSON:
 {{"seen_garment": "...", "seen_color": "...", "seen_pattern": "<vocab word>",
  "pattern_coverage": "full"/"partial"/"none",
+ "garment_visibility": "clear"/"partial"/"minimal",
  "garment_match": true/false, "color_match": true/false, "pattern_match": true/false,
  "model_gender": "man"/"woman"/"unclear", "is_clean_product_shot": true/false,
  "scenario_fit": "good"/"neutral"/"poor"/"n/a"}}"""
@@ -281,9 +312,11 @@ def _build_verify_prompt(attrs, active_axis, scenario_context=""):
     target  = f"garment={garment}; color={color}; pattern={pattern or 'solid/plain'}"
     axis_hint = ""
     if active_axis == "pattern":
-        axis_hint = (" KEY axis is PATTERN: pattern_match=true ONLY if pattern "
-                     "covers MAJORITY of garment body (pattern_coverage='full'). "
-                     "Swimwear, robes, and nightwear must be reported as-is.")
+        axis_hint = (" KEY axis is PATTERN: pattern_match=true ONLY if the pattern "
+                     "covers MORE THAN HALF of the garment BODY (pattern_coverage='full'). "
+                     "A pattern only on sleeves/collar/trim/hem/pocket or a small chest "
+                     "graphic is LOCALIZED -> report seen_pattern='solid', "
+                     "pattern_coverage='partial', pattern_match=false.")
     scenario_block = ""
     if scenario_context:
         scenario_block = (
@@ -532,6 +565,10 @@ def _verify_pass(vr, mode, active_axis=None, target_pattern=None,
        agent will seek a more appropriate garment.
     """
     if mode == "off":
+        # Gate: target garment must be prominently visible (reject headshot/hat-dominated/sliver)
+        if (vr.get("garment_visibility") or "").strip().lower() == "minimal":
+            print(f"    [gate] garment not prominent (visibility=minimal) — rejecting")
+            return False
         return True
 
     # Gate 1: reject swimwear / nightwear / robes
