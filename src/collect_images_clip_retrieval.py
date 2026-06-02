@@ -4,50 +4,46 @@ collect_images_clip_retrieval.py
 --------------------------------
 Image collection for POD-Bench options via rom1504/clip-retrieval KNN service.
 
+CHANGES IN THIS REVISION (all repo-grounded)
+--------------------------------------------
+[CUT]   _verify_pass Gate 2 (scenario_fit=poor -> FAIL). TPO is already encoded
+        deterministically by garment_category upstream; this gate false-rejected
+        good rank-1 items (the color-axis regression) and kept firing even with
+        --scenario-verify off because scenario_fit lives in the base prompt.
+[FIX]   The garment-prominence gate now runs in ALL verify modes. Previously the
+        visibility check lived inside the `if mode=="off"` branch of _verify_pass,
+        which _download_one never reaches (off returns before verify) — so it was
+        dead code and never fired in lenient/strict. That is why the camel-coat /
+        face-dominated shots slipped through.
+[ADD]   Anchored 1-5 rubric scoring. The VLM now returns garment_prominence (1-5)
+        and pattern_strength (1-5), each defined point-by-point in VERIFY_SYSTEM
+        (G-Eval / Prometheus style). Gates and ranking use these numbers.
+[ADD]   best-of-top-k selection. _download_one no longer accepts the FIRST passing
+        candidate; it scores every qualifying candidate (up to verify_budget) and
+        keeps the BEST. A clear full-body product shot beats a face/hat-dominated
+        sliver; an all-over pattern beats a localized one. Rank penalty preserves
+        the "top-1 is best for color" tendency.
+[SPEED] Real --vlm-urls round-robin (direct HTTP per endpoint) so 4 GPUs are
+        actually used, plus one shared keep-alive requests.Session.
+
 Two agent modes
 ---------------
-CollectionAgent (default, --react off)
-  Rule-based Thought: _infer_cause(), _check_duplicates(), _flag_hard_patterns()
-  Fast, deterministic, no extra LLM calls.
-
-ReActCollectionAgent (--react on)
-  LLM-based Thought following the ReAct paradigm (Yao et al., 2022).
-  After every Action+Observation the LLM reads the full trajectory and decides
-  the next Action.  Trajectories are logged per-option for analysis.
-
-  Trajectory loop per option (up to --react-steps N, default 4):
-    Thought  : LLM reasons over goal + observations so far
-    Action   : one of rewrite / relax / google / accept / give_up
-    Observation: VLM verify result, serialised as text
-    ... repeat ...
-
-  Falls back to CollectionAgent behaviour if LLM call fails.
+CollectionAgent (default, --react off)  : rule-based Thought; for color this is ~top-1.
+ReActCollectionAgent (--react on)       : LLM-driven Thought-Action-Observation loop.
 
 Axis-based agent config (shared by both agents)
--------------------------------------------------
   color           : rewrite=off, no dup check, no pattern check, 1 attempt
   pattern         : rewrite=on,  dup check,    pattern check,    3 attempts
   garment_category: rewrite=on,  no dup check, no pattern check, 2 attempts
 
-Scenario-aware verification
-----------------------------
-  AttributeVerifier injects scenario/TPO context as soft signal.
-  scenario_fit=poor for option A triggers a rewrite (hard block for A only).
-  scenario_fit for B/C/D is logged but never blocks pass/fail gate.
-
 CLI flags
-----------
-  --rewrite on|off          (default: on)
-  --rewrite-provider ALIAS  (default: vllm_vlm)
-  --agent-attempts N        outer attempt loop  (default: 3)
-  --verify strict|lenient|off
-  --scenario-verify on|off  (default: on)
-  --react on|off            use ReActCollectionAgent (default: off)
-  --react-steps N           max Thought-Action-Obs steps per option (default: 4)
-  --react-provider ALIAS    LLM for ReAct Thought (default: vllm)
+  --rewrite on|off / --rewrite-provider ALIAS / --agent-attempts N
+  --verify strict|lenient|off / --scenario-verify on|off
+  --react on|off / --react-steps N / --react-provider ALIAS
 """
 
 import argparse
+import base64
 import io
 import json
 import os
@@ -57,16 +53,27 @@ from pathlib import Path
 from collections import Counter
 
 import requests
+from requests.adapters import HTTPAdapter
 from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from src.utils import save_jsonl, load_jsonl, log_step, call_llm, call_vlm, parse_json_response
-from configs.config import IMAGES_DIR, OPTIONS_DIR, IMAGE_COLLECTION
+from configs.config import IMAGES_DIR, OPTIONS_DIR, IMAGE_COLLECTION, PROVIDER_ENDPOINTS
 
 UA = {"User-Agent": "Mozilla/5.0 (compatible; POD-Bench/2.0)"}
 
+# ── Shared HTTP session (keep-alive + big pool for parallel workers) ──
+_SESSION = requests.Session()
+_SESSION.headers.update(UA)
+_adapter = HTTPAdapter(pool_connections=32, pool_maxsize=64, max_retries=0)
+_SESSION.mount("http://", _adapter)
+_SESSION.mount("https://", _adapter)
+
 _HARD_PATTERNS  = {"checkered", "plaid", "polka_dot", "graphic_print", "camouflage"}
 _DUPLICATE_SSIM = 0.82
+
+# Verification scan budget for best-of-top-k (per option)
+_VERIFY_BUDGET  = 8
 
 # Garment types that should NEVER be accepted as valid fashion product shots
 _EXCLUDED_GARMENT_KEYWORDS = {
@@ -141,7 +148,7 @@ _REWRITE_CAUSE_HINTS = {
     "color_mismatch":    "Focus on the exact color; drop pattern emphasis temporarily.",
     "pattern_ambiguous": "Require the pattern to cover the FULL garment body; add 'all-over pattern'.",
     "no_candidates":     "Use simpler, broader terms; drop unusual modifiers.",
-    "scenario_fit_poor": "Find a garment more appropriate for the weather/occasion; adjust warmth/style level.",
+    "prominence_low":    "Request a full product shot of the garment on a plain background; no model headshot.",
 }
 
 
@@ -180,7 +187,7 @@ def augment(search_query: str) -> str:
 
 def download_image(url, dest_path, min_side=224, timeout=15):
     try:
-        resp = requests.get(url, timeout=timeout, headers=UA)
+        resp = _SESSION.get(url, timeout=timeout)
         resp.raise_for_status()
         img = Image.open(io.BytesIO(resp.content)).convert("RGB")
     except Exception:
@@ -202,7 +209,7 @@ def google_image_search(query, top_k=5):
     if not api_key or not cse_id:
         return []
     try:
-        resp = requests.get(
+        resp = _SESSION.get(
             "https://www.googleapis.com/customsearch/v1",
             params={"key": api_key, "cx": cse_id, "q": query,
                     "searchType": "image", "num": min(top_k, 10),
@@ -240,49 +247,58 @@ VERIFY_SYSTEM = f"""You are a precise fashion product-image inspector.
 You are given ONE product image and a target description.
 Inspect the MAIN garment (the largest/most prominent clothing item).
 
-PATTERN COVERAGE — THE SINGLE MOST IMPORTANT RULE:
-A pattern counts ONLY when it is spread across the WHOLE garment body,
-NOT when it sits on a small or localized region.
-- VALID (report the pattern): the motif repeats over the MAJORITY (>50%) of the
-  garment's torso/body area — front and visible sides — so the garment "reads"
-  as that pattern from across a room.
-- INVALID (report seen_pattern='solid'): the pattern appears ONLY on a localized
-  part — sleeves only, cuffs, collar, trim, hem, pocket, waistband, a single
-  chest logo/graphic, or one decorative panel. Localized = NOT a pattern.
-- If you are unsure whether coverage exceeds half the body, treat it as NOT full
-  (report 'partial') and set pattern_match=false.
+You will assign TWO 1-5 rubric scores (garment_prominence, pattern_strength)
+using the explicit anchors below, plus the usual match booleans.
 
-GARMENT VISIBILITY & FRAMING RULE (decide this BEFORE judging color/pattern):
-- You must judge the TARGET garment type (e.g. coat, shirt). It has to be CLEARLY
-  and LARGELY visible — occupying a substantial central portion of the image.
-- REJECT (garment_match=false, garment_visibility='minimal') when ANY holds:
-    * the target garment is absent, OR
-    * it appears only as a thin strip / small sliver at an edge of the frame, OR
-    * the image is dominated by a face, head, hair, HAT, bag, shoes, jewelry, or
-      another accessory, so the target garment cannot be reliably assessed.
-  A headshot/portrait where the garment is only marginally visible is NOT usable —
-  reject it. A hat/bag/etc. is an ACCESSORY, never the target garment.
-- A normal product shot — the garment worn full/upper body, on a mannequin, or
-  flat-lay filling the frame — is 'clear' and PASSES (a face being present is fine,
-  as long as the garment itself is prominently shown).
-- If unsure whether the garment is prominent enough, treat it as 'partial' and set
-  garment_match=false.
+==================== GARMENT PROMINENCE (1-5) ====================
+Score how clearly and largely the TARGET garment is shown:
+  1 = target garment absent, OR only a tiny sliver at the frame edge; the image
+      is dominated by a face/head/hair, a HAT, bag, shoes, or other accessory.
+  2 = target garment present but small / heavily cropped / occluded; its color
+      and pattern cannot be assessed reliably (e.g. a headshot with only a collar).
+  3 = garment clearly identifiable but NOT the main subject — it shares the frame
+      with a large face/background, or is at an angle that hides much of it.
+  4 = garment IS the main subject and mostly visible (worn upper/full body);
+      minor cropping or a visible face is fine.
+  5 = garment fills the frame as a clean product / flat-lay / mannequin shot, OR a
+      full-body worn shot where the whole garment is unobstructed.
+A hat/bag/shoe/jewelry is an ACCESSORY, never the target garment.
 
-PATTERN RULES (strictly enforced):
-1. seen_pattern is the pattern covering the garment BODY. Ignore patterns confined
-   to sleeves/cuffs/trim/collar/hem/pocket or a small chest graphic — those are
-   'partial' or 'none', and seen_pattern must then be 'solid'.
-2. Checkered/plaid/tartan/gingham counts as 'checkered' ONLY when the grid lines
-   cover the full garment body — NOT a small graphic, panel, or pocket detail.
-3. A logo, text, slogan, or illustrated picture that covers most of the front body
-   is 'graphic_print', NOT 'checkered' or 'striped'.
-4. pattern_coverage values (judge over the garment BODY only, excluding
-   sleeves/collar/trim):
-   - 'full'    : pattern repeats over >50% of the garment body area
-   - 'partial' : pattern on <50% of the body (sleeves only, hem only, small chest, panel)
-   - 'none'    : no discernible pattern on the body
-5. pattern_match = true ONLY IF seen_pattern matches the target AND
-   pattern_coverage = 'full'.
+==================== PATTERN STRENGTH (1-5) ====================
+Score how much of the garment BODY the pattern covers (judge the BODY only,
+excluding sleeves / collar / cuffs / trim / hem / pocket):
+  1 = no pattern on the body (solid), or pattern only on a tiny detail.
+  2 = pattern LOCALIZED to sleeves/cuffs/collar/hem/pocket or one small panel.
+  3 = pattern on roughly half the body, or weak / ambiguous coverage.
+  4 = pattern over a clear MAJORITY (>50%) of the body.
+  5 = bold ALL-OVER pattern across essentially the entire body; the garment
+      "reads" as that pattern from across a room.
+If the TARGET pattern is 'solid': report pattern_strength=5 when the body is
+plain, and 1 when an unwanted pattern dominates the body.
+A repeating HEART / STAR / CHARACTER / EMOJI / NOVELTY motif is 'graphic_print',
+NOT 'polka_dot' and NOT 'checkered'.
+
+==================== MODEL AGE ====================
+- model_age = 'child' if the person wearing/holding the garment is a baby, toddler,
+  or pre-teen kid; 'adult' if clearly a grown adult; 'unclear' for flat-lay /
+  mannequin / no person. Judge by face and body proportions, not garment size.
+
+==================== TARGET GARMENT WORN ====================
+- target_worn = true ONLY IF the TARGET garment is the primary outfit piece —
+  worn normally on the body and clearly the main item.
+- target_worn = false if the matching garment is merely DRAPED, TIED around the
+  waist/shoulders, HELD, folded, hung, shown as a styling prop, or is a secondary
+  layer while a DIFFERENT garment is the main worn piece (e.g. a plaid shirt
+  draped over the arms while a plain tank is actually worn).
+
+==================== DERIVED FIELDS ====================
+- garment_visibility = 'minimal' if prominence<=2, 'partial' if ==3, else 'clear'.
+- pattern_coverage   = 'none'/'partial' if pattern_strength<=2, 'partial' if ==3,
+                       else 'full' (>=4).
+- pattern_match = true ONLY IF seen_pattern matches the target pattern AND
+  pattern_strength >= 4 (i.e. the pattern truly covers the body).
+- A logo/text/slogan/illustration covering most of the front body is
+  'graphic_print', NOT 'checkered' or 'striped'.
 
 GARMENT TYPE RULES:
 - If the main garment is a swimsuit, swimdress, bikini, tankini, robe, bathrobe,
@@ -293,10 +309,12 @@ Choose seen_pattern from: {_PATTERN_VOCAB}.
 
 Output ONLY JSON:
 {{"seen_garment": "...", "seen_color": "...", "seen_pattern": "<vocab word>",
- "pattern_coverage": "full"/"partial"/"none",
+ "garment_prominence": 1-5, "pattern_strength": 1-5,
  "garment_visibility": "clear"/"partial"/"minimal",
+ "pattern_coverage": "full"/"partial"/"none",
  "garment_match": true/false, "color_match": true/false, "pattern_match": true/false,
- "model_gender": "man"/"woman"/"unclear", "is_clean_product_shot": true/false,
+ "model_gender": "man"/"woman"/"unclear", "model_age": "adult"/"child"/"unclear",
+ "target_worn": true/false, "is_clean_product_shot": true/false,
  "scenario_fit": "good"/"neutral"/"poor"/"n/a"}}"""
 
 VERIFY_SYSTEM_WITH_SCENARIO = (
@@ -312,11 +330,10 @@ def _build_verify_prompt(attrs, active_axis, scenario_context=""):
     target  = f"garment={garment}; color={color}; pattern={pattern or 'solid/plain'}"
     axis_hint = ""
     if active_axis == "pattern":
-        axis_hint = (" KEY axis is PATTERN: pattern_match=true ONLY if the pattern "
-                     "covers MORE THAN HALF of the garment BODY (pattern_coverage='full'). "
-                     "A pattern only on sleeves/collar/trim/hem/pocket or a small chest "
-                     "graphic is LOCALIZED -> report seen_pattern='solid', "
-                     "pattern_coverage='partial', pattern_match=false.")
+        axis_hint = (" KEY axis is PATTERN: only pattern_strength>=4 (pattern covers "
+                     "MORE THAN HALF of the garment BODY) counts as a match. A pattern "
+                     "only on sleeves/collar/trim/hem/pocket is LOCALIZED -> "
+                     "pattern_strength<=2, pattern_match=false.")
     scenario_block = ""
     if scenario_context:
         scenario_block = (
@@ -326,9 +343,39 @@ def _build_verify_prompt(attrs, active_axis, scenario_context=""):
         )
     return (
         f"Target: {target}\n"
-        f"Judge the main garment only. Report seen values and match booleans.{axis_hint}"
+        f"The image must depict ALL THREE target attributes (garment, color, pattern) "
+        f"on the primary WORN garment. Judge that garment only. Score "
+        f"garment_prominence and pattern_strength with the rubric anchors, then "
+        f"report seen values, model_age, target_worn, and the match booleans.{axis_hint}"
         f"{scenario_block}"
     )
+
+
+def _vlm_http(base_url, model, system, prompt, image_path,
+              max_tokens=380, temperature=0.0, timeout=120):
+    """Direct OpenAI-compatible call to a SPECIFIC vLLM endpoint, so --vlm-urls
+    round-robin truly hits :8002..:8005 (one GPU each) instead of collapsing to
+    the single config api_base."""
+    with open(image_path, "rb") as f:
+        b64 = base64.b64encode(f.read()).decode("utf-8")
+    payload = {
+        "model": model,
+        "messages": [
+            {"role": "system", "content": system},
+            {"role": "user", "content": [
+                {"type": "image_url",
+                 "image_url": {"url": f"data:image/jpeg;base64,{b64}"}},
+                {"type": "text", "text": prompt}]},
+        ],
+        "max_tokens": max_tokens, "temperature": temperature,
+    }
+    r = _SESSION.post(f"{base_url.rstrip('/')}/chat/completions",
+                      json=payload, timeout=timeout)
+    r.raise_for_status()
+    txt = r.json()["choices"][0]["message"].get("content") or ""
+    if "</think>" in txt:
+        txt = txt.split("</think>", 1)[1].strip()
+    return txt
 
 
 class AttributeVerifier:
@@ -336,6 +383,8 @@ class AttributeVerifier:
         self.provider        = provider_override
         self.vlm_url         = vlm_url
         self.scenario_verify = scenario_verify
+        ep = PROVIDER_ENDPOINTS.get("vllm_vlm", {})
+        self._model = ep.get("model_name", "Qwen/Qwen3-VL-4B-Instruct")
 
     def verify(self, image_path, attrs, active_axis=None, scenario_context=""):
         use_scenario = self.scenario_verify and bool(scenario_context)
@@ -343,16 +392,14 @@ class AttributeVerifier:
         prompt = _build_verify_prompt(attrs, active_axis,
                                       scenario_context if use_scenario else "")
         try:
-            kw = dict(image_paths=[str(image_path)], stage="image_verifier",
-                      system=system, max_tokens=350, temperature=0.0,
-                      provider_override=self.provider)
             if self.vlm_url:
-                try:
-                    resp = call_vlm(prompt, base_url=self.vlm_url, **kw)
-                except TypeError:
-                    resp = call_vlm(prompt, **kw)
+                resp = _vlm_http(self.vlm_url, self._model, system, prompt,
+                                 str(image_path), max_tokens=380)
             else:
-                resp = call_vlm(prompt, **kw)
+                resp = call_vlm(prompt, image_paths=[str(image_path)],
+                                stage="image_verifier", system=system,
+                                max_tokens=380, temperature=0.0,
+                                provider_override=self.provider)
             parsed = parse_json_response(resp) or {}
         except Exception as e:
             parsed = {"error": str(e)[:120]}
@@ -438,7 +485,7 @@ class KnnRetriever:
             except Exception as e:
                 print(f"    [knn] client query failed: {e}")
         try:
-            resp = requests.post(self._http_url, json={
+            resp = _SESSION.post(self._http_url, json={
                 "text": query, "modality": "image",
                 "num_images": top_k, "num_result_ids": top_k,
                 "indice_name": self.indice_name}, timeout=60)
@@ -499,8 +546,6 @@ def _canon_pattern(text):
             return grp
 
     # --- graphic_print override ---
-    # If the text contains plaid/checkered keywords BUT also contains a graphic
-    # context word, treat it as graphic_print (not structural checkered).
     _plaid_kw = {"plaid", "checkered", "check", "tartan", "gingham"}
     if any(pk in t for pk in _plaid_kw):
         if any(gk in t for gk in _GRAPHIC_OVERRIDE_PHRASES):
@@ -540,14 +585,30 @@ def _is_excluded_garment(vr: dict) -> bool:
     return any(kw in seen for kw in _EXCLUDED_GARMENT_KEYWORDS)
 
 
+def _num(vr, key):
+    """Safely read a numeric rubric score; None if absent/unparseable."""
+    v = vr.get(key)
+    if v is None:
+        return None
+    try:
+        return float(v)
+    except (TypeError, ValueError):
+        return None
+
+
 def _pattern_matches(target_pattern, vr, require_full_coverage=False):
     if not target_pattern:
         return True
     tgt = _canon_pattern(target_pattern.replace("_", " "))
     if require_full_coverage and tgt not in (None, "solid"):
-        cov = (vr.get("pattern_coverage") or "").strip().lower()
-        if cov and cov != "full":
-            return False
+        strength = _num(vr, "pattern_strength")
+        if strength is not None:
+            if strength < 4:                       # anchored: <4 = not all-over
+                return False
+        else:                                      # fallback to categorical field
+            cov = (vr.get("pattern_coverage") or "").strip().lower()
+            if cov and cov != "full":
+                return False
     seen = _canon_pattern(vr.get("seen_pattern", ""))
     if tgt is not None and seen is not None:
         return tgt == seen
@@ -559,16 +620,23 @@ def _verify_pass(vr, mode, active_axis=None, target_pattern=None,
     """
     Return True if the verification result passes all gates.
 
-    Extra gates added:
-    1. Swimwear / nightwear / robe garments always fail regardless of other matches.
-    2. scenario_fit=poor for option A (the 'ideal' option) causes a fail so the
-       agent will seek a more appropriate garment.
+    Gate 0 (ALL modes): target garment must be the prominent subject
+            (garment_prominence >= 3; falls back to garment_visibility != minimal).
+    Gate 1: reject swimwear / nightwear / robes.
+    (Gate 2 scenario_fit REMOVED — TPO is encoded deterministically upstream.)
+    Active-axis: pattern requires pattern_strength >= 4 (all-over coverage).
     """
-    if mode == "off":
-        # Gate: target garment must be prominently visible (reject headshot/hat-dominated/sliver)
-        if (vr.get("garment_visibility") or "").strip().lower() == "minimal":
-            print(f"    [gate] garment not prominent (visibility=minimal) — rejecting")
+    # Gate 0: framing / prominence — runs in every mode
+    prom = _num(vr, "garment_prominence")
+    if prom is not None:
+        if prom < 3:
+            print(f"    [gate] garment_prominence={prom:g} (<3) — rejecting")
             return False
+    elif (vr.get("garment_visibility") or "").strip().lower() == "minimal":
+        print(f"    [gate] garment not prominent (visibility=minimal) — rejecting")
+        return False
+
+    if mode == "off":
         return True
 
     # Gate 1: reject swimwear / nightwear / robes
@@ -576,21 +644,34 @@ def _verify_pass(vr, mode, active_axis=None, target_pattern=None,
         print(f"    [gate] excluded garment type: {vr.get('seen_garment')!r}")
         return False
 
-    # Gate 2: option A must have at least neutral scenario_fit
-    if option_key == "A":
-        fit = (vr.get("scenario_fit") or "n/a").lower()
-        if fit == "poor":
-            print(f"    [gate] option A scenario_fit=poor — rejecting")
-            return False
-
     g, c = vr.get("garment_match"), vr.get("color_match")
-    full_cov = (active_axis == "pattern")
     if mode == "strict":
-        return bool(g and c and _pattern_matches(target_pattern, vr, full_cov))
+        return bool(g and c and _pattern_matches(target_pattern, vr,
+                                                 active_axis == "pattern"))
     base = bool(g and c)
     if active_axis == "pattern":
         return base and _pattern_matches(target_pattern, vr, require_full_coverage=True)
     return base
+
+
+def _aspect_score(vr, active_axis):
+    """Rank qualifying candidates by the VLM's anchored 1-5 rubric scores —
+    higher = better-framed, cleaner, more fully-covered target."""
+    s = _num(vr, "garment_prominence") or 0.0          # 1-5 framing / size
+    if active_axis == "pattern":
+        s += _num(vr, "pattern_strength") or 0.0        # 1-5 all-over coverage
+    if vr.get("is_clean_product_shot") is True:
+        s += 1.0
+    return s
+
+
+def _is_excellent(vr, active_axis):
+    """Early-accept predicate: stop scanning when a candidate is clearly great."""
+    if (_num(vr, "garment_prominence") or 0) < 4:
+        return False
+    if active_axis == "pattern" and (_num(vr, "pattern_strength") or 0) < 4:
+        return False
+    return vr.get("is_clean_product_shot") is True
 
 
 def _gender_ok(vr, target_gender):
@@ -605,45 +686,68 @@ def _norm_title(t):
 
 
 # ============================================================
-#  Core retrieval
+#  Core retrieval  (best-of-top-k)
 # ============================================================
 
 def _download_one(cands, img_path, attrs, verifier, mode, top_n=24,
                   active_axis=None, target_gender=None, used_titles=None,
-                  reject_paths=None, scenario_context="", option_key=None):
+                  reject_paths=None, scenario_context="", option_key=None,
+                  verify_budget=_VERIFY_BUDGET):
+    """
+    best-of-top-k: instead of accepting the FIRST passing candidate, score every
+    qualifying candidate (up to verify_budget VLM calls) and keep the BEST one.
+    A clear full-body product shot beats a face/hat-dominated sliver; an all-over
+    pattern beats a localized one. A rank penalty preserves the "top-1 is best for
+    color" tendency. Early-accepts when a candidate is clearly excellent.
+    """
     used_titles  = used_titles  if used_titles  is not None else set()
     reject_paths = reject_paths if reject_paths is not None else set()
-    tmp          = Path(str(img_path) + ".tmp.jpg")
     target_pat   = attrs.get("pattern")
     vr_log       = []
+    best         = None          # (score, cand_file_str, title, vr)
+    n_verified   = 0
 
-    for cand in cands[:top_n]:
+    for rank, cand in enumerate(cands[:top_n]):
         title = cand.get("title", "")
         if _norm_title(title) in used_titles:
             continue
-        if not download_image(cand["image_url"], tmp):
+        cand_tmp = Path(str(img_path) + f".cand{rank}.jpg")
+        if not download_image(cand["image_url"], cand_tmp):
             continue
-        dup = False
-        for rp in reject_paths:
-            if ssim_score(tmp, rp) >= _DUPLICATE_SSIM:
-                dup = True
-                print(f"    [agent] duplicate vs {Path(rp).name}, skipping")
-                break
-        if dup:
-            tmp.unlink(missing_ok=True)
+        # dedup vs already-chosen sibling options
+        if any(ssim_score(cand_tmp, rp) >= _DUPLICATE_SSIM for rp in reject_paths):
+            cand_tmp.unlink(missing_ok=True)
             continue
         if mode == "off":
-            tmp.rename(img_path)
+            cand_tmp.rename(img_path)
             return True, title, {"passes": True, "model_gender": "unclear"}, vr_log
-        vr = verifier.verify(tmp, attrs, active_axis=active_axis,
-                              scenario_context=scenario_context)
-        vr_log.append((title, vr))
-        if (_verify_pass(vr, mode, active_axis, target_pat, option_key=option_key)
-                and _gender_ok(vr, target_gender)):
-            tmp.rename(img_path)
-            return True, title, vr, vr_log
-        tmp.unlink(missing_ok=True)
 
+        vr = verifier.verify(cand_tmp, attrs, active_axis=active_axis,
+                             scenario_context=scenario_context)
+        vr_log.append((title, vr))
+        n_verified += 1
+
+        qualifies = (_verify_pass(vr, mode, active_axis, target_pat,
+                                  option_key=option_key)
+                     and _gender_ok(vr, target_gender))
+        if qualifies:
+            score = _aspect_score(vr, active_axis) - 0.15 * rank
+            if best is None or score > best[0]:
+                if best is not None:
+                    Path(best[1]).unlink(missing_ok=True)
+                best = (score, str(cand_tmp), title, vr)
+                if _is_excellent(vr, active_axis):       # clearly great -> stop early
+                    Path(best[1]).rename(img_path)
+                    return True, title, vr, vr_log
+                continue                                  # keep best file, keep scanning
+        cand_tmp.unlink(missing_ok=True)
+
+        if n_verified >= verify_budget and best is not None:
+            break
+
+    if best is not None:
+        Path(best[1]).rename(img_path)
+        return True, best[2], best[3], vr_log
     return False, "", {}, vr_log
 
 
@@ -923,17 +1027,17 @@ class CollectionAgent:
     def _infer_cause(vr_log):
         if not vr_log:
             return "no_candidates"
+        prom_fail = sum(1 for _, vr in vr_log
+                        if (_num(vr, "garment_prominence") or 5) < 3)
         g_fail = sum(1 for _, vr in vr_log if not vr.get("garment_match"))
         c_fail = sum(1 for _, vr in vr_log
                      if vr.get("garment_match") and not vr.get("color_match"))
         p_fail = sum(1 for _, vr in vr_log
                      if vr.get("garment_match") and vr.get("color_match")
                      and not vr.get("pattern_match"))
-        cov_fail = sum(1 for _, vr in vr_log
-                       if vr.get("pattern_match")
-                       and (vr.get("pattern_coverage") or "") not in ("full", ""))
-        counts = {"garment_mismatch": g_fail, "color_mismatch": c_fail,
-                  "pattern_ambiguous": p_fail + cov_fail, "no_candidates": 0}
+        counts = {"prominence_low": prom_fail, "garment_mismatch": g_fail,
+                  "color_mismatch": c_fail, "pattern_ambiguous": p_fail,
+                  "no_candidates": 0}
         best = max(counts, key=counts.get)
         return best if counts[best] > 0 else "no_candidates"
 
@@ -955,9 +1059,9 @@ class CollectionAgent:
             pat = plan["options"][k]["attributes"].get("pattern", "")
             if _canon_pattern(pat) not in _HARD_PATTERNS:
                 continue
-            cov = (vr.get("pattern_coverage") or "").strip().lower()
-            if cov and cov != "full":
-                actions.append({"case": 3, "key": k, "pattern_coverage": cov})
+            strength = _num(vr, "pattern_strength")
+            if strength is not None and strength < 4:
+                actions.append({"case": 3, "key": k, "pattern_strength": strength})
         return actions
 
     def _finalise_cached(self, plan, out_dir, result):
@@ -1007,12 +1111,12 @@ Rules:
 - new_query is required only when action=="rewrite"; omit otherwise.
 - Thought should be 1-3 sentences: what went wrong and why this action fixes it.
 - Do NOT repeat a query that was already tried in this trajectory.
-- If garment_match and color_match are both true but pattern_coverage is partial,
-  always try rewrite with explicit "all-over pattern covering full garment body".
-- If seen_garment is swimwear/robe/nightwear, rewrite to explicitly request
-  the correct garment type (e.g. "coat", "jacket") and exclude swimwear.
-- If option A has scenario_fit=poor, rewrite to emphasise weather/occasion
-  appropriateness (e.g. "warm insulated coat for extreme cold").
+- If garment_match and color_match are true but pattern_strength<4, rewrite with
+  explicit "all-over pattern covering the full garment body".
+- If garment_prominence<3 (face/hat/accessory dominates), rewrite to request a
+  full product shot of the garment on a plain background.
+- If seen_garment is swimwear/robe/nightwear, rewrite to request the correct
+  garment type (e.g. "coat", "jacket") and exclude swimwear.
 - If 3+ rewrites failed, prefer relax or google before give_up.
 - Always end rewritten queries with: fashion product photo, plain background
 """
@@ -1026,16 +1130,16 @@ def _fmt_vr(vr: dict) -> str:
         f"garment={vr.get('seen_garment','?')}",
         f"color={vr.get('seen_color','?')}",
         f"pattern={vr.get('seen_pattern','?')}",
-        f"coverage={vr.get('pattern_coverage','?')}",
+        f"prom={vr.get('garment_prominence','?')}",
+        f"pstr={vr.get('pattern_strength','?')}",
         f"garment_match={vr.get('garment_match','?')}",
         f"color_match={vr.get('color_match','?')}",
         f"pattern_match={vr.get('pattern_match','?')}",
-        f"scenario_fit={vr.get('scenario_fit','n/a')}",
     ]
     return "  ".join(fields)
 
 
-def _build_react_prompt(goal: str, trajectory: list[dict]) -> str:
+def _build_react_prompt(goal: str, trajectory: list) -> str:
     lines = [f"GOAL: {goal}", ""]
     for i, step in enumerate(trajectory):
         lines.append(f"--- Step {i+1} ---")
@@ -1061,16 +1165,7 @@ class ReActCollectionAgent(CollectionAgent):
     """
     Replaces rule-based Thought with an LLM-driven Thought-Action-Observation
     loop per option, following the ReAct paradigm (Yao et al., 2022).
-
-    For each option key (A/B/C/D), the agent runs up to `react_steps` iterations:
-      1. Build trajectory text from all previous steps
-      2. Call LLM -> get {thought, action, new_query}
-      3. Execute action (rewrite KNN query / relax verify / google / accept / give_up)
-      4. Append Observation (VLM verify result) to trajectory
-      5. Repeat
-
     On any LLM failure, falls back to parent CollectionAgent._attempt() for that option.
-    Full trajectories are saved in collection_log.jsonl under "react_trajectory".
     """
 
     def __init__(self, *args, react_steps: int = 4,
@@ -1078,10 +1173,6 @@ class ReActCollectionAgent(CollectionAgent):
         super().__init__(*args, **kwargs)
         self.react_steps    = react_steps
         self.react_provider = react_provider
-
-    # ----------------------------------------------------------------
-    # Override collect() to use ReAct per-option loop
-    # ----------------------------------------------------------------
 
     def collect(self, plan, out_root):
         qid         = plan["query_id"]
@@ -1163,22 +1254,9 @@ class ReActCollectionAgent(CollectionAgent):
             result["structure_preserved"] = result["homogeneity_AB"]
         return result
 
-    # ----------------------------------------------------------------
-    # Per-option ReAct loop
-    # ----------------------------------------------------------------
-
     def _react_option(self, k, opt, attrs, out_dir, active_axis,
                       target_gender, used_titles, reject_paths,
                       sc_ctx, axis_cfg):
-        """
-        Run up to self.react_steps Thought-Action-Observation iterations for
-        a single option key.  Returns (ok, vr, img_path, trajectory).
-
-        BUG FIX: traj_step["thought"] is now populated ONLY after the LLM call
-        for FAIL steps, not pre-assigned from the ok-branch string.
-        The ok-branch sets thought="Observation passes all gates. Accepting."
-        directly, and returns immediately — so there is no bleed.
-        """
         garment = (attrs.get("garment_category") or "").replace("_", " ")
         color   = attrs.get("color") or ""
         pattern = (attrs.get("pattern") or "").replace("_", " ")
@@ -1205,7 +1283,6 @@ class ReActCollectionAgent(CollectionAgent):
             print(f"      [react] option={k} step={step}/{self.react_steps} "
                   f"query={current_query[:60]!r}")
 
-            # --- Action: search + download + verify ---
             if use_google:
                 cands = google_image_search(opt["search_query"], top_k=8)
                 src_tag = "google"
@@ -1221,7 +1298,6 @@ class ReActCollectionAgent(CollectionAgent):
             )
             opt["_last_vr_log"] = vr_log
 
-            # --- Observation string ---
             if ok:
                 obs = f"PASS  {_fmt_vr(vr)}"
             elif vr_log:
@@ -1231,7 +1307,6 @@ class ReActCollectionAgent(CollectionAgent):
                 obs = "FAIL  no_downloadable_candidates"
 
             if ok:
-                # ---- ACCEPT branch: thought is set here, NOT shared with FAIL path ----
                 traj_step = {
                     "step":         step,
                     "query":        current_query,
@@ -1245,7 +1320,6 @@ class ReActCollectionAgent(CollectionAgent):
                 opt["rewritten_query"] = current_query
                 return True, vr, img_path, trajectory
 
-            # ---- FAIL branch: append step WITHOUT thought; LLM fills it in below ----
             traj_step = {
                 "step":         step,
                 "query":        current_query,
@@ -1253,22 +1327,17 @@ class ReActCollectionAgent(CollectionAgent):
                 "observation":  obs,
                 "source":       src_tag,
                 "source_title": title,
-                # NOTE: "thought" intentionally absent here;
-                # it is set below after the LLM call (trajectory[-1]["thought"] = thought)
             }
             trajectory.append(traj_step)
 
             if step == self.react_steps:
-                # Budget exhausted
                 trajectory.append({"step": step + 1, "thought": "Budget exhausted.",
                                     "action": "give_up"})
                 break
 
-            # --- Thought: ask LLM for next action ---
             react_decision = self._llm_think(goal, trajectory)
 
             if react_decision is None:
-                # LLM failed: fall back to rule-based for remainder
                 print(f"      [react] LLM think failed at step {step}, "
                       f"falling back to rule-based for option {k}")
                 fb_ok, fb_src, fb_title, fb_vr, fb_path, fb_log = _resolve_option(
@@ -1292,12 +1361,10 @@ class ReActCollectionAgent(CollectionAgent):
             print(f"      [react] Action : {next_action}"
                   + (f" | query={new_query[:60]!r}" if new_query else ""))
 
-            # Attach LLM thought + next_action to the FAIL step we just appended
             trajectory[-1]["thought"]     = thought
             trajectory[-1]["next_action"] = next_action
 
             if next_action == "accept":
-                # LLM decided to accept even though gates failed — honour it
                 return True, vr_log[-1][1] if vr_log else {}, img_path, trajectory
 
             if next_action == "give_up":
@@ -1313,29 +1380,19 @@ class ReActCollectionAgent(CollectionAgent):
                 use_google = True
                 continue
 
-            # next_action == "rewrite"
             if new_query and new_query not in tried_queries:
                 current_query = new_query
                 tried_queries.add(current_query)
                 opt["rewritten_query"] = current_query
                 use_google    = False
-                current_mode  = self.mode   # reset mode on new query
+                current_mode  = self.mode
             else:
-                # Duplicate query suggested — try relax instead
                 print(f"      [react] query already tried, auto-relax")
                 current_mode = "lenient"
 
         return False, {}, img_path, trajectory
 
-    # ----------------------------------------------------------------
-    # LLM Thought call
-    # ----------------------------------------------------------------
-
-    def _llm_think(self, goal: str, trajectory: list[dict]) -> dict | None:
-        """
-        Call the ReAct LLM with the current trajectory.
-        Returns parsed {thought, action, new_query} or None on failure.
-        """
+    def _llm_think(self, goal: str, trajectory: list):
         prompt = _build_react_prompt(goal, trajectory)
         try:
             raw = call_llm(
@@ -1422,6 +1479,7 @@ def run(plan_path, output_path, image_root, backend, client_url, indice_name,
     vlm_urls  = vlm_urls or [None]
     verifiers = [AttributeVerifier(vlm_url=u, scenario_verify=scenario_verify)
                  for u in vlm_urls]
+    print(f"  VLM endpoints (round-robin): {vlm_urls}")
 
     if Path(output_path).exists():
         existing = load_jsonl(output_path)
