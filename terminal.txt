@@ -76,14 +76,13 @@ python src/collect_images_siglip_top1.py \
   --output data/images_siglip_top1/collection_log.jsonl \
   --workers 8 --top_k 10 --limit 30 --force
 
-python src/collect_images_clip_retrieval.py \
-  --backend local --client-url http://127.0.0.1:1234/knn-service \
-  --indice-name pod_fashion \
+python src/collect_images_siglip_dpv.py \
+  --client-url http://127.0.0.1:1235/knn-service \
   --vlm-urls "http://127.0.0.1:8002/v1,http://127.0.0.1:8003/v1,http://127.0.0.1:8004/v1,http://127.0.0.1:8005/v1" \
-  --workers 4 --top_k 24 \
-  --react off --scenario-verify off \
-  --rewrite on --rewrite-provider vllm_vlm \
-  --verify lenient --limit 30
+  --vlm-model Qwen/Qwen3-VL-30B-A3B-Instruct \
+  --gates prominence,demographic,pattern --gender-lock majority \
+  --image_root data/images_dpv --output data/images_dpv/collection_log.jsonl \
+  --workers 4 --top_k 12 --limit 30 --force
 
 
 

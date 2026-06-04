@@ -27,12 +27,12 @@ Servers:  KNN serve_fsiglip_knn.py :1235 ; VLM OpenAI-compat :8002..:8005
 
 Usage:
 # A) specify
-python src/collect_images_siglip_top1.py --pattern-mode specify \
+python src/collect_images_siglip_top1.py \
+  --plan_path data/options/option_plans.jsonl \
   --client-url http://127.0.0.1:1235/knn-service \
-  --vlm-urls "http://127.0.0.1:8002/v1,http://127.0.0.1:8003/v1,http://127.0.0.1:8004/v1,http://127.0.0.1:8005/v1" \
-  --vlm-model Qwen/Qwen3-VL-30B-A3B-Instruct \
-  --image_root data/img_specify --output data/img_specify/log.jsonl \
-  --workers 4 --top_k 12 --limit 30 --force
+  --image_root data/images_siglip_top1 \
+  --output data/images_siglip_top1/collection_log.jsonl \
+  --workers 8 --top_k 10 --limit 30 --force
 
 # B) verify  (--image_root data/img_verify, --pattern-mode verify)
 # C) both    (--image_root data/img_both,    --pattern-mode both)
