@@ -102,7 +102,7 @@ request `{text, modality, num_images, indice_name}` → `[{url, image_url, capti
 Query text is embedded with the SAME FashionSigLIP model and searched against the index.
 ```bash
 conda activate fsiglip
-python src/serve_fsiglip_knn.py --port 1235 --gpu 0      # leave running (tmux/screen)
+python fsiglip/serve_fsiglip_knn.py --port 1235 --gpu 0      # leave running (tmux/screen)
 ```
 Health + retrieval sanity:
 ```bash
