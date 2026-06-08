@@ -1,41 +1,42 @@
 #!/usr/bin/env python3
 """
-collect_images_siglip_top1.py  (+ gender + optional pattern-coverage)
+collect_images_vit_top1_v2.py  —  TOP-1 + gender + intra-set URL dedup
 ---------------------------------------------------------------------
-TOP-1 FashionSigLIP collector. Always keeps the four options A-D
-gender-consistent (single-word VLM check, fail-open). On the PATTERN axis only,
-it can additionally require the pattern to cover ALMOST THE ENTIRE garment body
-(strict all-over), via three switchable strategies:
+TOP-1 ViT-L/14 CLIP collector (identical logic to the FashionSigLIP v2;
+only the KNN backbone/port differs) with exactly TWO quality constraints, nothing else:
 
-  --pattern-mode off      pure top-1 (gender check only)               [default]
-  --pattern-mode specify  query specification only: append an all-over
-                          phrase to the retrieval query so SigLIP ranks
-                          full-coverage items higher. No extra VLM cost.
-  --pattern-mode verify   VLM verification only: inspect the image and reject
-                          partial/localized patterns (sleeves/trim/half body).
-  --pattern-mode both     specify + verify.
+  1. GENDER consistency across the four options A-D (single-word VLM check,
+     fail-open). The first option that yields a confident man/woman locks the
+     set gender; later options that conflict walk down to the next candidate.
 
-The strict bar for "full": the pattern must blanket essentially the WHOLE body
-(top + bottom of the torso), reading as that pattern at a glance. Sleeves-only,
-collar/trim-only, one panel, or only-upper/only-lower => NOT full.
+  2. INTRA-SET URL DEDUP: the four options of ONE query must be four DIFFERENT
+     images. A candidate URL already used by an earlier option in the same query
+     is skipped (judged on the URL BEFORE downloading, so no wasted bandwidth /
+     VLM call). Dedup is per-query only; different queries may reuse a URL.
 
-COLOR axis is never touched by any pattern mode. gender + pattern share ONE VLM
-call per candidate. All VLM use is fail-open (failure -> pass), so it never
-turns into the SKIP storm from before.
+Plus ONE retrieval-side touch (no VLM): on the PATTERN axis, for any option whose
+target pattern is non-solid, an all-over phrase is appended to the search query so
+the retriever ranks WHOLE-BODY patterns above localized (sleeve/trim-only) ones.
+This is query specification only - it changes the text sent to the KNN server, not
+the candidate filtering. color axis and solid options are never touched.
 
-Servers:  KNN serve_fsiglip_knn.py :1235 ; VLM OpenAI-compat :8002..:8005
+No VLM pattern check, no best-of-k. Pure top-1 walk that short-circuits only on:
+dead URL, duplicate URL (within the query), or gender conflict. All VLM use is
+fail-open.
+
+Servers:  KNN clip-retrieval back (ViT-L/14) :1234 ; VLM OpenAI-compat :8002..:8005
 
 Usage:
-# A) specify
-python src/collect_images_siglip_top1.py \
-  --plan_path data/options/option_plans.jsonl \
-  --client-url http://127.0.0.1:1235/knn-service \
-  --image_root data/images_siglip_top1 \
-  --output data/images_siglip_top1/collection_log.jsonl \
-  --workers 8 --top_k 10 --limit 30 --force
+  python src/collect_images_vit_top1_v2.py \
+    --client-url http://127.0.0.1:1234/knn-service \
+    --vlm-urls "http://127.0.0.1:8002/v1,http://127.0.0.1:8003/v1" \
+    --vlm-model Qwen/Qwen3-VL-4B-Instruct \
+    --image_root data/images_vit_top1 \
+    --output data/images_vit_top1/collection_log.jsonl \
+    --workers 4 --top_k 12 --limit 500 --force
 
-# B) verify  (--image_root data/img_verify, --pattern-mode verify)
-# C) both    (--image_root data/img_both,    --pattern-mode both)
+  # pure top-1 + dedup, NO gender (omit --vlm-urls):
+  python src/collect_images_vit_top1_v2.py --client-url ... --top_k 12
 """
 import argparse
 import base64
@@ -48,7 +49,7 @@ import requests
 from requests.adapters import HTTPAdapter
 from PIL import Image
 
-UA = {"User-Agent": "Mozilla/5.0 (compatible; POD-Bench-SigLIP/1.0)"}
+UA = {"User-Agent": "Mozilla/5.0 (compatible; POD-Bench-ViT/2.0)"}
 
 _SESSION = requests.Session()
 _SESSION.headers.update(UA)
@@ -56,8 +57,53 @@ _adapter = HTTPAdapter(pool_connections=32, pool_maxsize=64, max_retries=0)
 _SESSION.mount("http://", _adapter)
 _SESSION.mount("https://", _adapter)
 
-# Non-pattern targets that should NOT get an all-over phrase appended
+SOURCE_TAG = "vit_top1"
+
+# pattern values that are NOT a real (non-solid) pattern
 _SOLID_LIKE = {"", "solid", "plain", "none"}
+
+
+def _clean(s):
+    return (s or "").strip().lower().replace("_", " ")
+
+
+def specify_query(garment, target_color=None, target_pattern=None,
+                  axis=None, fallback_query=None):
+    """Build ONE natural-language CLIP prompt (not a comma list).
+
+    CLIP/SigLIP text encoders were trained on caption-like sentences and are
+    robust to short natural phrasing ("a photo of a {label}"), not to long
+    keyword pile-ups that blow past the ~77-token limit. So we compose a single
+    sentence template:
+
+        "a full-body product photo of a {color} {garment}[ with an all-over
+         {pattern} print covering the whole garment], the entire garment
+         clearly visible and not cropped"
+
+    - color adjective: included whenever a target color is known.
+    - all-over pattern clause: ONLY on the pattern axis with a non-solid target
+      (color axis / solid -> omitted, so the sentence stays clean).
+    - framing ("full-body product photo ... not cropped") is baked into the
+      template itself, not tacked on as keywords.
+
+    If no garment label is available, fall back to the original search query
+    wrapped minimally as "a full-body product photo of {query}, not cropped"."""
+    g = _clean(garment)
+    c = _clean(target_color)
+    tp = _clean(target_pattern)
+
+    if not g:
+        base = _clean(fallback_query) or "a clothing item"
+        return f"a full-body product photo of {base}, the whole item visible and not cropped"
+
+    head = "a full-body product photo of a"
+    color_adj = f" {c}" if c and c not in ("none", "unknown") else ""
+    pattern_clause = ""
+    if axis == "pattern" and tp not in _SOLID_LIKE:
+        pattern_clause = f" with an all-over {tp} print covering the whole garment"
+
+    return (f"{head}{color_adj} {g}{pattern_clause}, "
+            f"the entire garment clearly visible and not cropped")
 
 
 # -- jsonl io --
@@ -109,33 +155,11 @@ def download_image(url, dest_path, min_side=64, timeout=15):
         return False
 
 
-# -- query specification (retrieval-side) --
-def specify_query(query, target_pattern):
-    """Append a strict all-over phrase. PATTERN axis, non-solid target only."""
-    tp = (target_pattern or "").strip().lower()
-    if tp in _SOLID_LIKE:
-        return query
-    return (f"{query}, {tp} pattern covering the entire garment body, "
-            f"bold all-over print from top to bottom")
-
-
-# -- single VLM call: gender (+ strict full-coverage when asked) --
-_GENDER_ONLY_SYSTEM = (
+# -- single VLM call: gender only --
+_GENDER_SYSTEM = (
     "You see one clothing product image. Reply with ONLY one word: "
     "man, woman, or unclear - the gender of the person modeling the garment. "
     "If it is a flat-lay / mannequin / no person, reply unclear."
-)
-
-_GENDER_PATTERN_SYSTEM = (
-    "You inspect one clothing product image. Judge the MAIN garment.\n"
-    "Return ONLY compact JSON: {\"gender\":\"man|woman|unclear\","
-    "\"pattern_full\":true|false}.\n"
-    "gender: the model's gender; flat-lay/mannequin/no person => unclear.\n"
-    "pattern_full = true ONLY IF the TARGET pattern blankets ALMOST THE ENTIRE "
-    "garment BODY - both the upper and lower torso - so the garment reads as that "
-    "pattern at a glance. Set false if the pattern is ONLY on the sleeves, ONLY "
-    "on the collar/cuffs/trim/hem/pocket, on just one panel, on only the upper OR "
-    "only the lower half, or is a small/localized motif. Be STRICT: when in doubt, false."
 )
 
 
@@ -178,123 +202,114 @@ def _word_to_gender(txt):
     return "unclear"
 
 
-def vlm_check(vlm_url, model, image_path, need_pattern):
-    """Returns (gender, pattern_full).
-    gender in man/woman/unclear; pattern_full in True/False/None.
-    Fail-open: on any failure -> ('unclear', None)."""
-    if not need_pattern:
-        txt = _post_vlm(vlm_url, model, _GENDER_ONLY_SYSTEM,
-                        "man, woman, or unclear?", image_path, max_tokens=6)
-        return _word_to_gender(txt), None
-    txt = _post_vlm(vlm_url, model, _GENDER_PATTERN_SYSTEM,
-                    "Return the JSON.", image_path, max_tokens=40)
-    if not txt:
-        return "unclear", None
-    s, e = txt.find("{"), txt.rfind("}")
-    if s >= 0 and e > s:
-        try:
-            d = json.loads(txt[s:e + 1])
-            return _word_to_gender(d.get("gender")), bool(d.get("pattern_full"))
-        except Exception:
-            pass
-    return _word_to_gender(txt), None  # JSON broke -> gender only, pattern unknown
+def vlm_gender(vlm_url, model, image_path):
+    """Returns gender in man/woman/unclear. Fail-open -> 'unclear'."""
+    txt = _post_vlm(vlm_url, model, _GENDER_SYSTEM,
+                    "man, woman, or unclear?", image_path, max_tokens=6)
+    return _word_to_gender(txt)
+
+
+def _cand_url(c):
+    return c.get("url") or c.get("image_url")
 
 
 def resolve_option_top1(query, img_path, client_url, top_k, indice_name,
-                        vlm_url, vlm_model, target_gender,
-                        active_axis, target_pattern, pattern_mode):
-    """Top-1 that downloads AND is gender-consistent, AND (pattern axis +
-    verify/both) has a strict all-over pattern. Walks down only on: dead URL,
-    gender conflict, or partial pattern. fail-open everywhere.
-    Returns (option_result, seen_gender)."""
-    pat_axis = (active_axis == "pattern")
-    tp = (target_pattern or "").strip().lower()
-    nonsolid = tp not in _SOLID_LIKE
-
-    do_specify = pat_axis and nonsolid and pattern_mode in ("specify", "both")
-    do_verify  = pat_axis and nonsolid and pattern_mode in ("verify", "both")
-
-    q = specify_query(query, target_pattern) if do_specify else query
-    cands = knn_search(client_url, q, top_k=top_k, indice_name=indice_name)
+                        vlm_url, vlm_model, target_gender, used_urls):
+    """Top-1 that (a) downloads, (b) is a NEW url within this query, and
+    (c) is gender-consistent. Walks down only on: dead/dup url or gender
+    conflict. fail-open on VLM. Returns (option_result, seen_gender, chosen_url)."""
+    cands = knn_search(client_url, query, top_k=top_k, indice_name=indice_name)
 
     for rank, c in enumerate(cands):
-        url = c.get("url") or c.get("image_url")
+        url = _cand_url(c)
         if not url:
+            continue
+        if url in used_urls:           # intra-set duplicate -> skip BEFORE download
             continue
         if not download_image(url, img_path):
             continue
 
-        if not vlm_url:  # no VLM -> pure top-1 (with optional specify only)
-            return ({"image_path": str(img_path), "source": "fashionsiglip_top1",
-                     "search_query": q, "rank_used": rank,
+        if not vlm_url:                # pure top-1 + dedup (no gender)
+            return ({"image_path": str(img_path), "source": SOURCE_TAG,
+                     "search_query": query, "rank_used": rank, "url": url,
                      "source_title": c.get("caption", "")[:120],
-                     "similarity": c.get("similarity")}, "unclear")
+                     "similarity": c.get("similarity")}, "unclear", url)
 
-        g, pfull = vlm_check(vlm_url, vlm_model, img_path, need_pattern=do_verify)
-
-        # gender gate (always on)
+        g = vlm_gender(vlm_url, vlm_model, img_path)
         if target_gender in ("man", "woman") and g in ("man", "woman") and g != target_gender:
-            continue
-        # strict full-coverage gate (pattern axis + verify/both); fail-open if None
-        if do_verify and pfull is False:
-            continue
+            continue                   # gender conflict -> next candidate
 
-        rec = {"image_path": str(img_path), "source": "fashionsiglip_top1",
-               "search_query": q, "rank_used": rank,
-               "source_title": c.get("caption", "")[:120],
-               "similarity": c.get("similarity"), "model_gender": g}
-        if do_verify:
-            rec["pattern_full"] = pfull
-        return (rec, g)
+        return ({"image_path": str(img_path), "source": SOURCE_TAG,
+                 "search_query": query, "rank_used": rank, "url": url,
+                 "source_title": c.get("caption", "")[:120],
+                 "similarity": c.get("similarity"), "model_gender": g}, g, url)
 
-    return ({"image_path": None, "source": "FAILED", "search_query": q}, None)
+    return ({"image_path": None, "source": "FAILED", "search_query": query}, None, None)
 
 
 def collect_for_plan(plan, image_root, client_url, top_k, indice_name,
-                     vlm_url, vlm_model, pattern_mode):
+                     vlm_url, vlm_model):
     qid = plan["query_id"]
     out_dir = Path(image_root) / qid
     out_dir.mkdir(parents=True, exist_ok=True)
-    active_axis = plan.get("active_axis")
 
     result = {
         "query_id": qid, "user_id": plan.get("user_id"),
         "domain": plan.get("domain", "fashion"),
-        "active_axis": active_axis,
+        "active_axis": plan.get("active_axis"),
         "main_category": plan.get("main_category"),
         "scenario_archetype": plan.get("scenario_archetype"),
         "options": {}, "all_collected": False, "skipped": False,
-        "set_gender": None,
+        "set_gender": None, "gender_consistent": True,
     }
 
+    active_axis = plan.get("active_axis")
     n_ok = 0
     target_gender = None
+    used_urls = set()                  # per-query URL dedup
+    genders_seen = []
     for k in "ABCD":
         opt = plan["options"][k]
-        query = opt["search_query"]
-        target_pattern = (opt.get("attributes", {}) or {}).get("pattern")
+        attrs = opt.get("attributes", {}) or {}
+        # build ONE natural-language CLIP prompt from the option's attributes:
+        #   - garment label + color adjective always
+        #   - all-over pattern clause only on pattern axis + non-solid
+        #   - full-body / not-cropped framing baked into the template
+        target_color = attrs.get("color")
+        target_pattern = attrs.get("pattern")
+        query = specify_query(attrs.get("garment_category"),
+                              target_color=target_color,
+                              target_pattern=target_pattern,
+                              axis=active_axis,
+                              fallback_query=opt.get("search_query"))
         img_path = out_dir / f"{k}.jpg"
-        res, seen = resolve_option_top1(
+        res, seen, url = resolve_option_top1(
             query, img_path, client_url, top_k, indice_name,
-            vlm_url, vlm_model, target_gender,
-            active_axis, target_pattern, pattern_mode)
+            vlm_url, vlm_model, target_gender, used_urls)
         result["options"][k] = res
         if res["image_path"]:
             n_ok += 1
-            if target_gender is None and seen in ("man", "woman"):
-                target_gender = seen
+            if url:
+                used_urls.add(url)
+            if seen in ("man", "woman"):
+                genders_seen.append(seen)
+                if target_gender is None:
+                    target_gender = seen
 
     result["set_gender"] = target_gender
+    # consistency = all confident genders agree with the locked target
+    if target_gender and genders_seen:
+        result["gender_consistent"] = all(g == target_gender for g in genders_seen)
     result["all_collected"] = (n_ok == 4)
     result["skipped"] = (n_ok < 4)
     return result
 
 
 def run(plan_path, output_path, image_root, client_url, indice_name,
-        limit, top_k, workers, vlm_urls, vlm_model, pattern_mode):
+        limit, top_k, workers, vlm_urls, vlm_model):
     plans = load_jsonl(plan_path)
-    print(f"Loaded {len(plans)} plans  | server={client_url}  top_k={top_k}  "
-          f"pattern_mode={pattern_mode}")
+    print(f"Loaded {len(plans)} plans | server={client_url} top_k={top_k} "
+          f"(gender={'on' if vlm_urls and vlm_urls[0] else 'off'}, intra-set dedup=on)")
     vlm_urls = vlm_urls or [None]
     print(f"  VLM: {vlm_urls}  model={vlm_model}")
 
@@ -318,7 +333,7 @@ def run(plan_path, output_path, image_root, client_url, indice_name,
         idx, plan = idx_plan
         vlm_url = vlm_urls[idx % len(vlm_urls)]
         return collect_for_plan(plan, image_root, client_url, top_k, indice_name,
-                                vlm_url, vlm_model, pattern_mode)
+                                vlm_url, vlm_model)
 
     n_workers = max(1, workers)
     if n_workers == 1:
@@ -353,8 +368,10 @@ def run(plan_path, output_path, image_root, client_url, indice_name,
     save_jsonl(results, output_path)
     n_done = sum(1 for r in results if r.get("all_collected"))
     n_skip = sum(1 for r in results if r.get("skipped"))
+    n_gincons = sum(1 for r in results if r.get("gender_consistent") is False)
     print(f"\nSaved {len(results)}: complete={n_done} "
-          f"({n_done/max(len(results),1):.0%}), skipped={n_skip}")
+          f"({n_done/max(len(results),1):.0%}), skipped={n_skip}, "
+          f"gender_inconsistent={n_gincons}")
 
 
 def selftest(client_url, indice_name, top_k):
@@ -362,7 +379,7 @@ def selftest(client_url, indice_name, top_k):
         cands = knn_search(client_url, q, top_k=top_k, indice_name=indice_name)
         print(f"\nquery: {q!r}  -> {len(cands)} candidates")
         for i, c in enumerate(cands[:5]):
-            print(f"  [{i}] {c.get('similarity')} | {c.get('caption','')[:70]}")
+            print(f"  [{i}] {c.get('similarity')} | {_cand_url(c)} | {c.get('caption','')[:60]}")
 
 
 def main():
@@ -370,17 +387,14 @@ def main():
     ap.add_argument("--plan_path", type=Path,
                     default=Path("data/options/option_plans.jsonl"))
     ap.add_argument("--output", type=Path,
-                    default=Path("data/images_siglip_top1/collection_log.jsonl"))
+                    default=Path("data/images_vit_top1/collection_log.jsonl"))
     ap.add_argument("--image_root", type=Path,
-                    default=Path("data/images_siglip_top1"))
-    ap.add_argument("--client-url", default="http://127.0.0.1:1235/knn-service")
+                    default=Path("data/images_vit_top1"))
+    ap.add_argument("--client-url", default="http://127.0.0.1:1234/knn-service")
     ap.add_argument("--indice-name", default="pod_fashion")
     ap.add_argument("--vlm-urls", default="",
-                    help="comma-separated VLM endpoints; empty = pure top-1 (no gender, no pattern)")
+                    help="comma-separated VLM endpoints; empty = top-1 + dedup, no gender")
     ap.add_argument("--vlm-model", default="Qwen/Qwen3-VL-4B-Instruct")
-    ap.add_argument("--pattern-mode", choices=["off", "specify", "verify", "both"],
-                    default="off",
-                    help="pattern-axis full-coverage strategy (color axis untouched)")
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--top_k", type=int, default=12)
     ap.add_argument("--workers", type=int, default=4)
@@ -396,7 +410,7 @@ def main():
     vlm_urls = [u.strip() for u in args.vlm_urls.split(",") if u.strip()] or None
     run(args.plan_path, args.output, args.image_root,
         args.client_url, args.indice_name, args.limit, args.top_k, args.workers,
-        vlm_urls=vlm_urls, vlm_model=args.vlm_model, pattern_mode=args.pattern_mode)
+        vlm_urls=vlm_urls, vlm_model=args.vlm_model)
 
 
 if __name__ == "__main__":

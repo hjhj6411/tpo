@@ -1,42 +1,32 @@
 #!/usr/bin/env python3
 """
-eval_vlm_judge.py  —  simple VLM-as-judge for collection quality
------------------------------------------------------------------
-The lean alternative to the 3-layer eval. For each collected option image, show
-the judge VLM the image AND the plan's target attributes, and ask it to rate how
-well the image matches the target. No extraction step, no rule matching, no
-canonicalization — the model judges directly.
+eval_vlm_judge_r5.py  —  VLM-as-judge with a detailed 1-5 per-axis rubric
+-------------------------------------------------------------------------
+Stricter successor to eval_vlm_judge.py. Instead of one coarse 0-3 score, the
+judge grades THREE axes independently on a 1-5 scale with behavioral anchors
+(Prometheus-style rubric), which curbs the "everything looks ~3, give it a 4"
+leniency. Code combines them; pattern coverage is baked into the pattern score.
 
-Per option it returns:
-  match    : 0..3 integer  (0 wrong, 1 weak, 2 mostly, 3 perfect match of
-             garment+color+pattern to the target)
-  pattern_full : "yes"/"no"/"na"  (na unless target pattern is non-solid) —
-             does the target pattern cover the WHOLE garment body, not just sleeves/trim
-  notes    : one short phrase (why, if not perfect)
+Per option the judge returns:
+  garment 1-5, color 1-5, pattern 1-5   (each with explicit anchors)
+  pattern_full : yes/no/na   (yes only if pattern score >= 4; na if target solid)
+  set_ok       : yes/no      (no if child model / uninterpretable crop)
+  notes        : <=10 words
 
-Sampling: by default judges a random ~N images across one or more collection logs
-(stratified to over-sample pattern-axis non-solid options, which carry the key
-claim). Resumable. Reports mean match score and pattern_full accuracy per method
-and per active axis, plus a rough $ cost estimate.
+gpt-5 fix: reasoning models spend the token budget on hidden reasoning first, so
+a small max_completion_tokens yields an EMPTY content (finish_reason="length").
+We set max_completion_tokens=512 and reasoning_effort="minimal" (this is a narrow
+perceptual judgment; minimal effort is appropriate and keeps cost/latency low).
 
-Judge backends (pick with --provider):
-  gpt5_nano : OpenAI gpt-5-nano (vision, ~$0.05/M in, $0.40/M out — 500 imgs < $1).
-              needs OPENAI_API_KEY. Uses max_completion_tokens, no temperature.
-  vllm      : any local OpenAI-compatible endpoint (--vlm-url, --vlm-model).
+Backends: gpt5_nano (OpenAI gpt-5-nano, vision) or vllm (local OpenAI-compatible).
 
 Usage:
   export OPENAI_API_KEY=sk-...
-  python src/eval_vlm_judge.py \
+  python scripts/eval_vlm_judge_r5.py \
     --logs dpv:data/images_dpv/collection_log.jsonl,off:data/images_siglip_top1/collection_log.jsonl \
     --plans data/options/option_plans.jsonl \
-    --provider gpt5_nano --n 500 --oversample-pattern \
-    --out data/eval/judge.jsonl --report data/eval/judge_report.json
-
-  # local model instead:
-  python src/eval_vlm_judge.py --logs dpv:data/images_dpv/collection_log.jsonl \
-    --plans data/options/option_plans.jsonl \
-    --provider vllm --vlm-url http://127.0.0.1:8002/v1 --vlm-model Qwen/Qwen3-VL-30B-A3B-Instruct \
-    --n 500 --out data/eval/judge.jsonl --report data/eval/judge_report.json
+    --provider gpt5_nano --n 300 --oversample-pattern \
+    --out data/eval/judge_r5.jsonl --report data/eval/judge_r5_report.json --force
 """
 import argparse
 import base64
@@ -56,26 +46,49 @@ _SESSION.mount("http://", HTTPAdapter(pool_connections=16, pool_maxsize=32, max_
 
 _SOLID_LIKE = {"", "solid", "plain", "none"}
 
-JUDGE_SYSTEM = (
-    "You are a strict fashion product-image grader for a benchmark. You are given "
-    "ONE image and the TARGET attributes the image was supposed to depict. Judge "
-    "the MAIN garment only. Ignore background and accessories.\n\n"
-    "Return ONLY compact JSON:\n"
-    '{"match": 0|1|2|3, "pattern_full": "yes"|"no"|"na", "notes": "<=8 words"}\n\n'
-    "match = how well the image matches ALL THREE target attributes (garment type, "
-    "color, pattern):\n"
-    "  3 = perfect: garment, color, and pattern all clearly match the target.\n"
-    "  2 = mostly: two of the three match; one is slightly off.\n"
-    "  1 = weak: only one attribute matches, or the garment is hard to see / draped / "
-    "the image is badly framed.\n"
-    "  0 = wrong: the main garment does not match the target garment, or it is a "
-    "different gender/child model that breaks the set, or no garment is visible.\n"
-    "pattern_full (judge the BODY only, EXCLUDING sleeves/collar/cuffs/trim/hem):\n"
-    "  if target pattern is solid/none -> \"na\".\n"
-    "  else \"yes\" only if the target pattern covers ALMOST THE ENTIRE body "
-    "(upper+lower torso); \"no\" if it is only on sleeves/trim/one panel/half/localized. "
-    "Be strict: when in doubt, \"no\"."
-)
+JUDGE_SYSTEM = """You are a STRICT fashion product-image grader for an academic benchmark.
+You are given ONE image and the TARGET attributes it was supposed to depict. Judge the
+MAIN garment only; ignore background, accessories, and any secondary draped/tied garment.
+Grade THREE axes independently on a 1-5 scale using the exact anchors below. Do NOT be
+lenient: if an axis is ambiguous or you are unsure, give the LOWER score.
+
+Return ONLY compact JSON:
+{"garment":1-5,"color":1-5,"pattern":1-5,"pattern_full":"yes"|"no"|"na","set_ok":"yes"|"no","notes":"<=10 words"}
+
+garment (does the main garment TYPE match the target type?):
+  5 = exactly the target garment type.
+  4 = same functional category, minor sub-type difference (e.g. coat vs trench coat).
+  3 = related but clearly different cut/type.
+  2 = wrong garment but same broad area (a top when a top was wanted, etc.).
+  1 = different garment entirely, or no identifiable garment.
+
+color (does the dominant BODY color match the target color?):
+  5 = the target color clearly dominates the garment body.
+  4 = target color present and dominant but the shade is slightly off.
+  3 = target color is only one of several, not clearly dominant.
+  2 = a neighboring/confusable color dominates (e.g. navy vs blue, beige vs white).
+  1 = a clearly different color dominates.
+
+pattern (does the target PATTERN appear AND cover the body? judge the BODY only,
+EXCLUDING sleeves/collar/cuffs/trim/hem/pocket):
+  if the target pattern is solid/plain:
+    5 = body is plain solid; 3 = minor unwanted texture; 1 = an unwanted pattern covers the body.
+  if the target pattern is non-solid (plaid/striped/floral/polka_dot/checkered/
+  graphic_print/camouflage/animal_print):
+    5 = the target pattern, covering ALMOST THE ENTIRE body (upper AND lower torso).
+    4 = the target pattern over a clear majority of the body.
+    3 = the target pattern on only about half the body, OR the right pattern family but
+        coverage is ambiguous.
+    2 = pattern only LOCALIZED (sleeves / collar / trim / one panel / only-upper or
+        only-lower), OR a different but related pattern.
+    1 = no such pattern on the body, or a clearly wrong pattern.
+
+pattern_full = "na" if the target is solid; otherwise "yes" ONLY if the pattern score is
+>= 4 (covers most/all of the body), else "no". Be strict: when in doubt, "no".
+set_ok = "no" if the model is a child/baby, or the garment is so cropped/draped that you
+cannot tell what it is; otherwise "yes".
+A repeating heart / star / character / novelty / logo / text motif counts as graphic_print,
+NOT polka_dot and NOT checkered."""
 
 
 def load_jsonl(path):
@@ -118,11 +131,18 @@ def target_text(attrs):
     return f"garment={g}; color={c}; pattern={p}"
 
 
+def _as_int_1_5(v):
+    try:
+        n = int(round(float(v)))
+        return min(5, max(1, n))
+    except Exception:
+        return None
+
+
 def call_judge(provider, api_base, model, image_path, attrs, api_key=None,
                timeout=90, retries=3):
-    """Return parsed judge dict, or {} on failure."""
     user_text = (f"TARGET attributes: {target_text(attrs)}\n"
-                 f"Grade how well the image matches the target. Return the JSON.")
+                 f"Grade the three axes with the rubric. Return the JSON.")
     content = [
         {"type": "image_url",
          "image_url": {"url": f"data:image/jpeg;base64,{b64_image(image_path)}"}},
@@ -132,24 +152,29 @@ def call_judge(provider, api_base, model, image_path, attrs, api_key=None,
                "messages": [{"role": "system", "content": JUDGE_SYSTEM},
                             {"role": "user", "content": content}]}
     if provider == "gpt5_nano":
-        payload["max_completion_tokens"] = 60        # gpt-5 family: no temperature, use this
+        payload["max_completion_tokens"] = 512        # room for hidden reasoning + JSON
+        payload["reasoning_effort"] = "minimal"       # narrow judgment; minimal is enough
     else:
-        payload["max_tokens"] = 60
+        payload["max_tokens"] = 200
         payload["temperature"] = 0.0
     headers = {"Content-Type": "application/json"}
     if api_key:
         headers["Authorization"] = f"Bearer {api_key}"
     url = f"{api_base.rstrip('/')}/chat/completions"
 
+    last = "unparseable"
     for attempt in range(retries):
         try:
             r = _SESSION.post(url, json=payload, headers=headers, timeout=timeout)
             if r.status_code != 200:
                 if 400 <= r.status_code < 500 and r.status_code != 429:
                     return {"_error": f"HTTP {r.status_code}: {r.text[:160]}"}
+                last = f"HTTP {r.status_code}"
                 time.sleep(1.5 * (attempt + 1)); continue
             data = r.json()
-            txt = (data["choices"][0]["message"].get("content") or "")
+            msg = data["choices"][0].get("message", {})
+            txt = (msg.get("content") or "")
+            fr = data["choices"][0].get("finish_reason")
             usage = data.get("usage", {})
             if "</think>" in txt:
                 txt = txt.split("</think>", 1)[1]
@@ -159,10 +184,12 @@ def call_judge(provider, api_base, model, image_path, attrs, api_key=None,
                 d["_usage"] = {"in": usage.get("prompt_tokens", 0),
                                "out": usage.get("completion_tokens", 0)}
                 return d
+            last = f"empty_content(finish={fr})"
+            time.sleep(1.0 * (attempt + 1))
         except Exception as ex:
-            time.sleep(1.5 * (attempt + 1))
             last = str(ex)[:160]
-    return {"_error": locals().get("last", "unparseable")}
+            time.sleep(1.5 * (attempt + 1))
+    return {"_error": last}
 
 
 def collect_jobs(logs, plans_by_qid, done_keys):
@@ -201,9 +228,7 @@ def sample_jobs(jobs, n, oversample_pattern, pattern_frac, seed):
         n_pat = min(len(pat), int(round(n * pattern_frac)))
         chosen = pat[:n_pat] + oth[:max(0, n - n_pat)]
     else:
-        chosen = jobs[:]
-        rng.shuffle(chosen)
-        chosen = chosen[:n]
+        chosen = jobs[:]; rng.shuffle(chosen); chosen = chosen[:n]
     rng.shuffle(chosen)
     return chosen
 
@@ -225,13 +250,17 @@ def run(args):
 
     out = Path(args.out)
     existing = load_jsonl(out)
-    done = {f"{r['method']}|{r['query_id']}|{r['option']}" for r in existing}
+    # only treat SUCCESSFUL rows as done -> failed rows auto-retry on rerun
+    done = {f"{r['method']}|{r['query_id']}|{r['option']}" for r in existing
+            if isinstance(r.get("judge"), dict) and "_error" not in r["judge"]
+            and "garment" in r["judge"]}
     jobs = collect_jobs(logs, plans_by_qid, done)
     jobs = sample_jobs(jobs, args.n, args.oversample_pattern, args.pattern_frac, args.seed)
     print(f"  methods={[m for m,_ in logs]}  to judge: {len(jobs)}  "
           f"(already done {len(done)})  provider={args.provider} model={model}")
 
-    results = existing
+    # keep only successful prior rows in the output (drop stale error rows)
+    results = [r for r in existing if f"{r['method']}|{r['query_id']}|{r['option']}" in done]
     import threading
     from concurrent.futures import ThreadPoolExecutor, as_completed
     lock = threading.Lock()
@@ -253,12 +282,11 @@ def run(args):
                 results.append({"method": job["method"], "query_id": job["query_id"],
                                 "option": job["option"], "active_axis": job["active_axis"],
                                 "pattern_nonsolid": job["pattern_nonsolid"],
-                                "target": target_text(job["attrs"]),
-                                "judge": d})
+                                "target": target_text(job["attrs"]), "judge": d})
                 n += 1
                 if n % 25 == 0:
-                    print(f"  [{n}/{len(jobs)}] last={d.get('match','?')}/"
-                          f"{d.get('pattern_full','?')}")
+                    g = d.get("garment", "?"); c = d.get("color", "?"); p = d.get("pattern", "?")
+                    print(f"  [{n}/{len(jobs)}] last g/c/p={g}/{c}/{p} pf={d.get('pattern_full','?')}")
                 if n % 50 == 0:
                     _save(results, out)
     _save(results, out)
@@ -273,17 +301,24 @@ def _save(rows, path):
 
 
 def report(results, tok_in, tok_out, provider, report_path):
-    by = defaultdict(lambda: {"n": 0, "match_sum": 0, "match_n": 0,
-                              "pf_yes": 0, "pf_n": 0, "err": 0})
+    by = defaultdict(lambda: {"n": 0, "err": 0,
+                              "g_sum": 0, "c_sum": 0, "p_sum": 0, "axis_n": 0,
+                              "overall_sum": 0.0,
+                              "pf_yes": 0, "pf_n": 0, "setbad": 0})
+
     def bucket(key, r):
         b = by[key]; b["n"] += 1
         j = r["judge"]
-        if not isinstance(j, dict) or "_error" in j or "match" not in j:
+        if not isinstance(j, dict) or "_error" in j or "garment" not in j:
             b["err"] += 1; return
-        try:
-            b["match_sum"] += int(j["match"]); b["match_n"] += 1
-        except Exception:
-            b["err"] += 1
+        g = _as_int_1_5(j.get("garment")); c = _as_int_1_5(j.get("color")); p = _as_int_1_5(j.get("pattern"))
+        if None in (g, c, p):
+            b["err"] += 1; return
+        b["axis_n"] += 1
+        b["g_sum"] += g; b["c_sum"] += c; b["p_sum"] += p
+        b["overall_sum"] += (g + c + p) / 3.0
+        if str(j.get("set_ok")).lower() == "no":
+            b["setbad"] += 1
         if r["pattern_nonsolid"] and str(j.get("pattern_full")).lower() in ("yes", "no"):
             b["pf_n"] += 1
             if str(j.get("pattern_full")).lower() == "yes":
@@ -294,30 +329,33 @@ def report(results, tok_in, tok_out, provider, report_path):
         bucket(f"axis:{r['active_axis']}", r)
         bucket("ALL", r)
 
-    def line(key):
-        b = by[key]
-        ma = b["match_sum"] / b["match_n"] if b["match_n"] else float("nan")
-        pf = b["pf_yes"] / b["pf_n"] if b["pf_n"] else float("nan")
-        return (f"  {key:22s} n={b['n']:4d}  mean_match={ma:4.2f}/3  "
-                f"pattern_full_acc={'  n/a' if pf!=pf else f'{pf*100:5.1f}%'} "
-                f"(pf_n={b['pf_n']})  err={b['err']}")
+    def avg(s, n):
+        return (s / n) if n else float("nan")
 
-    print("\n" + "=" * 78)
-    print("  VLM-AS-JUDGE COLLECTION QUALITY")
-    print("=" * 78)
+    def line(key):
+        b = by[key]; an = b["axis_n"]
+        g = avg(b["g_sum"], an); c = avg(b["c_sum"], an); p = avg(b["p_sum"], an)
+        ov = avg(b["overall_sum"], an)
+        pf = avg(b["pf_yes"], b["pf_n"])
+        pfs = "  n/a" if pf != pf else f"{pf*100:5.1f}%"
+        return (f"  {key:20s} n={b['n']:4d} ok={an:4d} err={b['err']:3d} | "
+                f"garment={g:4.2f} color={c:4.2f} pattern={p:4.2f} overall={ov:4.2f}/5 | "
+                f"pattern_full={pfs}(pf_n={b['pf_n']}) set_bad={b['setbad']}")
+
+    print("\n" + "=" * 104)
+    print("  VLM-AS-JUDGE (1-5 rubric)   per-axis means + pattern_full accuracy")
+    print("=" * 104)
     for key in [k for k in by if k.startswith("method:")] + \
                [k for k in by if k.startswith("axis:")] + ["ALL"]:
         print(line(key))
 
-    # rough cost (gpt-5-nano: $0.05/M in, $0.40/M out)
     cost = None
     if provider == "gpt5_nano" and (tok_in or tok_out):
         cost = tok_in / 1e6 * 0.05 + tok_out / 1e6 * 0.40
         print(f"\n  tokens in={tok_in:,} out={tok_out:,}  est_cost=${cost:.3f} (gpt-5-nano)")
 
     rep = {"by": {k: dict(v) for k, v in by.items()},
-           "tokens": {"in": tok_in, "out": tok_out},
-           "est_cost_usd": cost}
+           "tokens": {"in": tok_in, "out": tok_out}, "est_cost_usd": cost}
     Path(report_path).parent.mkdir(parents=True, exist_ok=True)
     with open(report_path, "w") as f:
         json.dump(rep, f, ensure_ascii=False, indent=2, default=str)
@@ -326,19 +364,18 @@ def report(results, tok_in, tok_out, provider, report_path):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--logs", required=True, help="method:path,... collection logs")
+    ap.add_argument("--logs", required=True)
     ap.add_argument("--plans", type=Path, default=Path("data/options/option_plans.jsonl"))
     ap.add_argument("--provider", choices=["gpt5_nano", "vllm"], default="gpt5_nano")
-    ap.add_argument("--vlm-url", default="http://127.0.0.1:8002/v1", help="for --provider vllm")
-    ap.add_argument("--vlm-model", default=None,
-                    help="override model id (default gpt-5-nano / Qwen3-VL-30B)")
-    ap.add_argument("--n", type=int, default=500, help="images to judge (0=all)")
+    ap.add_argument("--vlm-url", default="http://127.0.0.1:8002/v1")
+    ap.add_argument("--vlm-model", default=None)
+    ap.add_argument("--n", type=int, default=300)
     ap.add_argument("--oversample-pattern", action="store_true")
     ap.add_argument("--pattern-frac", type=float, default=0.5)
     ap.add_argument("--workers", type=int, default=8)
     ap.add_argument("--seed", type=int, default=7)
-    ap.add_argument("--out", type=Path, default=Path("data/eval/judge.jsonl"))
-    ap.add_argument("--report", type=Path, default=Path("data/eval/judge_report.json"))
+    ap.add_argument("--out", type=Path, default=Path("data/eval/judge_r5.jsonl"))
+    ap.add_argument("--report", type=Path, default=Path("data/eval/judge_r5_report.json"))
     ap.add_argument("--force", action="store_true")
     args = ap.parse_args()
     if args.force and Path(args.out).exists():
