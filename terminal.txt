@@ -28,17 +28,17 @@ python src/collect_images_siglip_top1_v2.py \
   --output data/images_siglip_top1/collection_log.jsonl \
   --top_k 16 --workers 4 --force
 
-vllm serve Qwen/Qwen3-VL-4B-Instruct \
+vllm serve Qwen/Qwen3-VL-30B-A3B-Instruct \
   --port 8002 --max-model-len 32768 \
   --limit-mm-per-prompt '{"image": 1}' \
-  --tensor-parallel-size 2
+  --tensor-parallel-size 4
 vllm serve Qwen/Qwen3-VL-Reranker-8B \
   --port 8010 \
   --runner pooling \
   --trust-remote-code \
-  --gpu_memory_utilization 0.6 \
+  --gpu_memory_utilization 0.9 \
   --hf-overrides '{"architectures":["Qwen3VLForSequenceClassification"],"classifier_from_token":["no","yes"],"is_original_qwen3_reranker":true}' \
-  --tensor-parallel-size 3
+  --tensor-parallel-size 2
 
 
 
