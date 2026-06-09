@@ -33,7 +33,7 @@ Usage:
     --coverage-url http://127.0.0.1:1235/patch-coverage \
     --vlm-urls "http://127.0.0.1:8002/v1,http://127.0.0.1:8003/v1" \
     --vlm-model Qwen/Qwen3-VL-4B-Instruct \
-    --image_root data/images_siglip_cov \
+    --image_root data/images_siglip_cov_q \
     --output data/images_siglip_cov/collection_log.jsonl \
     --top_k 12 --grid 5 --workers 4 --force
 

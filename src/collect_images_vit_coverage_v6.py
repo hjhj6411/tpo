@@ -40,7 +40,7 @@ python src/collect_images_vit_coverage_v6.py \
 --vlm-model Qwen/Qwen3-VL-30B-A3B-Instruct \
 --image_root data/images_vit_cov \
 --output data/images_vit_cov/collection_log.jsonl \
---top_k 12 --grid 5 --workers 4 --force
+--top_k 12 --grid 5 --workers 4 --force --limit 10
 
   # coverage + dedup, NO gender (omit --vlm-urls)
 """
@@ -76,29 +76,31 @@ def _clean(s):
 
 def specify_query(garment, target_color=None, target_pattern=None,
                   axis=None, fallback_query=None):
-    """C1_allover query (validated by the coverage diagnostics): the proven
-    all-over phrase on the T4 'studio product shot' skeleton.
-
-        "a {color} {garment} with an all-over {pattern} pattern,
-         studio product shot, not cropped"
-
-    - color adjective when known.
-    - all-over clause ONLY on the pattern axis with a non-solid target.
-    - no garment label -> minimal wrapper on the raw query."""
     g = _clean(garment)
     c = _clean(target_color)
     tp = _clean(target_pattern)
 
     if not g:
-        base = _clean(fallback_query) or "a clothing item"
-        return f"a {base}, studio product shot, not cropped"
+        base = _clean(fallback_query) or "clothing"
+        return (
+            f"a fashion catalog photo of a person wearing {base}, "
+            f"entire garment visible, plain background"
+        ).replace("  ", " ")
 
     color_adj = f"{c} " if c and c not in ("none", "unknown") else ""
-    pattern_clause = ""
+    garment_core = f"{color_adj}{g}".replace("  ", " ").strip()
+
     if axis == "pattern" and tp not in _SOLID_LIKE:
-        pattern_clause = f" with an all-over {tp} pattern"
-    return (f"a {color_adj}{g}{pattern_clause}, "
-            f"studio product shot, not cropped").replace("  ", " ")
+        return (
+            f"a fashion catalog photo of a person wearing "
+            f"a {garment_core} with an all-over {tp} pattern, "
+            f"front view, entire garment visible, plain background"
+        ).replace("  ", " ")
+
+    return (
+        f"a fashion catalog photo of a person wearing "
+        f"a {garment_core}, front view, entire garment visible, plain background"
+    ).replace("  ", " ")
 
 
 def coverage_score_urls(coverage_url, urls, pattern, color, garment, grid):
