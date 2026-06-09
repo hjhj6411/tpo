@@ -27,13 +27,16 @@ Servers:  KNN+coverage serve_fsiglip_knn.py :1235 ; VLM OpenAI-compat :8002..
 Defaults: --top_k 12 --grid 5
 
 Usage:
-python src/collect_images_siglip_coverage_v6.py \
-  --plan_path data/options/option_plans.jsonl \
-  --client-url   http://127.0.0.1:1235/knn-service \
-  --coverage-url http://127.0.0.1:1235/patch-coverage \
-  --vlm-urls "http://127.0.0.1:8002/v1,http://127.0.0.1:8003/v1,http://127.0.0.1:8004/v1,http://127.0.0.1:8005/v1" --vlm-model Qwen/Qwen3-VL-30B-A3B-Instruct \
-  --image_root data/images_siglip_cov --top_k 12 --grid 5 \
-  --limit 20 --workers 4 --verbose --force
+  python src/collect_images_siglip_coverage_v6.py \
+    --plan_path data/options/option_plans.jsonl \
+    --client-url   http://127.0.0.1:1235/knn-service \
+    --coverage-url http://127.0.0.1:1235/patch-coverage \
+    --vlm-urls "http://127.0.0.1:8002/v1,http://127.0.0.1:8003/v1" \
+    --vlm-model Qwen/Qwen3-VL-4B-Instruct \
+    --image_root data/images_siglip_cov \
+    --output data/images_siglip_cov/collection_log.jsonl \
+    --top_k 12 --grid 5 --workers 4 --force
+
   # coverage + dedup, NO gender (omit --vlm-urls)
 """
 import argparse
@@ -68,30 +71,31 @@ def _clean(s):
 
 def specify_query(garment, target_color=None, target_pattern=None,
                   axis=None, fallback_query=None):
-    """C1_allover query (validated by the coverage diagnostics): the proven
-    all-over phrase on the T4 'studio product shot' skeleton.
-
-        "a {color} {garment} with an all-over {pattern} pattern,
-         studio product shot, not cropped"
-
-    - color adjective when known.
-    - all-over clause ONLY on the pattern axis with a non-solid target.
-    - no garment label -> minimal wrapper on the raw query."""
     g = _clean(garment)
     c = _clean(target_color)
     tp = _clean(target_pattern)
 
     if not g:
-        base = _clean(fallback_query) or "a clothing item"
-        return f"a {base}, studio product shot, not cropped"
+        base = _clean(fallback_query) or "clothing"
+        return (
+            f"a fashion catalog photo of a person wearing {base}, "
+            f"entire garment visible, plain background"
+        ).replace("  ", " ")
 
     color_adj = f"{c} " if c and c not in ("none", "unknown") else ""
-    pattern_clause = ""
-    if axis == "pattern" and tp not in _SOLID_LIKE:
-        pattern_clause = f" with an all-over {tp} pattern"
-    return (f"a {color_adj}{g}{pattern_clause}, "
-            f"studio product shot, not cropped").replace("  ", " ")
+    garment_core = f"{color_adj}{g}".replace("  ", " ").strip()
 
+    if axis == "pattern" and tp not in _SOLID_LIKE:
+        return (
+            f"a fashion catalog photo of a person wearing "
+            f"a {garment_core} with an all-over {tp} pattern, "
+            f"front view, entire garment visible, plain background"
+        ).replace("  ", " ")
+
+    return (
+        f"a fashion catalog photo of a person wearing "
+        f"a {garment_core}, front view, entire garment visible, plain background"
+    ).replace("  ", " ")
 
 def coverage_score_urls(coverage_url, urls, pattern, color, garment, grid):
     """Score patch coverage for a list of candidate URLs via the server's

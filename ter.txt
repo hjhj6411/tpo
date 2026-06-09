@@ -1,4 +1,4 @@
-CUDA_VISIBLE_DEVICES=2 vllm serve Qwen/Qwen3-VL-Reranker-8B   --port 8010 --runner pooling --trust-remote-code   --gpu_memory_utilization 0.7 --max-model-len 4096   --hf-overrides '{"architectures":["Qwen3VLForSequenceClassification"],"classifier_from_token":["no","yes"],"is_original_qwen3_reranker":true}'
+CUDA_VISIBLE_DEVICES=2 vllm serve Qwen/Qwen3-VL-Reranker-8B   --port 8010 --runner pooling --trust-remote-code   --gpu_memory_utilization 0.9 --max-model-len 4096   --hf-overrides '{"architectures":["Qwen3VLForSequenceClassification"],"classifier_from_token":["no","yes"],"is_original_qwen3_reranker":true}'
 
 vllm serve Qwen/Qwen3-VL-4B-Instruct   --port 8002 --max-model-len 32768   --limit-mm-per-prompt '{"image": 1}'   --tensor-parallel-size 1
 
@@ -28,3 +28,5 @@ python scripts/diag_patch_coverage.py \
   --images data/eval/rerank_c1 \
   --model hf-hub:Marqo/marqo-fashionSigLIP --gpu 0 \
   --grid 3 --pattern checkered
+
+  python src/collect_images_siglip_coverage_v6.py   --plan_path data/options/option_plans.jsonl   --client-url   http://127.0.0.1:1235/knn-service   --coverage-url http://127.0.0.1:1235/patch-coverage   --vlm-urls "http://127.0.0.1:8002/v1,http://127.0.0.1:8003/v1,http://127.0.0.1:8004/v1,http://127.0.0.1:8005/v1" --vlm-model Qwen/Qwen3-VL-30B-A3B-Instruct   --image_root data/images_siglip_cov_q --top_k 12 --grid 5   --limit 20 --workers 4 --verbose --force
