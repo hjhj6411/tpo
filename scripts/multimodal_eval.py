@@ -23,13 +23,13 @@ python scripts/multimodal_eval.py \
   --profiles data/profiles/profiles.jsonl \
   --image-root data/images_siglip_cov_q \
   --base-urls http://127.0.0.1:8002/v1 \
-  --model Qwen/Qwen2.5-VL-72B-Instruct-AWQ \
+  --model Qwen/Qwen2.5-VL-7B-Instruct \
   --concurrency 8 \
   --enable-thinking \
   --limit 1000 \
-  --out-dir data/eval_multimodal_it \
-  --enable-thinking --image-only-options
-
+  --out-dir data/eval_multimodal \
+  --image-only-options \
+  --enable-thinking 
   # 단일 모드
   python multimodal_eval_fast.py --profile-mode no --limit 20 --verbose ...
 

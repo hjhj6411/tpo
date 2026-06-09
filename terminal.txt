@@ -1,10 +1,10 @@
 conda activate pod
 Qwen/Qwen3-4B-Instruct-2507
-vllm serve Qwen/Qwen3-VL-30B-A3B-Instruct \
+vllm serve OpenGVLab/InternVL3-8B-Instruct    \
   --tensor-parallel-size 4 \
   --max-model-len 30000 \
   --dtype bfloat16 \
-  --port 8000 \
+  --port 8002 \
   --trust-remote-code \
   --gpu-memory-utilization 0.9
 
