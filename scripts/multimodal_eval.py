@@ -21,13 +21,13 @@ python scripts/multimodal_eval.py \
   --plans data/options/option_plans.jsonl \
   --queries data/queries/queries.jsonl \
   --profiles data/profiles/profiles.jsonl \
-  --image-root data/images_siglip_cov_q \
+  --image-root data/images_vit_cov \
   --base-urls http://127.0.0.1:8002/v1 \
-  --model Qwen/Qwen2.5-VL-7B-Instruct \
+  --model Qwen/Qwen3-VL-30B-A3B-Instruct \
   --concurrency 8 \
   --enable-thinking \
   --limit 1000 \
-  --out-dir data/eval_multimodal \
+  --out-dir data/eval_multimodal_vit \
   --image-only-options \
   --enable-thinking 
   # 단일 모드
