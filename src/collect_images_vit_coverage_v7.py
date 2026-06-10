@@ -20,10 +20,18 @@ ROUTING (--color-cov, default "color" — one knob at a time):
           PATTERN-axis options keep the proven v6 order (pattern_cov, sim).
   all   : color cov everywhere —
             color axis            : (color_cov, sim)
-            pattern axis nonsolid : (pattern_cov, color_cov, sim)   # pattern stays primary
+            pattern axis nonsolid : combined score = pcov * ccov desc, then sim
             pattern axis solid    : (color_cov, sim)
           NOTE: "all" scores every candidate on BOTH endpoints; the server's
           URL->PIL cache avoids downloading each image twice.
+
+PATTERN × COLOR COMBINED SCORE (pattern axis non-solid, color-cov != off):
+  score = pcov * ccov
+  Rationale: "black camouflage" requires BOTH camo pattern AND black color.
+  Lexicographic (pcov, ccov) fails because pcov 1.0 (army-green camo) always
+  beats pcov 0.85 (black camo), and ccov never gets a chance as tie-breaker.
+  The product score makes pcov=1.0/ccov=0.09=0.09 lose to pcov=0.85/ccov=0.95=0.81.
+  color axis and pattern-solid still use the single relevant coverage score.
 
 The option's PATTERN CONTEXT is always sent to the color endpoint (on the color
 axis this is the fixed pattern; on the pattern axis it is the option's own
@@ -165,10 +173,32 @@ def color_coverage_score_urls(color_coverage_url, urls, color, pattern, garment,
         return [None] * len(urls)
 
 
-def coverage_rerank(cands, primary, secondary=None):
-    """Return candidate indices ordered by (primary desc[, secondary desc],
-    similarity desc). `primary`/`secondary` are coverage lists aligned to
-    `cands`; a missing/None coverage is treated as -1 so any scored candidate
+def _combined_score(pcov_val, ccov_val):
+    """Product of pcov * ccov for pattern-axis non-solid candidates.
+    A None score is treated as -1 so unscored candidates sort to the bottom.
+    Returns a float in [-1, 1]."""
+    p = pcov_val if isinstance(pcov_val, (int, float)) else -1.0
+    c = ccov_val if isinstance(ccov_val, (int, float)) else -1.0
+    if p < 0 or c < 0:
+        # at least one missing: use whichever is available, or -1
+        if p >= 0:
+            return p
+        if c >= 0:
+            return c
+        return -1.0
+    return p * c
+
+
+def coverage_rerank(cands, primary, secondary=None, combined=False):
+    """Return candidate indices ordered by coverage scores.
+
+    Modes:
+      combined=True  -> sort by pcov*ccov product (primary=pcovs, secondary=ccovs)
+      secondary only -> (primary desc, secondary desc, sim desc)
+      primary only   -> (primary desc, sim desc)
+      neither        -> plain retrieval order
+
+    A missing/None coverage is treated as -1 so any scored candidate
     outranks an unscored one, and unscored candidates keep similarity order
     among themselves."""
     idx = list(range(len(cands)))
@@ -181,7 +211,13 @@ def coverage_rerank(cands, primary, secondary=None):
         c = arr[i] if (arr is not None and i < len(arr)) else None
         return c if isinstance(c, (int, float)) else -1.0
 
-    if secondary is None:
+    if combined:
+        # pcov * ccov product score
+        idx.sort(key=lambda i: (
+            -_combined_score(cov_of(primary, i), cov_of(secondary, i)),
+            -sim_of(i)
+        ))
+    elif secondary is None:
         idx.sort(key=lambda i: (-cov_of(primary, i), -sim_of(i)))
     else:
         idx.sort(key=lambda i: (-cov_of(primary, i), -cov_of(secondary, i),
@@ -296,17 +332,30 @@ def _cand_url(c):
     return c.get("url") or c.get("image_url")
 
 
+def _fmt_cov(arr, rank):
+    v = arr[rank] if (arr is not None and rank < len(arr)) else None
+    return f"{v:.2f}" if isinstance(v, (int, float)) else "  -- "
+
+
+def _fmt_combined(pcovs, ccovs, rank):
+    p = pcovs[rank] if (pcovs is not None and rank < len(pcovs)) else None
+    c = ccovs[rank] if (ccovs is not None and rank < len(ccovs)) else None
+    if isinstance(p, (int, float)) and isinstance(c, (int, float)):
+        return f"{p * c:.2f}"
+    return "  -- "
+
+
 def _print_rank_table(opt_label, query, cands, pcovs, ccovs, order, chosen_rank,
-                      skipped):
+                      skipped, use_combined=False):
     """Print the coverage-first ranking table for one option (verbose mode).
     pcov = pattern coverage, ccov = color coverage ('--' if not scored).
+    combined = pcov*ccov column shown when use_combined=True.
     `skipped` maps rank -> reason ('dup'/'dead'/'gender') for non-chosen rows."""
-    def fmt(arr, rank):
-        v = arr[rank] if (arr is not None and rank < len(arr)) else None
-        return f"{v:.2f}" if isinstance(v, (int, float)) else "  -- "
-
     print(f"    [{opt_label}] query: {query}")
-    print(f"      {'new':>3} {'retr':>4} {'pcov':>5} {'ccov':>5} {'sim':>8}  pick  caption")
+    if use_combined:
+        print(f"      {'new':>3} {'retr':>4} {'pcov':>5} {'ccov':>5} {'comb':>6} {'sim':>8}  pick  caption")
+    else:
+        print(f"      {'new':>3} {'retr':>4} {'pcov':>5} {'ccov':>5} {'sim':>8}  pick  caption")
     for nr, rank in enumerate(order):
         c = cands[rank]
         sim = c.get("similarity")
@@ -318,8 +367,15 @@ def _print_rank_table(opt_label, query, cands, pcovs, ccovs, order, chosen_rank,
         else:
             mark = ""
         cap = (c.get("caption") or "")[:42]
-        print(f"      {nr:>3} {rank:>4} {fmt(pcovs, rank):>5} {fmt(ccovs, rank):>5} "
-              f"{sims:>8}{mark:>9}  {cap}")
+        if use_combined:
+            comb = _fmt_combined(pcovs, ccovs, rank)
+            print(f"      {nr:>3} {rank:>4} {_fmt_cov(pcovs, rank):>5} "
+                  f"{_fmt_cov(ccovs, rank):>5} {comb:>6} "
+                  f"{sims:>8}{mark:>9}  {cap}")
+        else:
+            print(f"      {nr:>3} {rank:>4} {_fmt_cov(pcovs, rank):>5} "
+                  f"{_fmt_cov(ccovs, rank):>5} "
+                  f"{sims:>8}{mark:>9}  {cap}")
 
 
 def resolve_option_top1(query, img_path, client_url, top_k, indice_name,
@@ -334,12 +390,11 @@ def resolve_option_top1(query, img_path, client_url, top_k, indice_name,
     chosen_url).
 
     Coverage routing (the caller decides WHICH apply by passing/omitting them):
-      pattern cov : coverage_url AND non-solid cov_pattern        (as in v6)
-      color cov   : color_coverage_url AND ccov_color
-      both        : sort (pattern_cov desc, color_cov desc, sim desc)
-      pattern only: sort (pattern_cov desc, sim desc)
-      color only  : sort (color_cov desc, sim desc)
-      neither     : plain retrieval order
+      pattern axis non-solid + color cov available
+                     : sort by pcov*ccov PRODUCT (combined score), then sim
+      pattern only   : sort (pattern_cov desc, sim desc)  [v6 unchanged]
+      color only     : sort (color_cov desc, sim desc)
+      neither        : plain retrieval order
     On any coverage error it falls back to retrieval order (fail-open).
 
     verbose -> print the query and the coverage-first ranking table, marking the
@@ -363,12 +418,16 @@ def resolve_option_top1(query, img_path, client_url, top_k, indice_name,
                                           ccov_pattern or "",
                                           cov_garment or "garment", grid)
 
-    if use_pcov and use_ccov:
-        order = coverage_rerank(cands, pcovs, ccovs)
+    # Determine sort mode
+    # pattern non-solid + color cov both available -> pcov*ccov product
+    use_combined = use_pcov and use_ccov
+
+    if use_combined:
+        order = coverage_rerank(cands, pcovs, ccovs, combined=True)
     elif use_pcov:
-        order = coverage_rerank(cands, pcovs)
+        order = coverage_rerank(cands, pcovs)          # v6 pattern-only (unchanged)
     elif use_ccov:
-        order = coverage_rerank(cands, ccovs)
+        order = coverage_rerank(cands, ccovs)          # color axis
     else:
         order = list(range(len(cands)))
 
@@ -392,7 +451,12 @@ def resolve_option_top1(query, img_path, client_url, top_k, indice_name,
                 "coverage": pcovs[rank] if rank < len(pcovs) else None,
                 "cov_reranked": use_pcov,
                 "color_coverage": ccovs[rank] if rank < len(ccovs) else None,
-                "ccov_reranked": use_ccov}
+                "ccov_reranked": use_ccov,
+                "combined_score": (
+                    _combined_score(pcovs[rank] if rank < len(pcovs) else None,
+                                    ccovs[rank] if rank < len(ccovs) else None)
+                    if use_combined else None
+                )}
 
         if not vlm_url:                # coverage/top-1 + dedup (no gender)
             chosen = rank; result = (base, "unclear", url); break
@@ -405,7 +469,7 @@ def resolve_option_top1(query, img_path, client_url, top_k, indice_name,
 
     if verbose:
         _print_rank_table(opt_label, query, cands, pcovs, ccovs, order, chosen,
-                          skipped)
+                          skipped, use_combined=use_combined)
     return result
 
 
@@ -563,9 +627,12 @@ def run(plan_path, output_path, image_root, client_url, indice_name,
     n_gincons = sum(1 for r in results if r.get("gender_consistent") is False)
     n_ccov = sum(1 for r in results for k in "ABCD"
                  if (r.get("options", {}).get(k) or {}).get("ccov_reranked"))
+    n_combined = sum(1 for r in results for k in "ABCD"
+                     if (r.get("options", {}).get(k) or {}).get("combined_score") is not None)
     print(f"\nSaved {len(results)}: complete={n_done} "
           f"({n_done/max(len(results),1):.0%}), skipped={n_skip}, "
-          f"gender_inconsistent={n_gincons}, color_cov_options={n_ccov}")
+          f"gender_inconsistent={n_gincons}, color_cov_options={n_ccov}, "
+          f"combined_sort_options={n_combined}")
 
 
 def selftest(client_url, indice_name, top_k, color_coverage_url=None):
@@ -600,7 +667,8 @@ def main():
     ap.add_argument("--color-cov", choices=["color", "all", "off"], default="color",
                     help="color-coverage routing: 'color' = color-axis options only "
                          "(default; pattern axis stays exactly v6), 'all' = every "
-                         "option, 'off' = exact v6 behavior")
+                         "option incl. pattern non-solid with pcov*ccov sort, "
+                         "'off' = exact v6 behavior")
     ap.add_argument("--indice-name", default="pod_fashion")
     ap.add_argument("--vlm-urls", default="",
                     help="comma-separated VLM endpoints; empty = coverage + dedup, no gender")
@@ -613,8 +681,8 @@ def main():
     ap.add_argument("--selftest", action="store_true")
     ap.add_argument("--verbose", action="store_true",
                     help="print per-option query + coverage-first ranking table "
-                         "(pcov + ccov columns, what was retrieved, scored, and "
-                         "picked). Use with --workers 1 for readable output.")
+                         "(pcov, ccov, comb=pcov*ccov columns for pattern non-solid). "
+                         "Use with --workers 1 for readable output.")
     args = ap.parse_args()
 
     color_coverage_url = args.color_coverage_url.strip() or None
