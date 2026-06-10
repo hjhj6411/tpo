@@ -54,7 +54,7 @@ python src/collect_images_vit_coverage_v7.py \
 --vlm-model Qwen/Qwen3-VL-30B-A3B-Instruct \
 --image_root data/images_vit_cov_c \
 --output data/images_vit_cov_c/collection_log.jsonl \
---top_k 12 --grid 5 --workers 4 --color-cov color --force --limit 10
+--top_k 12 --grid 5 --workers 1 --verbose --color-cov all --force --limit 10
 
   # color cov + dedup, NO gender (omit --vlm-urls)
   # exact v6 reproduction: --color-cov off
