@@ -1,0 +1,23 @@
+# configs/models.yaml — model registry. ONE OpenAI-compatible client serves
+# vLLM and closed APIs alike; api_key_env keeps secrets out of manifests.
+models:
+  qwen3-vl-30b:
+    base_url: "http://127.0.0.1:8002/v1"
+    model_id: "Qwen/Qwen3-VL-30B-A3B-Instruct"
+    api_key_env: null
+    guided: true
+  gemma3-27b:
+    base_url: "http://127.0.0.1:8003/v1"
+    model_id: "google/gemma-3-27b-it"
+    api_key_env: null
+    guided: true
+  gpt:
+    base_url: "https://api.openai.com/v1"
+    model_id: "gpt-5"            # snapshot the exact version before runs
+    api_key_env: OPENAI_API_KEY
+    guided: false
+  gemini:
+    base_url: "https://generativelanguage.googleapis.com/v1beta/openai"
+    model_id: "gemini-2.5-pro"   # snapshot the exact version before runs
+    api_key_env: GEMINI_API_KEY
+    guided: false

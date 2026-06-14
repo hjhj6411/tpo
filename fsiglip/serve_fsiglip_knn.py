@@ -18,8 +18,11 @@ NEW (POST /knn-service-ensemble):  prompt-ensemble retrieval.
   is identical to /knn-service. Back-compat: a single "text" is also accepted here.
 
 NEW (POST /patch-coverage):  PATTERN patch coverage (grid tiles, each tile
-  classified "{pattern} fabric" vs "plain fabric" by argmax; coverage =
-  patterned_tiles / non-background_tiles).
+  argmax-classified "{pattern} patterned fabric" vs "plain solid fabric").
+  coverage = fraction of tiles matching the TARGET class — patterned tiles for a
+  non-solid target, PLAIN tiles for a solid target. So solid is no longer a
+  special skip case: a genuinely plain garment scores high on a solid target and
+  a wrongly-patterned one scores low. Lets the collector use pcov globally.
 
 NEW (POST /patch-color-coverage):  COLOR patch coverage.
   {"images": [url|path|b64, ...] OR "image": one,
@@ -242,12 +245,14 @@ def patch_coverage():
     grid = int(body.get("grid", 3))
     drop_white = bool(body.get("drop_white", True))
 
-    # text anchors (encoded once, shared scale with retrieval)
+    # text anchors (encoded once, shared scale with retrieval). Two classes:
+    # patterned vs plain. We argmax each tile into one of them.
     pat_txt = _encode_norm([f"a close-up of {pattern} patterned fabric",
                             "a close-up of plain solid-colored fabric"])
+    target_is_solid = pattern in ("", "solid", "plain", "none")
     c = f"{color} " if color and color not in ("none", "unknown") else ""
     spec = (f"a {c}{garment} with an all-over {pattern} pattern, studio product shot, not cropped"
-            if pattern not in ("", "solid", "plain", "none")
+            if not target_is_solid
             else f"a {c}{garment}, studio product shot, not cropped")
     spec_txt = _encode_norm([spec])
 
@@ -268,14 +273,23 @@ def patch_coverage():
         tiles = _make_tiles(img, grid, drop_white=drop_white)
         if not tiles:
             out.append({"src": str(src)[:80], "global_sim": gsim,
-                        "coverage": 0.0, "n_pattern": 0, "n_valid": 0})
+                        "coverage": 0.0, "n_pattern": 0, "n_valid": 0,
+                        "target_is_solid": target_is_solid})
             continue
         tfeat = _encode_images_norm(tiles)
-        sims = (tfeat @ pat_t.T)                  # (P,2): [pattern, plain]
+        sims = (tfeat @ pat_t.T)                  # (P,2): [patterned, plain]
         is_pat = (sims[:, 0] > sims[:, 1]).cpu().numpy()
+        # coverage = fraction of tiles matching the TARGET class:
+        #   non-solid target -> patterned tiles (as before)
+        #   solid target     -> plain tiles (so a genuinely plain garment scores
+        #                        high and a wrongly-patterned one scores low).
+        # This lets the collector use pcov GLOBALLY instead of skipping solid;
+        # the model decides solid-vs-patterned per tile by argmax either way.
+        match = is_pat if not target_is_solid else ~is_pat
         out.append({"src": str(src)[:80], "global_sim": gsim,
-                    "coverage": float(is_pat.mean()),
-                    "n_pattern": int(is_pat.sum()), "n_valid": int(len(tiles))})
+                    "coverage": float(match.mean()),
+                    "n_pattern": int(is_pat.sum()), "n_valid": int(len(tiles)),
+                    "target_is_solid": target_is_solid})
     return jsonify(out)
 
 

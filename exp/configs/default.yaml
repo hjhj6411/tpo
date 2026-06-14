@@ -1,0 +1,7 @@
+# configs/default.yaml — built-in defaults live in common/config.py; this file
+# is for site-specific overrides (paths, server ports). CLI always wins.
+items: data/bench/items.jsonl
+plans: data/options/option_plans.jsonl
+results_root: data/exp_results
+seed: 17
+image_max_side: 768
