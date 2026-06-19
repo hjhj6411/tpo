@@ -413,6 +413,19 @@ def main():
     args = ap.parse_args()
     device = f"cuda:{args.gpu}" if torch.cuda.is_available() else "cpu"
     _load(args.corpus, device)
+    import os, sys
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    from segmentation_expert import GarmentSegmenter
+    from serve_expert_routes import register_expert_routes
+    _state["segmenter"] = GarmentSegmenter(
+        backend=os.environ.get("SEG_BACKEND", "heuristic"))
+    register_expert_routes(
+        app, _state,
+        load_pil=_load_pil_cached,
+        encode_norm=_encode_norm,
+        img_feats=_img_feats_np,
+        make_tiles=_make_tiles)
+
     app.run(host="0.0.0.0", port=args.port, threaded=True)
 
 
