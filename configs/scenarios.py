@@ -262,8 +262,8 @@ CANONICAL_SCENARIOS = [
             "Standing in a festival crowd under the sun from noon to night. Outfit advice?",
         ],
         q_implicit=[
-            "Got tickets to a summer festival this weekend. What should I wear?",
-            "Spending Saturday at an open-air concert downtown. Outfit?",
+            "Got tickets to an outdoor summer festival during peak heat this weekend. What should I wear?",
+            "Spending Saturday at an open-air concert downtown in midsummer heat. Outfit?",
         ],
         justification="All-day outdoor festival in extreme heat makes heavy outerwear a health hazard."),
 
@@ -274,12 +274,12 @@ CANONICAL_SCENARIOS = [
          "occasion": {"activity": "exercise", "formality_required": "very_casual"}},
         gc_compat=_WATER_C, gc_incompat=_WATER_I,
         q_explicit=[
-            "Heading to the pool for a lap-swimming session. What should I wear?",
-            "Going to swim laps for an hour at the pool. What's the right outfit?",
+            "Heading to the pool for light water activities and lounging. What should I wear?",
+            "Going to the pool for casual water exercise and time by the deck. What's the right outfit?",
         ],
         q_implicit=[
-            "Starting regular swim training this week. What should I bring to wear?",
-            "Joined the local pool for morning swims. Outfit advice?",
+            "Starting regular pool visits this week. What should I bring to wear over swimwear?",
+            "Joined the local pool for morning water workouts. Outfit advice?",
         ],
         justification="A parka/blazer/dress to swim laps is absurd and waterlogged-dangerous."),
 
@@ -546,8 +546,8 @@ CANONICAL_SCENARIOS = [
             "Wandering the outdoor market stalls on a casual Saturday. Outfit?",
         ],
         q_implicit=[
-            "Heading to the local market for produce this morning. What should I wear?",
-            "Casual morning browsing the market. Outfit advice?",
+            "Heading to the outdoor local market for produce this morning. What should I wear?",
+            "Casual morning browsing farmers' market stalls. Outfit advice?",
         ],
         justification="A suit/blazer at a casual farmers' market is over-dressed."),
 
@@ -619,8 +619,8 @@ CANONICAL_SCENARIOS = [
             "Presenting our funding pitch to investors in a few hours. What should I wear?",
         ],
         q_implicit=[
-            "Big meeting with the VCs tomorrow morning to raise our round. Outfit advice?",
-            "Trying to win over serious investors at a meeting tomorrow. What should I wear?",
+            "Formal pitch meeting with VCs tomorrow morning to raise our round. Outfit advice?",
+            "Trying to win over serious investors in a polished office pitch tomorrow. What should I wear?",
         ],
         justification="Investor pitches demand credibility; casual wear and loud prints undermine professional trust."),
 
@@ -705,7 +705,7 @@ CANONICAL_SCENARIOS = [
         ],
         q_implicit=[
             "Have tickets to the gala opening night at the opera. Outfit advice?",
-            "Premiere performance at the grand concert hall tonight. What should I wear?",
+            "Premiere performance at the grand concert hall with a formal opening-night crowd. What should I wear?",
         ],
         justification="Opera/ballet premieres with dress codes prohibit casual and loud attire."),
 
@@ -973,7 +973,7 @@ CANONICAL_SCENARIOS = [
             "Going to a vernissage at a downtown gallery this evening. What should I wear?",
         ],
         q_implicit=[
-            "Got invited to the launch of a new exhibition tonight. Outfit advice?",
+            "Got invited to an evening gallery exhibition opening reception. Outfit advice?",
             "Heading to an opening reception at the art gallery. What should I wear?",
         ],
         justification="Gallery openings are smart-casual; shorts/hoodie and loud prints signal disinterest."),
@@ -1095,7 +1095,7 @@ CANONICAL_SCENARIOS = [
             "Going to an engagement celebration party this evening. What should I wear?",
         ],
         q_implicit=[
-            "My parents' big anniversary party is this weekend and I'm attending. Outfit advice?",
+            "My parents' big anniversary dinner at a nice venue is this weekend. Outfit advice?",
             "Celebrating a couple's engagement at a nice venue tonight. What should I wear?",
         ],
         justification="Milestone celebrations expect smart attire; shorts/hoodie and loud prints are out of place."),
