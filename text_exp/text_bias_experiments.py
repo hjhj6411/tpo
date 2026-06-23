@@ -10,6 +10,10 @@ Experiments:
   2) fixed_correct
      Force the original correct option A to appear as displayed A, B, C, or D and
      compare accuracy by correct answer position.
+     This experiment is valid ONLY when both query and profile are provided,
+     because otherwise there are two valid answers:
+       query-only    -> A and B both satisfy TPO
+       profile-only  -> A and C both satisfy preference
 
   3) bc_tradeoff
      Remove original A (both TPO+preference) and original D (neither), leaving only:
@@ -29,10 +33,9 @@ from __future__ import annotations
 
 import argparse
 import concurrent.futures as cf
-import json
 import random
 import sys
-from collections import Counter, defaultdict
+from collections import Counter
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -41,7 +44,6 @@ from configs.config import OPTIONS_DIR, QUERIES_DIR, PROFILES_DIR
 from src.utils import call_llm, load_jsonl, log_step, save_jsonl
 from text_exp.text_eval import (
     INPUT_FORMATS,
-    SUMMARY_GROUPS,
     TPO_SCORE,
     PROFILE_SCORE,
     build_prompt,
@@ -57,6 +59,7 @@ from text_exp.text_eval import (
 )
 
 EXPERIMENTS = ["position_bias", "fixed_correct", "bc_tradeoff"]
+FIXED_CORRECT_INPUT_FORMATS = ["all+query", "narrative+query"]
 
 SYSTEM_PROMPT_TWO_CHOICE = """\
 You are a fashion advisor.
@@ -94,6 +97,25 @@ Do NOT write sentences. Do NOT write words.
 If you write anything other than a single letter, your response is INVALID.
 Your ENTIRE response must be one of: A  B
 """
+
+
+# ── Experiment validity ────────────────────────────────────────────────
+def valid_input_formats_for_experiment(experiment):
+    if experiment == "fixed_correct":
+        return FIXED_CORRECT_INPUT_FORMATS[:]
+    return INPUT_FORMATS[:]
+
+
+def validate_experiment_format(experiment, input_format):
+    valid = valid_input_formats_for_experiment(experiment)
+    if input_format not in valid:
+        raise SystemExit(
+            f"Invalid input-format='{input_format}' for experiment='{experiment}'.\n"
+            "fixed_correct is meaningful only when both query and profile are provided, "
+            "because query-only has two TPO-correct answers (A/B) and profile-only has "
+            "two preference-correct answers (A/C).\n"
+            f"Use one of: {', '.join(valid)}"
+        )
 
 
 # ── Prompt construction ────────────────────────────────────────────────
@@ -182,6 +204,7 @@ def make_position_bias_jobs(plans, queries_map, profiles_map, input_format, seed
 
 
 def make_fixed_correct_jobs(plans, queries_map, profiles_map, input_format, seed, limit, trials):
+    validate_experiment_format("fixed_correct", input_format)
     rng = random.Random(seed)
     jobs = []
     for plan in _limit_plans(plans, limit):
@@ -246,6 +269,7 @@ def make_bc_tradeoff_jobs(plans, queries_map, profiles_map, input_format, seed, 
 
 
 def make_jobs(experiment, plans, queries_map, profiles_map, input_format, seed, limit, trials):
+    validate_experiment_format(experiment, input_format)
     if experiment == "position_bias":
         return make_position_bias_jobs(plans, queries_map, profiles_map, input_format, seed, limit, trials)
     if experiment == "fixed_correct":
@@ -355,27 +379,49 @@ def pct(num, den):
     return num / den * 100 if den else 0.0
 
 
+def bar(num, den, width=32):
+    ratio = num / den if den else 0.0
+    filled = int(round(ratio * width))
+    return "█" * filled + "░" * (width - filled)
+
+
+def print_bar_distribution(title, counts, labels, total, label_width=15, extra_label_fn=None):
+    print(f"\n  ── {title} ──")
+    for label in labels:
+        c = counts.get(label, 0)
+        extra = f" {extra_label_fn(label)}" if extra_label_fn else ""
+        print(f"  {label:<{label_width}} {bar(c, total)} {c:5d}/{total:5d}  {pct(c, total):5.1f}%{extra}")
+
+
 def print_position_bias_report(results):
     n = len(results)
     pred_display = Counter(r["predicted"] or "INVALID" for r in results)
     pred_original = Counter(r["predicted_original"] or "INVALID" for r in results)
     strict = sum(1 for r in results if r["predicted_original"] == "A")
 
-    print("\n  ── Position bias: displayed choice distribution ──")
-    for label in ["A", "B", "C", "D", "INVALID"]:
-        c = pred_display.get(label, 0)
-        print(f"  display {label:7s}: {c:5d} / {n:5d} = {pct(c, n):5.1f}%")
+    print_bar_distribution(
+        "Position bias: displayed choice distribution",
+        pred_display,
+        ["A", "B", "C", "D", "INVALID"],
+        n,
+        label_width=8,
+    )
 
-    print("\n  ── Position bias: original semantic choice distribution ──")
-    for label in ["A", "B", "C", "D", "INVALID"]:
-        c = pred_original.get(label, 0)
-        semantic = {
-            "A": "both",
-            "B": "tpo_only",
-            "C": "preference_only",
-            "D": "neither",
-        }.get(label, "invalid")
-        print(f"  original {label:7s} ({semantic:15s}): {c:5d} / {n:5d} = {pct(c, n):5.1f}%")
+    semantics = {
+        "A": "both",
+        "B": "tpo_only",
+        "C": "preference_only",
+        "D": "neither",
+        "INVALID": "invalid",
+    }
+    print_bar_distribution(
+        "Position bias: original semantic choice distribution",
+        pred_original,
+        ["A", "B", "C", "D", "INVALID"],
+        n,
+        label_width=8,
+        extra_label_fn=lambda label: f"({semantics.get(label, 'invalid')})",
+    )
     print(f"\n  strict accuracy after random shuffling: {strict}/{n} = {pct(strict, n):.1f}%")
 
 
@@ -483,6 +529,7 @@ def print_final_summary(rows):
 
 # ── Preview ─────────────────────────────────────────────────────────────
 def print_preview(experiment, plans, queries_map, profiles_map, input_format, seed, limit, trials):
+    validate_experiment_format(experiment, input_format)
     jobs = make_jobs(experiment, plans, queries_map, profiles_map, input_format, seed, limit or 1, trials)
     if not jobs:
         print("No preview job.")
@@ -501,7 +548,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--experiment", choices=EXPERIMENTS + ["all"], default="all")
     parser.add_argument("--input-format", choices=INPUT_FORMATS, default=None,
-                        help="If omitted, run all input formats.")
+                        help="If omitted, run all valid input formats per experiment. fixed_correct uses all+query and narrative+query only.")
     parser.add_argument("--plans", type=Path, default=OPTIONS_DIR / "option_plans.jsonl")
     parser.add_argument("--queries", type=Path, default=QUERIES_DIR / "queries.jsonl")
     parser.add_argument("--profiles", type=Path, default=PROFILES_DIR / "profiles.jsonl")
@@ -525,18 +572,26 @@ def main():
     profiles_map = {p["user_id"]: p for p in profiles}
 
     experiments = EXPERIMENTS if args.experiment == "all" else [args.experiment]
-    input_formats = INPUT_FORMATS if args.input_format is None else [args.input_format]
-    model_name = resolve_model_name(args.model, input_formats[0])
+
+    if args.input_format is not None:
+        for exp in experiments:
+            validate_experiment_format(exp, args.input_format)
+        formats_by_experiment = {exp: [args.input_format] for exp in experiments}
+    else:
+        formats_by_experiment = {exp: valid_input_formats_for_experiment(exp) for exp in experiments}
+
+    first_format = next(iter(formats_by_experiment.values()))[0]
+    model_name = resolve_model_name(args.model, first_format)
 
     print(f"  Plans: {len(plans)}, Queries: {len(queries)}, Profiles: {len(profiles)}")
     print(f"  Experiments: {experiments}")
-    print(f"  Input formats: {input_formats}")
+    print(f"  Input formats by experiment: {formats_by_experiment}")
     print(f"  Model: {model_name}")
     print(f"  Limit: {args.limit or 'all'}, Trials: {args.trials}, Concurrency: {args.concurrency}")
 
     if args.see:
         for exp in experiments:
-            for fmt in input_formats:
+            for fmt in formats_by_experiment[exp]:
                 print_preview(exp, plans, queries_map, profiles_map, fmt, args.seed, args.limit, args.trials)
         return
 
@@ -544,7 +599,7 @@ def main():
     final_rows = []
 
     for exp in experiments:
-        for fmt in input_formats:
+        for fmt in formats_by_experiment[exp]:
             print(f"\n{'─' * 78}")
             print(f"  ▶ experiment={exp} | input_format={fmt} | model={model_name}")
             print(f"{'─' * 78}")
