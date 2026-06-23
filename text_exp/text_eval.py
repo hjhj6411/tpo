@@ -439,6 +439,55 @@ def _summary_row(summary):
     return strict, tpo, prof
 
 
+def _metric_cell(d):
+    n = d.get("total", 0)
+    if not n:
+        return "     -       -       -   (n=0)"
+    strict = d.get("strict_correct", 0) / n * 100
+    tpo = d.get("tpo_correct", 0) / n * 100
+    profile = d.get("profile_correct", 0) / n * 100
+    return f"{strict:6.1f}% {tpo:6.1f}% {profile:7.1f}% (n={n})"
+
+
+def _ordered_breakdown_keys(summaries, prefix):
+    keys = set()
+    for summary in summaries.values():
+        keys.update(k for k in summary.get("breakdown", {}) if k.startswith(prefix))
+    return sorted(keys)
+
+
+def print_breakdown_comparison(summaries, prefix, title):
+    keys = _ordered_breakdown_keys(summaries, prefix)
+    if not keys:
+        return
+
+    print("\n" + "=" * 100)
+    print(f"  ══ {title} COMPARISON ══")
+    print("  cell = strict / tpo / profile")
+    print("=" * 100)
+
+    for key in keys:
+        print(f"\n  ── {key} ──")
+        print(f"  {'format':<18} {'strict':>7} {'tpo':>7} {'profile':>9}   {'n':>8}")
+        print("  " + "-" * 52)
+        for gi, group in enumerate(SUMMARY_GROUPS):
+            if gi > 0:
+                print("  " + "/" * 52)
+            for fmt in group:
+                summary = summaries.get(fmt)
+                if not summary:
+                    continue
+                d = summary.get("breakdown", {}).get(key, {})
+                n = d.get("total", 0)
+                if n:
+                    strict = d.get("strict_correct", 0) / n * 100
+                    tpo = d.get("tpo_correct", 0) / n * 100
+                    profile = d.get("profile_correct", 0) / n * 100
+                    print(f"  {fmt:<18} {strict:6.1f}%  {tpo:6.1f}%  {profile:7.1f}%   {n:8d}")
+                else:
+                    print(f"  {fmt:<18} {'-':>7}  {'-':>7}  {'-':>7}   {0:8d}")
+
+
 def print_grouped_summary(summaries):
     print("\n" + "=" * 78)
     print("  ══ GROUPED SUMMARY: all / all+query / query /// narrative / narrative+query / query ══")
@@ -455,6 +504,9 @@ def print_grouped_summary(summaries):
             strict, tpo, prof = _summary_row(s)
             print(f"  {fmt:<18} {model:<32} {strict:6.1f}%  {tpo:6.1f}%  {prof:7.1f}%")
     print("=" * 78)
+
+    print_breakdown_comparison(summaries, "axis:", "ACTIVE_AXIS")
+    print_breakdown_comparison(summaries, "qtype:", "QUERY_TYPE")
 
 
 # ── See prompts ─────────────────────────────────────────────────────────
@@ -561,6 +613,7 @@ def main():
             "tpo_correct": tpo_correct,
             "profile_correct": profile_correct,
             "total": total,
+            "breakdown": {k: dict(v) for k, v in breakdown.items()},
         }
 
     if run_all:
