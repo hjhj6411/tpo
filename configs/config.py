@@ -55,7 +55,7 @@ FASHION_ATTRIBUTE_AXES = {
     ],
     "pattern": [
         "solid", "striped", "checkered", "floral", "polka_dot",
-        "camouflage", "argyle", "paisley",
+        "camouflage", "argyle",
     ],
     "garment_category": [
         "t_shirt", "shirt", "blouse", "sweater", "hoodie",
