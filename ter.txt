@@ -1,4 +1,4 @@
-CUDA_VISIBLE_DEVICES=2 vllm serve Qwen/Qwen3-VL-Reranker-8B   --port 8010 --runner pooling --trust-remote-code   --gpu_memory_utilization 0.9 --max-model-len 4096   --hf-overrides '{"architectures":["Qwen3VLForSequenceClassification"],"classifier_from_token":["no","yes"],"is_original_qwen3_reranker":true}'
+CUDA_VISIBLE_DEVICES=1 vllm serve Qwen/Qwen3-VL-Reranker-8B   --port 8010 --runner pooling --trust-remote-code   --gpu_memory_utilization 0.9 --max-model-len 4096   --hf-overrides '{"architectures":["Qwen3VLForSequenceClassification"],"classifier_from_token":["no","yes"],"is_original_qwen3_reranker":true}'
 
 vllm serve Qwen/Qwen3-VL-32B-Instruct   --port 8002 --max-model-len 32768   --limit-mm-per-prompt '{"image": 1}'   --tensor-parallel-size 
 

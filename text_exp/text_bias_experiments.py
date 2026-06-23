@@ -19,9 +19,9 @@ Experiments:
      scenario/TPO or user preference.
 
 Examples:
-  python -m text_exp.text_bias_experiments --experiment all --model vllm --limit 50 --concurrency 16
+  python -m text_exp.text_bias_experiments --experiment all --model vllm --concurrency 32
   python -m text_exp.text_bias_experiments --experiment fixed_correct --input-format all+query --model vllm
-  python -m text_exp.text_bias_experiments --experiment bc_tradeoff --model Qwen/Qwen3-4B-Instruct-2507
+  python -m text_exp.text_bias_experiments --experiment bc_tradeoff --model Qwen/Qwen2.5-7B-Instruct
   python -m text_exp.text_bias_experiments --experiment bc_tradeoff --see --limit 1
 """
 

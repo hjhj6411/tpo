@@ -13,7 +13,7 @@ Default report grouping:
   all / all+query / query /// narrative / narrative+query / query
 
 Examples:
-  python -m text_exp.text_eval --model vllm --limit 50 --concurrency 32
+  python -m text_exp.text_eval --model vllm --concurrency 32
   python -m text_exp.text_eval --model gpt5_mini --input-format all+query --limit 50
   python -m text_exp.text_eval --see --limit 1
 """

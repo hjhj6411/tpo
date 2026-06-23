@@ -5,11 +5,11 @@ vllm serve Qwen/Qwen2.5-7B-Instruct \
 
 
 Qwen/Qwen3-4B-Instruct-2507
-vllm serve Qwen/Qwen3-4B-Instruct-2507    \
+CUDA_VISIBLE_DEVICES=2 vllm serve meta-llama/Llama-3.1-8B-Instruct   \
   --tensor-parallel-size 1 \
   --max-model-len 30000 \
   --dtype bfloat16 \
-  --port 8002 \
+  --port 8001 \
   --trust-remote-code \
   --gpu-memory-utilization 0.9
 
