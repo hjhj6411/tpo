@@ -3,8 +3,8 @@
 Text experiment variants preserving scripts/text_only_eval.py format.
 
 Input formats:
-  - all             : all profile key-value fields, no query
-  - all+query       : all profile key-value fields + query
+  - all             : compact key-value profile, no query
+  - all+query       : compact key-value profile + query
   - query           : query only, no profile
   - narrative       : narrative profile only, no query
   - narrative+query : narrative profile + query
@@ -109,41 +109,39 @@ def profile_to_narrative(profile):
     return ""
 
 
-def _drop_narrative_fields(value):
-    if isinstance(value, dict):
-        return {
-            k: _drop_narrative_fields(v)
-            for k, v in value.items()
-            if k not in NARRATIVE_KEYS
-        }
-    if isinstance(value, list):
-        return [_drop_narrative_fields(v) for v in value]
-    return value
+def _join_values(values):
+    if not values:
+        return "none"
+    return ", ".join(str(v).replace("_", " ") for v in values)
+
+
+def _axis_preferences(profile, axis):
+    attrs = profile.get("structured_attributes") or {}
+    axis_info = attrs.get(axis) if isinstance(attrs, dict) else None
+    if not isinstance(axis_info, dict):
+        return [], []
+    likes = axis_info.get("likes") or []
+    dislikes = axis_info.get("dislikes") or []
+    return list(likes), list(dislikes)
 
 
 def profile_to_all_kv_text(profile):
-    """All profile in key-value form, excluding narrative text fields."""
-    parts = []
-    ordered_keys = [
-        "user_id", "domain", "preference_archetype", "variant_index",
-        "structured_attributes", "likes_keywords", "dislikes_keywords",
-        "metadata",
-    ]
+    """Compact all-profile K-V text without narrative or duplicated keyword lists."""
+    lines = []
+    archetype = profile.get("preference_archetype")
+    if archetype:
+        lines.append(f"style: {str(archetype).replace('_', ' ')}")
 
-    for key in ordered_keys:
-        if key in profile and key not in NARRATIVE_KEYS:
-            val = _drop_narrative_fields(profile[key])
-            if val not in ({}, [], None, ""):
-                parts.append(f"{key}: {json.dumps(val, ensure_ascii=False)}")
+    for axis, label in [
+        ("garment_category", "garment"),
+        ("color", "color"),
+        ("pattern", "pattern"),
+    ]:
+        likes, dislikes = _axis_preferences(profile, axis)
+        lines.append(f"likes.{label}: {_join_values(likes)}")
+        lines.append(f"dislikes.{label}: {_join_values(dislikes)}")
 
-    for key, val in profile.items():
-        if key in ordered_keys or key in NARRATIVE_KEYS:
-            continue
-        val = _drop_narrative_fields(val)
-        if val not in ({}, [], None, ""):
-            parts.append(f"{key}: {json.dumps(val, ensure_ascii=False)}")
-
-    return "\n".join(parts)
+    return "\n".join(lines)
 
 
 # ── Option rendering ────────────────────────────────────────────────────
