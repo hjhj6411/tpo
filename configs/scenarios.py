@@ -591,8 +591,8 @@ CANONICAL_SCENARIOS = [
         gc_incompat=["hoodie", "shorts", "tank_top", "t_shirt"],
         co_compat=["black", "navy", "gray", "white", "beige"],
         co_incompat=["orange", "yellow", "pink"],
-        pa_compat=["solid", "striped", "checkered", "plaid"],
-        pa_incompat=["graphic_print", "camouflage", "animal_print"],
+        pa_compat=["solid", "striped", "checkered"],
+        pa_incompat=["camouflage", "argyle"],
         q_explicit=[
             "I have a corporate board meeting today and the dress code is strictly formal. What should I wear?",
             "Presenting to the executive board in a formal boardroom this afternoon. What should I wear?",
@@ -612,8 +612,8 @@ CANONICAL_SCENARIOS = [
         gc_incompat=["hoodie", "shorts", "tank_top", "t_shirt"],
         co_compat=["black", "navy", "gray", "white", "beige"],
         co_incompat=["orange", "yellow", "pink"],
-        pa_compat=["solid", "striped", "checkered", "plaid"],
-        pa_incompat=["graphic_print", "camouflage", "animal_print"],
+        pa_compat=["solid", "striped", "checkered"],
+        pa_incompat=["camouflage", "argyle"],
         q_explicit=[
             "Pitching to venture capital investors today; formal business attire is expected. What should I wear?",
             "Presenting our funding pitch to investors in a few hours. What should I wear?",
@@ -633,8 +633,8 @@ CANONICAL_SCENARIOS = [
         gc_incompat=["hoodie", "shorts", "tank_top", "t_shirt"],
         co_compat=["black", "navy", "gray", "white", "beige"],
         co_incompat=["orange", "yellow", "pink"],
-        pa_compat=["solid", "striped", "checkered", "plaid"],
-        pa_incompat=["graphic_print", "camouflage", "animal_print"],
+        pa_compat=["solid", "striped", "checkered"],
+        pa_incompat=["camouflage", "argyle"],
         q_explicit=[
             "I have an in-person job interview at a corporate office tomorrow. What should I wear?",
             "Interviewing for a professional role at their headquarters tomorrow. What should I wear?",
@@ -654,8 +654,8 @@ CANONICAL_SCENARIOS = [
         gc_incompat=["hoodie", "shorts", "tank_top", "t_shirt"],
         co_compat=["black", "navy", "gray", "white", "beige"],
         co_incompat=["orange", "yellow", "pink"],
-        pa_compat=["solid", "striped", "checkered", "plaid"],
-        pa_incompat=["graphic_print", "camouflage", "animal_print"],
+        pa_compat=["solid", "striped", "checkered"],
+        pa_incompat=["camouflage", "argyle"],
         q_explicit=[
             "Business dinner with an important client tonight; professional attire expected. What should I wear?",
             "Meeting a key client over dinner to represent the firm. What should I wear?",
@@ -677,7 +677,7 @@ CANONICAL_SCENARIOS = [
         co_compat=["black", "navy", "gray", "white"],
         co_incompat=["orange", "yellow", "pink"],  # red removed: red eveningwear appropriate under contemporary_western
         pa_compat=["solid", "striped"],
-        pa_incompat=["graphic_print", "camouflage", "animal_print", "floral"],
+        pa_incompat=["camouflage", "argyle", "floral"],
         q_explicit=[
             "Attending a black-tie gala tonight with a strict formal dress code. What should I wear?",
             "Invited to a formal evening ball — black tie. What should I wear?",
@@ -698,7 +698,7 @@ CANONICAL_SCENARIOS = [
         co_compat=["black", "navy", "gray", "white"],
         co_incompat=["orange", "yellow", "pink"],  # red removed: red eveningwear appropriate under contemporary_western
         pa_compat=["solid", "striped"],
-        pa_incompat=["graphic_print", "camouflage", "animal_print", "floral"],
+        pa_incompat=["camouflage", "argyle", "floral"],
         q_explicit=[
             "Attending an opera premiere tonight; they enforce a formal dress code. What should I wear?",
             "Going to opening night at the opera house with a dress code. What should I wear?",
@@ -719,7 +719,7 @@ CANONICAL_SCENARIOS = [
         co_compat=["black", "navy", "gray", "white"],
         co_incompat=["orange", "yellow", "pink"],  # red removed: red eveningwear appropriate under contemporary_western
         pa_compat=["solid", "striped"],
-        pa_incompat=["graphic_print", "camouflage", "animal_print", "floral"],
+        pa_incompat=["camouflage", "argyle", "floral"],
         q_explicit=[
             "I'm receiving a national award tonight at a formal ceremony on stage. What should I wear?",
             "Being honored at a formal national award ceremony this evening. What should I wear?",
@@ -740,7 +740,7 @@ CANONICAL_SCENARIOS = [
         co_compat=["black", "navy", "gray", "white"],
         co_incompat=["orange", "yellow", "pink"],  # red removed: red eveningwear appropriate under contemporary_western
         pa_compat=["solid", "striped"],
-        pa_incompat=["graphic_print", "camouflage", "animal_print", "floral"],
+        pa_incompat=["camouflage", "argyle", "floral"],
         q_explicit=[
             "Invited to a state banquet hosted by a head of state, strict formal protocol. What should I wear?",
             "Attending a formal banquet at the presidential residence. What should I wear?",
@@ -762,7 +762,7 @@ CANONICAL_SCENARIOS = [
         co_compat=["black", "navy", "gray"],
         co_incompat=["orange", "yellow", "pink", "red"],
         pa_compat=["solid", "striped"],
-        pa_incompat=["graphic_print", "camouflage", "animal_print", "floral"],
+        pa_incompat=["camouflage", "argyle", "floral"],
         q_explicit=[
             "I have to appear in court tomorrow before a judge. What should I wear?",
             "Appearing in a courtroom for a formal hearing tomorrow. What should I wear?",
@@ -783,7 +783,7 @@ CANONICAL_SCENARIOS = [
         co_compat=["black", "navy", "gray"],
         co_incompat=["orange", "yellow", "pink", "red"],
         pa_compat=["solid", "striped"],
-        pa_incompat=["graphic_print", "camouflage", "animal_print", "floral"],
+        pa_incompat=["camouflage", "argyle", "floral"],
         q_explicit=[
             "Presenting an oral argument before the high court. What should I wear?",
             "Arguing a case at the highest court next month. What should I wear?",
@@ -804,7 +804,7 @@ CANONICAL_SCENARIOS = [
         co_compat=["black", "navy", "gray"],
         co_incompat=["orange", "yellow", "pink", "red"],
         pa_compat=["solid", "striped"],
-        pa_incompat=["graphic_print", "camouflage", "animal_print", "floral"],
+        pa_incompat=["camouflage", "argyle", "floral"],
         q_explicit=[
             "Testifying at a formal government hearing on the record. What should I wear?",
             "Appearing before a parliamentary committee to give testimony. What should I wear?",
@@ -825,7 +825,7 @@ CANONICAL_SCENARIOS = [
         co_compat=["black", "navy", "gray"],
         co_incompat=["orange", "yellow", "pink", "red", "green"],
         pa_compat=["solid"],
-        pa_incompat=["graphic_print", "camouflage", "animal_print", "floral", "polka_dot"],
+        pa_incompat=["camouflage", "argyle", "floral", "polka_dot"],
         q_explicit=[
             "I'm attending a funeral and need to dress respectfully and somberly. What should I wear?",
             "Going to a funeral service this week; dark, formal dress expected. What should I wear?",
@@ -845,7 +845,7 @@ CANONICAL_SCENARIOS = [
         co_compat=["black", "navy", "gray"],
         co_incompat=["orange", "yellow", "pink", "red", "green"],
         pa_compat=["solid"],
-        pa_incompat=["graphic_print", "camouflage", "animal_print", "floral", "polka_dot"],
+        pa_incompat=["camouflage", "argyle", "floral", "polka_dot"],
         q_explicit=[
             "Attending a memorial remembrance service for a colleague. What should I wear?",
             "Going to a solemn remembrance ceremony this week. What should I wear?",
@@ -866,7 +866,7 @@ CANONICAL_SCENARIOS = [
         co_compat=["black", "navy", "gray"],
         co_incompat=["orange", "yellow", "pink", "red", "green"],
         pa_compat=["solid"],
-        pa_incompat=["graphic_print", "camouflage", "animal_print", "floral", "polka_dot"],
+        pa_incompat=["camouflage", "argyle", "floral", "polka_dot"],
         q_explicit=[
             "Attending a candlelight vigil tonight to mourn and pay respects. What should I wear?",
             "Going to a solemn evening vigil; subdued dress expected. What should I wear?",
@@ -886,7 +886,7 @@ CANONICAL_SCENARIOS = [
         co_compat=["black", "navy", "gray"],
         co_incompat=["orange", "yellow", "pink", "red", "green"],
         pa_compat=["solid"],
-        pa_incompat=["graphic_print", "camouflage", "animal_print", "floral", "polka_dot"],
+        pa_incompat=["camouflage", "argyle", "floral", "polka_dot"],
         q_explicit=[
             "Visiting a grieving family to offer my condolences in person. What should I wear?",
             "Paying respects at a bereaved family's home; subdued dress. What should I wear?",
@@ -907,7 +907,7 @@ CANONICAL_SCENARIOS = [
         # color: dropped under CULTURAL_FRAME — modesty is coverage (garment);
         # no crisp color rule, so color is a preference-only axis here
         pa_compat=["solid", "striped"],
-        pa_incompat=["graphic_print", "camouflage", "animal_print"],
+        pa_incompat=["camouflage", "argyle"],
         q_explicit=[
             "Attending a conservative religious service where modest dress is required. What should I wear?",
             "Going to worship with a traditional congregation; modesty expected. What should I wear?",
@@ -927,7 +927,7 @@ CANONICAL_SCENARIOS = [
         # color: dropped under CULTURAL_FRAME — modesty is coverage (garment);
         # no crisp color rule, so color is a preference-only axis here
         pa_compat=["solid", "striped"],
-        pa_incompat=["graphic_print", "camouflage", "animal_print"],
+        pa_incompat=["camouflage", "argyle"],
         q_explicit=[
             "Visiting a sacred temple where shoulders and knees must be covered. What should I wear?",
             "Attending a temple ceremony with strict modesty rules. What should I wear?",
@@ -947,7 +947,7 @@ CANONICAL_SCENARIOS = [
         # color: dropped under CULTURAL_FRAME — modesty is coverage (garment);
         # no crisp color rule, so color is a preference-only axis here
         pa_compat=["solid", "striped"],
-        pa_incompat=["graphic_print", "camouflage", "animal_print"],
+        pa_incompat=["camouflage", "argyle"],
         q_explicit=[
             "Attending a solemn religious observance where modest, subdued dress is expected. What should I wear?",
             "Going to an important religious holy-day service with modesty norms. What should I wear?",
@@ -966,8 +966,8 @@ CANONICAL_SCENARIOS = [
          "occasion": {"activity": "social_gathering", "formality_required": "smart_casual"}},
         gc_compat=["blazer", "shirt", "blouse", "dress"],
         gc_incompat=["hoodie", "shorts", "tank_top"],
-        pa_compat=["solid", "striped", "checkered", "plaid", "floral"],
-        pa_incompat=["camouflage", "graphic_print"],
+        pa_compat=["solid", "striped", "checkered", "floral"],
+        pa_incompat=["camouflage", "argyle"],
         q_explicit=[
             "Attending an art gallery opening tonight; smart-casual minimum. What should I wear?",
             "Going to a vernissage at a downtown gallery this evening. What should I wear?",
@@ -985,8 +985,8 @@ CANONICAL_SCENARIOS = [
          "occasion": {"activity": "social_gathering", "formality_required": "business_casual"}},
         gc_compat=["blazer", "shirt", "blouse", "dress"],
         gc_incompat=["hoodie", "shorts", "tank_top"],
-        pa_compat=["solid", "striped", "checkered", "plaid", "floral"],
-        pa_incompat=["camouflage", "graphic_print"],
+        pa_compat=["solid", "striped", "checkered", "floral"],
+        pa_incompat=["camouflage", "argyle"],
         q_explicit=[
             "Alumni formal dinner tonight in a hotel ballroom; smart attire expected. What should I wear?",
             "Going to a formal alumni reunion dinner this evening. What should I wear?",
@@ -1006,8 +1006,8 @@ CANONICAL_SCENARIOS = [
         gc_incompat=["hoodie", "shorts", "tank_top", "t_shirt"],
         co_compat=["black", "navy", "gray", "white", "beige"],
         co_incompat=["orange", "yellow"],
-        pa_compat=["solid", "striped", "checkered", "plaid"],
-        pa_incompat=["camouflage", "graphic_print", "animal_print"],
+        pa_compat=["solid", "striped", "checkered"],
+        pa_incompat=["camouflage", "argyle"],
         q_explicit=[
             "Company annual gala tonight; smart-casual to semi-formal expected. What should I wear?",
             "Going to the office year-end gala this evening. What should I wear?",
@@ -1025,8 +1025,8 @@ CANONICAL_SCENARIOS = [
          "occasion": {"activity": "first_date", "formality_required": "smart_casual"}},
         gc_compat=["shirt", "blouse", "blazer", "dress"],
         gc_incompat=["hoodie", "shorts", "tank_top"],
-        pa_compat=["solid", "striped", "floral", "checkered", "plaid"],
-        pa_incompat=["camouflage", "graphic_print"],
+        pa_compat=["solid", "striped", "floral", "checkered"],
+        pa_incompat=["camouflage", "argyle"],
         q_explicit=[
             "First date at an upscale restaurant tonight; I want to look put-together. What should I wear?",
             "Dinner date at a nice, dressy restaurant this evening. What should I wear?",
@@ -1047,7 +1047,7 @@ CANONICAL_SCENARIOS = [
         co_compat=["navy", "beige", "blue", "gray", "green", "purple", "black"],
         co_incompat=["orange", "yellow", "white"],  # white added: guest-wears-white taboo under contemporary_western
         pa_compat=["solid", "striped", "floral", "checkered"],
-        pa_incompat=["camouflage", "graphic_print", "animal_print"],
+        pa_incompat=["camouflage", "argyle"],
         q_explicit=[
             "Attending a wedding reception in a hotel ballroom; smart attire expected. What should I wear?",
             "Going to a friend's wedding reception this weekend. What should I wear?",
@@ -1068,7 +1068,7 @@ CANONICAL_SCENARIOS = [
         co_compat=["navy", "beige", "blue", "gray", "green", "purple", "black"],
         co_incompat=["orange", "yellow", "white"],  # white added: guest-wears-white taboo under contemporary_western
         pa_compat=["solid", "striped", "floral", "checkered"],
-        pa_incompat=["camouflage", "graphic_print", "animal_print"],
+        pa_incompat=["camouflage", "argyle"],
         q_explicit=[
             "Attending an outdoor garden wedding ceremony as a guest. What should I wear?",
             "Going to a daytime garden wedding; smart attire expected. What should I wear?",
@@ -1089,7 +1089,7 @@ CANONICAL_SCENARIOS = [
         co_compat=["navy", "beige", "blue", "gray", "green", "purple", "black"],
         co_incompat=["orange", "yellow", "white"],  # white added: guest-wears-white taboo under contemporary_western
         pa_compat=["solid", "striped", "floral", "checkered"],
-        pa_incompat=["camouflage", "graphic_print", "animal_print"],
+        pa_incompat=["camouflage", "argyle"],
         q_explicit=[
             "Attending a milestone anniversary celebration dinner; smart attire expected. What should I wear?",
             "Going to an engagement celebration party this evening. What should I wear?",
