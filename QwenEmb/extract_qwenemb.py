@@ -40,6 +40,16 @@ def iter_images_from_tar(tar_path: Path):
             yield key, img
 
 
+def limit_iterator(iterator, limit: int | None):
+    if limit is None:
+        yield from iterator
+        return
+    for i, item in enumerate(iterator):
+        if i >= limit:
+            break
+        yield item
+
+
 def batched(iterator, batch_size: int):
     keys, images = [], []
     for key, img in iterator:
@@ -107,14 +117,7 @@ def main():
         all_keys = []
         all_embs = []
         n_shard = 0
-        iterator = iter_images_from_tar(tar_path)
-        if args.limit_images is not None:
-            def limited():
-                for i, item in enumerate(iterator):
-                    if i >= args.limit_images:
-                        break
-                    yield item
-            iterator = limited()
+        iterator = limit_iterator(iter_images_from_tar(tar_path), args.limit_images)
 
         for keys, images in tqdm(batched(iterator, args.batch), desc=stem):
             embs = encoder.encode_images(images)
