@@ -4,7 +4,8 @@ POD-Bench v2 — Canonical Extreme Scenario Catalog (HARDCODED, 15 archetypes)
 Design: "Archetype x Specificity Gradient" (PCogAlignBench, SocialIQA, RVBench).
 Every scenario encodes an INDISPUTABLE TPO contrast — the incompatible garments
 (and, for dress-coded archetypes, colors/patterns) are wrong on grounds of
-physical danger, functional impossibility, or near-universal social norm.
+physical danger, functional impossibility, or social norm under the
+declared cultural frame (CULTURAL_FRAME, below).
 
 15 archetypes (was 8). Two families:
 
@@ -32,6 +33,35 @@ constraints still restrict A/B to compatible values).
 Instance generation:
   scenario x active_axis(color|pattern) x compatible_user -> one benchmark instance
 """
+
+# ═══════════════════════════════════════════════════════════
+#  CULTURAL FRAME  (scope condition for normative dress codes)
+# ═══════════════════════════════════════════════════════════
+# All *normative* dress codes (business, ultra-formal, judicial/civic, mourning,
+# religious, semi-formal, wedding) are defined under ONE explicit convention set:
+# contemporary Western / Euro-American norms. Rationale: the image pool is drawn
+# from the (predominantly US) Amazon Reviews 2023 corpus, so the normative frame
+# is aligned to the visual distribution, removing an image-label culture
+# mismatch. We do NOT claim universality — e.g. white/red wedding & mourning
+# conventions differ in parts of East/South Asia (here white is intentionally
+# NEUTRAL for mourning, since it is not Western mourning attire). This is a
+# stated scope condition, not a universality claim. The same frame is stated to
+# the model at eval time via EVAL_FRAME_CLAUSE, so the task probes occasion
+# reasoning within a declared convention rather than guessing the annotator's
+# culture. PHYSICAL archetypes (cold/heat/water/athletic/rugged/weather/casual)
+# are culture-invariant; their color & pattern stay preference-only.
+CULTURAL_FRAME = "contemporary_western"
+EVAL_FRAME_CLAUSE = (
+    "Assume contemporary Western / international dress-code conventions "
+    "when judging what is appropriate for the occasion."
+)
+# Archetypes whose color/pattern norms are governed by CULTURAL_FRAME.
+FRAME_SCOPED_ARCHETYPES = {
+    "business_professional", "ultra_formal", "judicial_civic",
+    "mourning_somber", "religious_modest", "semi_formal_social",
+    "wedding_celebration",
+}
+
 
 # ═══════════════════════════════════════════════════════════
 #  Helper to build scenario dicts compactly (same signature as v2.0)
@@ -83,7 +113,7 @@ SCENARIO_ARCHETYPES = {
 
 # shared garment palettes for physical archetypes (kept consistent so the
 # TPO contrast is identical across scenarios within an archetype)
-_COLD_C  = ["parka", "coat", "trench_coat", "jacket", "sweater", "windbreaker", "hoodie"]
+_COLD_C  = ["parka", "coat", "jacket", "sweater", "hoodie"]  # trench_coat/windbreaker removed: thin shells inadequate for sub-zero (physical)
 _COLD_I  = ["shorts", "tank_top", "t_shirt", "dress", "skirt"]
 _HEAT_C  = ["t_shirt", "tank_top", "shorts"]
 _HEAT_I  = ["parka", "coat", "trench_coat", "sweater", "suit_jacket", "blazer"]
@@ -645,7 +675,7 @@ CANONICAL_SCENARIOS = [
         gc_compat=["suit_jacket", "blazer", "dress"],
         gc_incompat=["hoodie", "shorts", "tank_top", "t_shirt"],
         co_compat=["black", "navy", "gray", "white"],
-        co_incompat=["orange", "yellow", "pink", "red"],
+        co_incompat=["orange", "yellow", "pink"],  # red removed: red eveningwear appropriate under contemporary_western
         pa_compat=["solid", "striped"],
         pa_incompat=["graphic_print", "camouflage", "animal_print", "floral"],
         q_explicit=[
@@ -666,7 +696,7 @@ CANONICAL_SCENARIOS = [
         gc_compat=["suit_jacket", "blazer", "dress", "shirt"],
         gc_incompat=["hoodie", "shorts", "tank_top", "t_shirt"],
         co_compat=["black", "navy", "gray", "white"],
-        co_incompat=["orange", "yellow", "pink", "red"],
+        co_incompat=["orange", "yellow", "pink"],  # red removed: red eveningwear appropriate under contemporary_western
         pa_compat=["solid", "striped"],
         pa_incompat=["graphic_print", "camouflage", "animal_print", "floral"],
         q_explicit=[
@@ -687,7 +717,7 @@ CANONICAL_SCENARIOS = [
         gc_compat=["suit_jacket", "blazer", "dress"],
         gc_incompat=["hoodie", "shorts", "tank_top", "t_shirt"],
         co_compat=["black", "navy", "gray", "white"],
-        co_incompat=["orange", "yellow", "pink", "red"],
+        co_incompat=["orange", "yellow", "pink"],  # red removed: red eveningwear appropriate under contemporary_western
         pa_compat=["solid", "striped"],
         pa_incompat=["graphic_print", "camouflage", "animal_print", "floral"],
         q_explicit=[
@@ -708,7 +738,7 @@ CANONICAL_SCENARIOS = [
         gc_compat=["suit_jacket", "blazer", "dress"],
         gc_incompat=["hoodie", "shorts", "tank_top", "t_shirt"],
         co_compat=["black", "navy", "gray", "white"],
-        co_incompat=["orange", "yellow", "pink", "red"],
+        co_incompat=["orange", "yellow", "pink"],  # red removed: red eveningwear appropriate under contemporary_western
         pa_compat=["solid", "striped"],
         pa_incompat=["graphic_print", "camouflage", "animal_print", "floral"],
         q_explicit=[
@@ -874,8 +904,8 @@ CANONICAL_SCENARIOS = [
          "occasion": {"activity": "ceremony_attendance", "formality_required": "business_casual"}},
         gc_compat=["shirt", "blouse", "blazer", "dress", "sweater", "coat"],
         gc_incompat=["tank_top", "shorts", "t_shirt", "hoodie"],
-        co_compat=["black", "navy", "gray", "white", "beige"],
-        co_incompat=["orange", "yellow", "pink"],
+        # color: dropped under CULTURAL_FRAME — modesty is coverage (garment);
+        # no crisp color rule, so color is a preference-only axis here
         pa_compat=["solid", "striped"],
         pa_incompat=["graphic_print", "camouflage", "animal_print"],
         q_explicit=[
@@ -894,8 +924,8 @@ CANONICAL_SCENARIOS = [
          "occasion": {"activity": "ceremony_attendance", "formality_required": "business_casual"}},
         gc_compat=["shirt", "blouse", "blazer", "dress", "sweater", "coat"],
         gc_incompat=["tank_top", "shorts", "t_shirt", "hoodie"],
-        co_compat=["black", "navy", "gray", "white", "beige"],
-        co_incompat=["orange", "yellow", "pink"],
+        # color: dropped under CULTURAL_FRAME — modesty is coverage (garment);
+        # no crisp color rule, so color is a preference-only axis here
         pa_compat=["solid", "striped"],
         pa_incompat=["graphic_print", "camouflage", "animal_print"],
         q_explicit=[
@@ -914,8 +944,8 @@ CANONICAL_SCENARIOS = [
          "occasion": {"activity": "ceremony_attendance", "formality_required": "business_casual"}},
         gc_compat=["shirt", "blouse", "blazer", "dress", "sweater", "coat"],
         gc_incompat=["tank_top", "shorts", "t_shirt", "hoodie"],
-        co_compat=["black", "navy", "gray", "white", "beige"],
-        co_incompat=["orange", "yellow", "pink"],
+        # color: dropped under CULTURAL_FRAME — modesty is coverage (garment);
+        # no crisp color rule, so color is a preference-only axis here
         pa_compat=["solid", "striped"],
         pa_incompat=["graphic_print", "camouflage", "animal_print"],
         q_explicit=[
@@ -1015,7 +1045,7 @@ CANONICAL_SCENARIOS = [
         gc_compat=["blazer", "suit_jacket", "dress", "shirt", "blouse"],
         gc_incompat=["hoodie", "shorts", "tank_top", "t_shirt"],
         co_compat=["navy", "beige", "blue", "gray", "green", "purple", "black"],
-        co_incompat=["orange", "yellow"],
+        co_incompat=["orange", "yellow", "white"],  # white added: guest-wears-white taboo under contemporary_western
         pa_compat=["solid", "striped", "floral", "checkered"],
         pa_incompat=["camouflage", "graphic_print", "animal_print"],
         q_explicit=[
@@ -1036,7 +1066,7 @@ CANONICAL_SCENARIOS = [
         gc_compat=["blazer", "suit_jacket", "dress", "shirt", "blouse"],
         gc_incompat=["hoodie", "shorts", "tank_top", "t_shirt"],
         co_compat=["navy", "beige", "blue", "gray", "green", "purple", "black"],
-        co_incompat=["orange", "yellow"],
+        co_incompat=["orange", "yellow", "white"],  # white added: guest-wears-white taboo under contemporary_western
         pa_compat=["solid", "striped", "floral", "checkered"],
         pa_incompat=["camouflage", "graphic_print", "animal_print"],
         q_explicit=[
@@ -1057,7 +1087,7 @@ CANONICAL_SCENARIOS = [
         gc_compat=["blazer", "suit_jacket", "dress", "shirt", "blouse"],
         gc_incompat=["hoodie", "shorts", "tank_top", "t_shirt"],
         co_compat=["navy", "beige", "blue", "gray", "green", "purple", "black"],
-        co_incompat=["orange", "yellow"],
+        co_incompat=["orange", "yellow", "white"],  # white added: guest-wears-white taboo under contemporary_western
         pa_compat=["solid", "striped", "floral", "checkered"],
         pa_incompat=["camouflage", "graphic_print", "animal_print"],
         q_explicit=[
