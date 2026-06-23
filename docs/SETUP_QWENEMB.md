@@ -70,8 +70,9 @@ Avoid concurrent download races before launching multiple extraction workers:
 ```bash
 conda activate qwenemb
 python - <<'PY'
-from qwenemb_encoder import QwenEmbConfig, QwenEmbEncoder
-enc = QwenEmbEncoder(QwenEmbConfig(model_id="Qwen/Qwen3-VL-Embedding-8B", device="cuda", dtype="bfloat16"))
+import os
+from QwenEmb.qwenemb_encoder import QwenEmbConfig, QwenEmbEncoder
+enc = QwenEmbEncoder(QwenEmbConfig(model_id=os.environ.get("QWENEMB_MODEL", "Qwen/Qwen3-VL-Embedding-8B"), device="cuda", dtype="bfloat16"))
 print('cached / loaded:', enc.cfg.model_id)
 PY
 ```
