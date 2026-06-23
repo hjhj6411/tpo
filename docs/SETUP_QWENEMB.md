@@ -42,9 +42,9 @@ Two conda envs, never shared unless you know the dependency pins are compatible:
 ```bash
 conda create -n qwenemb python=3.10 -y && conda activate qwenemb
 pip install torch torchvision --index-url https://download.pytorch.org/whl/cu124
-pip install transformers accelerate pillow pandas pyarrow flask numpy tqdm
+pip install sentence-transformers transformers accelerate pillow pandas pyarrow flask numpy tqdm
 pip install faiss-gpu-cu12
-python -c "import torch, transformers, faiss, flask; print('qwenemb env OK')"
+python -c "import torch, sentence_transformers, transformers, faiss, flask; print('qwenemb env OK')"
 ```
 
 If the Hugging Face model id differs in your cache or Qwen releases a new path, keep
