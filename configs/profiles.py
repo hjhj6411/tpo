@@ -18,18 +18,18 @@ Two design goals, both addressed by hardcoding:
     animal cues instead of full-body garment patterns. `plaid` is folded into
     `checkered` as a retrieval alias rather than treated as a separate label.
     Population tally of pattern_likes (48 slots):
-        striped 9, checkered 9, solid 7, floral 5, polka_dot 5,
-        camouflage 5, argyle 4, paisley 4
+        striped 9, checkered 9, argyle 8, solid 7, floral 5,
+        polka_dot 5, camouflage 5
     Population tally of color_likes (48 slots) spreads dark/neutral (~29) and
     bright (~19) so the benchmark is not all-dark-solid. Combined with the
     counterbalanced option planner, the blind value-prior collapses to ~0.50.
 
 A NEW archetype, `bold_expressive`, deliberately likes bright colors and clear
-all-over statement patterns (floral / paisley / argyle / polka_dot). Such users
-are still highly compatible because, under the relaxed compatibility check,
-physical scenarios (cold/heat/athletic/…) impose no color/pattern constraint —
-so their bright, loud preferences are valid there, balancing the dataset away
-from a dark/solid monoculture.
+all-over statement patterns (floral / argyle / polka_dot). Such users are still
+highly compatible because, under the relaxed compatibility check, physical
+scenarios (cold/heat/athletic/…) impose no color/pattern constraint — so their
+bright, loud preferences are valid there, balancing the dataset away from a
+dark/solid monoculture.
 """
 
 # ═══════════════════════════════════════════════════════════
@@ -49,7 +49,7 @@ PREFERENCE_ARCHETYPES = [
                 "color_likes": ["navy", "beige"],
                 "color_dislikes": ["orange", "red"],
                 "pattern_likes": ["striped", "checkered"],
-                "pattern_dislikes": ["paisley", "camouflage"],
+                "pattern_dislikes": ["argyle", "camouflage"],
             },
             {
                 "garment_likes": ["coat", "shirt", "sweater"],
@@ -57,7 +57,7 @@ PREFERENCE_ARCHETYPES = [
                 "color_likes": ["black", "gray"],
                 "color_dislikes": ["yellow", "pink"],
                 "pattern_likes": ["solid", "striped"],
-                "pattern_dislikes": ["camouflage", "paisley"],
+                "pattern_dislikes": ["camouflage", "argyle"],
             },
             {
                 "garment_likes": ["blazer", "blouse", "coat"],
@@ -81,7 +81,7 @@ PREFERENCE_ARCHETYPES = [
                 "color_likes": ["blue", "red"],
                 "color_dislikes": ["beige", "brown"],
                 "pattern_likes": ["camouflage", "solid"],
-                "pattern_dislikes": ["floral", "paisley"],
+                "pattern_dislikes": ["floral", "argyle"],
             },
             {
                 "garment_likes": ["tank_top", "shorts", "jacket"],
@@ -97,7 +97,7 @@ PREFERENCE_ARCHETYPES = [
                 "color_likes": ["white", "black"],
                 "color_dislikes": ["brown", "yellow"],
                 "pattern_likes": ["argyle", "checkered"],
-                "pattern_dislikes": ["floral", "paisley"],
+                "pattern_dislikes": ["floral", "camouflage"],
             },
         ],
     },
@@ -113,7 +113,7 @@ PREFERENCE_ARCHETYPES = [
                 "color_likes": ["black", "white"],
                 "color_dislikes": ["orange", "purple"],
                 "pattern_likes": ["solid", "striped"],
-                "pattern_dislikes": ["camouflage", "paisley"],
+                "pattern_dislikes": ["camouflage", "argyle"],
             },
             {
                 "garment_likes": ["trench_coat", "blouse", "sweater"],
@@ -121,7 +121,7 @@ PREFERENCE_ARCHETYPES = [
                 "color_likes": ["gray", "beige"],
                 "color_dislikes": ["red", "yellow"],
                 "pattern_likes": ["checkered", "striped"],
-                "pattern_dislikes": ["camouflage", "paisley"],
+                "pattern_dislikes": ["camouflage", "argyle"],
             },
             {
                 "garment_likes": ["blazer", "jeans", "shirt"],
@@ -153,7 +153,7 @@ PREFERENCE_ARCHETYPES = [
                 "color_likes": ["navy", "beige"],
                 "color_dislikes": ["purple", "orange"],
                 "pattern_likes": ["checkered", "camouflage"],
-                "pattern_dislikes": ["paisley", "floral"],
+                "pattern_dislikes": ["argyle", "floral"],
             },
             {
                 "garment_likes": ["coat", "windbreaker", "hoodie"],
@@ -193,7 +193,7 @@ PREFERENCE_ARCHETYPES = [
                 "color_likes": ["beige", "white"],
                 "color_dislikes": ["gray", "red"],
                 "pattern_likes": ["floral", "polka_dot"],
-                "pattern_dislikes": ["paisley", "camouflage"],
+                "pattern_dislikes": ["argyle", "camouflage"],
             },
         ],
     },
@@ -208,7 +208,7 @@ PREFERENCE_ARCHETYPES = [
                 "garment_dislikes": ["suit_jacket", "trench_coat", "blouse"],
                 "color_likes": ["black", "red"],
                 "color_dislikes": ["beige", "purple"],
-                "pattern_likes": ["paisley", "camouflage"],
+                "pattern_likes": ["argyle", "camouflage"],
                 "pattern_dislikes": ["floral", "polka_dot"],
             },
             {
@@ -217,14 +217,14 @@ PREFERENCE_ARCHETYPES = [
                 "color_likes": ["white", "green"],
                 "color_dislikes": ["navy", "brown"],
                 "pattern_likes": ["polka_dot", "striped"],
-                "pattern_dislikes": ["paisley", "floral"],
+                "pattern_dislikes": ["argyle", "floral"],
             },
             {
                 "garment_likes": ["hoodie", "shorts", "jacket"],
                 "garment_dislikes": ["suit_jacket", "trench_coat", "skirt"],
                 "color_likes": ["gray", "blue"],
                 "color_dislikes": ["pink", "beige"],
-                "pattern_likes": ["camouflage", "paisley"],
+                "pattern_likes": ["camouflage", "argyle"],
                 "pattern_dislikes": ["floral", "polka_dot"],
             },
         ],
@@ -241,7 +241,7 @@ PREFERENCE_ARCHETYPES = [
                 "color_likes": ["blue", "beige"],
                 "color_dislikes": ["orange", "purple"],
                 "pattern_likes": ["striped", "checkered"],
-                "pattern_dislikes": ["camouflage", "paisley"],
+                "pattern_dislikes": ["camouflage", "argyle"],
             },
             {
                 "garment_likes": ["jacket", "pants", "t_shirt"],
@@ -249,14 +249,14 @@ PREFERENCE_ARCHETYPES = [
                 "color_likes": ["navy", "white"],
                 "color_dislikes": ["yellow", "pink"],
                 "pattern_likes": ["checkered", "solid"],
-                "pattern_dislikes": ["camouflage", "paisley"],
+                "pattern_dislikes": ["camouflage", "argyle"],
             },
             {
                 "garment_likes": ["shirt", "jeans", "sweater"],
                 "garment_dislikes": ["trench_coat", "blazer", "tank_top"],
                 "color_likes": ["black", "green"],
                 "color_dislikes": ["pink", "red"],
-                "pattern_likes": ["solid", "paisley"],
+                "pattern_likes": ["solid", "argyle"],
                 "pattern_dislikes": ["floral", "camouflage"],
             },
         ],
@@ -275,7 +275,7 @@ PREFERENCE_ARCHETYPES = [
                 "garment_dislikes": ["suit_jacket", "coat", "blazer"],
                 "color_likes": ["red", "yellow"],
                 "color_dislikes": ["gray", "black"],
-                "pattern_likes": ["floral", "paisley"],
+                "pattern_likes": ["floral", "argyle"],
                 "pattern_dislikes": ["solid", "camouflage"],
             },
             {
