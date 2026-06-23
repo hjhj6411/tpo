@@ -41,13 +41,7 @@ for d in [PROFILES_DIR, QUERIES_DIR, OPTIONS_DIR, IMAGES_DIR, LABELS_DIR, FINAL_
 # ── Phase-1 axes ──────────────────────────────────────────
 PHASE1_AXES = ["color", "pattern", "garment_category"]
 
-# Pattern-axis policy:
-#   - Keep only garment-body-level, repeatable/all-over patterns.
-#   - Collapse plaid/tartan/gingham into checkered; they are retrieval aliases,
-#     not separate benchmark labels.
-#   - Exclude graphic_print and animal_print because they frequently retrieve
-#     localized front graphics/logos or inconsistent motif coverage rather than
-#     all-over garment-body patterns.
+
 FASHION_ATTRIBUTE_AXES = {
     "color": [
         "black", "white", "gray", "navy", "blue", "red", "pink", "orange",

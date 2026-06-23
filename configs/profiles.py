@@ -2,34 +2,6 @@
 POD-Bench v2 — User Preference Archetypes (HARDCODED, 24 users)
 
 8 preference archetypes × 3 variants = 24 users.
-
-Two design goals, both addressed by hardcoding:
-
-(1) MAXIMIZE compatibility across the 15 scenario archetypes.
-    Each variant's garment likes (~3) and dislikes (~3) leave ~12 neutral
-    garments, so for (almost) every scenario there is at least one neutral
-    TPO-compatible garment and one neutral TPO-incompatible garment — the
-    clean A/B (compat) vs C/D (incompat) garment pair the planner needs.
-
-(2) ELIMINATE the `solid`-monoculture confound at the source.
-    Liked patterns are spread across a compact all-over-pattern vocabulary.
-    The pattern axis intentionally excludes `graphic_print` and `animal_print`
-    because retrieval often returns localized front graphics/logos or motif-only
-    animal cues instead of full-body garment patterns. `plaid` is folded into
-    `checkered` as a retrieval alias rather than treated as a separate label.
-    Population tally of pattern_likes (48 slots):
-        striped 9, checkered 9, argyle 8, solid 7, floral 5,
-        polka_dot 5, camouflage 5
-    Population tally of color_likes (48 slots) spreads dark/neutral (~29) and
-    bright (~19) so the benchmark is not all-dark-solid. Combined with the
-    counterbalanced option planner, the blind value-prior collapses to ~0.50.
-
-A NEW archetype, `bold_expressive`, deliberately likes bright colors and clear
-all-over statement patterns (floral / argyle / polka_dot). Such users are still
-highly compatible because, under the relaxed compatibility check, physical
-scenarios (cold/heat/athletic/…) impose no color/pattern constraint — so their
-bright, loud preferences are valid there, balancing the dataset away from a
-dark/solid monoculture.
 """
 
 # ═══════════════════════════════════════════════════════════
