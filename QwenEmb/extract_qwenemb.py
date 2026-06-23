@@ -69,11 +69,13 @@ def parse_args():
     p.add_argument("--model-id", default="Qwen/Qwen3-VL-Embedding-8B")
     p.add_argument("--gpu", type=int, default=0)
     p.add_argument("--num-gpus", type=int, default=1)
-    p.add_argument("--batch", type=int, default=32)
+    p.add_argument("--batch", type=int, default=1)
     p.add_argument("--dtype", default="bfloat16", choices=["bfloat16", "bf16", "float16", "fp16", "float32", "fp32"])
     p.add_argument("--device", default="cuda")
-    p.add_argument("--device-map", default=None, help="Optional HF device_map, e.g. auto. Overrides --device placement.")
+    p.add_argument("--device-map", default=None, help="Optional HF device_map, kept for CLI compatibility.")
     p.add_argument("--dim", type=int, default=None, help="Optional Matryoshka truncation dimension.")
+    p.add_argument("--max-image-size", type=int, default=448,
+                   help="Resize image long side before Qwen encoding; use 384 if OOM persists.")
     p.add_argument("--limit-shards", type=int, default=None)
     p.add_argument("--limit-images", type=int, default=None, help="Debug cap per process, after shard split.")
     p.add_argument("--force", action="store_true")
@@ -102,6 +104,7 @@ def main():
         device_map=args.device_map,
         dtype=args.dtype,
         dim=args.dim,
+        max_image_size=args.max_image_size,
     )
     encoder = QwenEmbEncoder(cfg)
 
