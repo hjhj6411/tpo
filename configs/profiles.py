@@ -12,24 +12,24 @@ Two design goals, both addressed by hardcoding:
     clean A/B (compat) vs C/D (incompat) garment pair the planner needs.
 
 (2) ELIMINATE the `solid`-monoculture confound at the source.
-    In the old 7-archetype set, `solid` was a liked pattern for most users and
-    was the only liked pattern intersecting the formal-compatible set, so option
-    A was forced to be `solid` (liked_rate ≈ 0.90) and a preference-blind model
-    could win by always answering "solid". Here liked patterns are spread across
-    the whole vocabulary; `solid` is a liked pattern for only 7 of 24 users.
+    Liked patterns are spread across a compact all-over-pattern vocabulary.
+    The pattern axis intentionally excludes `graphic_print` and `animal_print`
+    because retrieval often returns localized front graphics/logos or motif-only
+    animal cues instead of full-body garment patterns. `plaid` is folded into
+    `checkered` as a retrieval alias rather than treated as a separate label.
     Population tally of pattern_likes (48 slots):
-        solid 7, striped 9, checkered 8, plaid 5, floral 5,
-        polka_dot 4, graphic_print 5, camouflage 3, animal_print 2
+        striped 9, checkered 9, solid 7, floral 5, polka_dot 5,
+        camouflage 5, argyle 4, paisley 4
     Population tally of color_likes (48 slots) spreads dark/neutral (~29) and
     bright (~19) so the benchmark is not all-dark-solid. Combined with the
     counterbalanced option planner, the blind value-prior collapses to ~0.50.
 
-A NEW archetype, `bold_expressive`, deliberately likes bright colors and loud
-patterns (floral / polka_dot / animal_print). Such users are still highly
-compatible because, under the relaxed compatibility check, physical scenarios
-(cold/heat/athletic/…) impose no color/pattern constraint — so their bright,
-loud preferences are valid there, balancing the dataset away from a
-dark/solid monoculture.
+A NEW archetype, `bold_expressive`, deliberately likes bright colors and clear
+all-over statement patterns (floral / paisley / argyle / polka_dot). Such users
+are still highly compatible because, under the relaxed compatibility check,
+physical scenarios (cold/heat/athletic/…) impose no color/pattern constraint —
+so their bright, loud preferences are valid there, balancing the dataset away
+from a dark/solid monoculture.
 """
 
 # ═══════════════════════════════════════════════════════════
@@ -49,7 +49,7 @@ PREFERENCE_ARCHETYPES = [
                 "color_likes": ["navy", "beige"],
                 "color_dislikes": ["orange", "red"],
                 "pattern_likes": ["striped", "checkered"],
-                "pattern_dislikes": ["graphic_print", "camouflage"],
+                "pattern_dislikes": ["paisley", "camouflage"],
             },
             {
                 "garment_likes": ["coat", "shirt", "sweater"],
@@ -57,15 +57,15 @@ PREFERENCE_ARCHETYPES = [
                 "color_likes": ["black", "gray"],
                 "color_dislikes": ["yellow", "pink"],
                 "pattern_likes": ["solid", "striped"],
-                "pattern_dislikes": ["animal_print", "graphic_print"],
+                "pattern_dislikes": ["camouflage", "paisley"],
             },
             {
                 "garment_likes": ["blazer", "blouse", "coat"],
                 "garment_dislikes": ["parka", "tank_top", "shorts"],
                 "color_likes": ["white", "navy"],
                 "color_dislikes": ["brown", "green"],
-                "pattern_likes": ["checkered", "plaid"],
-                "pattern_dislikes": ["polka_dot", "graphic_print"],
+                "pattern_likes": ["checkered", "argyle"],
+                "pattern_dislikes": ["polka_dot", "camouflage"],
             },
         ],
     },
@@ -80,8 +80,8 @@ PREFERENCE_ARCHETYPES = [
                 "garment_dislikes": ["suit_jacket", "trench_coat", "blazer"],
                 "color_likes": ["blue", "red"],
                 "color_dislikes": ["beige", "brown"],
-                "pattern_likes": ["graphic_print", "solid"],
-                "pattern_dislikes": ["floral", "animal_print"],
+                "pattern_likes": ["camouflage", "solid"],
+                "pattern_dislikes": ["floral", "paisley"],
             },
             {
                 "garment_likes": ["tank_top", "shorts", "jacket"],
@@ -96,8 +96,8 @@ PREFERENCE_ARCHETYPES = [
                 "garment_dislikes": ["suit_jacket", "trench_coat", "blouse"],
                 "color_likes": ["white", "black"],
                 "color_dislikes": ["brown", "yellow"],
-                "pattern_likes": ["graphic_print", "checkered"],
-                "pattern_dislikes": ["floral", "animal_print"],
+                "pattern_likes": ["argyle", "checkered"],
+                "pattern_dislikes": ["floral", "paisley"],
             },
         ],
     },
@@ -113,7 +113,7 @@ PREFERENCE_ARCHETYPES = [
                 "color_likes": ["black", "white"],
                 "color_dislikes": ["orange", "purple"],
                 "pattern_likes": ["solid", "striped"],
-                "pattern_dislikes": ["graphic_print", "animal_print"],
+                "pattern_dislikes": ["camouflage", "paisley"],
             },
             {
                 "garment_likes": ["trench_coat", "blouse", "sweater"],
@@ -121,7 +121,7 @@ PREFERENCE_ARCHETYPES = [
                 "color_likes": ["gray", "beige"],
                 "color_dislikes": ["red", "yellow"],
                 "pattern_likes": ["checkered", "striped"],
-                "pattern_dislikes": ["camouflage", "animal_print"],
+                "pattern_dislikes": ["camouflage", "paisley"],
             },
             {
                 "garment_likes": ["blazer", "jeans", "shirt"],
@@ -129,7 +129,7 @@ PREFERENCE_ARCHETYPES = [
                 "color_likes": ["navy", "white"],
                 "color_dislikes": ["pink", "green"],
                 "pattern_likes": ["solid", "checkered"],
-                "pattern_dislikes": ["floral", "graphic_print"],
+                "pattern_dislikes": ["floral", "camouflage"],
             },
         ],
     },
@@ -144,7 +144,7 @@ PREFERENCE_ARCHETYPES = [
                 "garment_dislikes": ["blazer", "dress", "suit_jacket"],
                 "color_likes": ["green", "brown"],
                 "color_dislikes": ["pink", "purple"],
-                "pattern_likes": ["checkered", "plaid"],
+                "pattern_likes": ["checkered", "camouflage"],
                 "pattern_dislikes": ["floral", "polka_dot"],
             },
             {
@@ -152,15 +152,15 @@ PREFERENCE_ARCHETYPES = [
                 "garment_dislikes": ["trench_coat", "blouse", "suit_jacket"],
                 "color_likes": ["navy", "beige"],
                 "color_dislikes": ["purple", "orange"],
-                "pattern_likes": ["plaid", "camouflage"],
-                "pattern_dislikes": ["animal_print", "floral"],
+                "pattern_likes": ["checkered", "camouflage"],
+                "pattern_dislikes": ["paisley", "floral"],
             },
             {
                 "garment_likes": ["coat", "windbreaker", "hoodie"],
                 "garment_dislikes": ["suit_jacket", "blazer", "skirt"],
                 "color_likes": ["gray", "blue"],
                 "color_dislikes": ["red", "yellow"],
-                "pattern_likes": ["plaid", "striped"],
+                "pattern_likes": ["argyle", "striped"],
                 "pattern_dislikes": ["floral", "polka_dot"],
             },
         ],
@@ -177,7 +177,7 @@ PREFERENCE_ARCHETYPES = [
                 "color_likes": ["black", "purple"],
                 "color_dislikes": ["orange", "green"],
                 "pattern_likes": ["floral", "solid"],
-                "pattern_dislikes": ["camouflage", "graphic_print"],
+                "pattern_dislikes": ["camouflage", "argyle"],
             },
             {
                 "garment_likes": ["blazer", "skirt", "shirt"],
@@ -185,7 +185,7 @@ PREFERENCE_ARCHETYPES = [
                 "color_likes": ["navy", "pink"],
                 "color_dislikes": ["brown", "yellow"],
                 "pattern_likes": ["floral", "striped"],
-                "pattern_dislikes": ["camouflage", "animal_print"],
+                "pattern_dislikes": ["camouflage", "argyle"],
             },
             {
                 "garment_likes": ["trench_coat", "dress", "blouse"],
@@ -193,7 +193,7 @@ PREFERENCE_ARCHETYPES = [
                 "color_likes": ["beige", "white"],
                 "color_dislikes": ["gray", "red"],
                 "pattern_likes": ["floral", "polka_dot"],
-                "pattern_dislikes": ["graphic_print", "camouflage"],
+                "pattern_dislikes": ["paisley", "camouflage"],
             },
         ],
     },
@@ -201,14 +201,14 @@ PREFERENCE_ARCHETYPES = [
     # ── 6. Streetwear ─────────────────────────────────────
     {
         "archetype_id": "streetwear",
-        "persona_hint": "Urban street style; prefers hoodies, jackets, bold graphics; avoids traditional formal.",
+        "persona_hint": "Urban street style; prefers hoodies, jackets, bold all-over patterns; avoids traditional formal.",
         "variants": [
             {
                 "garment_likes": ["hoodie", "jacket", "jeans"],
                 "garment_dislikes": ["suit_jacket", "trench_coat", "blouse"],
                 "color_likes": ["black", "red"],
                 "color_dislikes": ["beige", "purple"],
-                "pattern_likes": ["graphic_print", "camouflage"],
+                "pattern_likes": ["paisley", "camouflage"],
                 "pattern_dislikes": ["floral", "polka_dot"],
             },
             {
@@ -216,15 +216,15 @@ PREFERENCE_ARCHETYPES = [
                 "garment_dislikes": ["blazer", "coat", "dress"],
                 "color_likes": ["white", "green"],
                 "color_dislikes": ["navy", "brown"],
-                "pattern_likes": ["graphic_print", "striped"],
-                "pattern_dislikes": ["animal_print", "floral"],
+                "pattern_likes": ["polka_dot", "striped"],
+                "pattern_dislikes": ["paisley", "floral"],
             },
             {
                 "garment_likes": ["hoodie", "shorts", "jacket"],
                 "garment_dislikes": ["suit_jacket", "trench_coat", "skirt"],
                 "color_likes": ["gray", "blue"],
                 "color_dislikes": ["pink", "beige"],
-                "pattern_likes": ["camouflage", "graphic_print"],
+                "pattern_likes": ["camouflage", "paisley"],
                 "pattern_dislikes": ["floral", "polka_dot"],
             },
         ],
@@ -241,7 +241,7 @@ PREFERENCE_ARCHETYPES = [
                 "color_likes": ["blue", "beige"],
                 "color_dislikes": ["orange", "purple"],
                 "pattern_likes": ["striped", "checkered"],
-                "pattern_dislikes": ["camouflage", "animal_print"],
+                "pattern_dislikes": ["camouflage", "paisley"],
             },
             {
                 "garment_likes": ["jacket", "pants", "t_shirt"],
@@ -249,33 +249,33 @@ PREFERENCE_ARCHETYPES = [
                 "color_likes": ["navy", "white"],
                 "color_dislikes": ["yellow", "pink"],
                 "pattern_likes": ["checkered", "solid"],
-                "pattern_dislikes": ["graphic_print", "animal_print"],
+                "pattern_dislikes": ["camouflage", "paisley"],
             },
             {
                 "garment_likes": ["shirt", "jeans", "sweater"],
                 "garment_dislikes": ["trench_coat", "blazer", "tank_top"],
                 "color_likes": ["black", "green"],
                 "color_dislikes": ["pink", "red"],
-                "pattern_likes": ["solid", "plaid"],
+                "pattern_likes": ["solid", "paisley"],
                 "pattern_dislikes": ["floral", "camouflage"],
             },
         ],
     },
 
     # ── 8. Bold Expressive (NEW) ──────────────────────────
-    # Likes bright colors + loud patterns; balances the dataset away from
-    # a dark/solid monoculture. Highly compatible via physical scenarios
-    # (which impose no color/pattern TPO constraint).
+    # Likes bright colors + clear all-over statement patterns; balances the
+    # dataset away from a dark/solid monoculture. Highly compatible via physical
+    # scenarios (which impose no color/pattern TPO constraint).
     {
         "archetype_id": "bold_expressive",
-        "persona_hint": "Loves vivid colors and statement prints; avoids plain, muted looks.",
+        "persona_hint": "Loves vivid colors and statement all-over patterns; avoids plain, muted looks.",
         "variants": [
             {
                 "garment_likes": ["dress", "t_shirt", "skirt"],
                 "garment_dislikes": ["suit_jacket", "coat", "blazer"],
                 "color_likes": ["red", "yellow"],
                 "color_dislikes": ["gray", "black"],
-                "pattern_likes": ["floral", "animal_print"],
+                "pattern_likes": ["floral", "paisley"],
                 "pattern_dislikes": ["solid", "camouflage"],
             },
             {
@@ -291,7 +291,7 @@ PREFERENCE_ARCHETYPES = [
                 "garment_dislikes": ["blazer", "coat", "suit_jacket"],
                 "color_likes": ["purple", "green"],
                 "color_dislikes": ["black", "gray"],
-                "pattern_likes": ["animal_print", "polka_dot"],
+                "pattern_likes": ["argyle", "polka_dot"],
                 "pattern_dislikes": ["solid", "striped"],
             },
         ],
