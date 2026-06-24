@@ -226,11 +226,31 @@ def stage_name_for(input_format):
 # ── Answer parsing / model resolution ───────────────────────────────────
 def parse_answer(response: str):
     response = (response or "").strip()
+    if not response:
+        return None
+
+    if "</think>" in response:
+        response = response.split("</think>", 1)[1].strip()
+
+    # Ideal case: exactly one choice.
     if re.fullmatch(r"[ABCDabcd]", response):
         return response.upper()
+
     first_line = response.splitlines()[0].strip() if response else ""
-    if re.fullmatch(r"[ABCDabcd]", first_line):
-        return first_line.upper()
+    if re.fullmatch(r"[ABCDabcd][\s\.)\]:-]*", first_line):
+        return first_line[0].upper()
+
+    # Common short completions when max_tokens is small: "Answer: C", "The answer is B".
+    m = re.search(r"(?i)(?:answer|option|choice|select(?:ion)?|final)\s*[:\-]?\s*([ABCD])\b", response)
+    if m:
+        return m.group(1).upper()
+
+    # Last-resort fallback for short outputs only. Avoid parsing arbitrary long reasoning text.
+    if len(response) <= 80:
+        m = re.search(r"\b([ABCDabcd])\b", response)
+        if m:
+            return m.group(1).upper()
+
     return None
 
 
@@ -388,210 +408,148 @@ def evaluate(plans, queries_map, profiles_map,
 
 
 def print_progress(done, total, rec, strict_hit, axis, qtype):
-    status = "✓" if strict_hit else "✗"
-    print(f"  [{done:3d}/{total}] {status} pred={rec['predicted']} "
-          f"orig={rec['predicted_original']} ans={rec['correct_display']} | "
-          f"axis={axis} qtype={qtype}")
+    ok = "✓" if strict_hit else "✗"
+    print(f"  [{done}/{total}] {ok} pred={rec['predicted']} orig={rec['predicted_original']} "
+          f"ans={rec['correct_display']} | axis={axis} qtype={qtype}")
 
 
 # ── Reporting ───────────────────────────────────────────────────────────
-def print_report(strict_correct, tpo_correct, profile_correct, total, breakdown,
-                 input_format=None, model_name=None):
-    strict_acc = strict_correct / total * 100 if total else 0
-    tpo_acc = tpo_correct / total * 100 if total else 0
-    profile_acc = profile_correct / total * 100 if total else 0
-
-    print("\n" + "=" * 60)
-    if input_format:
-        print(f"  INPUT FORMAT:      {input_format}")
-    if model_name:
-        print(f"  MODEL:             {model_name}")
-    print(f"  STRICT ACCURACY:   {strict_correct}/{total} = {strict_acc:.1f}%")
-    print(f"  TPO ACCURACY:      {tpo_correct}/{total} = {tpo_acc:.1f}%")
-    print(f"  PROFILE ACCURACY:  {profile_correct}/{total} = {profile_acc:.1f}%")
-    print(f"  Random baseline:   25.0% strict")
-    print("=" * 60)
-
-    print("\n  ── By active_axis ──")
-    for key in sorted(k for k in breakdown if k.startswith("axis:")):
-        d = breakdown[key]
-        n = d["total"]
-        s = d["strict_correct"] / n * 100 if n else 0
-        t = d["tpo_correct"] / n * 100 if n else 0
-        p = d["profile_correct"] / n * 100 if n else 0
-        print(f"  {key:18s} strict={s:5.1f}%  tpo={t:5.1f}%  profile={p:5.1f}%  (n={n})")
-
-    print("\n  ── By query_type ──")
-    for key in sorted(k for k in breakdown if k.startswith("qtype:")):
-        d = breakdown[key]
-        n = d["total"]
-        s = d["strict_correct"] / n * 100 if n else 0
-        t = d["tpo_correct"] / n * 100 if n else 0
-        p = d["profile_correct"] / n * 100 if n else 0
-        print(f"  {key:18s} strict={s:5.1f}%  tpo={t:5.1f}%  profile={p:5.1f}%  (n={n})")
+def pct(num, den):
+    return num / den * 100 if den else 0.0
 
 
-def _summary_row(summary):
-    total = summary["total"]
-    strict = summary["strict_correct"] / total * 100 if total else 0
-    tpo = summary["tpo_correct"] / total * 100 if total else 0
-    prof = summary["profile_correct"] / total * 100 if total else 0
-    return strict, tpo, prof
+def summarize_breakdown(breakdown):
+    return {
+        key: {
+            "strict": pct(v["strict_correct"], v["total"]),
+            "tpo": pct(v["tpo_correct"], v["total"]),
+            "profile": pct(v["profile_correct"], v["total"]),
+            "n": v["total"],
+        }
+        for key, v in sorted(breakdown.items())
+    }
 
 
-def _metric_cell(d):
-    n = d.get("total", 0)
-    if not n:
-        return "     -       -       -   (n=0)"
-    strict = d.get("strict_correct", 0) / n * 100
-    tpo = d.get("tpo_correct", 0) / n * 100
-    profile = d.get("profile_correct", 0) / n * 100
-    return f"{strict:6.1f}% {tpo:6.1f}% {profile:7.1f}% (n={n})"
+def print_table(rows, title):
+    print("\n" + "=" * 78)
+    print(f"  {title}")
+    print("=" * 78)
+    print(f"  {'format':<18} {'model':<32} {'strict':>8} {'tpo':>7} {'profile':>9} {'n':>8}")
+    print("  " + "-" * 72)
+    for r in rows:
+        print(f"  {r['input_format']:<18} {r['model'][:32]:<32} "
+              f"{r['strict_acc']:7.1f}% {r['tpo_acc']:6.1f}% {r['profile_acc']:8.1f}% {r['n']:8d}")
 
 
-def _ordered_breakdown_keys(summaries, prefix):
-    keys = set()
-    for summary in summaries.values():
-        keys.update(k for k in summary.get("breakdown", {}) if k.startswith(prefix))
-    return sorted(keys)
+def print_grouped_summary(rows, title):
+    by_fmt = {r["input_format"]: r for r in rows}
+    print("\n" + "=" * 78)
+    print(f"  {title}")
+    print("=" * 78)
+    print(f"  {'format':<18} {'model':<32} {'strict':>8} {'tpo':>7} {'profile':>9}")
+    print("  " + "-" * 72)
+    for gi, group in enumerate(SUMMARY_GROUPS):
+        if gi > 0:
+            print("  " + "/" * 72)
+        for fmt in group:
+            r = by_fmt.get(fmt)
+            if not r:
+                continue
+            print(f"  {fmt:<18} {r['model'][:32]:<32} "
+                  f"{r['strict_acc']:7.1f}% {r['tpo_acc']:6.1f}% {r['profile_acc']:8.1f}%")
+    print("=" * 78)
 
 
-def print_breakdown_comparison(summaries, prefix, title):
-    keys = _ordered_breakdown_keys(summaries, prefix)
+def print_breakdown_comparison(rows, prefix, title):
+    by_fmt = {r["input_format"]: r for r in rows}
+    keys = sorted({
+        key for r in rows for key in r.get("breakdown", {})
+        if key.startswith(prefix)
+    })
     if not keys:
         return
 
     print("\n" + "=" * 100)
-    print(f"  ══ {title} COMPARISON ══")
+    print(f"  ══ {title} ══")
     print("  cell = strict / tpo / profile")
     print("=" * 100)
-
     for key in keys:
-        print(f"\n  ── {key} ──")
-        print(f"  {'format':<18} {'strict':>7} {'tpo':>7} {'profile':>9}   {'n':>8}")
+        label = key.split(":", 1)[1]
+        print(f"\n  ── {prefix}{label} ──")
+        print(f"  {'format':<18} {'strict':>8} {'tpo':>7} {'profile':>9} {'n':>10}")
         print("  " + "-" * 52)
         for gi, group in enumerate(SUMMARY_GROUPS):
             if gi > 0:
                 print("  " + "/" * 52)
             for fmt in group:
-                summary = summaries.get(fmt)
-                if not summary:
+                r = by_fmt.get(fmt)
+                if not r:
                     continue
-                d = summary.get("breakdown", {}).get(key, {})
-                n = d.get("total", 0)
-                if n:
-                    strict = d.get("strict_correct", 0) / n * 100
-                    tpo = d.get("tpo_correct", 0) / n * 100
-                    profile = d.get("profile_correct", 0) / n * 100
-                    print(f"  {fmt:<18} {strict:6.1f}%  {tpo:6.1f}%  {profile:7.1f}%   {n:8d}")
-                else:
-                    print(f"  {fmt:<18} {'-':>7}  {'-':>7}  {'-':>7}   {0:8d}")
+                cell = r.get("breakdown", {}).get(key)
+                if not cell:
+                    continue
+                print(f"  {fmt:<18} {cell['strict']:7.1f}% {cell['tpo']:6.1f}% "
+                      f"{cell['profile']:8.1f}% {cell['n']:10d}")
 
 
-def print_grouped_summary(summaries):
-    print("\n" + "=" * 78)
-    print("  ══ GROUPED SUMMARY: all / all+query / query /// narrative / narrative+query / query ══")
-    print(f"  {'format':<18} {'model':<32} {'strict':>7} {'tpo':>7} {'profile':>9}")
-    print("  " + "-" * 74)
-    for gi, group in enumerate(SUMMARY_GROUPS):
-        if gi > 0:
-            print("  " + "/" * 74)
-        for fmt in group:
-            s = summaries.get(fmt)
-            if not s:
-                continue
-            model = (s["model_name"] or "?")[:31]
-            strict, tpo, prof = _summary_row(s)
-            print(f"  {fmt:<18} {model:<32} {strict:6.1f}%  {tpo:6.1f}%  {prof:7.1f}%")
+# ── Preview ─────────────────────────────────────────────────────────────
+def print_preview(plans, queries_map, profiles_map, input_format, seed=42, limit=1):
+    jobs = prepare_jobs(plans, queries_map, profiles_map, input_format, seed=seed, limit=limit)
+    if not jobs:
+        print("No preview job.")
+        return
+    plan, _query, prompt, display_to_original, correct_display = jobs[0]
     print("=" * 78)
-
-    print_breakdown_comparison(summaries, "axis:", "ACTIVE_AXIS")
-    print_breakdown_comparison(summaries, "qtype:", "QUERY_TYPE")
-
-
-# ── See prompts ─────────────────────────────────────────────────────────
-def print_prompt_preview(plans, queries_map, profiles_map, seed=42):
-    print("\n" + "=" * 78)
-    print("  PROMPT PREVIEW: all / all+query / query /// narrative / narrative+query / query")
+    print(f"PREVIEW input_format={input_format} query_id={plan['query_id']} user_id={plan['user_id']}")
+    print(f"display_to_original={display_to_original} correct_display={correct_display}")
     print("=" * 78)
-
-    preview_order = ["all", "all+query", "query", "narrative", "narrative+query", "query"]
-    for i, fmt in enumerate(preview_order):
-        jobs = prepare_jobs(plans, queries_map, profiles_map, fmt, seed=seed, limit=1)
-        if not jobs:
-            print(f"\n[WARN] no preview job for input_format={fmt}")
-            continue
-        plan, query, prompt, _, _ = jobs[0]
-        print("\n" + "─" * 78)
-        print(f"INPUT FORMAT: {fmt}   query_id={plan.get('query_id')}   user_id={plan.get('user_id')}")
-        print("─" * 78)
-        print("[SYSTEM]")
-        print(system_prompt_for(fmt).rstrip())
-        print("\n[USER]")
-        print(prompt)
-        if i == 2:
-            print("\n" + "/" * 78)
+    print(prompt)
 
 
 # ── Main ────────────────────────────────────────────────────────────────
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--plans", type=Path,
-                        default=OPTIONS_DIR / "option_plans.jsonl")
-    parser.add_argument("--queries", type=Path,
-                        default=QUERIES_DIR / "queries.jsonl")
-    parser.add_argument("--profiles", type=Path,
-                        default=PROFILES_DIR / "profiles.jsonl")
-    parser.add_argument("--output", type=Path,
-                        default=OPTIONS_DIR / "text_eval_results.jsonl")
-    parser.add_argument("--limit", type=int, default=0, help="0 = all")
+    parser.add_argument("--plans", type=Path, default=OPTIONS_DIR / "option_plans.jsonl")
+    parser.add_argument("--queries", type=Path, default=QUERIES_DIR / "queries.jsonl")
+    parser.add_argument("--profiles", type=Path, default=PROFILES_DIR / "profiles.jsonl")
+    parser.add_argument("--output-dir", type=Path, default=OPTIONS_DIR / "text_eval")
+    parser.add_argument("--input-format", choices=INPUT_FORMATS, default=None,
+                        help="If omitted, run all formats.")
     parser.add_argument("--model", type=str, default=None,
-                        help="provider alias from config, e.g. vllm/gpt5_mini, or raw model name on the vllm endpoint")
+                        help="Provider alias such as vllm/gpt5_mini, or raw model name on the vllm endpoint.")
+    parser.add_argument("--limit", type=int, default=0, help="0 = all plans")
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--concurrency", type=int, default=1)
     parser.add_argument("--verbose", action="store_true")
-    parser.add_argument("--input-format", type=str, default=None, choices=INPUT_FORMATS,
-                        help="생략 시 all / all+query / query / narrative / narrative+query 실행")
-    parser.add_argument("--concurrency", type=int, default=1,
-                        help="병렬 요청 수. vllm은 32, OpenAI API는 1~8 권장")
-    parser.add_argument("--see", action="store_true",
-                        help="실험을 실행하지 않고 실제 model input prompt만 출력")
+    parser.add_argument("--see", action="store_true", help="Print one prompt preview and exit.")
     args = parser.parse_args()
 
     log_step("Text Input-Format Eval")
-
     plans = load_jsonl(args.plans)
     queries = load_jsonl(args.queries)
     profiles = load_jsonl(args.profiles)
-
     queries_map = {q["query_id"]: q for q in queries}
     profiles_map = {p["user_id"]: p for p in profiles}
+    input_formats = INPUT_FORMATS if args.input_format is None else [args.input_format]
+    model_name = resolve_model_name(args.model, input_formats[0])
 
     print(f"  Plans: {len(plans)}, Queries: {len(queries)}, Profiles: {len(profiles)}")
     print(f"  Concurrency: {args.concurrency}")
-    if args.limit:
-        print(f"  Limit: {args.limit}")
+    print(f"  Limit: {args.limit or 'all'}")
 
     if args.see:
-        print_prompt_preview(plans, queries_map, profiles_map, seed=args.seed)
+        for fmt in input_formats:
+            print_preview(plans, queries_map, profiles_map, fmt, seed=args.seed, limit=args.limit or 1)
         return
 
-    formats_to_run = [args.input_format] if args.input_format else INPUT_FORMATS
-    run_all = args.input_format is None
-    summaries = {}
+    args.output_dir.mkdir(parents=True, exist_ok=True)
+    rows = []
 
-    for fmt in formats_to_run:
-        model_name = resolve_model_name(args.model, fmt)
-        print(f"\n{'─' * 60}")
+    for fmt in input_formats:
+        print(f"\n{'─' * 78}")
         print(f"  ▶ input-format = {fmt}  |  model = {model_name}")
-        print(f"{'─' * 60}")
-
-        if run_all or args.output == OPTIONS_DIR / "text_eval_results.jsonl":
-            suffix = fmt.replace("+", "_plus_")
-            out_path = OPTIONS_DIR / f"text_eval_results_{suffix}.jsonl"
-        else:
-            out_path = args.output
-
-        results, strict_correct, tpo_correct, profile_correct, total, breakdown = evaluate(
+        print(f"{'─' * 78}")
+        results, strict, tpo, profile, total, breakdown = evaluate(
             plans, queries_map, profiles_map,
             input_format=fmt,
             limit=args.limit,
@@ -600,24 +558,33 @@ def main():
             verbose=args.verbose,
             concurrency=args.concurrency,
         )
-
+        safe_model = re.sub(r"[^A-Za-z0-9_.-]+", "_", model_name)
+        out_path = args.output_dir / f"{fmt.replace('+', '_plus_')}__{safe_model}.jsonl"
         save_jsonl(results, out_path)
-        print(f"\n  Saved {len(results)} result records → {out_path}")
-        print_report(strict_correct, tpo_correct, profile_correct, total, breakdown,
-                     input_format=fmt, model_name=model_name)
-
-        summaries[fmt] = {
+        row = {
             "input_format": fmt,
-            "model_name": model_name,
-            "strict_correct": strict_correct,
-            "tpo_correct": tpo_correct,
-            "profile_correct": profile_correct,
-            "total": total,
-            "breakdown": {k: dict(v) for k, v in breakdown.items()},
+            "model": model_name,
+            "strict_acc": pct(strict, total),
+            "tpo_acc": pct(tpo, total),
+            "profile_acc": pct(profile, total),
+            "n": total,
+            "out": str(out_path),
+            "breakdown": summarize_breakdown(breakdown),
         }
+        rows.append(row)
+        print_table([row], title=f"RESULT: {fmt}")
+        print(f"  Saved → {out_path}")
 
-    if run_all:
-        print_grouped_summary(summaries)
+    print_table(rows, title="FINAL SUMMARY")
+    print_grouped_summary(rows, title="══ GROUPED SUMMARY: all / all+query / query /// narrative / narrative+query / query ══")
+    print_breakdown_comparison(rows, "axis:", "ACTIVE_AXIS COMPARISON")
+    print_breakdown_comparison(rows, "qtype:", "QUERY_TYPE COMPARISON")
+
+    summary_path = args.output_dir / f"summary__{re.sub(r'[^A-Za-z0-9_.-]+', '_', model_name)}.json"
+    summary_rows = [{k: v for k, v in r.items() if k != "breakdown"} | {"breakdown": r["breakdown"]} for r in rows]
+    with open(summary_path, "w", encoding="utf-8") as f:
+        json.dump(summary_rows, f, ensure_ascii=False, indent=2)
+    print(f"\n  Summary saved → {summary_path}")
 
 
 if __name__ == "__main__":
