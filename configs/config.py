@@ -152,9 +152,9 @@ PROVIDER_ENDPOINTS = {
         "api_base": os.environ.get("QWEN36_API_BASE", "http://localhost:8000/v1"),
         "uses_max_completion_tokens": False,
         "supports_temperature": True,
-        # Choice-only text eval: prevent verbose Qwen responses.
-        "default_max_tokens": 1,
-        "long_max_tokens": 4,
+        # Choice-only text eval: enough room for whitespace/"Answer: C" but not a long explanation.
+        "default_max_tokens": 8,
+        "long_max_tokens": 16,
     },
     "vllm_vlm": {
         "kind": "openai_compat",
