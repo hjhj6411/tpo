@@ -145,6 +145,17 @@ PROVIDER_ENDPOINTS = {
         "default_max_tokens": 2048,
         "long_max_tokens": 4096,
     },
+    "qwen36_27b_choice": {
+        "kind": "openai_compat",
+        # Must match the served id from: curl -s $QWEN36_API_BASE/models
+        "model_name": os.environ.get("QWEN36_MODEL", "Qwen/Qwen3.6-27B"),
+        "api_base": os.environ.get("QWEN36_API_BASE", "http://localhost:8000/v1"),
+        "uses_max_completion_tokens": False,
+        "supports_temperature": True,
+        # Choice-only text eval: prevent verbose Qwen responses.
+        "default_max_tokens": 1,
+        "long_max_tokens": 4,
+    },
     "vllm_vlm": {
         "kind": "openai_compat",
         "model_name": "Qwen/Qwen3-VL-30B-A3B-Instruct",
