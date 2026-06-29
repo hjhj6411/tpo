@@ -133,3 +133,29 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+# Compatibility helpers for non-overlapping padded patch grid.
+# Intentional simplification: pad image/mask to patch-size multiples so edge patches never overlap.
+def ceil_to_multiple(x: int, m: int) -> int:
+    import math
+    return int(math.ceil(x / m) * m)
+
+
+def square_grid_with_padding(width: int, height: int, short_side_tiles: int):
+    import math
+    side = max(1, int(math.ceil(min(width, height) / max(1, short_side_tiles))))
+    padded_w = ceil_to_multiple(width, side)
+    padded_h = ceil_to_multiple(height, side)
+    patches = [
+        (x, y, side)
+        for y in range(0, padded_h, side)
+        for x in range(0, padded_w, side)
+    ]
+    return patches, padded_w, padded_h
+
+
+def pad_mask(mask, padded_w: int, padded_h: int):
+    from PIL import Image
+    out = Image.new("L", (padded_w, padded_h), 0)
+    out.paste(mask.convert("L"), (0, 0))
+    return out
