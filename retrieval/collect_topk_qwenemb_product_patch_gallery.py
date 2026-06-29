@@ -1,4 +1,25 @@
 #!/usr/bin/env python3
+
+"""
+python retrieval/collect_topk_qwenemb_product_patch_gallery.py \
+  --plan-path data/options/option_plans.jsonl \
+  --client-url http://127.0.0.1:1236/knn-service \
+  --index-name pod_qwenemb \
+  --output-root data/retrieval/qwenemb_product_patch_gallery_smoke \
+  --retrieval-k 20 \
+  --score-top-n 20 \
+  --show-k 20 \
+  --limit 4 \
+  --workers 4 \
+  --score-workers 1 \
+  --short-side-tiles 12 \
+  --min-coverage 0.05 \
+  --mask-threshold 32 \
+  --pattern-margin 0.0 \
+  --fp16 \
+  --force
+"""
+
 from __future__ import annotations
 
 import argparse
@@ -6,6 +27,7 @@ import concurrent.futures as cf
 import math
 import shutil
 import sys
+import tempfile
 import time
 from dataclasses import replace
 from pathlib import Path
@@ -209,57 +231,60 @@ def score_pattern_with_qwenemb(
         fp16=args.fp16,
     )
 
-    mask_dir = args.output_root / "masks" / rec_id
-    mask_dir.mkdir(parents=True, exist_ok=True)
-    mask.save(mask_dir / "mask.png")
+    # No persistent mask/tile assets during retrieval scoring.
+    # /score-image-files accepts file paths, so patch crops live only in a temp dir.
+    with tempfile.TemporaryDirectory(prefix="qwenemb_patch_") as tmp:
+        tiles = make_clothing_patch_tiles(
+            image_path=image_path,
+            mask=mask,
+            args=args,
+            out_dir=Path(tmp) / rec_id,
+        )
 
-    tiles = make_clothing_patch_tiles(
-        image_path=image_path,
-        mask=mask,
-        args=args,
-        out_dir=args.output_root / "tiles" / rec_id,
-    )
+        if not tiles:
+            return {
+                "score": 0.0,
+                "mode": "no_clothing_patch_after_birefnet_mask",
+                "tile_scores": [],
+            }
 
-    if not tiles:
-        return {
-            "score": 0.0,
-            "mode": "no_clothing_patch_after_birefnet_mask",
-            "tile_scores": [],
-        }
-
-    pos_text, neg_text = pattern_texts(pattern)
-    data = request_json(
-        session,
-        args.image_score_url,
-        {
-            "texts": {
-                "pattern": pos_text,
-                "negative": neg_text,
+        pos_text, neg_text = pattern_texts(pattern)
+        data = request_json(
+            session,
+            args.image_score_url,
+            {
+                "texts": {
+                    "pattern": pos_text,
+                    "negative": neg_text,
+                },
+                "image_paths": [t["tile"] for t in tiles],
             },
-            "image_paths": [t["tile"] for t in tiles],
-        },
-        args.image_score_timeout,
-        args.retries,
-    )
+            args.image_score_timeout,
+            args.retries,
+        )
 
-    tile_scores: list[dict[str, Any]] = []
-    for tile, row in zip(tiles, data.get("scores") or []):
-        if not isinstance(row, dict):
-            row = {}
-        pos = float(row.get("pattern", 0.0))
-        neg = float(row.get("negative", 0.0))
-        margin = pos - neg
-        present = margin >= args.pattern_margin
+        tile_scores: list[dict[str, Any]] = []
+        for tile, row in zip(tiles, data.get("scores") or []):
+            if not isinstance(row, dict):
+                row = {}
+            pos = float(row.get("pattern", 0.0))
+            neg = float(row.get("negative", 0.0))
+            margin = pos - neg
+            present = margin >= args.pattern_margin
 
-        tile_scores.append({
-            **tile,
-            "pattern_text": pos_text,
-            "negative_text": neg_text,
-            "pattern_similarity": pos,
-            "negative_similarity": neg,
-            "margin": margin,
-            "present": present,
-        })
+            tile_scores.append({
+                "index": tile["index"],
+                "x": tile["x"],
+                "y": tile["y"],
+                "size": tile["size"],
+                "mask_coverage": tile["mask_coverage"],
+                "pattern_text": pos_text,
+                "negative_text": neg_text,
+                "pattern_similarity": pos,
+                "negative_similarity": neg,
+                "margin": margin,
+                "present": present,
+            })
 
     denom = max(1, len(tile_scores))
     hits = sum(1 for t in tile_scores if t["present"])
@@ -350,6 +375,48 @@ def score_group(
         scored.append(rec)
 
     return scored
+
+
+def _rank_value(rec: dict[str, Any], key: str) -> float:
+    try:
+        return float(rec.get(key) or 0.0)
+    except Exception:
+        return 0.0
+
+
+def add_score_ranks(records: list[dict[str, Any]]) -> None:
+    groups: dict[tuple[str, str], list[dict[str, Any]]] = {}
+    for rec in records:
+        groups.setdefault((str(rec.get("query_id")), str(rec.get("option_label"))), []).append(rec)
+
+    specs = [
+        ("combined_score", "combined_rank"),
+        ("pattern_score", "pattern_rank"),
+        ("color_score", "color_rank"),
+        ("garment_score", "garment_rank"),
+    ]
+
+    for rows in groups.values():
+        for metric, rank_field in specs:
+            ordered = sorted(
+                rows,
+                key=lambda r: (_rank_value(r, metric), _rank_value(r, "similarity")),
+                reverse=True,
+            )
+            for i, rec in enumerate(ordered, start=1):
+                rec[rank_field] = i
+
+        for rec in rows:
+            rank_text = (
+                f"score ranks: "
+                f"combined #{rec.get('combined_rank')} / "
+                f"pattern #{rec.get('pattern_rank')} / "
+                f"color #{rec.get('color_rank')} / "
+                f"garment #{rec.get('garment_rank')}"
+            )
+            cap = str(rec.get("caption") or "")
+            if not cap.startswith("score ranks:"):
+                rec["caption"] = f"{rank_text} | {cap}" if cap else rank_text
 
 
 def parse_args() -> argparse.Namespace:
@@ -488,6 +555,7 @@ def main() -> None:
         raise SystemExit("--score-workers > 1 is intentionally disabled for shared BiRefNet model safety")
 
     scored_records = grouped_rerank(scored_records)
+    add_score_ranks(scored_records)
     if scored_log.exists():
         scored_log.unlink()
     append_jsonl(scored_log, scored_records)
