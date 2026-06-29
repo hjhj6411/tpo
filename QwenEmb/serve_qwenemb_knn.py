@@ -1,16 +1,18 @@
 #!/usr/bin/env python3
 """Serve QwenEmb FAISS index behind the clip-retrieval-compatible HTTP API.
 
-Besides the standard /knn-service retrieval route, this server exposes a
-candidate scoring route for axis-level reranking diagnostics:
-
+Routes:
+  GET  /health
+  POST /knn-service
+      Full-text retrieval over the FAISS image corpus.
   POST /score-candidates
-  request: {"texts": {"color": "black", "garment": "coat"}, "indices": [1, 2, 3]}
-  response: {"scores": [{"faiss_index": 1, "color": 0.12, "garment": 0.09}, ...]}
+      Score existing FAISS candidates against axis text queries.
+  POST /score-image-files
+      Score local image/crop files against text queries with QwenEmb.
 
-The scores are raw QwenEmb cosine/IP similarities between the axis text embedding
-and the stored candidate image embedding. They are not VLM judgement scores and
-are not expected to be bounded like binary coverage values.
+All score routes return raw QwenEmb cosine/IP similarities. They are not VLM
+judgement probabilities and are not expected to be bounded like binary coverage
+values.
 """
 
 from __future__ import annotations
@@ -23,6 +25,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 from flask import Flask, jsonify, request
+from PIL import Image
 
 from qwenemb_encoder import QwenEmbConfig, QwenEmbEncoder
 
@@ -55,6 +58,10 @@ def _normalise_texts(payload: dict[str, Any]) -> tuple[list[str], list[str]]:
     if isinstance(texts_obj, str):
         return ["score"], [texts_obj]
     return [], []
+
+
+def _open_rgb(path: str) -> Image.Image:
+    return Image.open(path).convert("RGB")
 
 
 def main():
@@ -102,7 +109,8 @@ def main():
             "dim": int(search_index.d),
             "index_name": args.index_name,
             "candidate_scoring": True,
-            "score_route": "/score-candidates",
+            "candidate_score_route": "/score-candidates",
+            "image_file_score_route": "/score-image-files",
             "meta": meta,
         })
 
@@ -186,6 +194,44 @@ def main():
             for name, score in zip(names, scores.tolist()):
                 out[str(name)] = float(score)
             rows.append(out)
+        return jsonify({"scores": rows, "texts": dict(zip(names, texts))})
+
+    @app.post("/score-image-files")
+    def score_image_files():
+        payload = request.get_json(force=True, silent=True) or {}
+        names, texts = _normalise_texts(payload)
+        if not texts:
+            return jsonify({"error": "Missing texts/queries/text/query"}), 400
+        paths_obj = payload.get("image_paths") or payload.get("paths") or payload.get("images")
+        if not isinstance(paths_obj, list) or not paths_obj:
+            return jsonify({"error": "Missing non-empty image_paths/paths/images list"}), 400
+        image_paths = [str(p) for p in paths_obj]
+
+        q = encoder.encode_text(texts).astype("float32")
+        if q.shape[1] != cpu_index.d:
+            return jsonify({
+                "error": f"query dim {q.shape[1]} != index dim {cpu_index.d}; use matching --dim/model",
+            }), 400
+
+        valid_images = []
+        valid_positions = []
+        rows: list[dict[str, Any]] = [
+            {"image_path": p, "source": "qwenemb_image_file_score"} for p in image_paths
+        ]
+        for pos, path in enumerate(image_paths):
+            try:
+                valid_images.append(_open_rgb(path))
+                valid_positions.append(pos)
+            except Exception as e:
+                rows[pos]["error"] = f"image_open_failed: {e}"
+
+        if valid_images:
+            emb = encoder.encode_images(valid_images).astype("float32")
+            scores = emb @ q.T
+            for local_i, pos in enumerate(valid_positions):
+                for name, score in zip(names, scores[local_i].tolist()):
+                    rows[pos][str(name)] = float(score)
+
         return jsonify({"scores": rows, "texts": dict(zip(names, texts))})
 
     print(f"[qwenemb] serving ntotal={search_index.ntotal} dim={search_index.d} port={args.port}")
