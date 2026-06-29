@@ -23,13 +23,22 @@ import concurrent.futures as cf
 import json
 import math
 import shutil
+import sys
 import time
 from pathlib import Path
 from typing import Any
 
 import requests
 
-from retrieval.collect_topk_scored_gallery import (
+# Allow both:
+#   python retrieval/collect_topk_qwenemb_axis_gallery.py
+# and:
+#   python -m retrieval.collect_topk_qwenemb_axis_gallery
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from retrieval.collect_topk_scored_gallery import (  # noqa: E402
     OPTION_LABELS,
     append_jsonl,
     build_gallery,
@@ -40,7 +49,7 @@ from retrieval.collect_topk_scored_gallery import (
     score_pattern,
     write_json,
 )
-from retrieval.print_scored_rankings import group_records, print_group
+from retrieval.print_scored_rankings import group_records, print_group  # noqa: E402
 
 
 def derive_axis_score_url(client_url: str) -> str:
@@ -340,8 +349,9 @@ def main() -> None:
 
     if args.print_table:
         print()
-        for key in sorted(group_records(scored_records)):
-            print_group(group_records(scored_records)[key], sort_by=args.print_sort_by, top_n=args.print_top_n, caption_width=58, show_score_ranks=True)
+        grouped = group_records(scored_records)
+        for key in sorted(grouped):
+            print_group(grouped[key], sort_by=args.print_sort_by, top_n=args.print_top_n, caption_width=58, show_score_ranks=True)
 
 
 if __name__ == "__main__":
