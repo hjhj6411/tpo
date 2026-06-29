@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Collect top-k retrieval candidates, score attributes, rerank, and build a gallery.
 
-This is a diagnostic collector for manually inspecting complex text-to-image
-retrieval such as "black striped coat". It keeps the raw retrieval top-k list,
-adds three attribute scores for every downloaded candidate, reranks by
+Diagnostic collector for manually inspecting complex text-to-image retrieval such
+as "black striped coat". It keeps the raw retrieval top-k list, adds three
+attribute scores for every downloaded candidate, reranks by
 
     combined_score = sqrt(pattern_score * color_score * garment_score)
 
@@ -12,27 +12,12 @@ and writes both JSONL logs and an HTML gallery.
 Scoring design:
   - color_score: global Qwen-VL score for whether the image matches the target color.
   - garment_score: global Qwen-VL score for whether the main item matches the target garment.
-  - pattern_score: patch-wise Qwen-VL scoring. The image is split into a grid, likely
-    non-background tiles are scored for the target pattern, and coverage is computed as
-    (# tiles with score >= threshold) / (# scored tiles). For target pattern == solid,
-    a global plain/solid score is used instead.
+  - pattern_score: patch-wise Qwen-VL scoring. The image is split into a grid,
+    likely non-background tiles are scored for the target pattern, and coverage is
+    (# tiles with score >= threshold) / (# scored tiles). For pattern == solid, a
+    global plain/solid score is used instead.
 
 The script does not VLM-filter candidates out. It only logs scores and reranks them.
-
-Example smoke test:
-
-  python retrieval/collect_topk_scored_gallery.py \
-    --plan-path data/options/option_plans.jsonl \
-    --client-url http://127.0.0.1:1236/knn-service \
-    --index-name pod_qwenemb \
-    --vlm-urls http://127.0.0.1:8002/v1 \
-    --vlm-model Qwen/Qwen3-VL-4B-Instruct \
-    --output-root data/retrieval/qwenemb_scored_gallery \
-    --retrieval-k 48 --score-top-n 48 --show-k 12 \
-    --limit 5 --workers 8 --score-workers 2 --force
-
-For full manual inspection, increase --limit or remove it, but be aware that
-patch scoring is VLM-call heavy.
 """
 
 from __future__ import annotations
@@ -56,7 +41,6 @@ from urllib.parse import urlparse
 import requests
 from PIL import Image, ImageStat
 
-
 OPTION_LABELS = ["A", "B", "C", "D"]
 DEFAULT_HEADERS = {
     "User-Agent": (
@@ -65,8 +49,6 @@ DEFAULT_HEADERS = {
     )
 }
 
-
-# ── Basic IO ────────────────────────────────────────────────────────────────
 
 def load_jsonl(path: Path) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
@@ -82,15 +64,15 @@ def append_jsonl(path: Path, rows: list[dict[str, Any]]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("a", encoding="utf-8") as f:
         for row in rows:
-            f.write(json.dumps(row, ensure_ascii=False) + "\n")
+            f.write(json.dumps(row, ensure_ascii=False, default=str) + "\n")
 
 
 def write_json(path: Path, obj: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(obj, ensure_ascii=False, indent=2), encoding="utf-8")
+    path.write_text(json.dumps(obj, ensure_ascii=False, indent=2, default=str), encoding="utf-8")
 
 
-def slugify(text: str, max_len: int = 96) -> str:
+def slugify(text: Any, max_len: int = 96) -> str:
     text = str(text or "")
     text = re.sub(r"[^A-Za-z0-9._-]+", "_", text).strip("_")
     return (text or "unknown")[:max_len]
@@ -99,8 +81,6 @@ def slugify(text: str, max_len: int = 96) -> str:
 def norm_attr(value: Any) -> str:
     return str(value or "").replace("_", " ").strip().lower()
 
-
-# ── Option/task construction ────────────────────────────────────────────────
 
 def option_to_text(opt: dict[str, Any]) -> str:
     text = opt.get("search_query")
@@ -165,8 +145,6 @@ def make_tasks(plans: list[dict[str, Any]], options: list[str]) -> list[OptionTa
     return tasks
 
 
-# ── Retrieval and image download ────────────────────────────────────────────
-
 def choose_extension(url: str, content_type: str | None) -> str:
     if content_type:
         content_type = content_type.split(";", 1)[0].strip().lower()
@@ -179,15 +157,8 @@ def choose_extension(url: str, content_type: str | None) -> str:
     return ".jpg"
 
 
-def query_knn(
-    session: requests.Session,
-    client_url: str,
-    text: str,
-    retrieval_k: int,
-    index_name: str,
-    timeout: float,
-    retries: int,
-) -> list[dict[str, Any]]:
+def query_knn(session: requests.Session, client_url: str, text: str, retrieval_k: int,
+              index_name: str, timeout: float, retries: int) -> list[dict[str, Any]]:
     payload = {
         "text": text,
         "modality": "image",
@@ -213,19 +184,11 @@ def query_knn(
     raise RuntimeError(f"KNN request failed for text={text!r}: {last_err}")
 
 
-def download_image(
-    session: requests.Session,
-    url: str,
-    out_base: Path,
-    timeout: float,
-    retries: int,
-    max_bytes: int,
-    force: bool,
-) -> tuple[Path | None, str | None]:
+def download_image(session: requests.Session, url: str, out_base: Path, timeout: float,
+                   retries: int, max_bytes: int, force: bool) -> tuple[Path | None, str | None]:
     if not url:
         return None, "missing_url"
-    existing = sorted(out_base.parent.glob(out_base.name + ".*"))
-    existing = [p for p in existing if not p.name.endswith(".tmp")]
+    existing = [p for p in sorted(out_base.parent.glob(out_base.name + ".*")) if not p.name.endswith(".tmp")]
     if existing and not force:
         return existing[0], None
 
@@ -237,8 +200,8 @@ def download_image(
                 ext = choose_extension(url, resp.headers.get("Content-Type"))
                 out_path = out_base.with_suffix(ext)
                 tmp_path = out_path.with_suffix(out_path.suffix + ".tmp")
-                total = 0
                 out_path.parent.mkdir(parents=True, exist_ok=True)
+                total = 0
                 with tmp_path.open("wb") as f:
                     for chunk in resp.iter_content(chunk_size=1024 * 128):
                         if not chunk:
@@ -275,12 +238,10 @@ def collect_one(task: OptionTask, args: argparse.Namespace) -> list[dict[str, An
     odir_name = f"{task.option_label}_{slugify(task.option_semantic or 'option', 40)}__{slugify(task.option_text, 64)}"
     odir = qdir / odir_name
     records: list[dict[str, Any]] = []
-
     for rank, item in enumerate(results, start=1):
         url = str(item.get("image_url") or item.get("url") or "")
         key = str(item.get("key") or "")
         out_base = odir / f"rank_{rank:03d}__{slugify(key or 'image', 80)}"
-
         local_path: Path | None = None
         download_error: str | None = None
         if not args.no_download:
@@ -293,7 +254,6 @@ def collect_one(task: OptionTask, args: argparse.Namespace) -> list[dict[str, An
                 max_bytes=args.max_image_bytes,
                 force=args.force,
             )
-
         records.append({
             "plan_idx": task.plan_idx,
             "query_id": task.query_id,
@@ -322,8 +282,6 @@ def collect_one(task: OptionTask, args: argparse.Namespace) -> list[dict[str, An
     return records
 
 
-# ── VLM scoring ─────────────────────────────────────────────────────────────
-
 def encode_image_b64(path: Path) -> tuple[str, str]:
     data = path.read_bytes()
     mime = mimetypes.guess_type(path.name)[0] or "image/jpeg"
@@ -334,9 +292,8 @@ def extract_score(text: str) -> tuple[float | None, Any]:
     text = (text or "").strip()
     if not text:
         return None, None
-    if "```" in text:
-        text = re.sub(r"^```(?:json)?\s*", "", text.strip(), flags=re.I)
-        text = re.sub(r"\s*```$", "", text.strip())
+    text = re.sub(r"^```(?:json)?\s*", "", text, flags=re.I).strip()
+    text = re.sub(r"\s*```$", "", text).strip()
     obj = None
     try:
         obj = json.loads(text)
@@ -361,39 +318,27 @@ def extract_score(text: str) -> tuple[float | None, Any]:
     if nums:
         raw = nums[0]
         try:
-            if raw.endswith("%"):
-                val = float(raw[:-1]) / 100.0
-            else:
-                val = float(raw)
-                if val > 1.0 and val <= 100.0:
-                    val /= 100.0
+            val = float(raw[:-1]) / 100.0 if raw.endswith("%") else float(raw)
+            if val > 1.0 and val <= 100.0:
+                val /= 100.0
             return max(0.0, min(1.0, val)), {"raw_text": text}
         except Exception:
-            return None, {"raw_text": text}
+            pass
     return None, {"raw_text": text}
 
 
-def call_vlm_score(
-    image_path: Path,
-    prompt: str,
-    vlm_url: str,
-    model: str,
-    timeout: float,
-    retries: int,
-    max_tokens: int,
-) -> tuple[float | None, Any, str | None]:
+def call_vlm_score(image_path: Path, prompt: str, vlm_url: str, model: str,
+                   timeout: float, retries: int, max_tokens: int) -> tuple[float | None, Any, str | None]:
     b64, mime = encode_image_b64(image_path)
     payload = {
         "model": model,
-        "messages": [
-            {
-                "role": "user",
-                "content": [
-                    {"type": "image_url", "image_url": {"url": f"data:{mime};base64,{b64}"}},
-                    {"type": "text", "text": prompt},
-                ],
-            }
-        ],
+        "messages": [{
+            "role": "user",
+            "content": [
+                {"type": "image_url", "image_url": {"url": f"data:{mime};base64,{b64}"}},
+                {"type": "text", "text": prompt},
+            ],
+        }],
         "temperature": 0,
         "max_tokens": max_tokens,
     }
@@ -420,53 +365,29 @@ def call_vlm_score(
 def color_prompt(color: str) -> str:
     return f"""You are scoring a fashion retrieval candidate.
 Target color: {color}
-
-Look at the main clothing item. Return ONLY valid JSON:
-{{"score": <number from 0 to 1>}}
-
-Score 1.0 if the main visible garment clearly matches the target color.
-Score 0.5 if the target color is partially present or ambiguous.
-Score 0.0 if the main garment is a different color or the clothing item is not visible.
-Do not explain."""
+Look at the main clothing item. Return ONLY valid JSON: {{"score": <number from 0 to 1>}}
+Score 1.0 if the main visible garment clearly matches the target color. Score 0.5 if partially present or ambiguous. Score 0.0 if different or not visible. Do not explain."""
 
 
 def garment_prompt(garment: str) -> str:
     return f"""You are scoring a fashion retrieval candidate.
 Target garment category: {garment}
-
-Look at the main clothing item. Return ONLY valid JSON:
-{{"score": <number from 0 to 1>}}
-
-Score 1.0 if the main garment is the target category.
-Score 0.5 if it is a close variant or ambiguous.
-Score 0.0 if it is a different garment category or not visible.
-Do not explain."""
+Look at the main clothing item. Return ONLY valid JSON: {{"score": <number from 0 to 1>}}
+Score 1.0 if the main garment is the target category. Score 0.5 if close/ambiguous. Score 0.0 if different or not visible. Do not explain."""
 
 
 def solid_prompt() -> str:
     return """You are scoring a fashion retrieval candidate.
 Target pattern: solid/plain fabric with no visible decorative pattern.
-
-Look at the main clothing item. Return ONLY valid JSON:
-{"score": <number from 0 to 1>}
-
-Score 1.0 if the main garment is plain/solid with no visible pattern.
-Score 0.5 if it is mostly plain but has small logos or weak texture.
-Score 0.0 if it clearly has stripes, checks, florals, camouflage, polka dots, argyle, or another visible pattern.
-Do not explain."""
+Look at the main clothing item. Return ONLY valid JSON: {"score": <number from 0 to 1>}
+Score 1.0 if the main garment is plain/solid. Score 0.5 if mostly plain with small logos or weak texture. Score 0.0 if it has visible stripes, checks, florals, camouflage, polka dots, argyle, or another pattern. Do not explain."""
 
 
 def pattern_tile_prompt(pattern: str) -> str:
     return f"""You are scoring a cropped image tile from a fashion retrieval candidate.
 Target pattern: {pattern}
-
-Return ONLY valid JSON:
-{{"score": <number from 0 to 1>}}
-
-Score 1.0 if this crop clearly shows {pattern} fabric/clothing pattern.
-Score 0.5 if the pattern may be present but is ambiguous or only partially visible.
-Score 0.0 if this crop is background, skin, hair, object, text, plain fabric, or a different pattern.
-Do not explain."""
+Return ONLY valid JSON: {{"score": <number from 0 to 1>}}
+Score 1.0 if this crop clearly shows {pattern} fabric/clothing pattern. Score 0.5 if ambiguous or partial. Score 0.0 if background, skin, hair, object, text, plain fabric, or a different pattern. Do not explain."""
 
 
 def likely_non_background_tile(tile: Image.Image, white_thresh: float, min_std: float) -> bool:
@@ -474,7 +395,6 @@ def likely_non_background_tile(tile: Image.Image, white_thresh: float, min_std: 
     stat = ImageStat.Stat(rgb)
     mean = sum(stat.mean) / 3.0
     std = sum(stat.stddev) / 3.0
-    # Mostly white/blank background or extremely flat tiles are not useful.
     if mean >= white_thresh and std < 35.0:
         return False
     if std < min_std:
@@ -482,18 +402,11 @@ def likely_non_background_tile(tile: Image.Image, white_thresh: float, min_std: 
     return True
 
 
-def make_pattern_tiles(
-    image_path: Path,
-    grid: int,
-    max_tiles: int,
-    tile_dir: Path,
-    save_tiles: bool,
-    white_thresh: float,
-    min_std: float,
-) -> list[Path]:
+def make_pattern_tiles(image_path: Path, grid: int, max_tiles: int, tile_dir: Path,
+                       save_tiles: bool, white_thresh: float, min_std: float) -> list[Path]:
     img = Image.open(image_path).convert("RGB")
     w, h = img.size
-    candidates: list[tuple[float, int, Path | Image.Image]] = []
+    candidates: list[tuple[float, int, Image.Image]] = []
     for gy in range(grid):
         for gx in range(grid):
             left = int(w * gx / grid)
@@ -504,32 +417,22 @@ def make_pattern_tiles(
             if not likely_non_background_tile(tile, white_thresh=white_thresh, min_std=min_std):
                 continue
             stat = ImageStat.Stat(tile)
-            variance_score = float(sum(stat.stddev) / 3.0)
-            candidates.append((variance_score, gy * grid + gx, tile))
-
+            candidates.append((float(sum(stat.stddev) / 3.0), gy * grid + gx, tile))
     candidates.sort(key=lambda x: (-x[0], x[1]))
     selected = candidates[:max_tiles]
-    paths: list[Path] = []
     tile_dir.mkdir(parents=True, exist_ok=True)
-    for _, idx, tile_obj in selected:
+    paths: list[Path] = []
+    for _, idx, tile in selected:
         out = tile_dir / f"tile_{idx:02d}.jpg"
         if save_tiles or not out.exists():
-            assert isinstance(tile_obj, Image.Image)
-            tile_obj.save(out, quality=92)
+            tile.save(out, quality=92)
         paths.append(out)
     return paths
 
 
-def score_pattern(
-    image_path: Path,
-    pattern: str,
-    rec_id: str,
-    args: argparse.Namespace,
-    vlm_url: str,
-) -> dict[str, Any]:
+def score_pattern(image_path: Path, pattern: str, rec_id: str, args: argparse.Namespace, vlm_url: str) -> dict[str, Any]:
     if not pattern:
         return {"score": 1.0, "mode": "missing_pattern_target", "tile_scores": []}
-
     if pattern == "solid":
         score, parsed, err = call_vlm_score(
             image_path=image_path,
@@ -542,20 +445,15 @@ def score_pattern(
         )
         return {"score": score if score is not None else 0.0, "mode": "solid_global", "parsed": parsed, "error": err, "tile_scores": []}
 
-    tile_dir = args.output_root / "tiles" / rec_id
     tiles = make_pattern_tiles(
         image_path=image_path,
         grid=args.tile_grid,
         max_tiles=args.pattern_max_tiles,
-        tile_dir=tile_dir,
+        tile_dir=args.output_root / "tiles" / rec_id,
         save_tiles=args.save_tiles,
         white_thresh=args.tile_white_thresh,
         min_std=args.tile_min_std,
-    )
-    if not tiles:
-        # Fallback: score the full image as one tile.
-        tiles = [image_path]
-
+    ) or [image_path]
     tile_scores: list[dict[str, Any]] = []
     for tile_path in tiles:
         score, parsed, err = call_vlm_score(
@@ -575,7 +473,6 @@ def score_pattern(
             "parsed": parsed,
             "error": err,
         })
-
     denom = max(len(tile_scores), 1)
     coverage = sum(1 for t in tile_scores if t["present"]) / denom
     avg_score = sum(float(t["score"]) for t in tile_scores) / denom
@@ -605,7 +502,6 @@ def score_candidate(args_tuple: tuple[int, dict[str, Any], argparse.Namespace]) 
     image_path = Path(local_path)
     vlm_urls = [u.strip() for u in args.vlm_urls.split(",") if u.strip()]
     vlm_url = vlm_urls[idx % len(vlm_urls)]
-
     color = rec.get("target_color") or ""
     garment = rec.get("target_garment") or ""
     pattern = rec.get("target_pattern") or ""
@@ -620,7 +516,6 @@ def score_candidate(args_tuple: tuple[int, dict[str, Any], argparse.Namespace]) 
         retries=args.retries,
         max_tokens=args.vlm_max_tokens,
     ) if color else (1.0, None, None)
-
     garment_score, garment_parsed, garment_err = call_vlm_score(
         image_path=image_path,
         prompt=garment_prompt(garment),
@@ -630,20 +525,12 @@ def score_candidate(args_tuple: tuple[int, dict[str, Any], argparse.Namespace]) 
         retries=args.retries,
         max_tokens=args.vlm_max_tokens,
     ) if garment else (1.0, None, None)
+    pattern_info = score_pattern(image_path=image_path, pattern=pattern, rec_id=rec_id, args=args, vlm_url=vlm_url)
 
-    pattern_info = score_pattern(
-        image_path=image_path,
-        pattern=pattern,
-        rec_id=rec_id,
-        args=args,
-        vlm_url=vlm_url,
-    )
-    pattern_score = float(pattern_info.get("score") or 0.0)
     c = float(color_score if color_score is not None else 0.0)
     g = float(garment_score if garment_score is not None else 0.0)
-    p = pattern_score
+    p = float(pattern_info.get("score") or 0.0)
     combined = math.sqrt(max(0.0, c * g * p))
-
     rec.update({
         "color_score": c,
         "pattern_score": p,
@@ -659,8 +546,6 @@ def score_candidate(args_tuple: tuple[int, dict[str, Any], argparse.Namespace]) 
     })
     return rec
 
-
-# ── Gallery ────────────────────────────────────────────────────────────────
 
 def relpath(path: str | None, base: Path) -> str | None:
     if not path:
@@ -715,7 +600,6 @@ def build_gallery(records: list[dict[str, Any]], output_root: Path, title: str, 
         f"<h1>{html.escape(title)}</h1>",
         f"<div class='meta'>records={len(records)} · showing top {show_k} after rerank per option · formula=sqrt(pattern*color*garment)</div>",
     ]
-
     for query_id in sorted(by_query):
         option_map = by_query[query_id]
         first = next(iter(next(iter(option_map.values()))), {})
@@ -756,9 +640,7 @@ def build_gallery(records: list[dict[str, Any]], output_root: Path, title: str, 
                     )
                 else:
                     html_parts.append("<div class='err'>no local image</div>")
-                html_parts.append(
-                    f"<div class='rank'>rerank {rec.get('rerank')} · original rank {rec.get('original_rank')}</div>"
-                )
+                html_parts.append(f"<div class='rank'>rerank {rec.get('rerank')} · original rank {rec.get('original_rank')}</div>")
                 html_parts.append(
                     "<div class='score'>"
                     f"combined={float(rec.get('combined_score') or 0):.3f}<br>"
@@ -782,8 +664,6 @@ def build_gallery(records: list[dict[str, Any]], output_root: Path, title: str, 
     gallery_path.write_text("\n".join(html_parts), encoding="utf-8")
     return gallery_path
 
-
-# ── Main ───────────────────────────────────────────────────────────────────
 
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser()
@@ -863,12 +743,11 @@ def main() -> None:
 
     raw_log = args.output_root / "raw_topk_results.jsonl"
     scored_log = args.output_root / "scored_results.jsonl"
-    for p in [raw_log, scored_log]:
-        if p.exists():
-            p.unlink()
+    for path in [raw_log, scored_log]:
+        if path.exists():
+            path.unlink()
     write_json(args.output_root / "run_config.json", vars(args) | {"options_list": options})
 
-    # Retrieval/download phase.
     raw_records: list[dict[str, Any]] = []
     errors: list[dict[str, Any]] = []
     done = 0
@@ -904,10 +783,9 @@ def main() -> None:
         for r in scored_records:
             r.update({"color_score": None, "pattern_score": None, "garment_score": None, "combined_score": None})
     else:
-        # Scoring phase.
         scored_records: list[dict[str, Any]] = []
-        done = 0
         score_inputs = [(i, r, args) for i, r in enumerate(raw_records)]
+        done = 0
         if args.score_workers <= 1:
             for item in score_inputs:
                 rec = score_candidate(item)
@@ -928,7 +806,6 @@ def main() -> None:
                         print(f"  score    [{done}/{len(score_inputs)}]")
 
     scored_records = grouped_rerank(scored_records)
-    # Rewrite sorted scored log after rerank is assigned.
     if scored_log.exists():
         scored_log.unlink()
     append_jsonl(scored_log, scored_records)
