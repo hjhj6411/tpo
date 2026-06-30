@@ -13,10 +13,11 @@ build/
 *.jpeg
 *.png
 *.log
-
+weights/
 # large data artifacts (never commit)
 corpus/
 data/amazon/
 data/images/
 *.csv
 *.faiss
+

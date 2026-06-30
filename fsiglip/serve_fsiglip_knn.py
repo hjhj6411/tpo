@@ -400,6 +400,57 @@ def knn_ensemble():
     return jsonify(_search(qv, k))
 
 
+
+@app.route("/score-image-files", methods=["POST"])
+def score_image_files():
+    """
+    Score local image files / URLs against arbitrary text anchors using the
+    already-loaded FashionSigLIP model.
+
+    Request:
+      {
+        "texts": {"key1": "text prompt", "key2": "..."},
+        "image_paths": ["/path/a.jpg", "https://..."]
+      }
+
+    Response:
+      {
+        "scores": [
+          {"key1": 0.123, "key2": 0.101},
+          ...
+        ]
+      }
+    """
+    body = request.get_json(force=True)
+    texts = body.get("texts") or {}
+    paths = body.get("image_paths") or body.get("images") or []
+
+    if not isinstance(texts, dict) or not texts:
+        return jsonify({"error": "missing non-empty dict field: texts"}), 400
+    if not isinstance(paths, list) or not paths:
+        return jsonify({"error": "missing non-empty list field: image_paths"}), 400
+
+    keys = list(texts.keys())
+    prompts = [str(texts[k]) for k in keys]
+
+    try:
+        anchors_np = _encode_norm(prompts)
+        anchors_t = torch.from_numpy(anchors_np).to(_state["device"])
+    except Exception as e:
+        return jsonify({"error": f"text_encode_failed: {e}"}), 500
+
+    out = []
+    for src in paths:
+        try:
+            img = _load_pil_cached(str(src))
+            feat = _encode_images_norm([img])
+            sims = (feat @ anchors_t.T)[0].detach().float().cpu().numpy()
+            out.append({k: float(v) for k, v in zip(keys, sims)})
+        except Exception as e:
+            out.append({"error": str(e)[:200]})
+
+    return jsonify({"scores": out})
+
 @app.route("/health")
 def health():
     return jsonify({"ntotal": _state["index"].ntotal})

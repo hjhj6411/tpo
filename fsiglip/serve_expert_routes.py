@@ -54,7 +54,10 @@ from __future__ import annotations
 import numpy as np
 from flask import request, jsonify
 
-from fsiglip.color_expert import color_coverage as _color_coverage
+try:
+    from fsiglip.color_expert import color_coverage as _color_coverage
+except ModuleNotFoundError:
+    from color_expert import color_coverage as _color_coverage
 
 
 _SOLID_LIKE = {"", "solid", "plain", "none", "unknown"}

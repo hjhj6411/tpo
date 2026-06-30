@@ -456,6 +456,8 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--min-coverage", type=float, default=0.05)
     p.add_argument("--pattern-margin", type=float, default=0.0)
 
+    p.add_argument("--num-shards", type=int, default=1)
+    p.add_argument("--shard-id", type=int, default=0)
     p.add_argument("--force", action="store_true")
     p.add_argument("--no-download", action="store_true")
     p.add_argument("--dry-run", action="store_true")
@@ -484,11 +486,22 @@ def main() -> None:
         for t in make_tasks(plans, options)
     ]
 
+    if args.num_shards < 1:
+        raise SystemExit("--num-shards must be >= 1")
+    if args.shard_id < 0 or args.shard_id >= args.num_shards:
+        raise SystemExit("--shard-id must satisfy 0 <= shard_id < num_shards")
+
+    total_tasks_before_shard = len(tasks)
+    if args.num_shards > 1:
+        tasks = [t for i, t in enumerate(tasks) if i % args.num_shards == args.shard_id]
+
     print("=" * 80)
     print("  QwenEmb product-shot retrieval + BiRefNet patch pattern coverage")
     print("=" * 80)
     print(f"  plans:        {len(plans)}")
     print(f"  option tasks: {len(tasks)}")
+    if args.num_shards > 1:
+        print(f"  shard:        {args.shard_id}/{args.num_shards} tasks={len(tasks)}/{total_tasks_before_shard}")
     print(f"  retrieval_k:  {args.retrieval_k}")
     print(f"  score_top_n:  {args.score_top_n or 'all'}")
     print(f"  show_k:       {args.show_k}")
