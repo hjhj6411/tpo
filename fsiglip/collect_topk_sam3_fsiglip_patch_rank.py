@@ -1714,6 +1714,19 @@ def process_one_record(
         selected_sam3_prompt=best["prompt"],
     )
 
+    raw_garment_score = float(garment_score)
+    garment_floor_failed = raw_garment_score < args.garment_floor_min
+
+    if garment_floor_failed:
+        garment_info = dict(garment_info)
+        garment_info["raw_garment_score_before_floor"] = raw_garment_score
+        garment_info["garment_floor_min"] = args.garment_floor_min
+        garment_info["garment_floor_action"] = args.garment_floor_action
+        garment_info["floor_applied"] = True
+
+        # Do not let a wrong garment survive because color/pattern are high.
+        garment_score = 0.0
+
     combined = math.sqrt(max(0.0, pattern_score * color_score * garment_score))
 
     write_json(rank_dir / "sam3_candidates.json", cand_json)
@@ -1722,6 +1735,8 @@ def process_one_record(
         "pattern_score": pattern_score,
         "color_score": color_score,
         "garment_score": garment_score,
+        "raw_garment_score_before_floor": raw_garment_score,
+        "garment_floor_failed": garment_floor_failed,
         "combined_score": combined,
         "sam3_prompt": best["prompt"],
         "crop_xyxy": list(crop_xyxy),
@@ -1729,8 +1744,12 @@ def process_one_record(
         "garment_score_raw": garment_info,
     })
 
+    final_skip_reason = None
+    if garment_floor_failed and args.garment_floor_action == "skip":
+        final_skip_reason = "low_garment_score"
+
     rec.update({
-        "skip_reason": None,
+        "skip_reason": final_skip_reason,
         "sam3_prompt": best["prompt"],
         "sam3_score": best["score"],
         "sam3_prompts": prompts,
@@ -1744,6 +1763,8 @@ def process_one_record(
         "pattern_score": pattern_score,
         "color_score": color_score,
         "garment_score": garment_score,
+        "raw_garment_score_before_floor": raw_garment_score,
+        "garment_floor_failed": garment_floor_failed,
         "combined_score": combined,
         "pattern_score_raw": pattern_info,
         "color_score_raw": color_info,
@@ -1859,6 +1880,17 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--pattern-margin", type=float, default=0.0)
     p.add_argument("--color-margin", type=float, default=0.005)
     p.add_argument("--global-margin-scale", type=float, default=30.0)
+
+    # Global garment floor.
+    # This is target-agnostic: if the crop is not sufficiently likely to be
+    # the requested garment type, it should not survive just because color/pattern are high.
+    p.add_argument("--garment-floor-min", type=float, default=0.30)
+    p.add_argument(
+        "--garment-floor-action",
+        choices=["zero", "skip"],
+        default="zero",
+        help="zero: keep record but set garment/combined to 0; skip: also mark skip_reason=low_garment_score.",
+    )
     p.add_argument(
         "--color-mode",
         choices=["patch", "global", "both"],
