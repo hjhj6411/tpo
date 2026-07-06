@@ -1,7 +1,27 @@
 #!/usr/bin/env python3
+# Variant of collect_topk_sam3_fsiglip_patch_rank.py.
+# Only the garment axis is changed: instead of a FashionSigLIP cosine similarity,
+# the SAM3 crop is judged PASS/FAIL by a vision-language model served via vLLM
+# (OpenAI-compatible /v1/chat/completions). garment_score = 1.0 (PASS) or 0.0 (FAIL).
+# Pattern / color scoring, SAM3 pipeline, and all output formats are unchanged.
+
+
+"""
+# 터미널 3: 수집 실행
+conda activate sam3
+python fsiglip/collect_topk_sam3_fsiglip_patch_rank_vlm_garment.py \
+  --plan-path data/options/option_plans.jsonl \
+  --client-url http://127.0.0.1:1235/knn-service \
+  --score-url http://127.0.0.1:1235/score-image-files \
+  --vlm-url http://127.0.0.1:8001/v1/chat/completions \
+  --vlm-model Qwen/Qwen3-VL-4B-Instruct \
+  --output-root data/retrieval/sam3_fsiglip_vlm_garment_test \
+  --limit 2 --options A,B,C,D --device cuda --force
+"""
 from __future__ import annotations
 
 import argparse
+import base64
 import json
 import math
 import mimetypes
@@ -777,30 +797,192 @@ def score_color_patches(
     )
 
 
-def score_garment_similarity(
+# Closed garment vocabulary the VLM must choose from. This MUST stay unified
+# with the garment categories that appear in the text query (attributes
+# .garment_category in the option plans, after norm()), otherwise a target
+# garment that is not in this list can never be predicted and would always FAIL
+# the garment axis. Deliberately keeps the visually confusable outerwear
+# (coat / trench coat / parka / windbreaker / jacket / blazer / suit jacket) as
+# SEPARATE categories so they can be discriminated. `assert_vocab_covers_targets`
+# enforces the unification at startup.
+GARMENT_VOCAB = [
+    "coat",
+    "trench coat",
+    "parka",
+    "windbreaker",
+    "jacket",
+    "blazer",
+    "suit jacket",
+    "hoodie",
+    "sweater",
+    "tank top",
+    "t shirt",
+    "shirt",
+    "blouse",
+    "dress",
+    "skirt",
+    "jeans",
+    "shorts",
+    "other",
+]
+
+# Symmetric equivalence classes: only true synonyms are merged, and every entry
+# is either a valid target garment or a plausible VLM synonym for one. The
+# visually confusable outerwear (coat / trench coat / parka / windbreaker /
+# jacket / blazer / suit jacket) are intentionally NOT merged, so the VLM
+# verdict actually discriminates them.
+GARMENT_EQUIV_GROUPS = [
+    {"tank top", "sleeveless top", "camisole top", "camisole", "crop top"},
+    {"t shirt", "tee", "tee shirt"},
+    {"shirt", "blouse"},
+    {"jeans", "denim pants", "denim"},
+    {"skirt", "mini skirt", "long skirt"},
+    {"dress", "gown"},
+    {"sweater", "pullover", "knit sweater", "cardigan", "knitwear"},
+    {"hoodie", "sweatshirt"},
+]
+
+
+def garment_equivalence_set(garment: str, strict: bool) -> set[str]:
+    g = norm(garment)
+    if strict:
+        return {g}
+    members = {g}
+    for grp in GARMENT_EQUIV_GROUPS:
+        if g in grp:
+            members |= grp
+    return members
+
+
+def assert_vocab_covers_targets(tasks: list["OptionTask"]) -> None:
+    """The VLM can only ever predict a label from GARMENT_VOCAB, so a target
+    garment whose (non-strict) equivalence set never intersects the vocab can
+    NEVER pass the garment axis. Fail loudly at startup if the closed vocab has
+    drifted out of sync with the text-query garment categories."""
+    vocab = set(GARMENT_VOCAB)
+    uncovered: dict[str, int] = {}
+    for t in tasks:
+        g = norm(t.target_garment)
+        if not g:
+            continue
+        if not (garment_equivalence_set(g, strict=False) & vocab):
+            uncovered[g] = uncovered.get(g, 0) + 1
+    if uncovered:
+        detail = ", ".join(f"{g!r} x{n}" for g, n in sorted(uncovered.items(), key=lambda kv: -kv[1]))
+        raise SystemExit(
+            "GARMENT_VOCAB is not unified with the text-query garment categories; "
+            "these targets can never pass the garment axis: " + detail + ". "
+            "Add them to GARMENT_VOCAB (or to a GARMENT_EQUIV_GROUPS synonym set)."
+        )
+
+
+VLM_GARMENT_PROMPT = (
+    "You are a fashion garment classifier. Look only at the single main clothing "
+    "item worn on the body in the image, and ignore the background, the person, "
+    "the pose, and any accessories.\n\n"
+    "Classify that garment into exactly ONE of these categories:\n"
+    "{options}\n\n"
+    "Rules:\n"
+    "- Outerwear, keep these distinct: a coat is long/heavy formal outerwear; a "
+    "trench coat is a long belted raincoat-style coat; a parka is a padded/insulated "
+    "hooded winter coat; a windbreaker is a thin lightweight nylon shell; a jacket "
+    "is short/light casual outerwear; a blazer is a structured tailored jacket worn "
+    "on its own; a suit jacket is a tailored jacket that matches suit trousers.\n"
+    "- If it clearly does not fit any listed category, answer \"other\".\n"
+    "Answer with only the category name, exactly as written above, and nothing else."
+)
+
+
+def encode_image_data_uri(path: Path) -> str:
+    ext = Path(path).suffix.lower().lstrip(".") or "jpeg"
+    if ext == "jpg":
+        ext = "jpeg"
+    b64 = base64.b64encode(Path(path).read_bytes()).decode("ascii")
+    return f"data:image/{ext};base64,{b64}"
+
+
+def parse_garment_category(text: str, vocab: list[str]) -> str | None:
+    """Return the vocabulary entry the VLM named. Longest substring match wins
+    so that 'tank top' beats 'top' and 'suit jacket' beats 'jacket'."""
+    t = norm(text)
+    if not t:
+        return None
+    matches = [v for v in vocab if v in t]
+    if not matches:
+        return None
+    return max(matches, key=len)
+
+
+def score_garment_vlm(
     session: requests.Session,
     args: argparse.Namespace,
     crop_path: Path,
     garment: str,
 ) -> tuple[float, dict[str, Any]]:
     """
-    Garment score = raw FashionSigLIP similarity between the SAM3 crop and
-    the garment word alone (e.g. "black striped coat" -> "a coat").
+    Garment score via a VLM (served through vLLM's OpenAI-compatible chat
+    endpoint). The model CLASSIFIES the SAM3 crop into one closed garment
+    category; this code then decides PASS/FAIL by comparing that predicted
+    category to the target's equivalence set.
+
+    PASS -> 1.0, FAIL -> 0.0. On unparseable / failed calls the crop is treated
+    as FAIL (0.0) so a wrong garment cannot survive on color/pattern alone; the
+    raw reason is always recorded for auditing.
     """
     g = norm(garment)
     if not g:
         return 1.0, {"mode": "missing_garment_target"}
 
-    key = f"garment::{g}"
-    row = score_image_files(session, args, {key: f"a {g}"}, [str(crop_path)], batch_size=1)[0]
-    sim = float(row.get(key, 0.0))
+    try:
+        data_uri = encode_image_data_uri(crop_path)
+    except Exception as e:
+        return 0.0, {"mode": "vlm_garment_image_encode_failed", "target": g, "error": str(e)}
 
-    return sim, {
-        "mode": "global_crop_fsiglip_garment_similarity",
+    options_block = "\n".join(f"- {c}" for c in GARMENT_VOCAB)
+    prompt = VLM_GARMENT_PROMPT.format(options=options_block)
+    payload = {
+        "model": args.vlm_model,
+        "messages": [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": prompt},
+                    {"type": "image_url", "image_url": {"url": data_uri}},
+                ],
+            }
+        ],
+        "max_tokens": args.vlm_max_tokens,
+        "temperature": args.vlm_temperature,
+    }
+
+    try:
+        data = post_json(session, args.vlm_url, payload, timeout=args.vlm_timeout, retries=args.vlm_retries)
+        content = data["choices"][0]["message"]["content"]
+    except Exception as e:
+        return 0.0, {"mode": "vlm_garment_request_failed", "target": g, "error": str(e)}
+
+    pred = parse_garment_category(content, GARMENT_VOCAB)
+    if pred is None:
+        return 0.0, {
+            "mode": "vlm_garment_unparseable",
+            "target": g,
+            "raw_response": str(content)[:500],
+            "model": args.vlm_model,
+        }
+
+    equiv = garment_equivalence_set(g, args.garment_strict)
+    verdict = pred in equiv
+    score = 1.0 if verdict else 0.0
+    return score, {
+        "mode": "vlm_garment_classify",
         "target": g,
-        "similarity": sim,
-        "formula": "cosine(crop_image, 'a {garment}')",
-        "raw_scores": row,
+        "predicted": pred,
+        "verdict": "PASS" if verdict else "FAIL",
+        "score": score,
+        "strict": bool(args.garment_strict),
+        "equivalence_set": sorted(equiv),
+        "raw_response": str(content)[:500],
+        "model": args.vlm_model,
     }
 
 
@@ -976,7 +1158,7 @@ def process_one_record(
     )
     color_score = float(color_info.get("score") or 0.0)
 
-    garment_score, garment_info = score_garment_similarity(
+    garment_score, garment_info = score_garment_vlm(
         session=session,
         args=args,
         crop_path=crop_path,
@@ -984,7 +1166,43 @@ def process_one_record(
     )
     garment_score = float(garment_score)
 
+    # A VLM infra error (timeout / connection / unparseable) is NOT a genuine
+    # "wrong garment" FAIL. Keep the two outcomes distinct so a server hiccup
+    # cannot silently discard a correct garment.
+    garment_error_modes = {
+        "vlm_garment_request_failed",
+        "vlm_garment_image_encode_failed",
+        "vlm_garment_unparseable",
+    }
+    garment_is_error = garment_info.get("mode") in garment_error_modes
+
+    if garment_is_error and args.vlm_error_policy == "uncertain":
+        # Do not let a missing judgement kill the candidate; rank by pattern*color.
+        garment_score = 1.0
+        final_skip_reason = "garment_uncertain"
+    elif garment_is_error:
+        garment_score = 0.0
+        final_skip_reason = "garment_vlm_error"
+    elif garment_score <= 0.0:
+        final_skip_reason = "garment_fail" if args.garment_fail_skip else None
+    else:
+        final_skip_reason = None
+
     combined = math.sqrt(max(0.0, pattern_score * color_score * garment_score))
+
+    # Hard filter: an option whose pattern or color barely matches is a wrong
+    # option no matter how good the other axes look. Force its score to 0 and
+    # flag it as skipped (unless a garment reason already claimed the skip slot).
+    attr_below = []
+    if args.attr_min_score > 0.0:
+        if pattern_score <= args.attr_min_score:
+            attr_below.append("pattern")
+        if color_score <= args.attr_min_score:
+            attr_below.append("color")
+    if attr_below:
+        combined = 0.0
+        if final_skip_reason is None:
+            final_skip_reason = "_".join(attr_below) + "_below_min"
 
     write_json(rank_dir / "sam3_candidates.json", cand_json)
     write_json(rank_dir / "patch_scores.json", pattern_info)
@@ -1000,7 +1218,7 @@ def process_one_record(
     })
 
     rec.update({
-        "skip_reason": None,
+        "skip_reason": final_skip_reason,
         "sam3_prompt": best["prompt"],
         "sam3_score": best["score"],
         "sam3_prompts": prompts,
@@ -1135,6 +1353,33 @@ def parse_args() -> argparse.Namespace:
         help="unused (color is always patch-based now); accepted so existing launch scripts keep working.",
     )
 
+    # VLM garment judge (vLLM OpenAI-compatible chat endpoint).
+    p.add_argument("--vlm-url", default="http://127.0.0.1:8000/v1/chat/completions",
+                   help="vLLM OpenAI-compatible chat-completions endpoint used for garment classification.")
+    p.add_argument("--vlm-model", default="Qwen/Qwen2.5-VL-7B-Instruct",
+                   help="Model name as served by vLLM (must match --served-model-name).")
+    p.add_argument("--vlm-max-tokens", type=int, default=16)
+    p.add_argument("--vlm-temperature", type=float, default=0.0)
+    p.add_argument("--vlm-timeout", type=float, default=120.0)
+    p.add_argument("--vlm-retries", type=int, default=4,
+                   help="Retries (with backoff) for a VLM call before it counts as an error.")
+    p.add_argument("--vlm-error-policy", choices=["skip", "uncertain"], default="skip",
+                   help="How to treat a VLM infra error (timeout/connection/unparseable), which is "
+                        "NOT a genuine wrong-garment FAIL. skip: drop with skip_reason=garment_vlm_error "
+                        "(re-runnable, never a false PASS). uncertain: keep the candidate, rank it by "
+                        "pattern*color only, skip_reason=garment_uncertain.")
+    p.add_argument("--garment-strict", action="store_true",
+                   help="PASS only if the VLM's predicted category equals the target exactly. "
+                        "Default (off) also accepts true synonyms (e.g. tank top/camisole), "
+                        "but never merges coat/jacket/blazer.")
+    p.add_argument("--garment-fail-skip", action="store_true", default=True,
+                   help="Mark garment-FAIL crops with skip_reason=garment_fail (default on).")
+    p.add_argument("--no-garment-fail-skip", dest="garment_fail_skip", action="store_false")
+    p.add_argument("--attr-min-score", type=float, default=0.2,
+                   help="Hard filter: if the pattern or color score is <= this threshold, the "
+                        "candidate is filtered out (combined_score forced to 0, "
+                        "skip_reason=pattern/color_below_min). Set to 0 to disable.")
+
     p.add_argument("--score-batch", type=int, default=128)
     p.add_argument("--timeout", type=float, default=120.0)
     p.add_argument("--score-timeout", type=float, default=120.0)
@@ -1182,6 +1427,7 @@ def main() -> None:
             plans = plans[: args.limit]
 
     tasks = make_tasks(plans, options)
+    assert_vocab_covers_targets(tasks)
 
     print("=" * 96)
     print("FashionSigLIP top-k -> SAM3 garment mask -> FSigLIP patch/global ranking")

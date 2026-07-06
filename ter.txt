@@ -5,6 +5,7 @@ vllm serve Qwen/Qwen3-VL-32B-Instruct   --port 8002 --max-model-len 32768   --li
 python fsiglip/serve_fsiglip_knn.py --port 1235 --gpu 0
 
 
+
 python scripts/diag_rerank_scores.py \
   --plans data/options/option_plans.jsonl \
   --client-url http://127.0.0.1:1235/knn-service \
