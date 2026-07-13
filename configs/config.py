@@ -50,7 +50,7 @@ FASHION_ATTRIBUTE_AXES = {
         "sweatshirt", "sweater", "hoodie", "cardigan",
         # outerwear
         "blazer", "windbreaker", "leather_jacket", "puffer_jacket",
-        "fleece", "trench_coat",
+        "fleece_jacket", "trench_coat",
         # bottoms
         "jeans", "slacks", "shorts", "leggings",
         # one-piece / skirts
@@ -62,7 +62,7 @@ GARMENT_FUNCTIONAL_GROUPS = {
     "basic_tops":       ["t_shirt", "tank_top", "formal_shirt"],
     "soft_tops":        ["sweatshirt", "sweater", "hoodie", "cardigan"],
     "light_outerwear":  ["windbreaker", "leather_jacket", "blazer"],
-    "heavy_outerwear":  ["fleece", "puffer_jacket", "trench_coat"],
+    "heavy_outerwear":  ["fleece_jacket", "puffer_jacket", "trench_coat"],
     "bottoms":          ["jeans", "slacks", "shorts", "leggings"],
     "dress_skirt":      ["dress", "mini_skirt", "long_skirt"],
 }

@@ -54,7 +54,7 @@ CONFUSABLE_ACTIVE_PAIRS = {
 }
 CONFUSABLE_GARMENT_PAIRS = {frozenset(p) for p in [
     ("jeans", "slacks"), ("leggings", "slacks"),
-    ("fleece", "sweater"), ("fleece", "hoodie"),
+    ("fleece_jacket", "sweater"), ("fleece_jacket", "hoodie"),
     ("sweater", "sweatshirt"), ("hoodie", "sweatshirt"),
     ("sweater", "cardigan"), ("windbreaker", "puffer_jacket"),
     ("dress", "long_skirt"), ("mini_skirt", "shorts"),
@@ -82,8 +82,7 @@ GARMENT_QUERY_ALIAS = {
     "windbreaker": "windbreaker",
     "leather_jacket": "leather jacket",
     "puffer_jacket": "puffer jacket",
-    # "fleece" alone retrieves neck gaiters/scarves; force the jacket sense.
-    "fleece": "fleece jacket",
+    "fleece_jacket": "fleece jacket",
     "trench_coat": "trench coat",
     "jeans": "jeans",
     "slacks": "slacks",

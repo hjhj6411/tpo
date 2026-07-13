@@ -39,6 +39,13 @@ v6 (WACV revision) — 7 scenarios added on top of the preserved 53 (total 60):
 v7 (WACV revision) — wedding_celebration constraints tightened:
 - color: compatible ['black', 'navy', 'gray']; incompatible ['white'].
 - pattern: compatible ['solid', 'striped']; incompatible ['leopard', 'floral'].
+
+v8 — hemisphere-ambiguity fix in query seeds:
+- cold_blizzard_outdoor implicit seed 'outdoor holiday market in January'
+  -> 'in the middle of winter' (January implies summer in the Southern
+  Hemisphere; season words travel with the asker's hemisphere, month names
+  do not). Audited all 240 seeds: the only other month reference,
+  'Dubai in August' (heat_desert_trek), is location-anchored and kept.
 """
 
 CULTURAL_FRAME = 'contemporary_western'
@@ -85,8 +92,8 @@ CANONICAL_SCENARIOS = [{'scenario_id': 'cold_blizzard_outdoor',
                                'for hours. What outfit makes sense?'],
                   'implicit': ["I'm heading to a winter festival up in the mountains this weekend. "
                                'Any outfit advice?',
-                               'Spending the whole day at an outdoor holiday market in January. '
-                               'What should I throw on?']}},
+                               'Spending the whole day at an outdoor holiday market in the middle '
+                               'of winter. What should I throw on?']}},
  {'scenario_id': 'cold_polar_expedition',
   'archetype': 'extreme_cold',
   'name': 'Polar / Arctic Expedition Day',
@@ -159,8 +166,8 @@ CANONICAL_SCENARIOS = [{'scenario_id': 'cold_blizzard_outdoor',
                                "Brutal heat today and I'll be on the sand for hours. What outfit "
                                'makes sense?'],
                   'implicit': ['Planning a beach day this weekend at the peak of summer. Outfit?',
-                               'Meeting friends down by the shore tomorrow afternoon. What should '
-                               'I wear?']}},
+                               'Meeting friends down by the shore tomorrow afternoon at the '
+                               'height of summer. What should I wear?']}},
  {'scenario_id': 'heat_desert_trek',
   'archetype': 'extreme_heat',
   'name': 'Desert Trek (Peak Summer)',
@@ -177,8 +184,8 @@ CANONICAL_SCENARIOS = [{'scenario_id': 'cold_blizzard_outdoor',
                                "Out in the open desert under blazing sun all day. What's the right "
                                'outfit?'],
                   'implicit': ['Spending the day exploring Dubai in August. Outfit advice?',
-                               'Doing a guided tour through the dunes next week. What should I '
-                               'wear?']}},
+                               'Doing a midsummer guided tour through the dunes next week. What '
+                               'should I wear?']}},
  {'scenario_id': 'heat_tropical_resort',
   'archetype': 'extreme_heat',
   'name': 'Tropical Resort Pool Party',
@@ -216,10 +223,10 @@ CANONICAL_SCENARIOS = [{'scenario_id': 'cold_blizzard_outdoor',
                                'should I wear?',
                                'Standing in a festival crowd under the sun from noon to night. '
                                'Outfit advice?'],
-                  'implicit': ['Got tickets to an outdoor summer festival during peak heat this '
-                               'weekend. What should I wear?',
-                               'Spending Saturday at an open-air concert downtown in midsummer '
-                               'heat. Outfit?']}},
+                  'implicit': ['Got tickets to an all-day outdoor summer festival this weekend. '
+                               'What should I wear?',
+                               'Spending Saturday at an open-air concert downtown in midsummer. '
+                               'Outfit?']}},
  {'scenario_id': 'water_swim_session',
   'archetype': 'aquatic_water',
   'name': 'Pool Visit & Poolside Lounging',

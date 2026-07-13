@@ -42,8 +42,7 @@ VALUE_DISPLAY_NAMES = {
     "windbreaker": "windbreaker",
     "leather_jacket": "leather jacket",
     "puffer_jacket": "puffer jacket",
-    # "fleece" alone reads as the fabric/neck warmer; render the jacket sense.
-    "fleece": "fleece jacket",
+    "fleece_jacket": "fleece jacket",
     "trench_coat": "trench coat",
     "jeans": "jeans",
     "slacks": "slacks",
