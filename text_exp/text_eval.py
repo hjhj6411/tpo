@@ -44,13 +44,6 @@ You will be given:
 
 Your task:
 Select the single BEST option that best fits the query.
-
-OUTPUT FORMAT — CRITICAL:
-You MUST output EXACTLY one character: A, B, C, or D.
-Do NOT output any explanation, reasoning, punctuation, or whitespace.
-Do NOT write sentences. Do NOT write words.
-If you write anything other than a single letter, your response is INVALID.
-Your ENTIRE response must be one of: A  B  C  D
 """
 
 SYSTEM_PROMPT_WITH_PROFILE = """\
@@ -63,13 +56,6 @@ You may be given:
 
 Your task:
 Select the single BEST option that best fits the available query and/or the user's preferences.
-
-OUTPUT FORMAT — CRITICAL:
-You MUST output EXACTLY one character: A, B, C, or D.
-Do NOT output any explanation, reasoning, punctuation, or whitespace.
-Do NOT write sentences. Do NOT write words.
-If you write anything other than a single letter, your response is INVALID.
-Your ENTIRE response must be one of: A  B  C  D
 """
 
 

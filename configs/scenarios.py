@@ -46,6 +46,29 @@ v8 — hemisphere-ambiguity fix in query seeds:
   Hemisphere; season words travel with the asker's hemisphere, month names
   do not). Audited all 240 seeds: the only other month reference,
   'Dubai in August' (heat_desert_trek), is location-anchored and kept.
+
+v9 — explicit/implicit sharpening (full 240-seed audit):
+- Implicit seeds must NOT state the constraint. 8 leaky implicit seeds
+  rewritten to name only the event: relig_temple_ceremony ('enforce a
+  covered dress code'), relig_conservative_worship ('strict modesty
+  norms'), heat_summer_festival x2 ('peak heat' / 'midsummer heat'),
+  formal_black_tie_gala ('formal evening event'), formal_opera_premiere
+  ('formal opening-night crowd'), biz_investor_pitch ('Formal pitch
+  meeting'), casual_farmers_market ('Casual morning').
+- Implicit seeds must still LICENSE the inference. Season cues added to 2
+  under-determined seeds: heat_beach_day ('by the shore' -> '+ at the
+  height of summer'), heat_desert_trek ('through the dunes' ->
+  'midsummer guided tour').
+- Explicit seeds in dress-coded scenarios must state the dress
+  expectation, since the occasion word alone (wedding, court, interview)
+  also appears in implicit seeds. 19 weak explicit seeds strengthened
+  with expectation phrases ('... attire expected' variants) across
+  biz_*, civic_*, mourn_memorial, relig_baptism_guest, social_*,
+  wedding_*, celebration_graduation.
+- severe_weather implicit seeds necessarily mention the weather event
+  (the weather IS the T/P context; without it the query is unanswerable).
+  Kept as-is by design; treat this archetype's implicit split as
+  weak-implicit in explicit-vs-implicit analyses.
 """
 
 CULTURAL_FRAME = 'contemporary_western'
@@ -598,7 +621,8 @@ CANONICAL_SCENARIOS = [{'scenario_id': 'cold_blizzard_outdoor',
                                'Wandering the outdoor market stalls on a casual Saturday. Outfit?'],
                   'implicit': ['Heading to the outdoor local market for produce this morning. What '
                                'should I wear?',
-                               "Casual morning browsing farmers' market stalls. Outfit advice?"]}},
+                               "Browsing the farmers' market stalls tomorrow morning. Outfit "
+                               'advice?']}},
  {'scenario_id': 'casual_amusement_park',
   'archetype': 'casual_leisure',
   'name': 'Amusement Park All-Day Visit',
@@ -743,9 +767,9 @@ CANONICAL_SCENARIOS = [{'scenario_id': 'cold_blizzard_outdoor',
               'incompatible': ['leopard', 'polka_dot']},
   'query_seeds': {'explicit': ['Pitching to venture capital investors today; formal business '
                                'attire is expected. What should I wear?',
-                               'Presenting our funding pitch to investors in a few hours. What '
-                               'should I wear?'],
-                  'implicit': ['Formal pitch meeting with VCs tomorrow morning to raise our round. '
+                               'Presenting our funding pitch to investors in a few hours; '
+                               'professional attire expected. What should I wear?'],
+                  'implicit': ['Pitch meeting with VCs tomorrow morning to raise our round. '
                                'Outfit advice?',
                                'Trying to win over serious investors in a polished office pitch '
                                'tomorrow. What should I wear?']}},
@@ -763,10 +787,10 @@ CANONICAL_SCENARIOS = [{'scenario_id': 'cold_blizzard_outdoor',
             'incompatible': ['orange', 'yellow', 'pink']},
   'pattern': {'compatible': ['solid', 'striped', 'checkered'],
               'incompatible': ['leopard', 'polka_dot']},
-  'query_seeds': {'explicit': ['I have an in-person job interview at a corporate office tomorrow. '
-                               'What should I wear?',
+  'query_seeds': {'explicit': ['I have an in-person job interview at a corporate office tomorrow '
+                               'and formal attire is expected. What should I wear?',
                                'Interviewing for a professional role at their headquarters '
-                               'tomorrow. What should I wear?'],
+                               'tomorrow; business attire expected. What should I wear?'],
                   'implicit': ['Final-round interview with the hiring panel next week. Outfit '
                                'advice?',
                                'Meeting the team that decides if I get the job tomorrow. What '
@@ -787,8 +811,8 @@ CANONICAL_SCENARIOS = [{'scenario_id': 'cold_blizzard_outdoor',
               'incompatible': ['leopard', 'polka_dot']},
   'query_seeds': {'explicit': ['Business dinner with an important client tonight; professional '
                                'attire expected. What should I wear?',
-                               'Meeting a key client over dinner to represent the firm. What '
-                               'should I wear?'],
+                               'Meeting a key client over dinner to represent the firm; smart '
+                               'business attire expected. What should I wear?'],
                   'implicit': ['Taking our biggest client out to dinner tonight. Outfit advice?',
                                'Dinner with the client whose account I manage. What should I '
                                'wear?']}},
@@ -811,7 +835,8 @@ CANONICAL_SCENARIOS = [{'scenario_id': 'cold_blizzard_outdoor',
                                'Invited to a formal evening ball — black tie. What should I wear?'],
                   'implicit': ['Got an invitation to a glamorous evening fundraiser at a grand '
                                'hotel. Outfit advice?',
-                               'Big formal evening event downtown tonight. What should I wear?']}},
+                               'Invited to an evening charity ball downtown tonight. What should '
+                               'I wear?']}},
  {'scenario_id': 'formal_opera_premiere',
   'archetype': 'ultra_formal',
   'name': 'Opera / Ballet Premiere',
@@ -831,8 +856,8 @@ CANONICAL_SCENARIOS = [{'scenario_id': 'cold_blizzard_outdoor',
                                'should I wear?'],
                   'implicit': ['Have tickets to the gala opening night at the opera. Outfit '
                                'advice?',
-                               'Premiere performance at the grand concert hall with a formal '
-                               'opening-night crowd. What should I wear?']}},
+                               'Premiere performance at the grand concert hall on opening night. '
+                               'What should I wear?']}},
  {'scenario_id': 'formal_national_award',
   'archetype': 'ultra_formal',
   'name': 'National Award Ceremony (Recipient)',
@@ -873,7 +898,7 @@ CANONICAL_SCENARIOS = [{'scenario_id': 'cold_blizzard_outdoor',
                                'formal protocol. What should I wear?',
                                'Attending a formal banquet at the presidential residence. What '
                                'should I wear?'],
-                  'implicit': ['Got a formal invitation to dine at the presidential palace. Outfit '
+                  'implicit': ['Got an invitation to dine at the presidential palace. Outfit '
                                'advice?',
                                'Attending an official banquet with dignitaries this evening. What '
                                'should I wear?']}},
@@ -891,8 +916,8 @@ CANONICAL_SCENARIOS = [{'scenario_id': 'cold_blizzard_outdoor',
             'incompatible': ['orange', 'yellow', 'pink', 'red']},
   'pattern': {'compatible': ['solid', 'striped'],
               'incompatible': ['leopard', 'polka_dot', 'floral']},
-  'query_seeds': {'explicit': ['I have to appear in court tomorrow before a judge. What should I '
-                               'wear?',
+  'query_seeds': {'explicit': ['I have to appear in court tomorrow before a judge; conservative '
+                               'formal dress is expected. What should I wear?',
                                'Appearing in a courtroom for a formal hearing tomorrow. What '
                                'should I wear?'],
                   'implicit': ["I've been called before a judge next week. Outfit advice?",
@@ -911,10 +936,10 @@ CANONICAL_SCENARIOS = [{'scenario_id': 'cold_blizzard_outdoor',
             'incompatible': ['orange', 'yellow', 'pink', 'red']},
   'pattern': {'compatible': ['solid', 'striped'],
               'incompatible': ['leopard', 'polka_dot', 'floral']},
-  'query_seeds': {'explicit': ['Presenting an oral argument before the high court. What should I '
-                               'wear?',
-                               'Arguing a case at the highest court next month. What should I '
-                               'wear?'],
+  'query_seeds': {'explicit': ['Presenting an oral argument before the high court, where strict '
+                               'formal dress is required. What should I wear?',
+                               'Arguing a case at the highest court next month; the dress code is '
+                               'strictly conservative. What should I wear?'],
                   'implicit': ["I'm the attorney appearing at the top court next month. Outfit "
                                'advice?',
                                'Standing before the senior bench to argue a case soon. What should '
@@ -935,8 +960,8 @@ CANONICAL_SCENARIOS = [{'scenario_id': 'cold_blizzard_outdoor',
               'incompatible': ['leopard', 'polka_dot', 'floral']},
   'query_seeds': {'explicit': ['Testifying at a formal government hearing on the record. What '
                                'should I wear?',
-                               'Appearing before a parliamentary committee to give testimony. What '
-                               'should I wear?'],
+                               'Appearing before a parliamentary committee to give testimony; '
+                               'formal dress expected. What should I wear?'],
                   'implicit': ["I've been summoned to speak before a legislative committee. Outfit "
                                'advice?',
                                'Giving official testimony at a public hearing next week. What '
@@ -955,10 +980,10 @@ CANONICAL_SCENARIOS = [{'scenario_id': 'cold_blizzard_outdoor',
             'incompatible': ['orange', 'yellow', 'pink', 'red']},
   'pattern': {'compatible': ['solid', 'striped'],
               'incompatible': ['leopard', 'polka_dot', 'floral']},
-  'query_seeds': {'explicit': ["I'm taking the oath at my citizenship ceremony next week. What "
-                               'should I wear?',
-                               'Attending my naturalization ceremony at the federal courthouse. '
-                               'What should I wear?'],
+  'query_seeds': {'explicit': ["I'm taking the oath at my citizenship ceremony next week; formal "
+                               'dress is expected. What should I wear?',
+                               'Attending my naturalization ceremony at the federal courthouse; '
+                               'formal attire expected. What should I wear?'],
                   'implicit': ['I finally become a citizen at an official ceremony this month. '
                                'Outfit advice?',
                                'Big official ceremony at the courthouse where I get sworn in. '
@@ -995,8 +1020,8 @@ CANONICAL_SCENARIOS = [{'scenario_id': 'cold_blizzard_outdoor',
   'color': {'compatible': ['black', 'navy', 'gray'],
             'incompatible': ['orange', 'yellow', 'pink', 'red', 'green']},
   'pattern': {'compatible': ['solid', 'striped'], 'incompatible': ['leopard', 'polka_dot', 'floral']},
-  'query_seeds': {'explicit': ['Attending a memorial remembrance service for a colleague. What '
-                               'should I wear?',
+  'query_seeds': {'explicit': ['Attending a memorial remembrance service for a colleague; dark, '
+                               'respectful dress expected. What should I wear?',
                                'Going to a solemn remembrance ceremony this week. What should I '
                                'wear?'],
                   'implicit': ["There's a service to honor someone who passed, and I'm attending. "
@@ -1067,8 +1092,8 @@ CANONICAL_SCENARIOS = [{'scenario_id': 'cold_blizzard_outdoor',
                                'expected. What should I wear?'],
                   'implicit': ["Joining a friend's family for their weekly service at a "
                                'traditional congregation. Outfit advice?',
-                               'Attending a religious service known for its strict modesty norms. '
-                               'What should I wear?']}},
+                               'Attending a holy-day service at a deeply traditional congregation '
+                               'with relatives. What should I wear?']}},
  {'scenario_id': 'relig_temple_ceremony',
   'archetype': 'religious_modest',
   'name': 'Temple Ceremony / Sacred Site Visit',
@@ -1090,8 +1115,8 @@ CANONICAL_SCENARIOS = [{'scenario_id': 'cold_blizzard_outdoor',
                                'covered. What should I wear?',
                                'Attending a temple ceremony with strict modesty rules. What should '
                                'I wear?'],
-                  'implicit': ['Touring some historic religious sites that enforce a covered dress '
-                               'code. Outfit advice?',
+                  'implicit': ['Touring several historic temples and shrines on my trip next '
+                               'week. Outfit advice?',
                                'Invited to a ceremony at a temple this weekend. What should I '
                                'wear?']}},
  {'scenario_id': 'relig_solemn_observance',
@@ -1136,8 +1161,8 @@ CANONICAL_SCENARIOS = [{'scenario_id': 'cold_blizzard_outdoor',
                    'exposed or loud clothing is inappropriate.',
   'color': None,
   'pattern': {'compatible': ['solid', 'striped'], 'incompatible': ['leopard', 'polka_dot']},
-  'query_seeds': {'explicit': ["Invited to a baby's baptism at a traditional church. What should "
-                               'I wear?',
+  'query_seeds': {'explicit': ["Invited to a baby's baptism at a traditional church where modest "
+                               'dress is expected. What should I wear?',
                                'Attending a christening ceremony where modest dress is expected. '
                                'What should I wear?'],
                   'implicit': ["My friend's baby is being baptized this Sunday and I'm invited. "
@@ -1159,8 +1184,8 @@ CANONICAL_SCENARIOS = [{'scenario_id': 'cold_blizzard_outdoor',
               'incompatible': ['leopard', 'polka_dot']},
   'query_seeds': {'explicit': ['Attending an art gallery opening tonight; smart-casual minimum. '
                                'What should I wear?',
-                               'Going to a vernissage at a downtown gallery this evening. What '
-                               'should I wear?'],
+                               'Going to a vernissage at a downtown gallery this evening; smart '
+                               'casual expected. What should I wear?'],
                   'implicit': ['Got invited to an evening gallery exhibition opening reception. '
                                'Outfit advice?',
                                'Heading to an opening reception at the art gallery. What should I '
@@ -1202,8 +1227,8 @@ CANONICAL_SCENARIOS = [{'scenario_id': 'cold_blizzard_outdoor',
               'incompatible': ['leopard', 'polka_dot']},
   'query_seeds': {'explicit': ['Company annual gala tonight; smart-casual to semi-formal expected. '
                                'What should I wear?',
-                               'Going to the office year-end gala this evening. What should I '
-                               'wear?'],
+                               'Going to the office year-end gala this evening; semi-formal '
+                               'expected. What should I wear?'],
                   'implicit': ["Our company's big end-of-year party is tonight. Outfit advice?",
                                "Heading to the firm's annual celebration dinner. What should I "
                                'wear?']}},
@@ -1243,8 +1268,8 @@ CANONICAL_SCENARIOS = [{'scenario_id': 'cold_blizzard_outdoor',
               'incompatible': ['leopard', 'floral']},
   'query_seeds': {'explicit': ['Attending a wedding reception in a hotel ballroom; smart attire '
                                'expected. What should I wear?',
-                               "Going to a friend's wedding reception this weekend. What should I "
-                               'wear?'],
+                               "Going to a friend's wedding reception this weekend; proper guest "
+                               'attire expected. What should I wear?'],
                   'implicit': ["My friend is getting married and I'm going to the reception next "
                                'Saturday. Outfit advice?',
                                'Invited to celebrate a couple at their reception dinner. What '
@@ -1263,8 +1288,8 @@ CANONICAL_SCENARIOS = [{'scenario_id': 'cold_blizzard_outdoor',
             'incompatible': ['white']},
   'pattern': {'compatible': ['solid', 'striped'],
               'incompatible': ['leopard', 'floral']},
-  'query_seeds': {'explicit': ['Attending an outdoor garden wedding ceremony as a guest. What '
-                               'should I wear?',
+  'query_seeds': {'explicit': ['Attending an outdoor garden wedding ceremony as a guest; smart '
+                               'daytime attire expected. What should I wear?',
                                'Going to a daytime garden wedding; smart attire expected. What '
                                'should I wear?'],
                   'implicit': ["A couple I know is marrying in a garden this spring and I'm "
@@ -1287,8 +1312,8 @@ CANONICAL_SCENARIOS = [{'scenario_id': 'cold_blizzard_outdoor',
               'incompatible': ['leopard', 'floral']},
   'query_seeds': {'explicit': ['Attending a milestone anniversary celebration dinner; smart attire '
                                'expected. What should I wear?',
-                               'Going to an engagement celebration party this evening. What should '
-                               'I wear?'],
+                               'Going to an engagement celebration party this evening; dressy '
+                               'attire expected. What should I wear?'],
                   'implicit': ["My parents' big anniversary dinner at a nice venue is this "
                                'weekend. Outfit advice?',
                                "Celebrating a couple's engagement at a nice venue tonight. What "
@@ -1307,10 +1332,10 @@ CANONICAL_SCENARIOS = [{'scenario_id': 'cold_blizzard_outdoor',
             'incompatible': ['white']},
   'pattern': {'compatible': ['solid', 'striped'],
               'incompatible': ['leopard', 'floral']},
-  'query_seeds': {'explicit': ["Attending my sister's university graduation ceremony. What "
-                               'should I wear?',
-                               'Going to a commencement ceremony at the big auditorium. What '
-                               'should I wear?'],
+  'query_seeds': {'explicit': ["Attending my sister's university graduation ceremony; smart "
+                               'attire expected. What should I wear?',
+                               'Going to a commencement ceremony at the big auditorium; neat, '
+                               'respectful attire expected. What should I wear?'],
                   'implicit': ["My best friend graduates next week and I'll be in the audience. "
                                'Outfit advice?',
                                'Watching the commencement at the university hall this Friday. '
