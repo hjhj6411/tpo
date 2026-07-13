@@ -112,12 +112,8 @@ def _axis_preferences(profile, axis):
 
 
 def profile_to_all_kv_text(profile):
-    """Compact all-profile K-V text without narrative or duplicated keyword lists."""
+    """Compact preference K-V text without style or duplicated keyword lists."""
     lines = []
-    archetype = profile.get("preference_archetype")
-    if archetype:
-        lines.append(f"style: {str(archetype).replace('_', ' ')}")
-
     for axis, label in [
         ("garment_category", "garment"),
         ("color", "color"),
