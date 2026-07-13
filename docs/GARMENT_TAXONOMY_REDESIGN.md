@@ -44,7 +44,7 @@
 | **blazer** | blazer, suit jacket | 사진상 거의 구분 불가 → 병합 |
 | **coat** | coat, trench coat | trench는 coat의 하위 유형 → 병합 |
 | **jacket** | jacket, windbreaker | 얇은 캐주얼 셸 우산어 (필요시 bomber/denim jacket 추가) |
-| **parka** | parka | 패딩·후드로 변별 가능 → 유지 |
+| **fleece** | fleece | puffer와 겹치지 않는 soft outerwear 용어로 유지 |
 | **shirt** | shirt, blouse | *이미 병합됨*(현행 `GARMENT_EQUIV_GROUPS`) |
 | t_shirt | t shirt, tee | 현행 유지 |
 | tank_top | tank top, camisole, crop top | 현행 유지 |
@@ -57,7 +57,7 @@
 
 병합 후 카테고리별 플랜 사용량(참고):
 `blazer 1210 · t_shirt 1082 · tank_top 936 · shorts 906 · shirt 820 · coat 760 ·
-dress 630 · jacket 594 · hoodie 480 · parka 470 · sweater 408 · skirt 244 · jeans 112`
+dress 630 · jacket 594 · hoodie 480 · fleece 470 · sweater 408 · skirt 244 · jeans 112`
 
 ### ⚠️ 중요: 이 통합안에서 `jacket`과 `blazer`는 **여전히 별개**다
 - 따라서 예제 `q00004 (striped white jacket)`의 블레이저들은 **계속 FAIL**이며,
@@ -96,7 +96,7 @@ GARMENT_EQUIV_GROUPS = [
 ```
 
 동시에 800–807줄 / 829–833줄 주석(“outerwear를 SEPARATE로 유지한다”)을 수정해야
-한다 — 이제 아우터를 **coarse canonical 3개(blazer/coat/jacket) + parka**로
+한다 — 이제 아우터를 **coarse canonical 3개(blazer/coat/jacket) + fleece**로
 접되, 이들 4개 간 굵은 대비는 유지한다는 문구로.
 
 ---
@@ -219,4 +219,4 @@ incompatible_garments = sorted({canonical_garment(g) for g in _neutral_values(
 1. **적용 범위**: 안 A(검증만) 로 먼저 갈지, 곧장 안 B(플랜 정규화)까지 갈지.
 2. **`jacket` 우산 범위**: `{jacket, windbreaker}` 로 둘지, `bomber jacket`/
    `denim jacket` 도 vocab+equiv에 추가할지.
-3. **`parka` 처리**: 현행대로 독립 유지(권장)로 확정할지.
+3. **`fleece` 처리**: puffer와 분리되는 독립 soft outerwear로 유지할지.

@@ -3,19 +3,23 @@
 # Only the garment axis is changed: instead of a FashionSigLIP cosine similarity,
 # the SAM3 crop is judged PASS/FAIL by a vision-language model served via vLLM
 # (OpenAI-compatible /v1/chat/completions). garment_score = 1.0 (PASS) or 0.0 (FAIL).
-# Pattern / color scoring, SAM3 pipeline, and all output formats are unchanged.
+# Pattern and color scoring use separate patch grids because patterns need
+# larger visual context while colors benefit from denser local patches.
 
 
 """
 # 터미널 3: 수집 실행
 conda activate sam3
-python fsiglip/collect_topk_sam3_fsiglip_patch_rank_vlm_garment.py \
+python fsiglip/collect_topk_sam3_fsiglip_patch_rank_vlm_garment_axis_patches.py \
   --plan-path data/options/option_plans.jsonl \
   --client-url http://127.0.0.1:1235/knn-service \
   --score-url http://127.0.0.1:1235/score-image-files \
   --vlm-url http://127.0.0.1:8001/v1/chat/completions \
   --vlm-model Qwen/Qwen3-VL-4B-Instruct \
   --output-root data/retrieval/sam3vlmfix \
+  --pattern-short-side-tiles 6 \
+  --color-short-side-tiles 12 \
+  --patch-mask-fill local_mean \
   --limit 10 --options A,B,C,D --device cuda --force
 """
 from __future__ import annotations
@@ -603,13 +607,67 @@ def patch_grid(w: int, h: int, short_side_tiles: int) -> list[tuple[int, int, in
     return [(x, y, side) for y in range(0, padded_h, side) for x in range(0, padded_w, side)]
 
 
-def make_patch_files(crop: Image.Image, crop_mask: np.ndarray, args: argparse.Namespace, patch_dir: Path) -> list[dict[str, Any]]:
+def fixed_patch_fill(fill_mode: str) -> tuple[int, int, int]:
+    if fill_mode == "white":
+        return (255, 255, 255)
+    if fill_mode == "black":
+        return (0, 0, 0)
+    return (127, 127, 127)
+
+
+def masked_tile(
+    crop: Image.Image,
+    crop_mask: np.ndarray,
+    x: int,
+    y: int,
+    x2: int,
+    y2: int,
+    size: int,
+    fill_mode: str,
+) -> Image.Image:
+    region = np.asarray(crop.crop((x, y, x2, y2)).convert("RGB"), dtype=np.uint8)
+    region_mask = crop_mask[y:y2, x:x2].astype(bool)
+
+    if fill_mode == "local_mean" and region_mask.any():
+        fill = tuple(int(round(v)) for v in region[region_mask].mean(axis=0))
+    else:
+        fill = fixed_patch_fill(fill_mode)
+
+    tile = np.full((size, size, 3), fill, dtype=np.uint8)
+    tile_region = tile[: y2 - y, : x2 - x]
+    tile_region[region_mask] = region[region_mask]
+    return Image.fromarray(tile, mode="RGB")
+
+
+def masked_crop_preview(crop: Image.Image, crop_mask: np.ndarray, fill_mode: str) -> Image.Image:
+    crop = crop.convert("RGB")
+    arr = np.asarray(crop, dtype=np.uint8)
+    mask = crop_mask.astype(bool)
+
+    if fill_mode == "local_mean" and mask.any():
+        fill = tuple(int(round(v)) for v in arr[mask].mean(axis=0))
+    else:
+        fill = fixed_patch_fill(fill_mode)
+
+    out = np.full(arr.shape, fill, dtype=np.uint8)
+    out[mask] = arr[mask]
+    return Image.fromarray(out, mode="RGB")
+
+
+def make_patch_files(
+    crop: Image.Image,
+    crop_mask: np.ndarray,
+    args: argparse.Namespace,
+    patch_dir: Path,
+    short_side_tiles: int,
+    axis: str,
+) -> list[dict[str, Any]]:
     crop = crop.convert("RGB")
     w, h = crop.size
     patch_dir.mkdir(parents=True, exist_ok=True)
 
     rows = []
-    for i, (x, y, s) in enumerate(patch_grid(w, h, args.short_side_tiles)):
+    for i, (x, y, s) in enumerate(patch_grid(w, h, short_side_tiles)):
         x2 = min(x + s, w)
         y2 = min(y + s, h)
         if x2 <= x or y2 <= y:
@@ -619,18 +677,29 @@ def make_patch_files(crop: Image.Image, crop_mask: np.ndarray, args: argparse.Na
         if cov < args.min_coverage:
             continue
 
-        tile = Image.new("RGB", (s, s), "white")
-        tile.paste(crop.crop((x, y, x2, y2)), (0, 0))
+        tile = masked_tile(
+            crop=crop,
+            crop_mask=crop_mask,
+            x=x,
+            y=y,
+            x2=x2,
+            y2=y2,
+            size=s,
+            fill_mode=args.patch_mask_fill,
+        )
 
         path = patch_dir / f"tile_{i:04d}__x{x}_y{y}_s{s}_cov{cov:.3f}.jpg"
         tile.save(path, quality=92)
 
         rows.append({
             "index": i,
+            "axis": axis,
             "x": x,
             "y": y,
             "size": s,
+            "short_side_tiles": int(short_side_tiles),
             "mask_coverage": cov,
+            "mask_fill": args.patch_mask_fill,
             "path": str(path),
         })
 
@@ -741,7 +810,9 @@ def score_patch_vocab(
             "x": patch["x"],
             "y": patch["y"],
             "size": patch["size"],
+            "short_side_tiles": patch.get("short_side_tiles"),
             "mask_coverage": float(patch["mask_coverage"]),
+            "mask_fill": patch.get("mask_fill"),
             "target": t,
             "pred": pred,
             "target_score": target_score,
@@ -1141,24 +1212,44 @@ def process_one_record(
     crop, crop_mask, crop_xyxy = crop_image_and_mask(image, mask, box)
 
     crop_path = rank_dir / "crop.jpg"
+    masked_crop_path = rank_dir / "masked_crop.jpg"
     mask_path = rank_dir / "mask.png"
-    patch_overlay_path = rank_dir / "patch_overlay.jpg"
-    patch_dir = rank_dir / "patches"
+    pattern_patch_overlay_path = rank_dir / "patch_overlay.jpg"
+    color_patch_overlay_path = rank_dir / "color_patch_overlay.jpg"
+    pattern_patch_dir = rank_dir / "patches"
+    color_patch_dir = rank_dir / "color_patches"
 
     crop.save(crop_path, quality=95)
+    masked_crop_preview(crop, crop_mask, args.patch_mask_fill).save(masked_crop_path, quality=95)
     save_mask(crop_mask, mask_path)
 
-    patches = make_patch_files(crop, crop_mask, args, patch_dir)
-    draw_patch_overlay(crop, crop_mask, patches, patch_overlay_path)
+    pattern_patches = make_patch_files(
+        crop=crop,
+        crop_mask=crop_mask,
+        args=args,
+        patch_dir=pattern_patch_dir,
+        short_side_tiles=args.pattern_short_side_tiles,
+        axis="pattern",
+    )
+    color_patches = make_patch_files(
+        crop=crop,
+        crop_mask=crop_mask,
+        args=args,
+        patch_dir=color_patch_dir,
+        short_side_tiles=args.color_short_side_tiles,
+        axis="color",
+    )
+    draw_patch_overlay(crop, crop_mask, pattern_patches, pattern_patch_overlay_path)
+    draw_patch_overlay(crop, crop_mask, color_patches, color_patch_overlay_path)
 
-    pattern_info = score_pattern_patches(session, args, task.target_pattern, patches)
+    pattern_info = score_pattern_patches(session, args, task.target_pattern, pattern_patches)
     pattern_score = float(pattern_info.get("score") or 0.0)
 
     color_info = score_color_patches(
         session=session,
         args=args,
         color=task.target_color,
-        patches=patches,
+        patches=color_patches,
     )
     color_score = float(color_info.get("score") or 0.0)
 
@@ -1211,6 +1302,8 @@ def process_one_record(
 
     write_json(rank_dir / "sam3_candidates.json", cand_json)
     write_json(rank_dir / "patch_scores.json", pattern_info)
+    write_json(rank_dir / "pattern_patch_scores.json", pattern_info)
+    write_json(rank_dir / "color_patch_scores.json", color_info)
     write_json(rank_dir / "score.json", {
         "pattern_score": pattern_score,
         "color_score": color_score,
@@ -1219,7 +1312,13 @@ def process_one_record(
         "sam3_prompt": best["prompt"],
         "query_garment": task.query_garment,
         "vlm_garment_vocab": list(task.vlm_garment_vocab),
+        "pattern_short_side_tiles": args.pattern_short_side_tiles,
+        "color_short_side_tiles": args.color_short_side_tiles,
+        "pattern_num_patches": len(pattern_patches),
+        "color_num_patches": len(color_patches),
+        "patch_mask_fill": args.patch_mask_fill,
         "crop_xyxy": list(crop_xyxy),
+        "masked_crop_path": str(masked_crop_path),
         "color_score_raw": color_info,
         "garment_score_raw": garment_info,
     })
@@ -1232,10 +1331,20 @@ def process_one_record(
         "sam3_candidates": cand_json,
         "crop_xyxy": list(crop_xyxy),
         "crop_path": str(crop_path),
+        "masked_crop_path": str(masked_crop_path),
         "mask_path": str(mask_path),
-        "patch_overlay_path": str(patch_overlay_path),
-        "patch_dir": str(patch_dir),
-        "num_patches": len(patches),
+        "patch_overlay_path": str(pattern_patch_overlay_path),
+        "patch_dir": str(pattern_patch_dir),
+        "num_patches": len(pattern_patches),
+        "pattern_patch_overlay_path": str(pattern_patch_overlay_path),
+        "color_patch_overlay_path": str(color_patch_overlay_path),
+        "pattern_patch_dir": str(pattern_patch_dir),
+        "color_patch_dir": str(color_patch_dir),
+        "pattern_num_patches": len(pattern_patches),
+        "color_num_patches": len(color_patches),
+        "pattern_short_side_tiles": args.pattern_short_side_tiles,
+        "color_short_side_tiles": args.color_short_side_tiles,
+        "patch_mask_fill": args.patch_mask_fill,
         "pattern_score": pattern_score,
         "color_score": color_score,
         "garment_score": garment_score,
@@ -1351,8 +1460,32 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--max-box-area-ratio", type=float, default=1.0)
     p.add_argument("--box-expand", type=float, default=0.02)
 
-    p.add_argument("--short-side-tiles", type=int, default=8)
+    p.add_argument(
+        "--short-side-tiles",
+        type=int,
+        default=8,
+        help="Backwards-compatible default patch density for both axes when axis-specific values are omitted.",
+    )
+    p.add_argument(
+        "--pattern-short-side-tiles",
+        type=int,
+        default=None,
+        help="Pattern patch grid density. Smaller value means larger patches; defaults to --short-side-tiles.",
+    )
+    p.add_argument(
+        "--color-short-side-tiles",
+        type=int,
+        default=None,
+        help="Color patch grid density. Larger value means smaller/denser patches; defaults to --short-side-tiles.",
+    )
     p.add_argument("--min-coverage", type=float, default=0.20)
+    p.add_argument(
+        "--patch-mask-fill",
+        choices=["local_mean", "gray", "white", "black"],
+        default="local_mean",
+        help="Fill color for pixels outside the SAM3 mask before saving patch tiles. "
+             "local_mean uses each tile's masked garment pixels to avoid background-color bias.",
+    )
     p.add_argument("--pattern-margin", type=float, default=0.0)
     p.add_argument("--color-margin", type=float, default=0.005)
     p.add_argument(
@@ -1412,6 +1545,14 @@ def main() -> None:
     args = parse_args()
     args.output_root = args.output_root.resolve()
     args.score_url = args.score_url or endpoint(args.client_url, "/score-image-files")
+    if args.pattern_short_side_tiles is None:
+        args.pattern_short_side_tiles = args.short_side_tiles
+    if args.color_short_side_tiles is None:
+        args.color_short_side_tiles = args.short_side_tiles
+    if args.pattern_short_side_tiles <= 0:
+        raise SystemExit("--pattern-short-side-tiles must be > 0")
+    if args.color_short_side_tiles <= 0:
+        raise SystemExit("--color-short-side-tiles must be > 0")
 
     options = [x.strip().upper() for x in args.options.split(",") if x.strip()]
     bad = [x for x in options if x not in OPTION_LABELS]
@@ -1447,6 +1588,9 @@ def main() -> None:
     print(f"score_url:   {args.score_url}")
     print(f"retrieval_k: {args.retrieval_k}")
     print(f"score_top_n: {args.score_top_n}")
+    print(f"pattern_tiles: {args.pattern_short_side_tiles}")
+    print(f"color_tiles:   {args.color_short_side_tiles}")
+    print(f"patch_mask_fill: {args.patch_mask_fill}")
     print(f"output:      {args.output_root}")
 
     write_json(args.output_root / "run_config.json", vars(args))

@@ -1,14 +1,22 @@
 """
-POD-Bench clean configuration for image retrieval.
+POD-Bench v2 central configuration — Canonical Extreme Scenario edition
 
-Design goals:
-- remove semantically overlapping canonical labels (plaid/checkered, suit_jacket/blazer, jacket/*_jacket)
-- keep garment labels short enough for CLIP retrieval and VLM judging
-- remove low-stability or data-sparse labels requested by the user
-- keep dress unified as `dress`
-- keep skirt split as `mini_skirt` / `long_skirt`
-- remove camouflage from the canonical pattern vocabulary
-- add leopard as a single canonical animal-print pattern label
+Key changes from v1:
+  - TPO_ATTR_INCOMPATIBILITIES removed -> CANONICAL_SCENARIOS in scenarios.py
+  - Random TPO sampling removed -> scenario-based matching
+  - Profile generation: archetype-based, backward-designed from scenarios
+  - Option planner: uses scenario compatible/incompatible sets directly
+
+Variant isolation:
+  Set POD_VARIANT=siglip (or any tag) to redirect all data paths to
+  data_<variant>/ instead of data/.  This lets ViT and FashionSigLIP
+  runs coexist without touching each other's files.
+
+  Examples:
+    POD_VARIANT=siglip python src/collect_images_clip_retrieval.py ...
+    POD_VARIANT=siglip python src/run_pipeline.py ...
+
+  Unset (or POD_VARIANT='') -> original data/ layout (ViT run, unchanged).
 """
 
 import os
@@ -33,38 +41,31 @@ for d in [PROFILES_DIR, QUERIES_DIR, OPTIONS_DIR, IMAGES_DIR, LABELS_DIR, FINAL_
 # ── Phase-1 axes ──────────────────────────────────────────
 PHASE1_AXES = ["color", "pattern", "garment_category"]
 
-# Canonical attribute vocabulary.
-# Important: these are benchmark labels, not a full fashion taxonomy.
-# Do not add aliases here. Synonyms should be handled only in retrieval/verifier logic.
+
 FASHION_ATTRIBUTE_AXES = {
     "color": [
         "black", "white", "gray", "navy", "blue", "red", "pink", "orange",
         "yellow", "green", "brown", "beige", "purple",
     ],
     "pattern": [
-        "solid", "striped", "checkered", "floral", "polka_dot", "leopard",
+        "solid", "striped", "checkered", "floral", "polka_dot",
+        "camouflage", "argyle",
     ],
     "garment_category": [
-        # tops
-        "t_shirt", "tank_top", "formal_shirt",
-        "sweatshirt", "sweater", "hoodie", "cardigan",
-        # outerwear
-        "blazer", "windbreaker", "leather_jacket", "puffer_jacket",
-        "fleece", "trench_coat",
-        # bottoms
-        "jeans", "slacks", "shorts", "leggings",
-        # one-piece / skirts
-        "dress", "mini_skirt", "long_skirt",
+        "t_shirt", "shirt", "blouse", "sweater", "hoodie",
+        "jacket", "coat", "trench_coat", "blazer", "parka", "windbreaker",
+        "dress", "skirt", "pants", "jeans", "shorts", "suit_jacket",
+        "tank_top",
     ],
 }
 
 GARMENT_FUNCTIONAL_GROUPS = {
-    "basic_tops":       ["t_shirt", "tank_top", "formal_shirt"],
-    "soft_tops":        ["sweatshirt", "sweater", "hoodie", "cardigan"],
-    "light_outerwear":  ["windbreaker", "leather_jacket", "blazer"],
-    "heavy_outerwear":  ["fleece", "puffer_jacket", "trench_coat"],
-    "bottoms":          ["jeans", "slacks", "shorts", "leggings"],
-    "dress_skirt":      ["dress", "mini_skirt", "long_skirt"],
+    "heavy_outerwear": ["parka", "coat", "trench_coat"],
+    "light_outerwear": ["jacket", "windbreaker", "blazer"],
+    "formal_tops":     ["suit_jacket", "shirt", "blouse"],
+    "casual_tops":     ["t_shirt", "hoodie", "tank_top", "sweater"],
+    "bottoms":         ["pants", "jeans", "shorts"],
+    "full_body":       ["dress", "skirt"],
 }
 
 COLOR_GROUPS = {
@@ -81,7 +82,7 @@ OPTION_LABELS = {
 }
 
 PHASE1_CONFIG = {
-    "n_users_total": 24,
+    "n_users_total": 20,
     "n_users_per_archetype": 3,
     "n_options_per_query": 4,
     "query_type_distribution": {
@@ -128,7 +129,7 @@ PROVIDER_ENDPOINTS = {
     },
     "vllm": {
         "kind": "openai_compat",
-        "model_name": "Qwen/Qwen3-4B-Instruct-2507",
+        "model_name": "Qwen/Qwen3-VL-4B-Instruct",
         "api_base": "http://localhost:8001/v1",
         "uses_max_completion_tokens": False,
         "supports_temperature": True,
@@ -146,10 +147,12 @@ PROVIDER_ENDPOINTS = {
     },
     "qwen36_27b_choice": {
         "kind": "openai_compat",
+        # Must match the served id from: curl -s $QWEN36_API_BASE/models
         "model_name": os.environ.get("QWEN36_MODEL", "Qwen/Qwen3.6-27B"),
         "api_base": os.environ.get("QWEN36_API_BASE", "http://localhost:8000/v1"),
         "uses_max_completion_tokens": False,
         "supports_temperature": True,
+        # Choice-only text eval: enough room for whitespace/"Answer: C" but not a long explanation.
         "default_max_tokens": 8,
         "long_max_tokens": 16,
     },

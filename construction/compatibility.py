@@ -16,15 +16,17 @@ scenarios did not increase the count.
 Relaxed behaviour: color/pattern can be the active axis for ANY scenario whose
 GARMENT is fully constrained (every scenario). When the active axis is NOT
 TPO-constrained, all of its values are situation-appropriate, so:
-  - the active axis is a *pure preference* probe (liked vs non-preferred), and
+  - the active axis is a *pure preference* probe (liked vs disliked), and
   - the garment alone carries TPO (compatible vs incompatible),
 which is the cleanest possible 2×2 instance.
 
 When the active axis IS TPO-constrained (dress-coded archetypes), the original
 behaviour is preserved exactly: A/B values are restricted to the scenario's
-compatible set so that B is "non-preferred but still TPO-OK", never "neither".
+compatible set so that B is "disliked but still TPO-OK", never "neither".
 
-Backward compatible: dress-coded scenarios produce identical results to before.
+Strict preference contrast: B/D require a profile-disliked active-axis value.
+If the profile's disliked value is not TPO-compatible for this scenario, that
+(user, scenario, axis) slot is skipped instead of falling back to neutral.
 """
 
 import sys
@@ -87,7 +89,7 @@ def check_axis_compatibility(profile, scenario, axis):
         garment_constraint["incompatible"], garment_likes, garment_dislikes)
 
     has_A = len(liked_compatible) > 0
-    has_B = len(disliked_compatible) > 0 or len(neutral_compatible) > 0
+    has_B = len(disliked_compatible) > 0
     has_clean_tpo_pair = len(compatible_garments) > 0 and len(incompatible_garments) > 0
 
     return {

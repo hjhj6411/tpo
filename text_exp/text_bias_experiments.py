@@ -25,7 +25,7 @@ Experiments:
 Examples:
   python -m text_exp.text_bias_experiments --experiment all --model vllm --concurrency 32
   python -m text_exp.text_bias_experiments --experiment fixed_correct --input-format all+query --model vllm
-  python -m text_exp.text_bias_experiments --experiment bc_tradeoff --model Qwen/Qwen2.5-7B-Instruct
+  python -m text_exp.text_bias_experiments --experiment all --model Qwen/Qwen3-VL-4B-Instruct  --concurrency 32
   python -m text_exp.text_bias_experiments --experiment bc_tradeoff --see --limit 1
 """
 

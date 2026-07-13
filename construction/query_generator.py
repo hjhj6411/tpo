@@ -1,20 +1,20 @@
 """
 STAGE 2 — Query Generator (clean 2×2).
 
-Builds one query record per (compatible user, scenario, active_axis) with
+Builds one query record per compatible (user, scenario, active_axis) with
 active_axis in {color, pattern}. Garment is NOT fixed here — the planner
 (STAGE 3) chooses a neutral compatible/incompatible garment pair so that the
-GARMENT alone carries the TPO contrast while color/pattern stays the preference
-axis.
+GARMENT alone carries the TPO contrast while the selected active axis carries
+the like/dislike preference contrast.
 
-Each record carries the per-instance value pools (liked/disliked/neutral that
-are TPO-compatible, plus neutral compatible/incompatible garments) so STAGE 3
-needs no recompute. The non-active axis is fixed to a preference-NEUTRAL,
-TPO-compatible value (or left unset if none exists — never a liked/disliked or
-TPO-incompatible value).
+Updated for the cleaned pattern vocabulary:
+- fallback pattern values use only canonical, stable patterns
+- only cleaned canonical fallback pattern values are used
+- local RNG seed is process-independent
 """
 
 import argparse
+import hashlib
 import random
 import sys
 from pathlib import Path
@@ -22,16 +22,29 @@ from pathlib import Path
 from .utils import save_jsonl, load_jsonl, log_step
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from configs.config import PROFILES_DIR, QUERIES_DIR
-from configs.scenarios import CANONICAL_SCENARIOS, get_scenario_by_id
+from configs.config import PROFILES_DIR, QUERIES_DIR, FASHION_ATTRIBUTE_AXES
+from configs.scenarios import CANONICAL_SCENARIOS
 from .compatibility import get_compatible_instances, print_compatibility_report
 
 ALLOWED_ACTIVE_AXES = {"color", "pattern"}
 
+# Safe neutral fallbacks. Deliberately excludes high-salience patterns such as
+# floral, polka_dot, and leopard to avoid injecting a second strong visual cue
+# into the non-active axis. All values must exist in FASHION_ATTRIBUTE_AXES.
 FALLBACK_AXIS_VALUES = {
     "color": ["black", "white", "navy", "gray", "beige"],
-    "pattern": ["solid", "striped", "plaid"],
+    "pattern": ["solid", "striped", "checkered"],
 }
+
+for _axis, _vals in FALLBACK_AXIS_VALUES.items():
+    _unknown = set(_vals) - set(FASHION_ATTRIBUTE_AXES[_axis])
+    if _unknown:
+        raise ValueError(f"Fallback values not in config vocabulary for {_axis}: {_unknown}")
+
+
+def _stable_seed(*parts) -> int:
+    payload = "::".join(str(p) for p in parts)
+    return int(hashlib.md5(payload.encode("utf-8")).hexdigest()[:8], 16)
 
 
 def _profile_prefs(profile, axis):
@@ -49,7 +62,7 @@ def _sample_preference_neutral_value(profile, scenario, axis, rng):
 
     Returns None if none exists — the caller then leaves that axis unfixed,
     which is safer than injecting a liked/disliked value (a second preference
-    signal) or a TPO-incompatible value (a second TPO signal). (R4)
+    signal) or a TPO-incompatible value (a second TPO signal).
     """
     if axis == "garment_category":
         return None
@@ -122,7 +135,7 @@ def _build_fixed_attrs(profile, scenario, active_axis, rng):
 
 
 def _make_query_id(user_id, scenario_id, active_axis, idx):
-    # R5: global index FIRST + zero-padded, so records / image folders sort
+    # global index FIRST + zero-padded, so records / image folders sort
     # numerically by the global instance number (not by user_id alphabetically).
     return f"q{idx:05d}__{user_id}__{scenario_id}__{active_axis}"
 
@@ -132,7 +145,7 @@ def build_queries(profiles, scenarios=None, seed=42, per_instance=1, explicit_ra
         scenarios = CANONICAL_SCENARIOS
 
     scenario_map = {s["scenario_id"]: s for s in scenarios}
-    profile_map = {p["user_id"]: p for p in profiles}          # O(1) lookup
+    profile_map = {p["user_id"]: p for p in profiles}
     compatible_instances, stats = get_compatible_instances(profiles, scenarios)
     queries = []
 
@@ -147,7 +160,7 @@ def build_queries(profiles, scenarios=None, seed=42, per_instance=1, explicit_ra
 
         for _ in range(per_instance):
             running_idx += 1
-            local_rng = random.Random((seed, running_idx).__hash__())
+            local_rng = random.Random(_stable_seed(seed, running_idx))
 
             query_type, query_text = _build_query_text(
                 scenario, local_rng, explicit_ratio=explicit_ratio

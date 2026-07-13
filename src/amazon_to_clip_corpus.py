@@ -40,7 +40,7 @@ from pathlib import Path
 CLOTHING_KW = [
     "shirt", "t-shirt", "tshirt", "tee", "blouse", "sweater", "pullover",
     "cardigan", "hoodie", "sweatshirt", "jacket", "coat", "overcoat",
-    "trench", "blazer", "parka", "puffer", "windbreaker", "anorak", "dress",
+    "trench", "blazer", "fleece", "puffer", "windbreaker", "anorak", "dress",
     "gown", "skirt", "pants", "trousers", "chinos", "slacks", "jeans",
     "shorts", "suit", "tank top", "camisole", "vest",
 ]

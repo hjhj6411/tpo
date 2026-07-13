@@ -12,8 +12,8 @@ The 15 archetypes fall into two families:
 
 | Archetype | # | Example |
 |---|---|---|
-| Extreme Cold | 4 | Blizzard outdoor → parka ✓, shorts ✗ |
-| Extreme Heat | 4 | Scorching beach → tank top ✓, parka ✗ |
+| Extreme Cold | 4 | Blizzard outdoor → fleece ✓, shorts ✗ |
+| Extreme Heat | 4 | Scorching beach → tank top ✓, fleece ✗ |
 | Aquatic / Water | 3 | Lap swimming → t-shirt ✓, blazer ✗ |
 | Athletic Indoor | 3 | Gym weight training → t-shirt ✓, suit jacket ✗ |
 | Athletic Outdoor | 3 | Road run → shorts ✓, coat ✗ |

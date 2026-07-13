@@ -1,25 +1,24 @@
 """
-STAGE 3 — Option Planner (clean 2×2 with GLOBAL COUNTERBALANCING).
+STAGE 3 — Option Planner (clean 2×2 with strict disliked B/D values).
 
 For every query, emits the 4-option (A/B/C/D) *specification* (attributes +
 search_query), not images. The 2×2:
 
-    active_axis value:   A,C = liked        B,D = non-preferred
+    active_axis value:   A,C = liked        B,D = disliked
     garment (TPO):       A,B = compatible   C,D = incompatible
 
     A tpo_and_preference | B tpo_only | C preference_only | D neither
 
-Counterbalancing: A/B values are assigned in a SECOND, GLOBAL pass that drives
-each value's (#used-as-A − #used-as-B) toward zero per axis, so a
-preference-blind model cannot exploit a value-frequency prior (blind exploit
-→ ~0.50). This REQUIRES the full balanced 24-user population (see STAGE 1).
+Updated for the cleaned garment/pattern vocabulary:
+- formal_shirt renders as "formal shirt"
+- leopard renders as "leopard print" in retrieval queries
+- polka_dot renders as "polka dot"
+- search queries use the cleaned canonical vocabulary and retrieval-friendly aliases
 
-Reproducibility (R1): the per-query garment RNG is seeded from a stable MD5 of
-the query_id (Python's built-in hash() is salted per-process by PYTHONHASHSEED,
-which made the old build non-reproducible).
-
-Usage:
-  python -m construction.option_planner --force
+Confusability-aware assignment:
+- (A, B) active-axis values and (compat, incompat) garment pairs avoid
+  visually-confusable pairs (e.g. black/navy, jeans/slacks) via a soft
+  penalty whenever the profile/scenario pools offer an alternative.
 """
 
 import argparse
@@ -36,11 +35,77 @@ from configs.config import OPTIONS_DIR, PROFILES_DIR, QUERIES_DIR
 from configs.scenarios import get_scenario_by_id
 
 ALLOWED_ACTIVE_AXES = {"color", "pattern"}
+VALUE_BALANCE_WEIGHT = 16
+
+# Visually-confusable value pairs. A/B (and compat/incompat garments) differing
+# only by such a pair are hard to separate in CLIP retrieval and VLM judging,
+# so they carry a large soft penalty. Penalty (not exclusion): dress-coded
+# scenarios whose compatible colors are all dark neutrals must still emit a
+# pair, and no (user, scenario, axis) slot should become a new coverage hole.
+CONFUSABLE_PAIR_PENALTY = 10_000
+CONFUSABLE_ACTIVE_PAIRS = {
+    "color": {frozenset(p) for p in [
+        ("black", "navy"), ("black", "gray"), ("gray", "navy"),
+        ("gray", "white"), ("navy", "blue"), ("navy", "purple"),
+        ("white", "beige"), ("brown", "beige"),
+        ("red", "orange"), ("red", "pink"),
+    ]},
+    "pattern": set(),
+}
+CONFUSABLE_GARMENT_PAIRS = {frozenset(p) for p in [
+    ("jeans", "slacks"), ("leggings", "slacks"),
+    ("fleece", "sweater"), ("fleece", "hoodie"),
+    ("sweater", "sweatshirt"), ("hoodie", "sweatshirt"),
+    ("sweater", "cardigan"), ("windbreaker", "puffer_jacket"),
+    ("dress", "long_skirt"), ("mini_skirt", "shorts"),
+]}
+
+PATTERN_QUERY_ALIAS = {
+    "solid": "solid",
+    "striped": "striped",
+    "checkered": "checkered",
+    "floral": "floral print",
+    "polka_dot": "polka dot",
+    "leopard": "leopard print",
+}
+
+GARMENT_QUERY_ALIAS = {
+    "t_shirt": "t-shirt",
+    "long_sleeve_t_shirt": "long-sleeve t-shirt",
+    "tank_top": "tank top",
+    "formal_shirt": "formal shirt",
+    "sweatshirt": "sweatshirt",
+    "sweater": "sweater",
+    "hoodie": "hoodie",
+    "cardigan": "cardigan",
+    "blazer": "blazer",
+    "windbreaker": "windbreaker",
+    "leather_jacket": "leather jacket",
+    "puffer_jacket": "puffer jacket",
+    # "fleece" alone retrieves neck gaiters/scarves; force the jacket sense.
+    "fleece": "fleece jacket",
+    "trench_coat": "trench coat",
+    "jeans": "jeans",
+    "slacks": "slacks",
+    "shorts": "shorts",
+    "leggings": "leggings",
+    "dress": "dress",
+    "mini_skirt": "mini skirt",
+    "long_skirt": "long skirt",
+}
 
 
 def _stable_seed(s: str) -> int:
-    """Process-independent seed from a string (R1)."""
+    """Process-independent seed from a string."""
     return int(hashlib.md5(s.encode("utf-8")).hexdigest()[:8], 16)
+
+
+def _render_value(axis: str, value: str) -> str:
+    if axis == "pattern":
+        return PATTERN_QUERY_ALIAS.get(value, value.replace("_", " "))
+    if axis == "garment_category":
+        return GARMENT_QUERY_ALIAS.get(value, value.replace("_", " "))
+    return value.replace("_", " ")
 
 
 # ── value pools per query ──────────────────────────────────
@@ -49,9 +114,8 @@ def _liked_pool(query):
     return list(query.get("liked_compatible", []))
 
 
-def _nonpref_pool(query):
-    # non-preferred = disliked first, then neutral (original B semantics)
-    return list(query.get("disliked_compatible", [])) + list(query.get("neutral_compatible", []))
+def _disliked_pool(query):
+    return list(query.get("disliked_compatible", []))
 
 
 def _pick_garment(query, field, rng):
@@ -64,30 +128,35 @@ def attrs_to_search_query(attrs):
     pattern = attrs.get("pattern")
     color = attrs.get("color")
     garment = attrs.get("garment_category", "item")
+
+    # Do not add "solid" as a retrieval adjective; it often hurts recall.
     if pattern and pattern != "solid":
-        parts.append(pattern.replace("_", " "))
+        parts.append(_render_value("pattern", pattern))
     if color:
-        parts.append(color)
-    parts.append(garment.replace("_", " "))
+        parts.append(_render_value("color", color))
+    parts.append(_render_value("garment_category", garment))
     return " ".join(parts)
 
 
 def _rationale(k, active_axis, attrs):
-    val = attrs.get(active_axis)
-    g = attrs.get("garment_category")
+    val = _render_value(active_axis, attrs.get(active_axis, ""))
+    g = _render_value("garment_category", attrs.get("garment_category", ""))
     return {
         "A": f"preferred {active_axis}={val}, TPO-compatible garment={g}",
-        "B": f"non-preferred {active_axis}={val}, TPO-compatible garment={g}",
+        "B": f"disliked {active_axis}={val}, TPO-compatible garment={g}",
         "C": f"preferred {active_axis}={val}, but garment={g} violates TPO",
-        "D": f"non-preferred {active_axis}={val}, and garment={g} violates TPO",
+        "D": f"disliked {active_axis}={val}, and garment={g} violates TPO",
     }.get(k, "")
 
 
 # ── global counterbalanced (A,B) value assignment ─────────
 
 def assign_ab_values(queries, seed=42):
-    """Choose (a_val, b_val) per query so that, within each active axis, every
-    value's usage as A vs B is balanced. Greedy, deterministic given seed.
+    """Choose liked/disliked (a_val, b_val) per query.
+
+    Within each active axis, value usage is balanced where the profile pools
+    allow it. The first priority is per-user variety; the second is global A/B
+    balance. B/D never use neutral values.
 
     Returns: dict query_id -> (a_val, b_val); queries with no valid pair omitted.
     """
@@ -100,32 +169,104 @@ def assign_ab_values(queries, seed=42):
 
     for axis, qs in by_axis.items():
         net = Counter()  # value -> (#A - #B) so far
+        user_a = Counter()
+        user_b = Counter()
 
         def dof(q):
             # fewest degrees of freedom first → place constrained queries before easy ones
-            return (len(set(_liked_pool(q))), len(set(_nonpref_pool(q))))
+            return (len(set(_liked_pool(q))), len(set(_disliked_pool(q))))
+
+        confusable = CONFUSABLE_ACTIVE_PAIRS.get(axis, set())
 
         for q in sorted(qs, key=lambda q: (dof(q), q["query_id"])):
+            uid = q.get("user_id", "?")
             liked = list(dict.fromkeys(_liked_pool(q)))
-            nonpref = [v for v in dict.fromkeys(_nonpref_pool(q)) if v not in set(liked)]
-            if not liked or not nonpref:
+            disliked = [v for v in dict.fromkeys(_disliked_pool(q)) if v not in set(liked)]
+            if not liked or not disliked:
                 continue
-            # A = liked value most over-represented as B so far (net most negative)
-            a = min(liked, key=lambda v: (net[v], rng.random()))
-            cand = [v for v in nonpref if v != a] or nonpref
-            # B = non-preferred value most over-represented as A so far (net most positive)
-            b = max(cand, key=lambda v: (net[v], rng.random()))
-            if a == b:
+            # Joint (A, B) pick: avoid confusable pairs first, then global
+            # balance on both sides, then per-user variety.
+            best = None
+            for av in liked:
+                for bv in disliked:
+                    if av == bv:
+                        continue
+                    score = (
+                        CONFUSABLE_PAIR_PENALTY * (frozenset((av, bv)) in confusable)
+                        + VALUE_BALANCE_WEIGHT * (net[av] - net[bv])
+                        + user_a[(uid, av)] + user_b[(uid, bv)]
+                    )
+                    key = (score, user_a[(uid, av)], user_b[(uid, bv)], rng.random())
+                    if best is None or key < best[0]:
+                        best = (key, av, bv)
+            if best is None:
                 continue
+            _, a, b = best
             net[a] += 1
             net[b] -= 1
+            user_a[(uid, a)] += 1
+            user_b[(uid, b)] += 1
             assignment[q["query_id"]] = (a, b)
+    return assignment
+
+
+def assign_garment_pairs(queries, seed=42):
+    """Choose neutral TPO garment pairs while reducing repeated option sets."""
+    rng = random.Random(seed + 1009)
+    assignment = {}
+    pair_use = Counter()
+    comp_use = Counter()
+    inc_use = Counter()
+    user_pair_use = Counter()
+    user_scenario_pair_use = Counter()
+    user_comp_use = Counter()
+    user_inc_use = Counter()
+
+    def dof(q):
+        comp = list(dict.fromkeys(q.get("compatible_garments", [])))
+        inc = list(dict.fromkeys(q.get("incompatible_garments", [])))
+        return (len(comp) * len(inc), len(comp), len(inc), q["query_id"])
+
+    for q in sorted(queries, key=dof):
+        uid = q.get("user_id", "?")
+        sid = q.get("scenario_id", "?")
+        axis = q.get("active_axis", "?")
+        comp = list(dict.fromkeys(q.get("compatible_garments", [])))
+        inc = list(dict.fromkeys(q.get("incompatible_garments", [])))
+        candidates = []
+        for cg in comp:
+            for ig in inc:
+                if cg == ig:
+                    continue
+                score = (
+                    CONFUSABLE_PAIR_PENALTY * (frozenset((cg, ig)) in CONFUSABLE_GARMENT_PAIRS)
+                    + 20 * user_scenario_pair_use[(uid, sid, cg, ig)]
+                    + 10 * user_pair_use[(uid, axis, cg, ig)]
+                    + 4 * pair_use[(axis, cg, ig)]
+                    + 2 * user_comp_use[(uid, axis, cg)]
+                    + 2 * user_inc_use[(uid, axis, ig)]
+                    + comp_use[(axis, cg)]
+                    + inc_use[(axis, ig)]
+                )
+                candidates.append((score, rng.random(), cg, ig))
+        if not candidates:
+            continue
+
+        _, _, compat_garment, incompat_garment = min(candidates)
+        assignment[q["query_id"]] = (compat_garment, incompat_garment)
+        pair_use[(axis, compat_garment, incompat_garment)] += 1
+        comp_use[(axis, compat_garment)] += 1
+        inc_use[(axis, incompat_garment)] += 1
+        user_pair_use[(uid, axis, compat_garment, incompat_garment)] += 1
+        user_scenario_pair_use[(uid, sid, compat_garment, incompat_garment)] += 1
+        user_comp_use[(uid, axis, compat_garment)] += 1
+        user_inc_use[(uid, axis, incompat_garment)] += 1
     return assignment
 
 
 # ── per-query plan build (uses pre-assigned a/b) ──────────
 
-def plan_options_for_query(profile, query, ab_values):
+def plan_options_for_query(profile, query, ab_values, garment_pairs=None):
     """Returns (plan_dict, None) on success, or (None, reason) on skip."""
     scenario = get_scenario_by_id(query["scenario_id"])
     if scenario is None:
@@ -136,14 +277,20 @@ def plan_options_for_query(profile, query, ab_values):
 
     ab = ab_values.get(query["query_id"])
     if ab is None:
-        return None, "no_counterbalanced_ab_pair"   # liked or non-pref pool empty
-    liked_v, nonpref_v = ab
-    if not liked_v or not nonpref_v or liked_v == nonpref_v:
+        return None, "no_counterbalanced_ab_pair"   # liked or disliked pool empty
+    liked_v, disliked_v = ab
+    if not liked_v or not disliked_v or liked_v == disliked_v:
         return None, "degenerate_ab_pair"
+    if disliked_v not in set(query.get("disliked_compatible", [])):
+        return None, "active_value_not_disliked"
 
-    rng = random.Random(_stable_seed(query["query_id"]))
-    compat_garment = _pick_garment(query, "compatible_garments", rng)
-    incompat_garment = _pick_garment(query, "incompatible_garments", rng)
+    pair = (garment_pairs or {}).get(query["query_id"])
+    if pair is None:
+        rng = random.Random(_stable_seed(query["query_id"]))
+        compat_garment = _pick_garment(query, "compatible_garments", rng)
+        incompat_garment = _pick_garment(query, "incompatible_garments", rng)
+    else:
+        compat_garment, incompat_garment = pair
     if not compat_garment or not incompat_garment or compat_garment == incompat_garment:
         return None, "no_neutral_garment_pair"
 
@@ -151,9 +298,9 @@ def plan_options_for_query(profile, query, ab_values):
     fixed_attrs.pop("garment_category", None)
 
     attrs_a = {**fixed_attrs, active_axis: liked_v, "garment_category": compat_garment}
-    attrs_b = {**fixed_attrs, active_axis: nonpref_v, "garment_category": compat_garment}
+    attrs_b = {**fixed_attrs, active_axis: disliked_v, "garment_category": compat_garment}
     attrs_c = {**fixed_attrs, active_axis: liked_v, "garment_category": incompat_garment}
-    attrs_d = {**fixed_attrs, active_axis: nonpref_v, "garment_category": incompat_garment}
+    attrs_d = {**fixed_attrs, active_axis: disliked_v, "garment_category": incompat_garment}
 
     label_map = {"A": "tpo_and_preference", "B": "tpo_only",
                  "C": "preference_only", "D": "neither"}
@@ -186,7 +333,7 @@ def plan_options_for_query(profile, query, ab_values):
 
 
 def run_pipeline(profile_path, query_path, output_path, force=False, limit=0, seed=42):
-    log_step("STAGE 3 — Option Planner (clean 2×2 + global counterbalancing)")
+    log_step("STAGE 3 — Option Planner (clean 2×2 + strict disliked B/D)")
     profiles = {p["user_id"]: p for p in load_jsonl(profile_path)}
     queries = load_jsonl(query_path)
     print(f"  {len(profiles)} profiles, {len(queries)} queries")
@@ -194,6 +341,8 @@ def run_pipeline(profile_path, query_path, output_path, force=False, limit=0, se
     # GLOBAL pass over ALL queries so balance holds even with --limit.
     ab_values = assign_ab_values(queries, seed=seed)
     print(f"  Counterbalanced A/B value assignment for {len(ab_values)} queries")
+    garment_pairs = assign_garment_pairs(queries, seed=seed)
+    print(f"  Diverse neutral garment-pair assignment for {len(garment_pairs)} queries")
 
     if output_path.exists() and not force:
         existing = load_jsonl(output_path)
@@ -218,7 +367,7 @@ def run_pipeline(profile_path, query_path, output_path, force=False, limit=0, se
         if (i + 1) % 200 == 0:
             print(f"  [{i+1}/{len(todo)}] planning...")
         try:
-            plan, reason = plan_options_for_query(prof, query, ab_values)
+            plan, reason = plan_options_for_query(prof, query, ab_values, garment_pairs)
             if plan is None:
                 n_fail += 1
                 fail_reasons[reason] += 1
@@ -240,6 +389,7 @@ def run_pipeline(profile_path, query_path, output_path, force=False, limit=0, se
             print(f"    {r:28s}: {n:5d}  ({n / max(total, 1):.1%})")
 
     _report_balance(plans)
+    _report_option_diversity(plans)
 
 
 def _report_balance(plans):
@@ -254,7 +404,37 @@ def _report_balance(plans):
               for v in set(fa[ax]) | set(fb[ax])}
         worst = max(lr.items(), key=lambda kv: abs(kv[1] - 0.5)) if lr else (None, .5)
         print(f"  [{ax}] residual max value-skew: {worst[0]}={worst[1]:.2f} "
-              f"(0.50 == confound-free)")
+              f"(0.50 target; strict dislike pools may make this unattainable)")
+
+
+def _report_option_diversity(plans):
+    by_user_axis = defaultdict(Counter)
+    for p in plans:
+        opts = p["options"]
+        pair = (
+            opts["A"]["attributes"].get("garment_category"),
+            opts["C"]["attributes"].get("garment_category"),
+        )
+        by_user_axis[(p.get("user_id"), p.get("active_axis"))][pair] += 1
+
+    ratios = []
+    worst = None
+    for key, counts in by_user_axis.items():
+        total = sum(counts.values())
+        if total <= 0:
+            continue
+        ratio = len(counts) / total
+        ratios.append(ratio)
+        item = (ratio, key, len(counts), total, counts.most_common(1)[0])
+        if worst is None or item < worst:
+            worst = item
+
+    if ratios and worst:
+        ratio, key, uniq, total, top = worst
+        avg = sum(ratios) / len(ratios)
+        print(f"  garment-pair diversity per user-axis: avg={avg:.2f}, "
+              f"min={ratio:.2f} ({key[0]}/{key[1]}: {uniq}/{total}, "
+              f"top_repeat={top[1]})")
 
 
 def main():
