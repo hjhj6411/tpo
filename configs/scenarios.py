@@ -79,7 +79,8 @@ FRAME_SCOPED_ARCHETYPES = {'business_professional',
  'religious_modest',
  'semi_formal_social',
  'ultra_formal',
- 'wedding_celebration'}
+ 'wedding_celebration',
+ 'club_code'}
 
 SCENARIO_ARCHETYPES = {'extreme_cold': 'Extreme Cold / Winter',
  'extreme_heat': 'Extreme Heat / Summer',
@@ -96,7 +97,11 @@ SCENARIO_ARCHETYPES = {'extreme_cold': 'Extreme Cold / Winter',
  'mourning_somber': 'Mourning / Somber',
  'religious_modest': 'Religious / Sacred / Modest',
  'semi_formal_social': 'Semi-Formal Social',
- 'wedding_celebration': 'Wedding / Celebration'}
+ 'wedding_celebration': 'Wedding / Celebration',
+ 'safety_visibility': 'Night Visibility / Road Safety',
+ 'field_stealth': 'Field Stealth / Wildlife & Camouflage',
+ 'stage_media': 'Stage & Media Production',
+ 'club_code': 'Club / Institutional Athletic Code'}
 
 CANONICAL_SCENARIOS = [{'scenario_id': 'cold_blizzard_outdoor',
   'archetype': 'extreme_cold',
@@ -740,7 +745,7 @@ CANONICAL_SCENARIOS = [{'scenario_id': 'cold_blizzard_outdoor',
   'justification': 'Hoodie/shorts and loud colors/prints at a corporate board meeting are '
                    'universally inappropriate.',
   'color': {'compatible': ['black', 'navy', 'gray', 'white', 'beige'],
-            'incompatible': ['orange', 'yellow', 'pink']},
+            'incompatible': ['orange', 'yellow']},
   'pattern': {'compatible': ['solid', 'striped', 'checkered'],
               'incompatible': ['leopard', 'polka_dot']},
   'query_seeds': {'explicit': ['I have a corporate board meeting today and the dress code is '
@@ -762,7 +767,7 @@ CANONICAL_SCENARIOS = [{'scenario_id': 'cold_blizzard_outdoor',
   'justification': 'Investor pitches demand credibility; casual wear and loud prints undermine '
                    'professional trust.',
   'color': {'compatible': ['black', 'navy', 'gray', 'white', 'beige'],
-            'incompatible': ['orange', 'yellow', 'pink']},
+            'incompatible': ['orange', 'yellow']},
   'pattern': {'compatible': ['solid', 'striped', 'checkered'],
               'incompatible': ['leopard', 'polka_dot']},
   'query_seeds': {'explicit': ['Pitching to venture capital investors today; formal business '
@@ -784,7 +789,7 @@ CANONICAL_SCENARIOS = [{'scenario_id': 'cold_blizzard_outdoor',
   'justification': 'Hoodie/shorts and loud prints to a formal interview signal disrespect for the '
                    'opportunity.',
   'color': {'compatible': ['black', 'navy', 'gray', 'white', 'beige'],
-            'incompatible': ['orange', 'yellow', 'pink']},
+            'incompatible': ['orange', 'yellow']},
   'pattern': {'compatible': ['solid', 'striped', 'checkered'],
               'incompatible': ['leopard', 'polka_dot']},
   'query_seeds': {'explicit': ['I have an in-person job interview at a corporate office tomorrow '
@@ -806,7 +811,7 @@ CANONICAL_SCENARIOS = [{'scenario_id': 'cold_blizzard_outdoor',
   'justification': 'Business meetings represent the company; casual wear and loud prints are a '
                    'professional failure.',
   'color': {'compatible': ['black', 'navy', 'gray', 'white', 'beige'],
-            'incompatible': ['orange', 'yellow', 'pink']},
+            'incompatible': ['orange', 'yellow']},
   'pattern': {'compatible': ['solid', 'striped', 'checkered'],
               'incompatible': ['leopard', 'polka_dot']},
   'query_seeds': {'explicit': ['Business dinner with an important client tonight; professional '
@@ -827,7 +832,8 @@ CANONICAL_SCENARIOS = [{'scenario_id': 'cold_blizzard_outdoor',
   'justification': 'Black-tie events have an explicit dress code that excludes casual and loud '
                    'clothing.',
   'color': {'compatible': ['black', 'navy', 'gray', 'white'],
-            'incompatible': ['orange', 'yellow', 'pink']},
+            'incompatible': ['orange', 'yellow', 'pink'],
+            'violation_garment_scope': ['blazer', 'formal_shirt', 'slacks']},
   'pattern': {'compatible': ['solid', 'striped'],
               'incompatible': ['leopard', 'polka_dot', 'floral']},
   'query_seeds': {'explicit': ['Attending a black-tie gala tonight with a strict formal dress '
@@ -847,7 +853,8 @@ CANONICAL_SCENARIOS = [{'scenario_id': 'cold_blizzard_outdoor',
                        'incompatible': ['hoodie', 'shorts', 'tank_top', 't_shirt']},
   'justification': 'Opera/ballet premieres with dress codes prohibit casual and loud attire.',
   'color': {'compatible': ['black', 'navy', 'gray', 'white'],
-            'incompatible': ['orange', 'yellow', 'pink']},
+            'incompatible': ['orange', 'yellow', 'pink'],
+            'violation_garment_scope': ['blazer', 'formal_shirt', 'slacks']},
   'pattern': {'compatible': ['solid', 'striped'],
               'incompatible': ['leopard', 'polka_dot', 'floral']},
   'query_seeds': {'explicit': ['Attending an opera premiere tonight; they enforce a formal dress '
@@ -869,7 +876,8 @@ CANONICAL_SCENARIOS = [{'scenario_id': 'cold_blizzard_outdoor',
   'justification': 'Receiving a national award in a hoodie/shorts or loud prints disrespects the '
                    'institution.',
   'color': {'compatible': ['black', 'navy', 'gray', 'white'],
-            'incompatible': ['orange', 'yellow', 'pink']},
+            'incompatible': ['orange', 'yellow', 'pink'],
+            'violation_garment_scope': ['blazer', 'formal_shirt', 'slacks']},
   'pattern': {'compatible': ['solid', 'striped'],
               'incompatible': ['leopard', 'polka_dot', 'floral']},
   'query_seeds': {'explicit': ["I'm receiving a national award tonight at a formal ceremony on "
@@ -891,7 +899,8 @@ CANONICAL_SCENARIOS = [{'scenario_id': 'cold_blizzard_outdoor',
   'justification': 'State banquets enforce strict formal protocol; casual or loud attire is '
                    'unacceptable.',
   'color': {'compatible': ['black', 'navy', 'gray', 'white'],
-            'incompatible': ['orange', 'yellow', 'pink']},
+            'incompatible': ['orange', 'yellow', 'pink'],
+            'violation_garment_scope': ['blazer', 'formal_shirt', 'slacks']},
   'pattern': {'compatible': ['solid', 'striped'],
               'incompatible': ['leopard', 'polka_dot', 'floral']},
   'query_seeds': {'explicit': ['Invited to a state banquet hosted by a head of state, strict '
@@ -998,7 +1007,7 @@ CANONICAL_SCENARIOS = [{'scenario_id': 'cold_blizzard_outdoor',
   'justification': 'Funerals universally demand dark, somber attire; bright/casual/loud clothing '
                    'is disrespectful.',
   'color': {'compatible': ['black', 'navy', 'gray'],
-            'incompatible': ['orange', 'yellow', 'pink', 'red', 'green']},
+            'incompatible': ['orange', 'yellow', 'pink', 'red']},
   'pattern': {'compatible': ['solid', 'striped'], 'incompatible': ['leopard', 'polka_dot', 'floral']},
   'query_seeds': {'explicit': ["I'm attending a funeral and need to dress respectfully and "
                                'somberly. What should I wear?',
@@ -1018,7 +1027,7 @@ CANONICAL_SCENARIOS = [{'scenario_id': 'cold_blizzard_outdoor',
   'justification': 'Memorial services share funeral solemnity; bright/festive attire is '
                    'disrespectful.',
   'color': {'compatible': ['black', 'navy', 'gray'],
-            'incompatible': ['orange', 'yellow', 'pink', 'red', 'green']},
+            'incompatible': ['orange', 'yellow', 'pink', 'red']},
   'pattern': {'compatible': ['solid', 'striped'], 'incompatible': ['leopard', 'polka_dot', 'floral']},
   'query_seeds': {'explicit': ['Attending a memorial remembrance service for a colleague; dark, '
                                'respectful dress expected. What should I wear?',
@@ -1039,7 +1048,7 @@ CANONICAL_SCENARIOS = [{'scenario_id': 'cold_blizzard_outdoor',
   'justification': 'Candlelight vigils are solemn; bright/festive colors and loud prints are '
                    'inappropriate.',
   'color': {'compatible': ['black', 'navy', 'gray'],
-            'incompatible': ['orange', 'yellow', 'pink', 'red', 'green']},
+            'incompatible': ['orange', 'yellow', 'pink', 'red']},
   'pattern': {'compatible': ['solid', 'striped'], 'incompatible': ['leopard', 'polka_dot', 'floral']},
   'query_seeds': {'explicit': ['Attending a candlelight vigil tonight to mourn and pay respects. '
                                'What should I wear?',
@@ -1059,7 +1068,7 @@ CANONICAL_SCENARIOS = [{'scenario_id': 'cold_blizzard_outdoor',
   'justification': 'Visiting a grieving family in bright party colors or loud prints is '
                    'universally insensitive.',
   'color': {'compatible': ['black', 'navy', 'gray'],
-            'incompatible': ['orange', 'yellow', 'pink', 'red', 'green']},
+            'incompatible': ['orange', 'yellow', 'pink', 'red']},
   'pattern': {'compatible': ['solid', 'striped'], 'incompatible': ['leopard', 'polka_dot', 'floral']},
   'query_seeds': {'explicit': ['Visiting a grieving family to offer my condolences in person. What '
                                'should I wear?',
@@ -1181,7 +1190,7 @@ CANONICAL_SCENARIOS = [{'scenario_id': 'cold_blizzard_outdoor',
                    'disinterest.',
   'color': None,
   'pattern': {'compatible': ['solid', 'striped', 'checkered', 'floral'],
-              'incompatible': ['leopard', 'polka_dot']},
+              'incompatible': ['leopard']},
   'query_seeds': {'explicit': ['Attending an art gallery opening tonight; smart-casual minimum. '
                                'What should I wear?',
                                'Going to a vernissage at a downtown gallery this evening; smart '
@@ -1244,7 +1253,7 @@ CANONICAL_SCENARIOS = [{'scenario_id': 'cold_blizzard_outdoor',
                    'disrespect.',
   'color': None,
   'pattern': {'compatible': ['solid', 'striped', 'floral', 'checkered'],
-              'incompatible': ['leopard', 'polka_dot']},
+              'incompatible': ['leopard']},
   'query_seeds': {'explicit': ['First date at an upscale restaurant tonight; I want to look '
                                'put-together. What should I wear?',
                                'Dinner date at a nice, dressy restaurant this evening. What should '
@@ -1339,7 +1348,272 @@ CANONICAL_SCENARIOS = [{'scenario_id': 'cold_blizzard_outdoor',
                   'implicit': ["My best friend graduates next week and I'll be in the audience. "
                                'Outfit advice?',
                                'Watching the commencement at the university hall this Friday. '
-                               'What should I wear?']}}]
+                               'What should I wear?']}},
+
+ # ── v2 archetypes: functional / non-formal coded scenarios ──────────────
+ # These fill the constraint-source x formality grid (see archetype index
+ # v2): functional-casual (safety_visibility, field_stealth, stage_media),
+ # functional-formal (stage_tv_interview), normative-casual (club_code).
+ # Niche-knowledge scenarios (field_wildlife_hide, stage_greenscreen_shoot)
+ # carry the rule inside their implicit seeds (weak-implicit by design).
+ {'scenario_id': 'visib_night_road_run',
+  'archetype': 'safety_visibility',
+  'name': 'Night Run Along an Unlit Road',
+  'tpo': {'time': {'time_of_day': 'night'},
+          'place': {'venue': 'roadside', 'indoor_outdoor': 'outdoor'},
+          'occasion': {'activity': 'running', 'formality_required': 'very_casual'}},
+  'garment_category': {'compatible': ['windbreaker', 't_shirt', 'sweatshirt', 'leggings', 'shorts'],
+                       'incompatible': ['blazer', 'trench_coat', 'slacks', 'dress', 'long_skirt']},
+  'justification': 'Runners beside traffic at night must be visible to drivers; dark clothing '
+                   'is a documented safety hazard, and restrictive formal wear impedes running.',
+  'color': {'compatible': ['yellow', 'orange', 'white'],
+            'incompatible': ['black', 'navy', 'gray', 'brown']},
+  'pattern': None,
+  'query_seeds': {'explicit': ['Going for a run along an unlit country road tonight; I need to '
+                               'stay visible to drivers. What should I wear?',
+                               'Night run on the road shoulder tonight — high-visibility gear '
+                               'recommended. What should I wear?'],
+                  'implicit': ['Heading out for a run along the highway after sunset. What '
+                               'should I wear?',
+                               'Evening jog on the roadside once it gets dark. Outfit advice?']}},
+ {'scenario_id': 'visib_night_bike_commute',
+  'archetype': 'safety_visibility',
+  'name': 'Cycling Home After Dark',
+  'tpo': {'time': {'time_of_day': 'night'},
+          'place': {'venue': 'road', 'indoor_outdoor': 'outdoor'},
+          'occasion': {'activity': 'cycling', 'formality_required': 'very_casual'}},
+  'garment_category': {'compatible': ['windbreaker', 't_shirt', 'sweatshirt', 'leggings'],
+                       'incompatible': ['trench_coat', 'long_skirt', 'dress', 'blazer']},
+  'justification': 'Cyclists in traffic after dark need high-visibility clothing; dark colors '
+                   'make riders invisible to drivers, and loose formal garments catch in the bike.',
+  'color': {'compatible': ['yellow', 'orange', 'white'],
+            'incompatible': ['black', 'navy', 'gray', 'brown']},
+  'pattern': None,
+  'query_seeds': {'explicit': ['Cycling home on city roads after dark; I want drivers to see me. '
+                               'What should I wear?',
+                               'Night bike commute along the main road; high-visibility clothing '
+                               'advised. What should I wear?'],
+                  'implicit': ['Riding my bike home late tonight. What should I wear?',
+                               'Cycling back from work after sunset today. Outfit advice?']}},
+ {'scenario_id': 'visib_dawn_roadside_cleanup',
+  'archetype': 'safety_visibility',
+  'name': 'Dawn Roadside Cleanup Volunteering',
+  'tpo': {'time': {'time_of_day': 'early_morning'},
+          'place': {'venue': 'roadside', 'indoor_outdoor': 'outdoor'},
+          'occasion': {'activity': 'volunteering', 'formality_required': 'very_casual'}},
+  'garment_category': {'compatible': ['t_shirt', 'sweatshirt', 'windbreaker', 'jeans', 'leggings'],
+                       'incompatible': ['dress', 'blazer', 'slacks', 'trench_coat']},
+  'justification': 'Working on a road shoulder in low dawn light requires bright, visible '
+                   'clothing for safety and practical garments for physical work.',
+  'color': {'compatible': ['yellow', 'orange', 'white'],
+            'incompatible': ['black', 'navy', 'gray', 'brown']},
+  'pattern': None,
+  'query_seeds': {'explicit': ['Volunteering for a roadside litter cleanup before sunrise; we '
+                               'were told to stay visible to traffic. What should I wear?',
+                               'Early-morning highway cleanup event; bright, practical clothes '
+                               'recommended. What should I wear?'],
+                  'implicit': ['Joining a roadside cleanup crew at dawn tomorrow. What should I '
+                               'wear?',
+                               'Helping pick up litter along the highway early tomorrow. Outfit '
+                               'advice?']}},
+ {'scenario_id': 'field_safari_tour',
+  'archetype': 'field_stealth',
+  'name': 'African Safari Game Drive',
+  'tpo': {'time': {'time_of_day': 'daytime'},
+          'place': {'venue': 'savanna', 'indoor_outdoor': 'outdoor'},
+          'occasion': {'activity': 'wildlife_viewing', 'formality_required': 'very_casual'}},
+  'garment_category': {'compatible': ['formal_shirt', 't_shirt', 'windbreaker', 'jeans', 'shorts'],
+                       'incompatible': ['dress', 'mini_skirt', 'blazer', 'leather_jacket']},
+  'justification': 'Safari operators require muted earth tones: bright colors and loud prints '
+                   'startle wildlife, and animal/camouflage prints are prohibited or restricted '
+                   'in several countries.',
+  'color': {'compatible': ['brown', 'beige', 'green'],
+            'incompatible': ['red', 'orange', 'yellow', 'pink', 'white']},
+  'pattern': {'compatible': ['solid', 'striped', 'checkered'],
+              'incompatible': ['leopard', 'floral', 'polka_dot']},
+  'query_seeds': {'explicit': ['Booked a safari game drive; the guide asked for muted earth '
+                               'tones only. What should I wear?',
+                               'Safari tour tomorrow — the operator says no bright colors or '
+                               'animal prints. What should I wear?'],
+                  'implicit': ['Going on an African safari game drive next week. Outfit advice?',
+                               'First safari trip — riding in an open jeep to see the animals. '
+                               'What should I wear?']}},
+ {'scenario_id': 'field_paintball_match',
+  'archetype': 'field_stealth',
+  'name': 'Forest Paintball Match',
+  'tpo': {'time': {'time_of_day': 'daytime'},
+          'place': {'venue': 'forest', 'indoor_outdoor': 'outdoor'},
+          'occasion': {'activity': 'paintball', 'formality_required': 'very_casual'}},
+  'garment_category': {'compatible': ['windbreaker', 'sweatshirt', 'hoodie', 'jeans', 'slacks'],
+                       'incompatible': ['tank_top', 'shorts', 'mini_skirt', 'dress']},
+  'justification': 'Woodland paintball rewards dark natural colors that blend into cover; '
+                   'bright colors make you an easy target, and exposed skin bruises from hits.',
+  'color': {'compatible': ['green', 'brown', 'black'],
+            'incompatible': ['white', 'yellow', 'pink', 'orange', 'red']},
+  'pattern': {'compatible': ['solid', 'striped', 'checkered'],
+              'incompatible': ['polka_dot', 'floral']},
+  'query_seeds': {'explicit': ['Forest paintball match this weekend; I want to blend in and '
+                               'keep my skin covered. What should I wear?',
+                               'Playing woodland paintball — dark colors and full coverage '
+                               'recommended. What should I wear?'],
+                  'implicit': ['Playing paintball out in the woods with friends on Saturday. '
+                               'What should I wear?',
+                               'First paintball game at the forest field this weekend. Outfit '
+                               'advice?']}},
+ {'scenario_id': 'field_wildlife_hide',
+  'archetype': 'field_stealth',
+  'name': 'Wildlife Photography from a Hide',
+  'tpo': {'time': {'time_of_day': 'daytime'},
+          'place': {'venue': 'nature_reserve', 'indoor_outdoor': 'outdoor'},
+          'occasion': {'activity': 'wildlife_photography', 'formality_required': 'very_casual'}},
+  'garment_category': {'compatible': ['sweatshirt', 'hoodie', 'windbreaker', 'fleece_jacket', 'jeans'],
+                       'incompatible': ['dress', 'blazer', 'mini_skirt', 'trench_coat']},
+  'justification': 'Rangers ask hide visitors to wear muted, quiet clothing: high-visibility '
+                   'colors and busy prints scare animals away from the observation area.',
+  'color': {'compatible': ['green', 'brown', 'beige', 'gray'],
+            'incompatible': ['white', 'red', 'orange', 'yellow', 'pink']},
+  'pattern': {'compatible': ['solid', 'striped', 'checkered'],
+              'incompatible': ['floral', 'polka_dot']},
+  'query_seeds': {'explicit': ['Wildlife photography session from a hide tomorrow; I was told '
+                               'to wear muted, low-key clothing. What should I wear?',
+                               'Spending the day in a bird hide — the ranger said no bright '
+                               'colors or loud prints. What should I wear?'],
+                  'implicit': ['The photography guide asked us to dress low-key for the hide '
+                               'session tomorrow. Outfit advice?',
+                               "Day in the wildlife hide — the ranger's notes say to blend in. "
+                               'What should I wear?']}},
+ {'scenario_id': 'stage_backstage_crew',
+  'archetype': 'stage_media',
+  'name': 'Concert Backstage Crew Shift',
+  'tpo': {'time': {'time_of_day': 'evening'},
+          'place': {'venue': 'concert_hall', 'indoor_outdoor': 'indoor'},
+          'occasion': {'activity': 'stage_crew_work', 'formality_required': 'very_casual'}},
+  'garment_category': {'compatible': ['t_shirt', 'sweatshirt', 'hoodie', 'jeans', 'slacks'],
+                       'incompatible': ['blazer', 'formal_shirt', 'dress', 'trench_coat', 'mini_skirt']},
+  'justification': 'Stage crews wear all black ("show blacks") to stay invisible to the '
+                   'audience during scene changes, in practical clothes for hauling equipment.',
+  'color': {'compatible': ['black'],
+            'incompatible': ['white', 'yellow', 'pink', 'red', 'orange']},
+  'pattern': {'compatible': ['solid'],
+              'incompatible': ['leopard', 'floral', 'polka_dot']},
+  'query_seeds': {'explicit': ['Working backstage crew at a concert tonight; we are required '
+                               'to wear all black. What should I wear?',
+                               'Stagehand shift at the theater — show blacks required. What '
+                               'should I wear?'],
+                  'implicit': ['Helping run backstage at a live show tonight. What should I '
+                               'wear?',
+                               'Crew call at the concert hall this evening. Outfit advice?']}},
+ {'scenario_id': 'stage_greenscreen_shoot',
+  'archetype': 'stage_media',
+  'name': 'Chroma-Key Studio Shoot (Green & Blue Stages)',
+  'tpo': {'time': {'time_of_day': 'daytime'},
+          'place': {'venue': 'studio', 'indoor_outdoor': 'indoor'},
+          'occasion': {'activity': 'video_shoot', 'formality_required': 'very_casual'}},
+  'garment_category': {'compatible': ['t_shirt', 'sweatshirt', 'sweater', 'jeans', 'leggings'],
+                       'incompatible': ['trench_coat', 'windbreaker']},
+  'justification': 'The studio keys on both green and blue stages, so clothing in either chroma '
+                   'color is removed in compositing; fine repeating patterns cause moire flicker '
+                   'on camera, and shiny, flappy outerwear disrupts the keying.',
+  'color': {'compatible': ['red', 'pink', 'black', 'gray'],
+            'incompatible': ['green', 'blue']},
+  'pattern': {'compatible': ['solid'],
+              'incompatible': ['striped', 'checkered', 'polka_dot']},
+  'query_seeds': {'explicit': ['Filming in front of a green screen tomorrow; the studio said '
+                               'no green, no blue, and no fine patterns. What should I wear?',
+                               'Green-screen shoot for a video — told to avoid the chroma '
+                               'colors and busy prints. What should I wear?'],
+                  'implicit': ["The studio sent wardrobe notes for tomorrow's chroma-key "
+                               'shoot: nothing that interferes with the key. Outfit advice?',
+                               'Shooting on the green-screen stage tomorrow; wardrobe rules '
+                               'apply. What should I wear?']}},
+ {'scenario_id': 'stage_tv_interview',
+  'archetype': 'stage_media',
+  'name': 'Live TV News Interview',
+  'tpo': {'time': {'time_of_day': 'daytime'},
+          'place': {'venue': 'tv_studio', 'indoor_outdoor': 'indoor'},
+          'occasion': {'activity': 'media_appearance', 'formality_required': 'business_casual'}},
+  'garment_category': {'compatible': ['blazer', 'formal_shirt', 'dress', 'slacks'],
+                       'incompatible': ['hoodie', 'tank_top', 't_shirt', 'shorts']},
+  'justification': 'On-air guests dress professionally; studios advise against green (chroma '
+                   'risk), pure white (camera bloom), and fine patterns (moire) on camera.',
+  'color': {'compatible': ['navy', 'gray', 'blue', 'beige', 'purple'],
+            'incompatible': ['green', 'white']},
+  'pattern': {'compatible': ['solid'],
+              'incompatible': ['striped', 'checkered', 'polka_dot']},
+  'query_seeds': {'explicit': ['I am being interviewed on live TV news; smart, camera-friendly '
+                               'clothes expected. What should I wear?',
+                               'On-air TV interview tomorrow — professional attire that works '
+                               'on camera. What should I wear?'],
+                  'implicit': ['A news channel is interviewing me on air tomorrow. Outfit '
+                               'advice?',
+                               'Going on live television for an interview this week. What '
+                               'should I wear?']}},
+ {'scenario_id': 'club_tennis_whites',
+  'archetype': 'club_code',
+  'name': 'Club Tennis Tournament (All-White Rule)',
+  'tpo': {'time': {'time_of_day': 'daytime'},
+          'place': {'venue': 'tennis_club', 'indoor_outdoor': 'outdoor'},
+          'occasion': {'activity': 'tennis_match', 'formality_required': 'very_casual'}},
+  'garment_category': {'compatible': ['t_shirt', 'shorts', 'mini_skirt'],
+                       'incompatible': ['jeans', 'leather_jacket', 'trench_coat', 'slacks',
+                                        'blazer', 'hoodie']},
+  'justification': 'Traditional tennis clubs enforce a Wimbledon-style all-white rule for '
+                   'players; colored or patterned clothing violates the club code.',
+  'color': {'compatible': ['white'],
+            'incompatible': ['black', 'navy', 'gray', 'brown', 'red', 'blue', 'green', 'pink',
+                             'orange', 'yellow', 'purple', 'beige']},
+  'pattern': {'compatible': ['solid'],
+              'incompatible': ['striped', 'checkered', 'floral', 'polka_dot', 'leopard']},
+  'query_seeds': {'explicit': ["Playing in my club's tennis tournament; the all-white dress "
+                               'rule applies. What should I wear?',
+                               'Club championship tennis match — whites-only rule like '
+                               'Wimbledon. What should I wear?'],
+                  'implicit': ['Playing a match at the traditional tennis club on Saturday. '
+                               'What should I wear?',
+                               "Entered the members' tournament at our old tennis club. Outfit "
+                               'advice?']}},
+ {'scenario_id': 'club_yacht_regatta',
+  'archetype': 'club_code',
+  'name': 'Yacht Club Regatta Day',
+  'tpo': {'time': {'time_of_day': 'daytime'},
+          'place': {'venue': 'marina', 'indoor_outdoor': 'outdoor'},
+          'occasion': {'activity': 'regatta', 'formality_required': 'smart_casual'}},
+  'garment_category': {'compatible': ['formal_shirt', 'windbreaker', 'slacks', 'shorts', 't_shirt'],
+                       'incompatible': ['hoodie', 'leather_jacket', 'sweatshirt', 'mini_skirt']},
+  'justification': 'Yacht club regattas follow a traditional nautical dress code: crisp marine '
+                   'colors and tidy sailing wear; loud colors and streetwear are out of place.',
+  'color': {'compatible': ['navy', 'white', 'beige'],
+            'incompatible': ['orange', 'yellow']},
+  'pattern': {'compatible': ['solid', 'striped'],
+              'incompatible': ['leopard', 'floral', 'polka_dot']},
+  'query_seeds': {'explicit': ['Attending our yacht club regatta day; classic nautical dress '
+                               'expected. What should I wear?',
+                               'Regatta at the sailing club — traditional marine style '
+                               'expected. What should I wear?'],
+                  'implicit': ['Spending Saturday at the yacht club regatta. Outfit advice?',
+                               'Invited to watch the sailing club races this weekend. What '
+                               'should I wear?']}},
+ {'scenario_id': 'club_golf_round',
+  'archetype': 'club_code',
+  'name': 'Country Club Golf Round',
+  'tpo': {'time': {'time_of_day': 'daytime'},
+          'place': {'venue': 'golf_course', 'indoor_outdoor': 'outdoor'},
+          'occasion': {'activity': 'golf', 'formality_required': 'smart_casual'}},
+  'garment_category': {'compatible': ['formal_shirt', 'sweater', 'slacks', 'long_skirt', 'shorts'],
+                       'incompatible': ['jeans', 'tank_top', 'hoodie', 't_shirt']},
+  'justification': 'Traditional country clubs require collared shirts and tailored bottoms on '
+                   'the course; denim, athletic streetwear, and loud prints violate the code.',
+  'color': None,
+  'pattern': {'compatible': ['solid', 'striped', 'checkered'],
+              'incompatible': ['leopard', 'polka_dot']},
+  'query_seeds': {'explicit': ['Playing a round at a traditional country club; collared shirts '
+                               'required and no denim. What should I wear?',
+                               'Golf at a members-only club — classic golf dress code '
+                               'enforced. What should I wear?'],
+                  'implicit': ['Tee time at the old country club tomorrow morning. What should '
+                               'I wear?',
+                               'First round of golf at a private club with a friend. Outfit '
+                               'advice?']}}]
 
 
 def get_constrained_axes(scenario):

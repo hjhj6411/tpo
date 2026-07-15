@@ -17,8 +17,8 @@ python fsiglip/collect_topk_sam3_fsiglip_patch_rank_vlm_garment_axis_patches.py 
   --vlm-url http://127.0.0.1:8001/v1/chat/completions \
   --vlm-model Qwen/Qwen3-VL-4B-Instruct \
   --output-root data/retrieval/sam3vlmfix \
-  --pattern-short-side-tiles 6 \
-  --color-short-side-tiles 12 \
+  --pattern-short-side-tiles 5 \
+  --color-short-side-tiles 15 \
   --patch-mask-fill local_mean \
   --limit 10 --options A,B,C,D --device cuda --force
 """

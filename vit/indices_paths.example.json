@@ -1,0 +1,9 @@
+{
+  "pod_fashion": {
+    "indice_folder": "/home1/hjhj6411/pod_bench/data/clip_corpus/index",
+    "provide_safety_model": false,
+    "enable_faiss_memory_mapping": true,
+    "columns_to_return": ["url", "caption"],
+    "metadata_folder": "/home1/hjhj6411/pod_bench/data/clip_corpus/embeddings/metadata"
+  }
+}

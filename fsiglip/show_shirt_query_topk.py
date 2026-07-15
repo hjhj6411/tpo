@@ -19,7 +19,7 @@ from pathlib import Path
 import requests
 
 
-DEFAULT_QUERIES = ["black fleece", "fleece"]
+DEFAULT_QUERIES = ["all-over stripe black padded jacket", "all-over striped black puffer", "all-over striped black parka"]
 
 
 def query_knn(session, url, query, top_k, index_name, timeout):

@@ -27,6 +27,17 @@ compatible set so that B is "disliked but still TPO-OK", never "neither".
 Strict preference contrast: B/D require a profile-disliked active-axis value.
 If the profile's disliked value is not TPO-compatible for this scenario, that
 (user, scenario, axis) slot is skipped instead of falling back to neutral.
+
+Violation-axis generalization (dress-code TPO)
+----------------------------------------------
+The TPO-violation axis is no longer hardwired to garment_category. A scenario
+that itself constrains color/pattern (dress-coded archetypes) can carry the
+C/D violation through that axis instead, provided the profile leaves
+preference-NEUTRAL values on both the compatible and the incompatible side —
+the same neutrality rule already applied to garments, so the TPO contrast is
+never confounded with preference. Physical scenarios constrain only garment,
+so they keep garment-only violations by construction. The planner picks the
+final axis; this module only reports the feasible candidates per instance.
 """
 
 import sys
@@ -38,6 +49,18 @@ from configs.config import FASHION_ATTRIBUTE_AXES
 from configs.scenarios import CANONICAL_SCENARIOS
 
 ALLOWED_ACTIVE_AXES = {"color", "pattern"}
+
+# Cross-axis visual combinations excluded from benchmark construction.
+INCOMPATIBLE_PATTERN_GARMENT_PAIRS = {
+    ("striped", "puffer_jacket"),
+}
+
+
+def is_pattern_garment_compatible(pattern, garment):
+    """Return whether a pattern/garment pair may appear in an option."""
+    if not pattern or not garment:
+        return True
+    return (str(pattern), str(garment)) not in INCOMPATIBLE_PATTERN_GARMENT_PAIRS
 
 
 def _profile_prefs(profile, axis):
@@ -62,6 +85,31 @@ def _active_compatible_values(scenario, axis):
         return list(constraint.get("compatible", [])), True
     # unconstrained active axis: every value is situation-appropriate
     return list(FASHION_ATTRIBUTE_AXES[axis]), False
+
+
+def _violation_axis_options(profile, scenario, active_axis):
+    """Neutral value pools for non-garment TPO-violation axes.
+
+    A color/pattern axis is a violation candidate only when the scenario
+    itself constrains it, and only through preference-neutral values on both
+    sides (compatible for A/B, incompatible for C/D).
+    """
+    options = {}
+    for axis in ("color", "pattern"):
+        if axis == active_axis:
+            continue
+        constraint = scenario.get(axis)
+        if constraint is None or not constraint.get("incompatible"):
+            continue
+        likes, dislikes = _profile_prefs(profile, axis)
+        comp_neutral = _neutral_values(constraint.get("compatible", []), likes, dislikes)
+        inc_neutral = _neutral_values(constraint["incompatible"], likes, dislikes)
+        if comp_neutral and inc_neutral:
+            options[axis] = {
+                "compatible_neutral": comp_neutral,
+                "incompatible_neutral": inc_neutral,
+            }
+    return options
 
 
 def check_axis_compatibility(profile, scenario, axis):
@@ -100,6 +148,7 @@ def check_axis_compatibility(profile, scenario, axis):
         "neutral_compatible": neutral_compatible,
         "compatible_garments": compatible_garments,
         "incompatible_garments": incompatible_garments,
+        "violation_options": _violation_axis_options(profile, scenario, axis),
     }
 
 
@@ -166,6 +215,7 @@ def get_compatible_instances(profiles, scenarios=None):
                         "neutral_compatible": result["neutral_compatible"],
                         "compatible_garments": result["compatible_garments"],
                         "incompatible_garments": result["incompatible_garments"],
+                        "violation_options": result.get("violation_options", {}),
                     })
     return instances, stats
 

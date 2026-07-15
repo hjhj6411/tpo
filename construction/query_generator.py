@@ -17,6 +17,7 @@ import argparse
 import hashlib
 import random
 import sys
+from collections import Counter
 from pathlib import Path
 
 from .utils import save_jsonl, load_jsonl, log_step
@@ -57,12 +58,25 @@ def _neutral_values(values, likes, dislikes):
     return sorted(set(values) - likes - dislikes)
 
 
-def _sample_preference_neutral_value(profile, scenario, axis, rng):
+def _sample_preference_neutral_value(profile, scenario, axis, rng,
+                                     usage=None, user_id=None):
     """A preference-NEUTRAL, TPO-compatible value for a NON-active axis.
 
     Returns None if none exists — the caller then leaves that axis unfixed,
     which is safer than injecting a liked/disliked value (a second preference
     signal) or a TPO-incompatible value (a second TPO signal).
+
+    When the scenario does not constrain a COLOR axis, any color is
+    situation-appropriate, so the pool is the full vocabulary minus the
+    user's likes/dislikes (the narrow dress-code-safe fallback list would
+    collapse to a single value for users whose preferences cover the rest).
+    Pattern keeps the low-salience fallback set: a high-salience fixed
+    pattern (leopard/floral/polka_dot) would inject a second strong visual
+    cue into the non-active axis.
+
+    `usage` is a per-(user, axis, value) counter; when given, the least-used
+    value is picked first so one user does not repeat the same fixed value
+    across their whole query set.
     """
     if axis == "garment_category":
         return None
@@ -70,21 +84,33 @@ def _sample_preference_neutral_value(profile, scenario, axis, rng):
     likes, dislikes = _profile_prefs(profile, axis)
     constraint = scenario.get(axis)
     tpo_bad = set(constraint.get("incompatible", [])) if constraint else set()
+    axis_constrained = bool(constraint and constraint.get("incompatible"))
 
     # 1) scenario-compatible AND preference-neutral
+    pool = []
     if constraint and constraint.get("compatible"):
         pool = _neutral_values(constraint["compatible"], likes, dislikes)
-        if pool:
-            return rng.choice(pool)
 
     # 2) generic fallback, but still preference-neutral AND not TPO-incompatible
-    fb = [v for v in _neutral_values(FALLBACK_AXIS_VALUES.get(axis, []), likes, dislikes)
-          if v not in tpo_bad]
-    if fb:
-        return rng.choice(fb)
+    if not pool:
+        if axis == "color" and not axis_constrained:
+            base = FASHION_ATTRIBUTE_AXES["color"]
+        else:
+            base = FALLBACK_AXIS_VALUES.get(axis, [])
+        pool = [v for v in _neutral_values(base, likes, dislikes)
+                if v not in tpo_bad]
 
     # 3) give up — leave this axis unfixed rather than leak a bad value
-    return None
+    if not pool:
+        return None
+
+    if usage is None:
+        return rng.choice(pool)
+    min_use = min(usage[(user_id, axis, v)] for v in pool)
+    least_used = [v for v in pool if usage[(user_id, axis, v)] == min_use]
+    pick = rng.choice(least_used)
+    usage[(user_id, axis, pick)] += 1
+    return pick
 
 
 def _extract_seed_pool(scenario, query_type):
@@ -123,12 +149,13 @@ def _build_query_text(scenario, rng, explicit_ratio=0.5):
     return query_type, _render_fallback_query(scenario, query_type)
 
 
-def _build_fixed_attrs(profile, scenario, active_axis, rng):
+def _build_fixed_attrs(profile, scenario, active_axis, rng, usage=None, user_id=None):
     fixed_attrs = {}
     for axis in ("color", "pattern"):
         if axis == active_axis:
             continue
-        val = _sample_preference_neutral_value(profile, scenario, axis, rng)
+        val = _sample_preference_neutral_value(
+            profile, scenario, axis, rng, usage=usage, user_id=user_id)
         if val is not None:
             fixed_attrs[axis] = val
     return fixed_attrs
@@ -149,6 +176,10 @@ def build_queries(profiles, scenarios=None, seed=42, per_instance=1, explicit_ra
     compatible_instances, stats = get_compatible_instances(profiles, scenarios)
     queries = []
 
+    # Shared per-(user, axis, value) counter so fixed non-active values rotate
+    # per user instead of repeating one value across all of a user's queries.
+    fixed_usage = Counter()
+
     running_idx = 0
     for inst in compatible_instances:
         profile = profile_map[inst["user_id"]]
@@ -165,7 +196,10 @@ def build_queries(profiles, scenarios=None, seed=42, per_instance=1, explicit_ra
             query_type, query_text = _build_query_text(
                 scenario, local_rng, explicit_ratio=explicit_ratio
             )
-            fixed_attrs = _build_fixed_attrs(profile, scenario, active_axis, local_rng)
+            fixed_attrs = _build_fixed_attrs(
+                profile, scenario, active_axis, local_rng,
+                usage=fixed_usage, user_id=inst["user_id"],
+            )
             query_id = _make_query_id(
                 inst["user_id"], inst["scenario_id"], active_axis, running_idx
             )
@@ -182,6 +216,7 @@ def build_queries(profiles, scenarios=None, seed=42, per_instance=1, explicit_ra
                 "neutral_compatible": inst["neutral_compatible"],
                 "compatible_garments": inst["compatible_garments"],
                 "incompatible_garments": inst["incompatible_garments"],
+                "violation_options": inst.get("violation_options", {}),
                 "query_type": query_type,
                 "query_text": query_text,
                 "fixed_attrs": fixed_attrs,
