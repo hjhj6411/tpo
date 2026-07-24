@@ -144,7 +144,7 @@ def narrative_fallback(likes, dislikes):
 # against the fixed sets below so catalog drift fails loudly instead of
 # silently breaking the by-construction guarantees.
 #   ANCHOR  — compatible across every normative-formal coded scenario
-#             -> every profile takes 1 like + 1 dislike here (R1/R2)
+#             -> garment takes 2 likes + 2 dislikes (R1), color 1+1 (R2)
 #   RESERVE — never assigned to preferences; supplies TPO-violation
 #             values (color axis only — pattern has no RESERVE tier:
 #             every pattern may carry preference, and per-user neutrality
@@ -155,7 +155,16 @@ def narrative_fallback(likes, dislikes):
 
 NORMATIVE_FORMAL_ARCHETYPES = FRAME_SCOPED_ARCHETYPES - {"club_code"}
 
-GARMENT_ANCHOR = ["blazer", "formal_shirt", "dress"]
+# Widened 2026-07-24 from the blazer/formal_shirt/dress trio. With only three
+# anchors and one like + one dislike per profile, each user had exactly ONE
+# formal fallback pair, so the dress-code garment preference axis collapsed onto
+# the three anchor-trio matchups (45% of the axis, per-user worst 87%). The
+# strictest scenarios (black-tie gala, opera premiere) admitted nothing else at
+# all. Five anchors at 2+2 give each user C(2,2)-crossed 4 formal pairs and the
+# strictest scenarios C(5,2)=10 globally. Requires the compat-side widening of
+# the 17 normative-formal scenarios (docs/redesign_v2_plan.md §16) — S1 below
+# fails loudly if that widening is reverted.
+GARMENT_ANCHOR = ["blazer", "formal_shirt", "dress", "slacks", "long_skirt"]
 COLOR_ANCHOR = ["black", "navy", "gray"]
 COLOR_RESERVE = ["orange", "yellow", "pink", "white"]   # hard-RESERVE
 PATTERN_QUIET = ["solid", "striped"]                     # 1 like + 1 dislike split
@@ -241,7 +250,7 @@ def derive_and_validate_tiers():
 # them on each side so formal scenarios admit non-ANCHOR garment pairs
 # (otherwise the garment axis collapses to blazer/formal_shirt/dress
 # matchups — observed 70% of the axis).
-FORMAL_FREE_GARMENTS = ["sweater", "cardigan", "trench_coat", "slacks", "long_skirt"]
+FORMAL_FREE_GARMENTS = ["sweater", "cardigan", "trench_coat"]
 
 # Post-generation manual touch-ups from profile inspection. SWAPS exchange a
 # value between two variants, so every global like/dislike tally — and the
@@ -250,12 +259,12 @@ FORMAL_FREE_GARMENTS = ["sweater", "cardigan", "trench_coat", "slacks", "long_sk
 # asserts make this fail loudly if the seed (and thus variant contents)
 # ever changes.
 # 2026-07-16 inspection: variants 9/20 (U010/U021) shared identical garment
-# AND color likes — a duplicated-taste twin. Two swaps break the twin.
-MANUAL_SWAPS = [
-    # (variant_field, idx_a, value_a, idx_b, value_b)
-    ("garment_likes", 20, "tank_top", 22, "leggings"),   # U021 <-> U023
-    ("color_likes",   20, "green",    19, "beige"),      # U021 <-> U020
-]
+# AND color likes — a duplicated-taste twin. Two swaps broke the twin.
+# 2026-07-24: emptied because the ANCHOR 5x(2+2) change alters every variant, so
+# the old swaps are stale by construction (their value asserts would fire).
+# Re-run twin inspection on the new seed-42 output and re-author if a twin
+# reappears.
+MANUAL_SWAPS = []
 
 
 def _apply_manual_swaps(variants):
@@ -360,11 +369,22 @@ def generate_rule_variants(seed=42, n_variants=24):
     random.Random(seed + 4649).shuffle(expr_pairs)
 
     for idx in range(n_variants):
-        # ---- R1 garment: ANCHOR 1+1 (balanced) ----
-        ga_like = _balanced_choice(GARMENT_ANCHOR, use["ga_like"], [], rng)
-        ga_dis = _balanced_choice(
-            [g for g in GARMENT_ANCHOR if g != ga_like],
-            use["ga_dis"], [], rng)
+        # ---- R1 garment: ANCHOR 2+2 (balanced), 1 anchor left neutral ----
+        # The 5th anchor stays preference-neutral for this user, which is what
+        # keeps a neutral TPO-compatible garment available in the strictest
+        # scenarios (same ANCHOR-arithmetic guarantee the 3x(1+1) design relied
+        # on, now with two anchors on each preference side).
+        ga_likes = []
+        for _ in range(2):
+            ga_likes.append(_balanced_choice(
+                [g for g in GARMENT_ANCHOR if g not in ga_likes],
+                use["ga_like"], [], rng))
+        ga_dislikes = []
+        for _ in range(2):
+            ga_dislikes.append(_balanced_choice(
+                [g for g in GARMENT_ANCHOR
+                 if g not in ga_likes and g not in ga_dislikes],
+                use["ga_dis"], [], rng))
 
         # ---- R1 garment: FREE 2+2 with R4 (exhaustive, balanced-first) ----
         # Enumerate every (like-pair, dislike-pair) combo over the whole
@@ -384,8 +404,8 @@ def generate_rule_variants(seed=42, n_variants=24):
                 combos.append((f_gap, load, r2.random(), lp, dp))
         combos.sort()
         for _, _, _, lp, dp in combos:
-            likes = [ga_like] + list(lp)
-            dislikes = [ga_dis] + list(dp)
+            likes = ga_likes + list(lp)
+            dislikes = ga_dislikes + list(dp)
             if _garment_pairs_alive_everywhere(likes, dislikes):
                 gf_likes, gf_dis = list(lp), list(dp)
                 break
@@ -427,7 +447,7 @@ def generate_rule_variants(seed=42, n_variants=24):
                 f"R5 failed for variant {idx}: no FREE color assignment "
                 f"keeps every non-boundary (user, scenario) cell alive")
 
-        for cnt, vals in (("ga_like", [ga_like]), ("ga_dis", [ga_dis]),
+        for cnt, vals in (("ga_like", ga_likes), ("ga_dis", ga_dislikes),
                           ("gf_like", gf_likes), ("gf_dis", gf_dis),
                           ("ca_like", [ca_like]), ("ca_dis", [ca_dis]),
                           ("cf_like", cf_likes), ("cf_dis", cf_dis)):
@@ -457,9 +477,12 @@ def validate_rule_profiles(variants):
         pl, pd = set(v["pattern_likes"]), set(v["pattern_dislikes"])
         tag = f"{arch_id}/{var_idx}"
         assert not gl & gd and not cl & cd and not pl & pd, f"{tag}: overlap"
-        assert len(gl) == len(gd) == 3 and len(cl) == len(cd) == 3, f"{tag}: quota"
-        assert len(gl & set(GARMENT_ANCHOR)) == 1, f"{tag}: R1 like quota"
-        assert len(gd & set(GARMENT_ANCHOR)) == 1, f"{tag}: R1 dislike quota"
+        # garment carries 4+4 (ANCHOR 2 + FREE 2 per side); color stays 3+3.
+        # The asymmetry is deliberate — it buys formal garment pair diversity —
+        # and must be disclosed in the paper's methodology.
+        assert len(gl) == len(gd) == 4 and len(cl) == len(cd) == 3, f"{tag}: quota"
+        assert len(gl & set(GARMENT_ANCHOR)) == 2, f"{tag}: R1 like quota"
+        assert len(gd & set(GARMENT_ANCHOR)) == 2, f"{tag}: R1 dislike quota"
         assert len(cl & set(COLOR_ANCHOR)) == 1, f"{tag}: R2 like quota"
         assert len(cd & set(COLOR_ANCHOR)) == 1, f"{tag}: R2 dislike quota"
         assert not (cl | cd) & reserve_c, f"{tag}: R2 RESERVE color leak"

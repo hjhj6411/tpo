@@ -668,3 +668,131 @@ garment 100%는 "현 카탈로그에서 관측됨"으로 서술할 것.
   validation(특히 dress-code implicit 711건의 규범 정답 일치도), 평가 프롬프트에
   `EVAL_FRAME_CLAUSE` 미전달. **위 수치는 pre-retrieval 통계로만 인용하고,
   이미지 검색·human validation 후 동일 표를 재계산해 최종 수치로 교체할 것.**
+
+## 16. 2026-07-24 (3차): ANCHOR tier 확장 — dress-code garment 선호축 집중 해소
+
+**variant `wacv_scenario_v2`. `wacv_scenario_v1`은 보존.**
+
+### 16.1 근본 원인 — planner가 아니라 feasibility frontier
+
+§15에서 유일한 실질 취약점으로 지목한 dress-code garment 선호축(균등 대비
+**6.59x**, top3 45.0%, per-user 최악 87%)의 원인은 planner가 아니라 **프로필의
+ANCHOR 1+1 구조**였다.
+
+- `GARMENT_ANCHOR`가 `[blazer, formal_shirt, dress]` 3개뿐이고 프로필당
+  anchor like 1 + dislike 1 → **사용자당 formal fallback pair가 평생 정확히 1개**.
+- `formal_black_tie_gala` / `formal_opera_premiere`는 compatible garment이
+  **정확히 anchor 3개뿐**이라, 해당 시나리오의 모든 쿼리가 그 1개 pair로 강제됨.
+- garment-active 쿼리 488개 중 **256개(52%)는 liked∩compatible = 1,
+  disliked∩compatible = 1**로 선택지 자체가 없었음.
+
+`assign_ab_values`는 per-user variety → global pair balance 순으로 이미 올바르게
+설계되어 있다. **존재하지 않는 pair를 다양화할 수는 없다.**
+
+**시나리오만 넓히는 접근은 실패한다 (실측).** compatible-side widening만 적용하고
+프로필을 동결한 채 재생성하면 6.59x → **6.99x**(악화), per-user 최악 87% 그대로.
+시나리오가 slacks를 허용해도 그것을 like/dislike하는 유저에게만 pair가 생기는데,
+프로필의 formal-호환 FREE garment이 side당 ~1개뿐이기 때문이다.
+**두 파일을 함께 고쳐야만 풀린다.**
+
+### 16.2 조치 ① `configs/scenarios.py` — compat-side widening 17건
+
+**`incompatible`은 한 건도 건드리지 않았다.** 전부 허용 확대이므로 §15의
+"관습적 근거 없는 금지 발명 금지" 원칙과 충돌하지 않는다.
+
+| 시나리오 | 추가 | 관습적 근거 |
+| --- | --- | --- |
+| `biz_corporate_board` / `investor_pitch` / `job_interview` / `client_meeting` | `long_skirt` | 미디·펜슬 스커트는 비즈니스 표준 |
+| `formal_black_tie_gala` / `formal_opera_premiere` | `slacks`, `long_skirt` | 이브닝 트라우저·플로어렝스 스커트는 black-tie 정석 |
+| `civic_court_appearance` / `civic_citizenship_oath` | `long_skirt` | 법정 보수 복장에 부합 |
+| `mourn_funeral` / `mourn_memorial` | `slacks`, `long_skirt` | 장례식 정장 바지·긴 치마, 논쟁 여지 없음 |
+| `relig_conservative_worship` / `temple_ceremony` / `solemn_observance` / `baptism_guest` | `slacks` | modest 기준에 부합 (`long_skirt`는 이미 있었음) |
+| `wedding_reception` / `celebration_graduation` | `slacks` | 하객 slacks+셔츠 표준 |
+| `stage_tv_interview` | `long_skirt` | TV 인터뷰 통상 복장. **R4 통과에 필수** — 이 시나리오의 compatible이 5개 anchor 중 4개와 일치해, neutral anchor가 `long_skirt`인 변형(~5명)에서 R4가 결정론적으로 실패한다 |
+
+**검토했으나 채택하지 않은 것:** mourning/civic에 color `brown` 추가. 근거가 가장
+약하고("dark muted colors") color 축은 애초에 문제 축이 아니다(3.2x). 리뷰어에게
+찔릴 여지만 만든다.
+
+**구현 주의.** `civic_citizenship_oath`는 `EVALUATION_EXCLUDED_SCENARIOS`라
+`CANONICAL_SCENARIOS`에는 없지만 `PROFILE_GENERATION_SCENARIOS`에는 있다
+(같은 상황이 14개). 다만 `PROFILE_GENERATION_SCENARIOS`는 trim **이전의**
+`CANONICAL_SCENARIOS`에서 파생되어 **같은 dict 객체를 공유**하므로, 소스
+리터럴을 고치면 양쪽에 반영된다. (런타임 패치로 접근하면 양쪽을 따로 고쳐야 하고,
+canonical만 고치면 S1이 실패한다.)
+
+**효과:** normative-formal 20개 시나리오의 공통 compatible garment 집합이
+`{blazer, dress, formal_shirt}` → `{blazer, dress, formal_shirt, long_skirt, slacks}`
+로 3개 → **5개**. 단독으로는 지표 개선 없음 — 조치 ②의 전제 조건이다.
+
+### 16.3 조치 ② `construction/profile_generator.py` — ANCHOR 5개 × (2+2)
+
+1. `GARMENT_ANCHOR`를 위 5개로 확장 (S1이 widening 반전 시 즉시 실패)
+2. **R1 garment: anchor 2 like + 2 dislike** (balanced), FREE 2+2 유지
+   → **garment quota 3+3 → 4+4**
+3. `FORMAL_FREE_GARMENTS`에서 `slacks`/`long_skirt` 제거 (ANCHOR로 승격)
+   → `[sweater, cardigan, trench_coat]`
+4. `validate_rule_profiles`: `len(gl)==len(gd)==4`, anchor 교집합 `==2`
+5. `MANUAL_SWAPS = []` — 모든 변형이 바뀌어 옛 swap은 구조적으로 stale
+
+**anchor 5개 중 1개는 항상 선호 중립으로 남는다.** 이것이 최엄격 시나리오에서
+중립 TPO-적합 garment 공급을 보장한다(3×(1+1) 설계가 의존하던 ANCHOR 산술과
+동일한 보장, 이제 각 side에 2개씩). 실측: 24명 전부 2/2/1 분할, 중립 anchor 분포
+`long_skirt 6, slacks 5, formal_shirt 5, blazer 4, dress 4`.
+
+### 16.4 결과 (v1 → v2)
+
+| 지표 | v1 | v2 |
+| --- | ---: | ---: |
+| **dress active garment top3** | **6.59x** (45.0%) | **3.70x** (23.6%) |
+| 〃 max pair | 17.1% `blazer/dress` | 8.4% `blazer/formal_shirt` |
+| 〃 pairs | 44 | 47 |
+| 〃 per-user distinct pairs | min 2 / med 4 | **min 6 / med 8 / max 11** |
+| 〃 per-user 최악 top share | **87%** | **28%** |
+| dress active color | 3.38x | 3.20x |
+| physical violation garment | 2.38x | **2.89x** |
+| option plans | 3,318 | 3,340 |
+| evaluable queries | 2,860 | 2,882 |
+| validate_options | 0/3,318 | **0/3,340** |
+| 변이 테스트 | 48/48 | **48/48** |
+
+**랭킹 1위가 3.70x로 내려오며 "단일 취약 축"이 사라졌다.** 전 축이
+1.5~3.7x 대역으로 수렴하므로, limitations 서술이 "단일 취약 축 방어"에서
+"전 축 균등 공개"로 바뀐다.
+
+**새 기준 SHA256 (v1 기준값 폐기):**
+```
+profiles.jsonl     6642f47a850acbe63b5f916b4c246a092c6ca49ff45b725387df7e5849d7c68f
+queries.jsonl      fc1c355332d76131fae7558cdcc2a308951cdc39817e92d581ae0576ce468cf5
+option_plans.jsonl 8922488f2b952c357c1c64fa1c3e20d3bec343103e3a7cd96a64c981a976a3cf
+```
+
+### 16.5 변하지 않은 것 / 새로 공개할 것
+
+- **pattern 축은 이 수정으로 풀리지 않는다.** dress active pattern 2.55x,
+  `solid/striped` 23.9%, per-user 최다 pair 53%는 그대로. 원인이 "formal-호환
+  pattern = {solid, striped} 2개뿐"이라는 **어휘 폭 한계**라서, violation
+  pattern(1.5x)과 **동일한 논리로 공개하는 것이 정답**이다. herringbone 등
+  quiet pattern 추가는 검색·판정 난이도를 올리므로 채택하지 않는다.
+- **physical violation 2.38x → 2.89x 상승.** `slacks`/`long_skirt`가 선호축으로
+  이동해 중립 풀에서 빠진 영향(physical violation 쌍의 16.5%가 이 둘에 의존했다).
+  Dress-code를 고치려 Physical을 소폭 열화시킨 **의식적 거래**이며, 2.89x는
+  방어 가능 대역이다.
+- **garment quota 4+4의 공개 의무.** 축별 quota 비대칭(garment 4+4, color 3+3,
+  pattern 2+2)은 methodology에 명시할 것. "formal pair 다양성을 위한 설계"로
+  서술하면 되고, 숨기면 찔린다.
+- **무플랜 쿼리는 257건으로 v1과 우연히 같으나 구성이 다르다** (garment 32→31,
+  pattern 225→226, archetype 분포도 이동). 프로필 종속이므로 v1 수치를
+  이월하지 말 것. 조합 커버리지는 1,416/1,416 유지.
+- **only-A 미세 이슈:** `sweatshirt` nA=2 nB=0, `hoodie` nA=1 nB=0
+  (v1은 `leggings` nA=0 nB=2). n이 극히 작아 실질 영향은 없으나 counterbalanced
+  subset에서 제외된다.
+- **twin inspection 결과 트윈 0건** — garment+color likes 동일 쌍 없음,
+  likes+dislikes 전체 동일 쌍 없음. `MANUAL_SWAPS`는 빈 채로 확정.
+- **widening 약한 고리 2개를 human validation 항목에 포함할 것**:
+  black-tie의 `slacks`(어휘에 tuxedo/gown이 없어 `blazer`를 이미 대역으로 쓰는
+  것과 같은 근사), 그리고 채택하지 않은 mourning `brown`. 사람 판정으로
+  뒷받침하면 리뷰 방어 근거가 확보된다.
+- **§15.2의 블로킹 3건은 그대로 남는다**: 이미지 파이프라인
+  (`availability_catalog` 8,265행 전부 `error:KeyError`), human validation,
+  `EVAL_FRAME_CLAUSE` 미전달.

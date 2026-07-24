@@ -1,0 +1,144 @@
+{
+  "n_plans": 3340,
+  "n_structural_failures": 0,
+  "n_tpo_failures": 0,
+  "error_types": {},
+  "failures": [],
+  "blind_exploit_acc": {
+    "color": 0.5237430167597765,
+    "pattern": 0.5006993006993007,
+    "garment_category": 0.5397489539748954
+  },
+  "liked_rate": {
+    "color": {
+      "navy": 0.49728260869565216,
+      "black": 0.5193370165745856,
+      "beige": 0.5014164305949008,
+      "gray": 0.48148148148148145,
+      "red": 0.5536912751677853,
+      "green": 0.4878048780487805,
+      "brown": 0.4894366197183099,
+      "purple": 0.49645390070921985,
+      "blue": 0.46953405017921146
+    },
+    "garment_category": {
+      "formal_shirt": 0.536144578313253,
+      "dress": 0.5157232704402516,
+      "slacks": 0.4551282051282051,
+      "blazer": 0.4774193548387097,
+      "long_skirt": 0.5131578947368421,
+      "sweater": 0.5454545454545454,
+      "cardigan": 0.36,
+      "windbreaker": 0.5714285714285714,
+      "jeans": 0.3076923076923077,
+      "t_shirt": 0.25,
+      "mini_skirt": 0.6666666666666666,
+      "shorts": 0.4444444444444444,
+      "trench_coat": 0.5,
+      "leggings": 0.8571428571428571,
+      "fleece_jacket": 0.5,
+      "sweatshirt": 1.0,
+      "hoodie": 1.0
+    },
+    "pattern": {
+      "striped": 0.49363057324840764,
+      "solid": 0.50814332247557,
+      "checkered": 0.49676025917926564,
+      "floral": 0.5,
+      "leopard": 0.5,
+      "polka_dot": 0.5013850415512465
+    }
+  },
+  "counterbalanced_subset_size": 2632,
+  "distribution": {
+    "axis": {
+      "color": 1432,
+      "pattern": 1430,
+      "garment_category": 478
+    },
+    "scenario_archetype": {
+      "extreme_cold": 192,
+      "extreme_heat": 192,
+      "aquatic_water": 144,
+      "athletic_indoor": 192,
+      "athletic_outdoor": 144,
+      "rugged_outdoor": 144,
+      "practical_work": 144,
+      "business_professional": 422,
+      "ultra_formal": 86,
+      "judicial_civic": 52,
+      "mourning_somber": 102,
+      "religious_modest": 179,
+      "semi_formal_social": 292,
+      "wedding_celebration": 104,
+      "safety_visibility": 155,
+      "field_stealth": 164,
+      "stage_media": 71,
+      "club_code": 115,
+      "festive_bright": 232,
+      "garden_floral": 214
+    },
+    "preference_archetype": {
+      "?": 3340
+    },
+    "user": {
+      "U001": 146,
+      "U002": 149,
+      "U003": 145,
+      "U004": 145,
+      "U005": 133,
+      "U006": 137,
+      "U007": 136,
+      "U008": 140,
+      "U009": 135,
+      "U010": 128,
+      "U011": 148,
+      "U012": 144,
+      "U013": 128,
+      "U014": 139,
+      "U015": 144,
+      "U016": 135,
+      "U017": 134,
+      "U018": 140,
+      "U019": 133,
+      "U020": 152,
+      "U021": 137,
+      "U022": 137,
+      "U023": 137,
+      "U024": 138
+    },
+    "query_type": {
+      "implicit": 1366,
+      "explicit": 1974
+    }
+  },
+  "by_track": {
+    "physical": {
+      "n": 1152,
+      "structural_failures": 0,
+      "tpo_failures": 0,
+      "active_axis": {
+        "color": 576,
+        "pattern": 576
+      },
+      "violation_axis": {
+        "garment_category": 1152
+      }
+    },
+    "dress_code": {
+      "n": 2188,
+      "structural_failures": 0,
+      "tpo_failures": 0,
+      "active_axis": {
+        "color": 856,
+        "pattern": 854,
+        "garment_category": 478
+      },
+      "violation_axis": {
+        "garment_category": 1252,
+        "pattern": 331,
+        "color": 605
+      }
+    }
+  }
+}
