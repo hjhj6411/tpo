@@ -69,6 +69,32 @@ v9 — explicit/implicit sharpening (full 240-seed audit):
   (the weather IS the T/P context; without it the query is unanswerable).
   Kept as-is by design; treat this archetype's implicit split as
   weak-implicit in explicit-vs-implicit analyses.
+
+v10 — greenscreen compat fix (total 72 unchanged):
+- stage_greenscreen_shoot color compatible extended with brown/beige/
+  purple: chroma keying only forbids green/blue, so the 4-color list
+  was an over-narrow encoding of the same real-world rule (navy stays
+  excluded: blue-spill risk). Raises color-axis coverage from 13/24
+  users to near-full.
+- stage_backstage_crew and club_tennis_whites pin color to a single
+  value (show blacks / all-white rule), so their color/pattern axes
+  admit no preference A/B for any user and only garment-active plans
+  (a handful of users) exist. They were briefly removed for this, then
+  restored by decision: keep the scenarios, accept the sparse coverage
+  as a documented boundary.
+
+v11 — simple scenario curation:
+- Keep the generated profiles fixed; curate only the scenario catalog.
+- Rewrite the three aquatic scenarios as cover-up recommendations over
+  swimwear so the available garment vocabulary can represent the answer.
+- Make celebration_graduation's event-specific dark-neutral dress guidance
+  explicit and remove its unsupported white-clothing ban.
+- Treat floral as potentially appropriate in professional and golf attire
+  instead of forcing every floral garment onto the wrong side.
+- Exclude ambiguous severe-weather and casual-leisure scenarios, the
+  unsupported citizenship color/pattern rule, and five sparse boundary
+  scenarios. The active catalog now requires every user-scenario cell to
+  produce at least one evaluable item.
 """
 
 CULTURAL_FRAME = 'contemporary_western'
@@ -101,7 +127,60 @@ SCENARIO_ARCHETYPES = {'extreme_cold': 'Extreme Cold / Winter',
  'safety_visibility': 'Night Visibility / Road Safety',
  'field_stealth': 'Field Stealth / Wildlife & Camouflage',
  'stage_media': 'Stage & Media Production',
- 'club_code': 'Club / Institutional Athletic Code'}
+ 'club_code': 'Club / Institutional Athletic Code',
+ 'festive_bright': 'Festive / Bright-Color Dress Code',
+ 'garden_floral': 'Garden / Daytime Floral Social',
+ 'sports_spirit': 'Sports Fan / Team-Color Rule'}
+
+# ── Evaluation track (first-class Physical vs Dress-code split) ────────────
+# The two tracks are scored SEPARATELY end to end (§ redesign lever A):
+#   PHYSICAL   — constraints are physical (weather, water, exertion). Only the
+#                garment is situation-constrained, so a physical item tests one
+#                thing: "did the model recommend a situation-appropriate garment?"
+#   DRESS_CODE — constraints are normative (formality, safety, ritual, club
+#                rules). Garment AND color AND pattern can all carry the norm,
+#                so a dress-code item tests "did the model take in the rule
+#                and apply it across all three attributes?"
+# Archetype -> track is the source of truth (the researcher's intent about what
+# KIND of situation it is). It is cross-checked against the mechanical property
+# `_scenario_is_coded` (does the scenario constrain color/pattern?) so the label
+# can never silently drift from the catalog.
+TRACK_PHYSICAL = "physical"
+TRACK_DRESS_CODE = "dress_code"
+
+PHYSICAL_ARCHETYPES = frozenset({
+    "extreme_cold", "extreme_heat", "aquatic_water", "athletic_indoor",
+    "athletic_outdoor", "rugged_outdoor", "severe_weather", "casual_leisure",
+    "practical_work",
+})
+DRESS_CODE_ARCHETYPES = frozenset({
+    "business_professional", "ultra_formal", "judicial_civic", "mourning_somber",
+    "religious_modest", "semi_formal_social", "wedding_celebration",
+    "safety_visibility", "field_stealth", "stage_media", "club_code",
+    "festive_bright", "garden_floral", "sports_spirit",
+})
+
+
+def _scenario_is_coded(scenario):
+    """Mechanical property: does the scenario constrain color and/or pattern?
+    Physical scenarios constrain only garment; dress-code scenarios add a
+    color/pattern norm. Used to guard the archetype->track label from drift."""
+    for ax in ("color", "pattern"):
+        c = scenario.get(ax)
+        if c is not None and c.get("incompatible"):
+            return True
+    return False
+
+
+def scenario_track(scenario):
+    """Return the evaluation track for a scenario from its archetype."""
+    arch = scenario.get("archetype")
+    if arch in DRESS_CODE_ARCHETYPES:
+        return TRACK_DRESS_CODE
+    if arch in PHYSICAL_ARCHETYPES:
+        return TRACK_PHYSICAL
+    raise KeyError(f"archetype {arch!r} not assigned to a track")
+
 
 CANONICAL_SCENARIOS = [{'scenario_id': 'cold_blizzard_outdoor',
   'archetype': 'extreme_cold',
@@ -257,40 +336,47 @@ CANONICAL_SCENARIOS = [{'scenario_id': 'cold_blizzard_outdoor',
                                'Outfit?']}},
  {'scenario_id': 'water_swim_session',
   'archetype': 'aquatic_water',
-  'name': 'Pool Visit & Poolside Lounging',
+  'name': 'Pool Deck Cover-Up Over Swimwear',
   'tpo': {'place': {'venue': 'pool', 'indoor_outdoor': 'indoor'},
           'occasion': {'activity': 'exercise', 'formality_required': 'very_casual'}},
   'garment_category': {'compatible': ['t_shirt', 'tank_top', 'shorts'],
                        'incompatible': ['trench_coat', 'blazer', 'fleece_jacket', 'puffer_jacket',
                                         'leather_jacket', 'sweater', 'dress']},
-  'justification': 'A fleece/blazer/dress at the pool is absurd and waterlogged-dangerous.',
+  'justification': 'These options are evaluated as a pool-deck cover-up worn over swimwear; '
+                   'lightweight tops and shorts are practical, while heavy or structured '
+                   'garments are not.',
   'color': None,
   'pattern': None,
   'query_seeds': {'explicit': ['Heading to the pool for light water activities and lounging. What '
-                               'should I wear?',
+                               'cover-up should I wear over my swimwear?',
                                'Going to the pool for casual water exercise and time by the deck. '
-                               "What's the right outfit?"],
+                               "What should I wear over my swimwear?"],
                   'implicit': ['Starting regular pool visits this week. What should I bring to '
                                'wear over swimwear?',
-                               'Joined the local pool for morning water workouts. Outfit '
-                               'advice?']}},
+                               'Joined the local pool for morning water workouts. What cover-up '
+                               'should I wear over my swimwear?']}},
  {'scenario_id': 'water_park_day',
   'archetype': 'aquatic_water',
-  'name': 'Water Park Visit (Peak Summer)',
+  'name': 'Water Park Cover-Up (Peak Summer)',
   'tpo': {'time': {'season': 'summer', 'weather': 'hot_humid'},
           'place': {'indoor_outdoor': 'outdoor'},
           'occasion': {'activity': 'casual_outing', 'formality_required': 'very_casual'}},
   'garment_category': {'compatible': ['t_shirt', 'tank_top', 'shorts'],
                        'incompatible': ['trench_coat', 'blazer', 'fleece_jacket', 'puffer_jacket',
                                         'leather_jacket', 'sweater', 'dress']},
-  'justification': 'Coat/fleece/dress at a water park in summer heat is nonsensical and unsafe.',
+  'justification': 'These options are evaluated as a lightweight cover-up worn over swimwear '
+                   'between attractions; heavy or structured garments are impractical in the '
+                   'summer heat.',
   'color': None,
   'pattern': None,
-  'query_seeds': {'explicit': ['Taking the family to a water park in scorching heat. What should I '
-                               'wear?',
-                               'Spending the day going down water slides in the sun. Outfit?'],
-                  'implicit': ['Day out at the water park this weekend. What should I wear?',
-                               'Kids want to hit the aqua park tomorrow. Outfit advice?']}},
+  'query_seeds': {'explicit': ['Taking the family to a water park in scorching heat. What '
+                               'lightweight cover-up should I wear over my swimwear?',
+                               'Spending the day at the water slides. What should I wear over my '
+                               'swimwear between rides?'],
+                  'implicit': ['Day out at the water park this weekend. What cover-up should I '
+                               'wear over my swimwear?',
+                               'Kids want to hit the aqua park tomorrow. What should I wear over '
+                               'my swimwear between attractions?']}},
  {'scenario_id': 'water_poolside_lounge',
   'archetype': 'aquatic_water',
   'name': 'Resort Poolside Lounging',
@@ -300,15 +386,18 @@ CANONICAL_SCENARIOS = [{'scenario_id': 'cold_blizzard_outdoor',
   'garment_category': {'compatible': ['t_shirt', 'tank_top', 'shorts'],
                        'incompatible': ['trench_coat', 'blazer', 'fleece_jacket', 'puffer_jacket',
                                         'leather_jacket', 'sweater', 'dress']},
-  'justification': 'Heavy structured garments by a pool in summer heat are impractical and get '
-                   'soaked.',
+  'justification': 'These options are evaluated as a poolside cover-up over swimwear; lightweight '
+                   'tops and shorts suit the heat, while heavy structured garments do not.',
   'color': None,
   'pattern': None,
-  'query_seeds': {'explicit': ['Lounging poolside all afternoon in the heat, going in and out of '
-                               'the water. What should I wear?',
-                               'Spending a hot day by the pool with frequent dips. Outfit?'],
-                  'implicit': ['Relaxing by the hotel pool tomorrow afternoon. What should I wear?',
-                               'Booked a cabana by the pool for the day. Outfit advice?']}},
+  'query_seeds': {'explicit': ['Lounging poolside all afternoon in the heat. What cover-up should '
+                               'I wear over my swimwear?',
+                               'Spending a hot day by the pool. What should I wear over my '
+                               'swimwear while lounging?'],
+                  'implicit': ['Relaxing by the hotel pool tomorrow afternoon. What cover-up '
+                               'should I wear over my swimwear?',
+                               'Booked a cabana by the pool for the day. What should I wear over '
+                               'my swimwear?']}},
  {'scenario_id': 'gym_weight_training',
   'archetype': 'athletic_indoor',
   'name': 'Gym Weight Training',
@@ -746,7 +835,7 @@ CANONICAL_SCENARIOS = [{'scenario_id': 'cold_blizzard_outdoor',
                    'universally inappropriate.',
   'color': {'compatible': ['black', 'navy', 'gray', 'white', 'beige'],
             'incompatible': ['orange', 'yellow']},
-  'pattern': {'compatible': ['solid', 'striped', 'checkered'],
+  'pattern': {'compatible': ['solid', 'striped', 'checkered', 'floral'],
               'incompatible': ['leopard', 'polka_dot']},
   'query_seeds': {'explicit': ['I have a corporate board meeting today and the dress code is '
                                'strictly formal. What should I wear?',
@@ -768,7 +857,7 @@ CANONICAL_SCENARIOS = [{'scenario_id': 'cold_blizzard_outdoor',
                    'professional trust.',
   'color': {'compatible': ['black', 'navy', 'gray', 'white', 'beige'],
             'incompatible': ['orange', 'yellow']},
-  'pattern': {'compatible': ['solid', 'striped', 'checkered'],
+  'pattern': {'compatible': ['solid', 'striped', 'checkered', 'floral'],
               'incompatible': ['leopard', 'polka_dot']},
   'query_seeds': {'explicit': ['Pitching to venture capital investors today; formal business '
                                'attire is expected. What should I wear?',
@@ -790,7 +879,7 @@ CANONICAL_SCENARIOS = [{'scenario_id': 'cold_blizzard_outdoor',
                    'opportunity.',
   'color': {'compatible': ['black', 'navy', 'gray', 'white', 'beige'],
             'incompatible': ['orange', 'yellow']},
-  'pattern': {'compatible': ['solid', 'striped', 'checkered'],
+  'pattern': {'compatible': ['solid', 'striped', 'checkered', 'floral'],
               'incompatible': ['leopard', 'polka_dot']},
   'query_seeds': {'explicit': ['I have an in-person job interview at a corporate office tomorrow '
                                'and formal attire is expected. What should I wear?',
@@ -812,7 +901,7 @@ CANONICAL_SCENARIOS = [{'scenario_id': 'cold_blizzard_outdoor',
                    'professional failure.',
   'color': {'compatible': ['black', 'navy', 'gray', 'white', 'beige'],
             'incompatible': ['orange', 'yellow']},
-  'pattern': {'compatible': ['solid', 'striped', 'checkered'],
+  'pattern': {'compatible': ['solid', 'striped', 'checkered', 'floral'],
               'incompatible': ['leopard', 'polka_dot']},
   'query_seeds': {'explicit': ['Business dinner with an important client tonight; professional '
                                'attire expected. What should I wear?',
@@ -1335,16 +1424,19 @@ CANONICAL_SCENARIOS = [{'scenario_id': 'cold_blizzard_outdoor',
           'occasion': {'activity': 'ceremony_attendance', 'formality_required': 'smart_casual'}},
   'garment_category': {'compatible': ['blazer', 'dress', 'formal_shirt', 'long_skirt'],
                        'incompatible': ['hoodie', 'shorts', 'tank_top', 't_shirt']},
-  'justification': 'A graduation ceremony expects smart guest attire; hoodies/shorts and loud '
-                   'animal prints are out of place.',
+  'justification': 'The university guest guidance requests smart attire in dark neutral colors '
+                   'and understated patterns; casual garments, bright colors, and loud prints '
+                   'violate that stated guidance.',
   'color': {'compatible': ['black', 'navy', 'gray'],
-            'incompatible': ['white']},
+            'incompatible': ['orange', 'yellow', 'pink', 'red']},
   'pattern': {'compatible': ['solid', 'striped'],
               'incompatible': ['leopard', 'floral']},
-  'query_seeds': {'explicit': ["Attending my sister's university graduation ceremony; smart "
-                               'attire expected. What should I wear?',
-                               'Going to a commencement ceremony at the big auditorium; neat, '
-                               'respectful attire expected. What should I wear?'],
+  'query_seeds': {'explicit': ["Attending my sister's university graduation ceremony; the guest "
+                               'guidance requests smart attire in dark neutral colors and '
+                               'understated patterns. What should I wear?',
+                               'Going to a commencement ceremony where guests are asked to wear '
+                               'dark neutral colors, understated patterns, and smart attire. What '
+                               'should I wear?'],
                   'implicit': ["My best friend graduates next week and I'll be in the audience. "
                                'Outfit advice?',
                                'Watching the commencement at the university hall this Friday. '
@@ -1514,7 +1606,7 @@ CANONICAL_SCENARIOS = [{'scenario_id': 'cold_blizzard_outdoor',
   'justification': 'The studio keys on both green and blue stages, so clothing in either chroma '
                    'color is removed in compositing; fine repeating patterns cause moire flicker '
                    'on camera, and shiny, flappy outerwear disrupts the keying.',
-  'color': {'compatible': ['red', 'pink', 'black', 'gray'],
+  'color': {'compatible': ['red', 'pink', 'black', 'gray', 'brown', 'beige', 'purple'],
             'incompatible': ['green', 'blue']},
   'pattern': {'compatible': ['solid'],
               'incompatible': ['striped', 'checkered', 'polka_dot']},
@@ -1604,7 +1696,7 @@ CANONICAL_SCENARIOS = [{'scenario_id': 'cold_blizzard_outdoor',
   'justification': 'Traditional country clubs require collared shirts and tailored bottoms on '
                    'the course; denim, athletic streetwear, and loud prints violate the code.',
   'color': None,
-  'pattern': {'compatible': ['solid', 'striped', 'checkered'],
+  'pattern': {'compatible': ['solid', 'striped', 'checkered', 'floral'],
               'incompatible': ['leopard', 'polka_dot']},
   'query_seeds': {'explicit': ['Playing a round at a traditional country club; collared shirts '
                                'required and no denim. What should I wear?',
@@ -1613,7 +1705,286 @@ CANONICAL_SCENARIOS = [{'scenario_id': 'cold_blizzard_outdoor',
                   'implicit': ['Tee time at the old country club tomorrow morning. What should '
                                'I wear?',
                                'First round of golf at a private club with a friend. Outfit '
-                               'advice?']}}]
+                               'advice?']}},
+ # ── festive_bright: color-diversity engine ────────────────────────────────
+ # Explicit "wear bright colors" dress code -> vivid LIKED colors
+ # (red/green/purple) are the appropriate A/B; dark neutrals are the TPO
+ # violation. Unlike safety_visibility (whose brights are all RESERVE and thus
+ # never a preference), this hosts genuine color PREFERENCE pairs and also puts
+ # bright colors on the correct side (breaks the "bright = wrong" shortcut).
+ # Pattern is unconstrained (a festive party has no pattern rule), so pattern
+ # preference stays diverse. Explicit-forced (see EXPLICIT_ONLY_SCENARIOS).
+ {'scenario_id': 'festive_holiday_party',
+  'archetype': 'festive_bright',
+  'name': 'Year-End Festive Colorful Party',
+  'tpo': {'time': {'season': 'winter', 'time_of_day': 'evening'},
+          'place': {'venue': 'party_hall', 'indoor_outdoor': 'indoor'},
+          'occasion': {'activity': 'celebration', 'formality_required': 'semi_formal'}},
+  'garment_category': {'compatible': ['dress', 'blazer', 'formal_shirt', 'long_skirt', 'mini_skirt'],
+                       'incompatible': ['hoodie', 'sweatshirt', 'tank_top', 'shorts']},
+  'justification': 'The invitation sets an explicit bright, festive color code, so dark muted '
+                   'outfits read as off-theme; sloppy casual wear is under-dressed for the party.',
+  'color': {'compatible': ['red', 'green', 'purple', 'orange', 'yellow'],
+            'incompatible': ['black', 'navy', 'gray']},
+  'pattern': None,
+  'query_seeds': {'explicit': ['I have a year-end holiday party tonight and the invitation says to '
+                               'wear bright, festive colors. What should I wear?',
+                               "Our office holiday party has a 'wear something colorful and "
+                               "festive' dress code this evening. What should I put on?"],
+                  'implicit': ['Heading to a big year-end holiday party tonight. Any outfit ideas?',
+                               'Got a festive holiday get-together this evening. What should I '
+                               'wear?']}},
+ {'scenario_id': 'festive_bright_theme_party',
+  'archetype': 'festive_bright',
+  'name': 'Bright-Colors Theme Party',
+  'tpo': {'time': {'time_of_day': 'evening'},
+          'place': {'venue': 'party_hall', 'indoor_outdoor': 'indoor'},
+          'occasion': {'activity': 'celebration', 'formality_required': 'semi_formal'}},
+  'garment_category': {'compatible': ['dress', 'blazer', 'formal_shirt', 'long_skirt', 'mini_skirt'],
+                       'incompatible': ['hoodie', 'sweatshirt', 'tank_top', 'shorts']},
+  'justification': 'The party sets an explicit vivid-color theme and asks guests to avoid dark '
+                   'outfits; very casual gym wear is under-dressed for the celebration.',
+  'color': {'compatible': ['red', 'green', 'purple', 'orange', 'yellow'],
+            'incompatible': ['black', 'navy', 'gray']},
+  'pattern': None,
+  'query_seeds': {'explicit': ["It's a friend's milestone birthday bash and the dress code is "
+                               "'bright colors only.' What should I wear?",
+                               'The party invite says to come in vivid, colorful outfits — nothing '
+                               'dark. What should I wear?'],
+                  'implicit': ['Going to a lively birthday celebration this weekend. Outfit '
+                               'advice?',
+                               "A friend's throwing a big colorful party. What should I wear?"]}},
+ {'scenario_id': 'festive_street_fiesta',
+  'archetype': 'festive_bright',
+  'name': 'Summer Street Fiesta',
+  'tpo': {'time': {'season': 'summer', 'time_of_day': 'evening'},
+          'place': {'venue': 'street', 'indoor_outdoor': 'outdoor'},
+          'occasion': {'activity': 'celebration', 'formality_required': 'casual'}},
+  'garment_category': {'compatible': ['dress', 'formal_shirt', 'long_skirt', 'mini_skirt', 'jeans'],
+                       'incompatible': ['hoodie', 'sweatshirt', 'puffer_jacket', 'fleece_jacket']},
+  'justification': 'The fiesta explicitly calls for bright, vibrant clothing, so dark muted colors '
+                   'are off-theme; heavy winter layers are wrong for a summer outdoor celebration.',
+  'color': {'compatible': ['red', 'green', 'purple', 'orange', 'yellow'],
+            'incompatible': ['black', 'navy', 'gray']},
+  'pattern': None,
+  'query_seeds': {'explicit': ["There's a summer street fiesta tonight and everyone's asked to "
+                               'wear bright, vibrant colors. What should I wear?',
+                               'The carnival social this evening calls for colorful, festive '
+                               'clothing. What should I put on?'],
+                  'implicit': ['Heading to a summer street festival tonight. What should I wear?',
+                               'Going to a lively neighborhood fiesta this evening. Outfit '
+                               'ideas?']}},
+ # ── garden_floral: pattern-diversity engine ───────────────────────────────
+ # Explicit "florals / light patterns" daytime dress code -> floral, polka_dot
+ # and checkered become the appropriate A/B (breaking the solid-vs-striped
+ # monopoly the formal cluster forces), and a loud animal print is the pattern
+ # TPO violation. Color is unconstrained (no color rule), so color preference
+ # stays diverse. Explicit-forced (see EXPLICIT_ONLY_SCENARIOS).
+ {'scenario_id': 'garden_spring_party',
+  'archetype': 'garden_floral',
+  'name': 'Spring Garden Party (Daytime)',
+  'tpo': {'time': {'season': 'spring', 'time_of_day': 'afternoon'},
+          'place': {'venue': 'garden', 'indoor_outdoor': 'outdoor'},
+          'occasion': {'activity': 'social', 'formality_required': 'semi_formal'}},
+  'garment_category': {'compatible': ['dress', 'blazer', 'formal_shirt', 'long_skirt', 'cardigan'],
+                       'incompatible': ['hoodie', 'sweatshirt', 'tank_top', 'shorts']},
+  'justification': 'The garden party explicitly encourages soft florals and light patterns; a bold '
+                   'animal print reads as too aggressive for the setting, and gym wear is '
+                   'under-dressed for a daytime social.',
+  'color': None,
+  'pattern': {'compatible': ['solid', 'striped', 'floral', 'polka_dot', 'checkered'],
+              'incompatible': ['leopard']},
+  'query_seeds': {'explicit': ["I'm invited to a spring garden party this afternoon; the dress "
+                               'code is light and floral. What should I wear?',
+                               'Afternoon garden party this weekend — they asked for florals and '
+                               'soft spring patterns, nothing too loud. What should I wear?'],
+                  'implicit': ['Going to an outdoor garden party this spring afternoon. Outfit '
+                               'advice?',
+                               'I have a daytime garden gathering coming up. What should I wear?']}},
+ {'scenario_id': 'garden_afternoon_tea',
+  'archetype': 'garden_floral',
+  'name': 'Garden Afternoon Tea',
+  'tpo': {'time': {'season': 'spring', 'time_of_day': 'afternoon'},
+          'place': {'venue': 'garden', 'indoor_outdoor': 'outdoor'},
+          'occasion': {'activity': 'social', 'formality_required': 'semi_formal'}},
+  'garment_category': {'compatible': ['dress', 'blazer', 'formal_shirt', 'long_skirt', 'cardigan'],
+                       'incompatible': ['hoodie', 'sweatshirt', 'tank_top', 'shorts']},
+  'justification': 'Afternoon tea in a garden explicitly encourages soft, floral daywear; a loud '
+                   'animal print is too aggressive for the genteel setting and gym wear is '
+                   'under-dressed.',
+  'color': None,
+  'pattern': {'compatible': ['solid', 'striped', 'floral', 'polka_dot', 'checkered'],
+              'incompatible': ['leopard']},
+  'query_seeds': {'explicit': ["I'm going to a garden afternoon tea and the invite suggests "
+                               'florals and light patterns. What should I wear?',
+                               'Afternoon tea in the garden this weekend — soft, floral daywear is '
+                               'encouraged. What should I wear?'],
+                  'implicit': ['Invited to an afternoon tea in a garden this weekend. What should '
+                               'I wear?',
+                               'Going to a daytime tea party outdoors. Outfit ideas?']}},
+ {'scenario_id': 'garden_bridal_shower',
+  'archetype': 'garden_floral',
+  'name': 'Garden Bridal Shower (Daytime)',
+  'tpo': {'time': {'season': 'spring', 'time_of_day': 'afternoon'},
+          'place': {'venue': 'garden', 'indoor_outdoor': 'outdoor'},
+          'occasion': {'activity': 'social', 'formality_required': 'semi_formal'}},
+  'garment_category': {'compatible': ['dress', 'blazer', 'formal_shirt', 'long_skirt', 'cardigan'],
+                       'incompatible': ['hoodie', 'sweatshirt', 'tank_top', 'shorts']},
+  'justification': 'A daytime garden bridal shower explicitly sets a light-floral theme; a bold '
+                   'animal print clashes with the soft setting and very casual gym wear is '
+                   'under-dressed.',
+  'color': None,
+  'pattern': {'compatible': ['solid', 'striped', 'floral', 'polka_dot', 'checkered'],
+              'incompatible': ['leopard']},
+  'query_seeds': {'explicit': ["I'm attending a garden bridal shower this afternoon; the theme is "
+                               'light florals. What should I wear?',
+                               'Bridal shower in a garden this weekend — florals and soft daytime '
+                               'looks encouraged. What should I wear?'],
+                  'implicit': ["Going to a friend's bridal shower in a garden. What should I "
+                               'wear?',
+                               'I have a daytime bridal shower coming up outdoors. Outfit '
+                               'advice?']}},
+ # ── sports_spirit: casual-garment engine + team/rival color rule ──────────
+ # The query names the team color (correct) and rival color (TPO violation),
+ # so color is the VIOLATION axis and the A/B preference rides on the CASUAL
+ # garment (t-shirt/hoodie/jeans/…) — the non-anchor garment pairs the formal
+ # cluster cannot supply. Pattern is pinned to solid (fixed_background): a fan
+ # shirt is plain, and sports must not manufacture more solid/striped pattern
+ # items. Explicit-forced (colors named in query).
+ #
+ # Team & rival colors are BOTH hard-RESERVE colors (orange/yellow/white),
+ # which are preference-neutral for every user (R2 keeps RESERVE out of all
+ # tastes): this keeps the color violation confound-free (approach (a),
+ # measurement purity) AND gives full coverage — no user skips on color.
+ # It also puts bright colors on the CORRECT side (the team color), directly
+ # countering the "bright = wrong" shortcut (§4). The only remaining coverage
+ # limit is garment feasibility (a user needs a liked AND a disliked garment
+ # among the casual set), so these stay in BOUNDARY_SCENARIOS. The broad casual
+ # garment set below (what fans actually wear in the stands, incl. cold-weather
+ # outerwear) lifts that to ~21/24 users.
+ {'scenario_id': 'sports_home_game',
+  'archetype': 'sports_spirit',
+  'name': 'Home-Team Game (Fan Section)',
+  'tpo': {'time': {'time_of_day': 'evening'},
+          'place': {'venue': 'stadium', 'indoor_outdoor': 'outdoor'},
+          'occasion': {'activity': 'spectating', 'formality_required': 'very_casual'}},
+  'garment_category': {'compatible': ['t_shirt', 'tank_top', 'sweatshirt', 'hoodie', 'sweater',
+                                      'cardigan', 'jeans', 'shorts', 'leggings', 'windbreaker',
+                                      'leather_jacket', 'puffer_jacket', 'mini_skirt'],
+                       'incompatible': ['blazer', 'dress', 'slacks', 'trench_coat',
+                                        'formal_shirt', 'long_skirt']},
+  'justification': 'The query names the home color (correct) and the rival color to avoid, so the '
+                   'wrong color violates the stated rule; formal wear is absurdly over-dressed for '
+                   'a stadium fan section.',
+  'color': {'compatible': ['orange'], 'incompatible': ['white']},
+  'pattern': None,
+  'fixed_background': {'pattern': 'solid'},
+  'query_seeds': {'explicit': ["I'm going to cheer for the home team tonight — our color is orange "
+                               'and the visiting side wears white. What should I wear?',
+                               'Heading to the stadium to support the home side (we wear orange); '
+                               'the away team is in white. What should I put on?'],
+                  'implicit': ["I'm going to cheer for the home team tonight — our color is orange "
+                               'and the visiting side wears white. What should I wear?']}},
+ {'scenario_id': 'sports_derby_match',
+  'archetype': 'sports_spirit',
+  'name': 'Local Derby Match (Fan Section)',
+  'tpo': {'time': {'time_of_day': 'afternoon'},
+          'place': {'venue': 'stadium', 'indoor_outdoor': 'outdoor'},
+          'occasion': {'activity': 'spectating', 'formality_required': 'very_casual'}},
+  'garment_category': {'compatible': ['t_shirt', 'tank_top', 'sweatshirt', 'hoodie', 'sweater',
+                                      'cardigan', 'jeans', 'shorts', 'leggings', 'windbreaker',
+                                      'leather_jacket', 'puffer_jacket', 'mini_skirt'],
+                       'incompatible': ['blazer', 'dress', 'slacks', 'trench_coat',
+                                        'formal_shirt', 'long_skirt']},
+  'justification': 'The query names our color (correct) and the rival color to avoid, so the wrong '
+                   'color violates the stated rule; formal wear is over-dressed for a derby fan '
+                   'section.',
+  'color': {'compatible': ['yellow'], 'incompatible': ['orange']},
+  'pattern': None,
+  'fixed_background': {'pattern': 'solid'},
+  'query_seeds': {'explicit': ["I'm off to the local derby to back our side — we're in yellow and "
+                               'the rivals wear orange. What should I wear?',
+                               'Going to the derby match in the supporters section; our color is '
+                               'yellow, the other team is orange. What should I put on?'],
+                  'implicit': ["I'm off to the local derby to back our side — we're in yellow and "
+                               'the rivals wear orange. What should I wear?']}},
+ {'scenario_id': 'sports_school_rivalry',
+  'archetype': 'sports_spirit',
+  'name': 'School Rivalry Game (Student Section)',
+  'tpo': {'time': {'time_of_day': 'afternoon'},
+          'place': {'venue': 'stadium', 'indoor_outdoor': 'outdoor'},
+          'occasion': {'activity': 'spectating', 'formality_required': 'very_casual'}},
+  'garment_category': {'compatible': ['t_shirt', 'tank_top', 'sweatshirt', 'hoodie', 'sweater',
+                                      'cardigan', 'jeans', 'shorts', 'leggings', 'windbreaker',
+                                      'leather_jacket', 'puffer_jacket', 'mini_skirt'],
+                       'incompatible': ['blazer', 'dress', 'slacks', 'trench_coat',
+                                        'formal_shirt', 'long_skirt']},
+  'justification': 'The query names our school color (correct) and the rival school color to '
+                   'avoid, so the wrong color violates the stated rule; formal wear is '
+                   'over-dressed for a student cheering section.',
+  'color': {'compatible': ['white'], 'incompatible': ['yellow']},
+  'pattern': None,
+  'fixed_background': {'pattern': 'solid'},
+  'query_seeds': {'explicit': ["I'm heading to the school rivalry game in the student section — "
+                               'our school color is white and the rival school wears yellow. What '
+                               'should I wear?',
+                               'Going to cheer at the big rivalry game; our side is white, theirs '
+                               'is yellow. What should I put on?'],
+                  'implicit': ["I'm heading to the school rivalry game in the student section — "
+                               'our school color is white and the rival school wears yellow. What '
+                               'should I wear?']}}]
+
+
+# ── Stamp `track` onto every scenario + guard against drift ───────────────
+# Each scenario carries its own `track` so queries/plans can inherit it without
+# re-deriving. The assertion ties the archetype label to the mechanical
+# color/pattern constraint: if a physical scenario ever gains a color norm (or a
+# dress-code scenario loses its only one), generation fails loudly here.
+for _sc in CANONICAL_SCENARIOS:
+    _sc["track"] = scenario_track(_sc)
+    _coded = _scenario_is_coded(_sc)
+    _expected = TRACK_DRESS_CODE if _coded else TRACK_PHYSICAL
+    assert _sc["track"] == _expected, (
+        f"track drift: {_sc['scenario_id']} is labeled {_sc['track']} "
+        f"(archetype {_sc['archetype']}) but color/pattern-coded={_coded}"
+    )
+del _sc
+
+# ── Curated exclusions ─────────────────────────────────────────────────────
+# Profiles stay tied to the 73-scenario catalog on which their fixed seed-42
+# assignment was built. Evaluation uses the smaller curated subset below.
+PROFILE_TRIM_SCENARIOS = {
+    "formal_national_award", "formal_state_banquet",        # keep gala + opera
+    "civic_supreme_argument", "civic_govt_hearing",
+    "mourn_vigil", "mourn_condolence_visit",                # keep funeral + memorial
+    "wedding_garden_ceremony", "wedding_anniversary_party",
+}
+PROFILE_GENERATION_SCENARIOS = [
+    s for s in CANONICAL_SCENARIOS
+    if s["scenario_id"] not in PROFILE_TRIM_SCENARIOS
+]
+
+EVALUATION_EXCLUDED_SCENARIOS = {
+    # Rules are ambiguous or not represented by the current attributes.
+    "civic_citizenship_oath",
+    "weather_typhoon", "weather_hailstorm", "weather_dust_storm",
+    "weather_freezing_rain",
+    "casual_park_picnic", "casual_farmers_market",
+    "casual_amusement_park", "casual_zoo_day",
+
+    # Too few users produce an evaluable 2x2 item.
+    "stage_backstage_crew", "club_tennis_whites",
+    "sports_home_game", "sports_derby_match", "sports_school_rivalry",
+}
+TRIM_SCENARIOS = PROFILE_TRIM_SCENARIOS | EVALUATION_EXCLUDED_SCENARIOS
+if TRIM_SCENARIOS:
+    CANONICAL_SCENARIOS = [s for s in CANONICAL_SCENARIOS
+                           if s["scenario_id"] not in TRIM_SCENARIOS]
+
+assert PHYSICAL_ARCHETYPES.isdisjoint(DRESS_CODE_ARCHETYPES)
+assert set(SCENARIO_ARCHETYPES) == (PHYSICAL_ARCHETYPES | DRESS_CODE_ARCHETYPES), (
+    "every archetype must be assigned to exactly one evaluation track"
+)
 
 
 def get_constrained_axes(scenario):
@@ -1623,6 +1994,13 @@ def get_constrained_axes(scenario):
         if c is not None and c.get("incompatible"):
             axes.append(ax)
     return axes
+
+
+def scenarios_by_track():
+    out = {TRACK_PHYSICAL: [], TRACK_DRESS_CODE: []}
+    for sc in CANONICAL_SCENARIOS:
+        out[sc["track"]].append(sc)
+    return out
 
 
 def get_scenario_by_id(sid):
@@ -1652,9 +2030,10 @@ def count_axis_slots():
 if __name__ == "__main__":
     from collections import Counter
     print(f"Scenarios: {len(CANONICAL_SCENARIOS)}")
-    print(f"Archetypes: {len(SCENARIO_ARCHETYPES)}")
     by_arch = Counter(s["archetype"] for s in CANONICAL_SCENARIOS)
+    print(f"Active archetypes: {len(by_arch)}")
     for arch in SCENARIO_ARCHETYPES:
-        print(f"  {arch:24s}: {by_arch.get(arch, 0)} scenarios")
+        if by_arch[arch]:
+            print(f"  {arch:24s}: {by_arch[arch]} scenarios")
     total, by_axis = count_axis_slots()
     print(f"Explicitly-constrained axis slots/user: {total} {by_axis}")

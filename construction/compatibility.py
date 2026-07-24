@@ -95,8 +95,9 @@ def _violation_axis_options(profile, scenario, active_axis):
     sides (compatible for A/B, incompatible for C/D).
     """
     options = {}
+    fixed_bg = scenario.get("fixed_background") or {}
     for axis in ("color", "pattern"):
-        if axis == active_axis:
+        if axis == active_axis or axis in fixed_bg:
             continue
         constraint = scenario.get(axis)
         if constraint is None or not constraint.get("incompatible"):
@@ -112,7 +113,56 @@ def _violation_axis_options(profile, scenario, active_axis):
     return options
 
 
+def is_coded_scenario(scenario):
+    """Dress-code (coded) scenario: constrains color and/or pattern.
+    Only these can host garment as the ACTIVE (preference) axis, because the
+    TPO violation must then rotate to a constrained value axis."""
+    for ax in ("color", "pattern"):
+        c = scenario.get(ax)
+        if c is not None and c.get("incompatible"):
+            return True
+    return False
+
+
+def _check_garment_axis_compatibility(profile, scenario):
+    """Garment as ACTIVE axis (coded scenarios only).
+
+    A/C carry a LIKED scenario-compatible garment, B/D a DISLIKED one; the
+    TPO violation is forced onto a constrained color/pattern axis, so
+    feasibility = liked∩compatible ≥1 AND disliked∩compatible ≥1 AND at
+    least one value axis offers preference-neutral values on both sides.
+    """
+    garment_constraint = scenario.get("garment_category")
+    if garment_constraint is None or not garment_constraint.get("compatible"):
+        return {"compatible": False, "reason": "garment_constraint_missing"}
+    if not is_coded_scenario(scenario):
+        return {"compatible": False, "reason": "not_coded_scenario"}
+
+    likes, dislikes = _profile_prefs(profile, "garment_category")
+    comp = garment_constraint["compatible"]
+    liked_compatible = sorted(likes & set(comp))
+    disliked_compatible = sorted(dislikes & set(comp))
+    neutral_compatible = _neutral_values(comp, likes, dislikes)
+    incompatible_garments = _neutral_values(
+        garment_constraint.get("incompatible", []), likes, dislikes)
+    violation_options = _violation_axis_options(profile, scenario, "garment_category")
+
+    return {
+        "compatible": bool(liked_compatible and disliked_compatible
+                           and violation_options),
+        "axis_tpo_constrained": True,
+        "liked_compatible": liked_compatible,
+        "disliked_compatible": disliked_compatible,
+        "neutral_compatible": neutral_compatible,
+        "compatible_garments": neutral_compatible,
+        "incompatible_garments": incompatible_garments,
+        "violation_options": violation_options,
+    }
+
+
 def check_axis_compatibility(profile, scenario, axis):
+    if axis == "garment_category":
+        return _check_garment_axis_compatibility(profile, scenario)
     if axis not in ALLOWED_ACTIVE_AXES:
         return {"compatible": False, "reason": "axis_not_supported"}
 
@@ -177,8 +227,15 @@ def build_compatibility_matrix(profiles, scenarios=None):
                 continue
 
             matrix[uid][sid] = {}
-            # RELAXED: every garment-constrained scenario can host color & pattern
-            for axis in ("color", "pattern"):
+            # RELAXED: every garment-constrained scenario can host color & pattern;
+            # coded scenarios additionally host garment as the active axis.
+            # fixed_background axes are pinned to a constant value (e.g. sports
+            # jerseys are always solid), so they are neither active nor violation.
+            fixed_bg = sc.get("fixed_background") or {}
+            axes = [a for a in ("color", "pattern") if a not in fixed_bg]
+            if is_coded_scenario(sc):
+                axes.append("garment_category")
+            for axis in axes:
                 result = check_axis_compatibility(profile, sc, axis)
                 matrix[uid][sid][axis] = result
 

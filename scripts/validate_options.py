@@ -2,30 +2,45 @@
 """
 validate_options.py — Construction validity & confound audit for POD-Bench v2 (clean 2x2).
 
-Drop into  tpo/scripts/  and run from the repo root:
+Paths default to the POD_VARIANT-aware data root (configs.config), so run it the
+same way you run the generators:
 
-    python -m scripts.validate_options
-    # or
+    POD_VARIANT=wacv_scenario_v1 python -m scripts.validate_options
+    # or override every path explicitly
     python scripts/validate_options.py \
-        --profiles data/profiles/profiles.jsonl \
-        --queries  data/queries/queries.jsonl \
-        --plans    data/options/option_plans.jsonl \
-        --out      data/options/validation_report.json
+        --profiles data_wacv_scenario_v1/profiles/profiles.jsonl \
+        --queries  data_wacv_scenario_v1/queries/queries.jsonl \
+        --plans    data_wacv_scenario_v1/options/option_plans.jsonl \
+        --out      data_wacv_scenario_v1/options/validation_report.json
+
+AXIS ROLES (generalized 2x2)
+----------------------------
+Each plan names two distinct axes; the remaining third axis is held fixed.
+  active_axis     — carries PREFERENCE (A/C take the liked value, B/D do not)
+  violation_axis  — carries TPO        (A/B take the compatible value, C/D do not)
+  fixed axis      — constant across all four options, preference-neutral
+Both roles may be any of color / pattern / garment_category. In particular
+garment may be the active axis (dress-code garment preference) and color or
+pattern may be the violation axis (dress-code color/pattern norms); an earlier
+version of this script assumed violation==garment and active in {color,pattern}
+and therefore reported those plans as failures.
 
 WHAT IT CHECKS
 --------------
 Per instance:
   [S] Structural 2x2 integrity
         labels A/B/C/D == tpo_and_preference/tpo_only/preference_only/neither
+        active_axis != violation_axis, both in the canonical axis set
         A.active == C.active (liked), B.active == D.active (non-preferred), A.active != B.active
-        A.garment == B.garment (TPO-compat), C.garment == D.garment (TPO-incompat), A.g != C.g
-        non-active axis (color<->pattern) identical across all four
+        A.violation == B.violation (TPO-compat), C.violation == D.violation (incompat), A != C
+        the fixed axis is identical across all four
+        violation_value / tpo_compatible_value agree with the options
   [P] Preference correctness (needs profile)
         A.active in user likes; B.active NOT in user likes
-        every garment is preference-neutral (not in likes, not in dislikes)
-        fixed non-active value is preference-neutral
+        every violation-axis value is preference-neutral (not in likes, not in dislikes)
+        fixed-axis value is preference-neutral
   [T] TPO correctness vs scenario compatible/incompatible sets (needs configs.scenarios)
-        A/B garment in scenario compatible; C/D garment in scenario incompatible
+        A/B violation value in scenario compatible; C/D in scenario incompatible
         A/B active value not in scenario incompatible; fixed value not in scenario incompatible
   [U] Uniqueness: the four attribute tuples are distinct
 
@@ -41,6 +56,7 @@ Dataset-level confound diagnostics (explains the WITHOUT-profile strict > 50%):
 
 import argparse
 import json
+import os
 import sys
 from collections import Counter, defaultdict
 from pathlib import Path
@@ -56,8 +72,26 @@ except Exception as e:  # pragma: no cover
     def get_scenario_by_id(_sid):  # type: ignore
         return None
 
+try:
+    from configs.config import PROFILES_DIR, QUERIES_DIR, OPTIONS_DIR
+except Exception as e:  # pragma: no cover
+    print(f"  [warn] could not import configs.config ({e}); falling back to ./data")
+    PROFILES_DIR = Path("data/profiles")
+    QUERIES_DIR = Path("data/queries")
+    OPTIONS_DIR = Path("data/options")
+
 LABELS = {"A": "tpo_and_preference", "B": "tpo_only",
           "C": "preference_only", "D": "neither"}
+
+AXES = ("color", "pattern", "garment_category")
+
+
+def axis_roles(plan):
+    """(active, violation, fixed) for a plan, or None if the pair is unusable."""
+    act, vio = plan.get("active_axis"), plan.get("violation_axis")
+    if act not in AXES or vio not in AXES or act == vio:
+        return None
+    return act, vio, next(a for a in AXES if a not in (act, vio))
 
 
 def load_jsonl(path):
@@ -84,7 +118,6 @@ def prefs(profile, axis):
 
 def check_structure_and_pref(plan, profile):
     errs = []
-    axis = plan.get("active_axis")
     opts = plan.get("options", {})
 
     if set(opts.keys()) != {"A", "B", "C", "D"}:
@@ -92,53 +125,62 @@ def check_structure_and_pref(plan, profile):
     for k in "ABCD":
         if opts[k].get("label") != LABELS[k]:
             errs.append(f"label_{k}={opts[k].get('label')}")
-    if axis not in ("color", "pattern"):
-        errs.append(f"active_axis_not_allowed={axis}")
+
+    roles = axis_roles(plan)
+    if roles is None:
+        errs.append(f"bad_axis_roles=active:{plan.get('active_axis')}"
+                    f"/violation:{plan.get('violation_axis')}")
         return errs, None
+    axis, vaxis, faxis = roles
 
-    A, B, C, D = (opts[k]["attributes"] for k in "ABCD")
-    aA, aB, aC, aD = (x.get(axis) for x in (A, B, C, D))
-    gA, gB, gC, gD = (x.get("garment_category") for x in (A, B, C, D))
+    attrs = {k: opts[k]["attributes"] for k in "ABCD"}
+    a = {k: attrs[k].get(axis) for k in "ABCD"}     # preference axis
+    v = {k: attrs[k].get(vaxis) for k in "ABCD"}    # TPO axis
 
-    # structural 2x2
-    if aA != aC: errs.append("A.active!=C.active")
-    if aB != aD: errs.append("B.active!=D.active")
-    if aA == aB: errs.append("A.active==B.active(degenerate)")
-    if gA != gB: errs.append("A.garment!=B.garment")
-    if gC != gD: errs.append("C.garment!=D.garment")
-    if gA == gC: errs.append("A.garment==C.garment(degenerate)")
+    # structural 2x2 — preference axis pairs A/C and B/D, TPO axis pairs A/B and C/D
+    if a["A"] != a["C"]: errs.append("A.active!=C.active")
+    if a["B"] != a["D"]: errs.append("B.active!=D.active")
+    if a["A"] == a["B"]: errs.append("A.active==B.active(degenerate)")
+    if v["A"] != v["B"]: errs.append("A.violation!=B.violation")
+    if v["C"] != v["D"]: errs.append("C.violation!=D.violation")
+    if v["A"] == v["C"]: errs.append("A.violation==C.violation(degenerate)")
 
-    other = "pattern" if axis == "color" else "color"
-    ovals = {x.get(other) for x in (A, B, C, D)}
-    if len(ovals) > 1:
-        errs.append(f"fixed_{other}_not_constant:{sorted(map(str, ovals))}")
-    oval = next(iter(ovals)) if ovals else None
+    fvals = {attrs[k].get(faxis) for k in "ABCD"}
+    if len(fvals) > 1:
+        errs.append(f"fixed_{faxis}_not_constant:{sorted(map(str, fvals))}")
+    fval = next(iter(fvals)) if fvals else None
+
+    # declared summary fields must agree with the options they summarize
+    if plan.get("tpo_compatible_value") not in (None, v["A"]):
+        errs.append("tpo_compatible_value_mismatch")
+    if plan.get("violation_value") not in (None, v["C"]):
+        errs.append("violation_value_mismatch")
 
     # preference correctness
     if profile is not None:
-        likes, dislikes = prefs(profile, axis)
-        if aA not in likes:
-            errs.append(f"A.active({aA})_not_in_likes")
-        if aB in likes:
-            errs.append(f"B.active({aB})_in_likes")
+        likes, _ = prefs(profile, axis)
+        if a["A"] not in likes:
+            errs.append(f"A.active({a['A']})_not_in_likes")
+        if a["B"] in likes:
+            errs.append(f"B.active({a['B']})_in_likes")
 
-        glikes, gdis = prefs(profile, "garment_category")
-        for k, g in zip("ABCD", (gA, gB, gC, gD)):
-            if g in glikes or g in gdis:
-                errs.append(f"{k}.garment({g})_not_neutral")
+        vlikes, vdis = prefs(profile, vaxis)
+        for k in "ABCD":
+            if v[k] in vlikes or v[k] in vdis:
+                errs.append(f"{k}.violation({v[k]})_not_neutral")
 
-        olikes, odis = prefs(profile, other)
-        if oval is not None and (oval in olikes or oval in odis):
-            errs.append(f"fixed_{other}({oval})_not_neutral")
+        flikes, fdis = prefs(profile, faxis)
+        if fval is not None and (fval in flikes or fval in fdis):
+            errs.append(f"fixed_{faxis}({fval})_not_neutral")
 
     # uniqueness
-    tuples = [tuple(sorted(x.items())) for x in (A, B, C, D)]
+    tuples = [tuple(sorted(attrs[k].items())) for k in "ABCD"]
     if len(set(tuples)) < 4:
         errs.append("duplicate_options")
 
-    info = {"axis": axis, "a_val": aA, "b_val": aB,
-            "compat_garment": gA, "incompat_garment": gC,
-            "fixed_axis": other, "fixed_val": oval}
+    info = {"axis": axis, "a_val": a["A"], "b_val": a["B"],
+            "violation_axis": vaxis, "compat_val": v["A"], "incompat_val": v["C"],
+            "fixed_axis": faxis, "fixed_val": fval}
     return errs, info
 
 
@@ -148,31 +190,38 @@ def check_tpo(plan):
     sc = get_scenario_by_id(plan.get("scenario_id", ""))
     if sc is None:
         return ["scenario_not_found"]
+    roles = axis_roles(plan)
+    if roles is None:
+        return []  # already reported by the structural check
+    axis, vaxis, faxis = roles
     errs = []
-    axis = plan["active_axis"]
     opts = plan["options"]
 
-    gc = sc.get("garment_category") or {}
-    gcomp, ginc = set(gc.get("compatible", [])), set(gc.get("incompatible", []))
-    gv = {k: opts[k]["attributes"].get("garment_category") for k in "ABCD"}
-    if gv["A"] not in gcomp: errs.append(f"A.garment({gv['A']})_not_TPO_compat")
-    if gv["B"] not in gcomp: errs.append(f"B.garment({gv['B']})_not_TPO_compat")
-    if gv["C"] not in ginc: errs.append(f"C.garment({gv['C']})_not_TPO_incompat")
-    if gv["D"] not in ginc: errs.append(f"D.garment({gv['D']})_not_TPO_incompat")
+    # the violation axis is the one the scenario must constrain
+    vc = sc.get(vaxis) or {}
+    vcomp, vinc = set(vc.get("compatible", [])), set(vc.get("incompatible", []))
+    vv = {k: opts[k]["attributes"].get(vaxis) for k in "ABCD"}
+    if not vinc:
+        errs.append(f"scenario_has_no_{vaxis}_constraint")
+    else:
+        for k in "AB":
+            if vv[k] not in vcomp:
+                errs.append(f"{k}.violation({vv[k]})_not_TPO_compat")
+        for k in "CD":
+            if vv[k] not in vinc:
+                errs.append(f"{k}.violation({vv[k]})_not_TPO_incompat")
 
-    ac = sc.get(axis) or {}
-    ainc = set(ac.get("incompatible", []))
+    # the preference and fixed axes must stay clear of the scenario's bans
+    ainc = set((sc.get(axis) or {}).get("incompatible", []))
     for k in "AB":
-        v = opts[k]["attributes"].get(axis)
-        if ainc and v in ainc:
-            errs.append(f"{k}.active({v})_in_TPO_incompat")
+        av = opts[k]["attributes"].get(axis)
+        if ainc and av in ainc:
+            errs.append(f"{k}.active({av})_in_TPO_incompat")
 
-    other = "pattern" if axis == "color" else "color"
-    oc = sc.get(other) or {}
-    oinc = set(oc.get("incompatible", []))
-    ov = opts["A"]["attributes"].get(other)
-    if oinc and ov in oinc:
-        errs.append(f"fixed_{other}({ov})_in_TPO_incompat")
+    finc = set((sc.get(faxis) or {}).get("incompatible", []))
+    fv = opts["A"]["attributes"].get(faxis)
+    if finc and fv in finc:
+        errs.append(f"fixed_{faxis}({fv})_in_TPO_incompat")
     return errs
 
 
@@ -180,11 +229,14 @@ def check_tpo(plan):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--profiles", default="data/profiles/profiles.jsonl")
-    ap.add_argument("--queries", default="data/queries/queries.jsonl")
-    ap.add_argument("--plans", default="data/options/option_plans.jsonl")
-    ap.add_argument("--out", default="data/options/validation_report.json")
+    ap.add_argument("--profiles", default=str(PROFILES_DIR / "profiles.jsonl"))
+    ap.add_argument("--queries", default=str(QUERIES_DIR / "queries.jsonl"))
+    ap.add_argument("--plans", default=str(OPTIONS_DIR / "option_plans.jsonl"))
+    ap.add_argument("--out", default=str(OPTIONS_DIR / "validation_report.json"))
     args = ap.parse_args()
+
+    print(f"\n  data root: {OPTIONS_DIR.parent}"
+          f"  (POD_VARIANT={os.environ.get('POD_VARIANT', '') or '<unset>'})")
 
     profiles = {p["user_id"]: p for p in load_jsonl(args.profiles)}
     queries = {q["query_id"]: q for q in load_jsonl(args.queries)}
@@ -209,6 +261,9 @@ def main():
     by = {k: Counter() for k in
           ("axis", "scenario_archetype", "preference_archetype", "user", "query_type")}
     inst_meta = []  # (axis, a_val, b_val, query_id)
+    # Physical and Dress-code are reported as two separate datasets.
+    track_stats = defaultdict(lambda: {"n": 0, "struct": 0, "tpo": 0,
+                                       "active": Counter(), "violation": Counter()})
 
     for plan in plans:
         qid = plan.get("query_id")
@@ -222,6 +277,13 @@ def main():
             n_struct_fail += 1
         if t_errs:
             n_tpo_fail += 1
+
+        ts = track_stats[plan.get("track", "?")]
+        ts["n"] += 1
+        ts["struct"] += bool(s_errs)
+        ts["tpo"] += bool(t_errs)
+        ts["active"][plan.get("active_axis", "?")] += 1
+        ts["violation"][plan.get("violation_axis", "?")] += 1
         for e in all_errs:
             err_counter[e.split(":")[0].split("(")[0]] += 1
         if all_errs:
@@ -252,6 +314,17 @@ def main():
             print(f"    {e:42s} {c}")
     else:
         print("  ✓ no construction errors")
+
+    # per-track view: the two tracks are separate datasets, never pooled
+    print("\n  per track (reported as independent datasets):")
+    for tname in sorted(track_stats):
+        ts = track_stats[tname]
+        share = lambda c: ", ".join(f"{k}={v} ({v / ts['n']:.1%})"
+                                    for k, v in c.most_common())
+        print(f"    [{tname}]  {ts['n']} plans   "
+              f"structural={ts['struct']}  TPO={ts['tpo']}")
+        print(f"       active axis    : {share(ts['active'])}")
+        print(f"       violation axis : {share(ts['violation'])}")
 
     # ── report: balance ────────────────────────────────────────────────
     print("\n" + "=" * 64)
@@ -349,6 +422,11 @@ def main():
         "liked_rate": liked_rate,
         "counterbalanced_subset_size": len(cb_ids),
         "distribution": {k: dict(v) for k, v in by.items()},
+        "by_track": {t: {"n": s["n"], "structural_failures": s["struct"],
+                         "tpo_failures": s["tpo"],
+                         "active_axis": dict(s["active"]),
+                         "violation_axis": dict(s["violation"])}
+                     for t, s in track_stats.items()},
     }
     with open(out, "w", encoding="utf-8") as f:
         json.dump(report, f, ensure_ascii=False, indent=2)

@@ -27,7 +27,25 @@ from configs.config import PROFILES_DIR, QUERIES_DIR, FASHION_ATTRIBUTE_AXES
 from configs.scenarios import CANONICAL_SCENARIOS
 from .compatibility import get_compatible_instances, print_compatibility_report
 
-ALLOWED_ACTIVE_AXES = {"color", "pattern"}
+# Value axes plus garment: garment-active queries exist only for coded
+# (dress-code) scenarios — compatibility.py emits those instances only there.
+ALLOWED_ACTIVE_AXES = {"color", "pattern", "garment_category"}
+
+# Niche-knowledge scenarios where an implicit query would test domain trivia
+# instead of constraint application (design doc §4.3 / §6.2): force explicit
+# queries so the rule is always stated in the query text.
+EXPLICIT_ONLY_SCENARIOS = {
+    "field_wildlife_hide", "stage_greenscreen_shoot",
+    # festive_bright / garden_floral norms ("wear bright colors" / "florals")
+    # are not universal common sense, so the rule must be stated in the query
+    # (§6.3): this makes the dark/leopard violation defensible and turns the
+    # item into instruction-application + preference rather than a knowledge test.
+    "festive_holiday_party", "festive_bright_theme_party", "festive_street_fiesta",
+    "garden_spring_party", "garden_afternoon_tea", "garden_bridal_shower",
+    # This event uses a stated university guest dress guide rather than a
+    # universal graduation color rule.
+    "celebration_graduation",
+}
 
 # Safe neutral fallbacks. Deliberately excludes high-salience patterns such as
 # floral, polka_dot, and leopard to avoid injecting a second strong visual cue
@@ -91,16 +109,23 @@ def _sample_preference_neutral_value(profile, scenario, axis, rng,
     if constraint and constraint.get("compatible"):
         pool = _neutral_values(constraint["compatible"], likes, dislikes)
 
-    # 2) generic fallback, but still preference-neutral AND not TPO-incompatible
+    # 2) constrained axis with no compatible-neutral value left -> UNFIXED.
+    # A fallback here would inject a value the scenario does not declare
+    # compatible (e.g. checkered at a funeral), so options could no longer
+    # claim every non-violation attribute is TPO-appropriate.
+    if not pool and axis_constrained:
+        return None
+
+    # 3) unconstrained axis: generic preference-neutral fallback
     if not pool:
-        if axis == "color" and not axis_constrained:
+        if axis == "color":
             base = FASHION_ATTRIBUTE_AXES["color"]
         else:
             base = FALLBACK_AXIS_VALUES.get(axis, [])
         pool = [v for v in _neutral_values(base, likes, dislikes)
                 if v not in tpo_bad]
 
-    # 3) give up — leave this axis unfixed rather than leak a bad value
+    # 4) give up — leave this axis unfixed rather than leak a bad value
     if not pool:
         return None
 
@@ -140,7 +165,10 @@ def _render_fallback_query(scenario, query_type):
 
 
 def _build_query_text(scenario, rng, explicit_ratio=0.5):
-    query_type = "explicit" if rng.random() < explicit_ratio else "implicit"
+    if scenario.get("scenario_id") in EXPLICIT_ONLY_SCENARIOS:
+        query_type = "explicit"
+    else:
+        query_type = "explicit" if rng.random() < explicit_ratio else "implicit"
     pool = _extract_seed_pool(scenario, query_type)
     if not pool:
         pool = _extract_seed_pool(scenario, "explicit" if query_type == "implicit" else "implicit")
@@ -151,8 +179,14 @@ def _build_query_text(scenario, rng, explicit_ratio=0.5):
 
 def _build_fixed_attrs(profile, scenario, active_axis, rng, usage=None, user_id=None):
     fixed_attrs = {}
+    fixed_bg = scenario.get("fixed_background") or {}
     for axis in ("color", "pattern"):
         if axis == active_axis:
+            continue
+        if axis in fixed_bg:
+            # axis pinned to a constant background value for this scenario
+            # (e.g. sports jerseys are always solid); no preference signal.
+            fixed_attrs[axis] = fixed_bg[axis]
             continue
         val = _sample_preference_neutral_value(
             profile, scenario, axis, rng, usage=usage, user_id=user_id)
@@ -210,6 +244,7 @@ def build_queries(profiles, scenarios=None, seed=42, per_instance=1, explicit_ra
                 "scenario_id": inst["scenario_id"],
                 "scenario_archetype": scenario.get("archetype"),
                 "scenario_name": scenario.get("name"),
+                "track": scenario.get("track"),
                 "active_axis": active_axis,
                 "liked_compatible": inst["liked_compatible"],
                 "disliked_compatible": inst["disliked_compatible"],

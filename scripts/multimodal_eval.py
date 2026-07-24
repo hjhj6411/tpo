@@ -138,16 +138,16 @@ def profile_to_narrative(profile):
 
 
 def profile_to_all_text(profile):
-    ordered_keys = ["user_id", "domain", "preference_archetype", "variant_index",
+    # WHITELIST: only the user definition reaches the evaluated model.
+    # Generation-internal metadata (style pool / archetype, variant index)
+    # is a summary shortcut and must never leak into the prompt.
+    ordered_keys = ["user_id", "domain",
                     "structured_attributes", "likes_keywords", "dislikes_keywords",
                     "narrative_profile"]
     parts = []
     for key in ordered_keys:
         if key in profile:
             parts.append(f"{key}: {json.dumps(profile[key], ensure_ascii=False)}")
-    for key, val in profile.items():
-        if key not in ordered_keys:
-            parts.append(f"{key}: {json.dumps(val, ensure_ascii=False)}")
     return "\n".join(parts)
 
 

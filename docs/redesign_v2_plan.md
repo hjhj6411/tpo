@@ -333,19 +333,51 @@ POD-Bench의 문제 하나는 이렇게 생겼습니다.
 [완료] S1 반영 (규범-격식 9곳에 드레스 추가, 건별 판정 통과)
 [완료] 허용 목록 전수 검수 (§6.5)
 [완료] 규칙 검증 시뮬레이션
+[완료] 프로필 생성기 R1~R4 구현 (construction/profile_generator.py v5)
+       - 티어는 카탈로그에서 파생·검증(드리프트 시 즉시 실패), 아키타입 8종은
+         스타일 풀로 계승 (티어 = 어느 구역, 아키타입 = 구역 안에서 무엇)
+       - R4는 전 조합 열거 방식이라 "진짜 불가능할 때만" 실패
+       - 검증 결과: R1~R4 어설션 전부 통과, 기존 16 아키타입 커버리지 100%
+         (기존 벤치는 구멍 존재), 규범-격식 garment 게이트 672/672 전수 보장,
+         solid/striped 12:12, floral 8:8:8
+       - 기존 동작은 --legacy 플래그로 보존; 실데이터 미덮어씀 (재생성은 4단계)
 
-1. 프로필 생성기에 규칙 R1~R3 + 재추첨 로직 구현
-   (기존 preference_archetype과 결합: 티어가 "어느 구역에서", 아키타입이
-   "구역 안에서 무엇을" — §5 참조. 생성 후 24개 전수 인간 검수)
-2. 쿼리 생성기 확장: 옷-선호 축 지원, 틈새 시나리오는 explicit 쿼리만
-3. 선지 생성기 확장: 쿼리당 여러 위반 축 판 생성, 초격식 색-스코프 반영,
-   유저별 균형 카운터를 새 구조에 맞게 재실행
-4. 전체 재생성 (시드 3개)
-5. 재검증: 커버리지 / 유저별 균형 / 혼동쌍 비율 / 위반 축 분포
+[완료] 쿼리 생성기 확장 (construction/compatibility.py + query_generator.py)
+       - compatibility.py: 코드형 시나리오에서 garment-active 인스턴스 방출
+         (_check_garment_axis_compatibility — liked/disliked ∩ 허용 목록 +
+         위반 가능한 값 축 ≥1이 성립 조건)
+       - query_generator.py: garment 축 허용 + 틈새 2종(wildlife_hide,
+         greenscreen)은 explicit 쿼리 강제
+       - 검증: v2 프로필 기준 쿼리 3,818개 = 값-선호 3,186 + 옷-선호 632
+         (프로필 검증 수치와 정확히 일치), explicit-only 정책 확인
+
+[완료] 선지 생성기 확장 (construction/option_planner.py)
+       - 병렬 variant: 값-선호 쿼리는 garment 판 + feasible 시 회전 판,
+         옷-선호 쿼리는 값 축 위반 판 1개(무늬 우선). plan_id로 판 구분,
+         query_id는 유지(클러스터 통계용)
+       - garment-active 템플릿: A/C=좋아하는 허용 옷, B/D=싫어하는 허용 옷,
+         위반은 색/무늬 값으로
+       - violation_garment_scope 소비: 초격식 색 위반은 수트 계열로만
+         (검증 결과 ultra_formal color 192→96 — 방어 가능한 판만 생성)
+       - 스크래치패드 전체 체인 검증: 3,818 쿼리 → 4,638 플랜(쌍둥이 판 884,
+         스킵 64=1.4%), 위반 축 69/21/10%, 2×2 의미론 불변식 8종 전수 검사
+         위반 0 (선호/TPO/배경/무늬-옷 정합/스코프 포함)
+       - 부수 수정: 배경값 폴백이 "허용 목록에 없는 값"(장례식에 checkered 등)
+         을 주입하던 명세 위반 841건 발견 → 제약 축은 중립값 없으면 unfixed로
+
+1. 전체 재생성 (시드 3개) — 프로필 재생성 직후 24개 전수 인간 검수 포함
+2. 재검증: 커버리지 / 유저별 균형 / 혼동쌍 비율 / 위반 축 분포
    → 기존 지표가 하나라도 나빠지면 임시 패치가 아니라 규칙을 고쳐서 재생성
-6. 이미지 수집: 종교 시나리오는 노출 없는 스타일 필터 적용,
-   신규 시나리오(형광 러닝복, 사파리 셔츠 등)의 검색 가능성 사전 확인
-7. 인간 검증 → 기준 미달 시나리오 조정 → 벤치 확정
+3. 이미지 수집: 종교 시나리오는 노출 없는 스타일 필터 적용,
+   신규 시나리오(형광 러닝복, 사파리 셔츠 등)의 검색 가능성 사전 확인,
+   하류 파이프라인의 query_id 키를 plan_id로 전환
+4. 인간 검증 → 기준 미달 시나리오 조정 → 벤치 확정
+
+참고 — 확장 후 알려진 구조적 관찰 (버그 아님, 논문 한계에 연결):
+- pattern·garment의 유저 내 A값 반복도가 높음(max-share ~0.85) — R1/R3 쿼터의
+  귀결(§5.3 트레이드오프). 다양성은 위반값·배경·시나리오 축에서 나옴
+- garment-active 스킵 64건 = 초격식 스코프/무늬 소진으로 위반 축이 없는 조합
+  (드레스 선호 유저 × 초격식 등) — 호스팅 클래스의 정상 경계
 ```
 
 ---
@@ -360,3 +392,279 @@ POD-Bench의 문제 하나는 이렇게 생겼습니다.
    외부 의존성. 7단계 전에 소규모 검색 테스트 권장.
 4. **기존 2,760문제의 처리** — 재설계본과 별도 버전으로 보관, 비교 실험용으로
    유지 권장.
+
+---
+
+## 11. 2026-07-16 후속 결정·구현 (§10 결정 1·2 처리 포함)
+
+재생성본(7/15) 재검증에서 확인된 두 잔여 문제를 사용자 결정에 따라 처리.
+
+**A. 단일값 compat 시나리오 제거 (scenarios.py v10, 총 70개)**
+- `club_tennis_whites`(color={white})·`stage_backstage_crew`(color={black},
+  pattern={solid})는 규범이 색을 단일값으로 고정하고 그 값이 RESERVE라
+  선호 축이 정의상 사망 — garment-active만 우연히 1~2명 성립하는 상태였음.
+  "전원 0보다 나쁜 1~2명" 상태를 없애기 위해 시나리오 자체를 제거(사용자 결정).
+  stage_media·club_code 아키타입은 각 3→2개로 축소.
+- `stage_greenscreen_shoot` color compatible에 brown/beige/purple 추가
+  (크로마키의 실제 금지는 green/blue뿐 — 규범 변경이 아닌 과협소 인코딩 교정,
+  navy는 blue-spill 위험으로 계속 제외). color 커버 13/24 → 24/24.
+
+**B. pattern 축 pair-family 다운샘플 (option_planner.py, 기본 활성)**
+- 문제: pattern-active가 전체 48.6%, 그중 74.8%가 solid vs striped —
+  벤치의 36%가 사실상 "solid/striped 구분 문제"로 수렴 (construct 왜곡).
+- 규칙: solid-striped 판을 floral-관여 판 총량과 같게 캡(축 내 50:50),
+  유저별 pattern 총량 균등화(target = 2·floral/24 = 47). floral 판은 보존,
+  쿼리 클러스터 단위 드롭(쌍둥이 판 무결), 싱글턴 우선, 유저의
+  solid-striped 최다 시나리오부터, (user,scenario) 셀은 절대 비우지 않음.
+  `--no_pattern_downsample`로 비활성 가능.
+- 근본 해결(격식-호환 무늬 어휘 확장: pinstripe/herringbone 등)은 차기 버전
+  future work — 이번 제출은 §5.3 한계 명시(사용자 결정, §10-2 확정).
+
+**재생성·재검증 결과 (seed 42; 프로필은 바이트 동일 → 7/15 검수 유효)**
+- 3,826 쿼리 → 3,520 플랜 (§10-1의 규모 우려도 완화: 4,638→3,520).
+- 유저별 시나리오 커버리지 **24/24 전원 × 70개 전 시나리오** (구멍 0).
+- solid-striped 전체 점유 36.3% → **15.9%**; pattern 축 내 74.8% → 49.6%
+  (solid-striped 558 : floral-관여 568); pattern HHI 0.593 → 0.381.
+- 축 비중: color 52.0%(쌍 33종, HHI 0.058) / pattern 32.0% / garment 16.1%.
+- 혼동쌍 23.5%(수용선 25% 내), 위반 축 garment 74/pattern 13/color 13%.
+- 유저별 플랜 142~155(편차 9.2%), 축별 min-max: color 73~79, pattern 46~47,
+  garment 21~30.
+- 부작용(알려진 트레이드오프): pattern 유저 내 A값 반복도 0.85→0.92
+  (비-floral 유저 8명은 pattern 판이 전부 solid-striped 그대로 — R3 쿼터 귀결,
+  어휘 확장 전까지 불가피).
+
+---
+
+## 12. 2026-07-16 (2차): pattern 어휘 전면 개방 — RESERVE 폐지
+
+**결정(사용자):** 어휘 6종 중 3종만 A/B에 등장하는 것은 측정 범위 절반 —
+"문제가 일부 사라지더라도" checkered/polka_dot/leopard를 선호 어휘로 개방.
+
+**새 R3 (profile_generator):** PATTERN_RESERVE 폐지 → PATTERN_EXPRESSIVE
+{floral, checkered, polka_dot, leopard}. 전원 quiet 교차(solid/striped 1+1,
+격식 시나리오 커버리지 보장) + expressive 1 like + 1 dislike. 12개 순서쌍
+×2 = 24명 완전 균형(각 값 like 6명/dislike 6명). 유저당 expressive 2종이
+중립으로 남아 위반값·배경값 공급 유지(색과 달리 하드 RESERVE 불필요).
+floral 1/3 순환·style pool floral 슬롯 제거.
+
+**다운샘플 규칙 보강:** target = min(2·기타쌍, color 총량)/24 — 축 내
+solid-striped ≤ 50%와 pattern 축 ≤ color 축을 동시 보장.
+
+**결과 (3,780 쿼리 → 3,820 플랜, 커버리지 24/24 × 70 유지):**
+- pattern A/B 쌍 15/15종 전부 등장, HHI 0.593(원) → 0.145.
+  solid vs striped: 축 내 32.0%, 전체 13.7% (원 36.3%).
+- 축 비중 color 43.6% / pattern 42.8% / garment 13.6% (동률 달성).
+- pattern 유저 내 A값 반복도 0.92 → ~0.59 (비-floral 유저 100% 집중 해소).
+- 혼동쌍 24.3%, 스킵 66건(1.7%).
+- **비용(수용됨):** vP(패턴 위반) 470 → 179 (4.7%) — expressive 선호가
+  기존 중립 위반값을 소비, 해당 슬롯은 vG/vC 폴백(커버리지 손실 0).
+  신규 스킵 no_neutral_garment_pair 2건(0.1%).
+- **프로필이 실제로 변경됨 → 24명 인간 재검수 필요** (7/15 검수 무효).
+
+---
+
+## 13. 2026-07-16 (3차): vs 쌍 균형화 — 풀 폐지 + 쌍 단위 배정 + R5
+
+**결정(사용자):** 혼동쌍은 고려 대상 아님. 과대/과소 vs 쌍을 수정하되,
+필요하면 archetype(스타일 풀) 자체를 폐지해도 됨. 제거했던 단일값
+시나리오 2개는 복원(경계로 문서화, 총 72개).
+
+**변경 3건:**
+1. option_planner assign_ab_values: 혼동쌍 페널티 제거, 배정 키를
+   (유저별 쌍 사용량 → 전역 쌍 균형 → 유저별 값 다양성 → 전역 net)으로
+   교체 — 값 단위 균형이 (quiet,quiet)/(expr,expr) 쌍만 교대시키고
+   혼합쌍을 굶기던 아티팩트 해소.
+2. profile_generator STYLE_POOLS 폐지: FREE 구역을 풀별 고정
+   like/dislike 분할 대신 전역 least-used 배정으로. garment FREE는 전
+   어휘 전수 열거 + "양측에 격식-호환 FREE 옷 ≥1" 우선(FORMAL_FREE_
+   GARMENTS) — 격식 시나리오에서 garment 쌍이 ANCHOR 3종에 갇히는 것
+   해소. quiet_like는 인덱스 교대(12:12 유지).
+3. R5 신설(_cells_alive_everywhere): 경계 시나리오 2개를 제외한 모든
+   (user, scenario) 셀이 최소 한 축에서 A/B 성립하도록 color FREE 콤보를
+   전수 열거로 선택 — 전역 배정이 만든 greenscreen 구멍 3건 재발 차단.
+
+**결과 (3,784 쿼리 → 3,821 플랜, 24/24 × 70 커버, 경계 2개 별도):**
+- garment: 쌍 26→33종, HHI 0.161→0.105, 최대 25.9→18.5%,
+  ANCHOR-3종 쌍 합 70.2→49.3%
+- color: 쌍 33→36종(전 조합), HHI 0.061→0.043, 최소 0.1→0.9%
+- pattern: HHI 0.145→0.125, 혼합쌍(quiet×expressive) 1~3%→4~10%,
+  최소 쌍 0.9→3.2%, ss 29.0%(다운샘플 캡)
+- 혼동쌍 비율은 관리 지표에서 제외(페널티 제거로 상승 가능, 무시)
+- 프로필 재변경 → 24명 인간 재검수 필요
+
+**§13 추가 — 프로필 검수(2026-07-16) 및 수동 손질:**
+R1~R5 독립 재검증 전원 통과, 의미 결함 0. 유일 지적: U010·U021의
+garment likes와 color likes 완전 동일(쌍둥이 취향). 해소: MANUAL_SWAPS
+(profile_generator) — U021 tank_top↔U023 leggings, U021 green↔U020 beige
+맞교환. 교환은 전역 like/dislike 집계를 보존하므로 쌍 분포 무영향
+(HHI 변화 ±0.001), 시드 변경 시 어설션으로 즉시 실패. validate에 R5
+어설션 추가. 잔여: 단일 축 like-set 충돌 7쌍(조합상 불가피, 인물
+쌍둥이 아님) — U011-U020(garment likes 동일)만 경계선, 수용.
+
+---
+
+## 14. 2026-07-24 (레버 A): Physical / Dress-code 트랙 1급 분리 + 축별 리포팅
+
+**배경(사용자 방향 재확인).** 여러 차례 튜닝을 거치며 원래 목표—"Physical과
+Dress-code를 처음부터 나누어 평가"—가 리포팅에서 흐려졌음. 두 트랙은 성격이
+다름: **Physical = 상황에 맞는 garment 추천 능력**(garment 위반 100%), **Dress-code
+= garment·color·pattern 규범 정보를 받아들여 적용하는 능력**. 또한 축(garment/
+color/pattern) 간 비중 쏠림은 현실의 비대칭("주황은 언제나 입지만 탱크탑은 겨울에
+못 입음")에서 오는 **불가피한 한계**로, 1:1:1 강제 대신 **축별 지표 분리**로 처리하기로
+확정. 단, **축 안에서의 vs-쌍 균형**(예: color가 red-vs-blue로 수렴하고 green-vs-red는
+<1%가 되는 것)은 유지 대상.
+
+**변경 3건 (데이터 재생성 없음 — 배관·리포팅만):**
+1. `configs/scenarios.py`: `track ∈ {physical, dress_code}`를 시나리오 1급 필드로
+   추가. 아키타입→track이 진실 원천(PHYSICAL_ARCHETYPES 9 / DRESS_CODE_ARCHETYPES
+   11), `_scenario_is_coded`(색·무늬 제약 여부)와 **양방향 드리프트 어설션**으로
+   묶음 — 물리 시나리오가 색 규범을 얻거나 규범 시나리오가 유일한 색·무늬 제약을
+   잃으면 import 시 즉시 실패. `scenario_track()`·`scenarios_by_track()` 추가.
+2. `query_generator`·`option_planner`: 쿼리·플랜 레코드가 `track`을 상속(재유도 불필요).
+   option_planner 종료 리포트에 트랙 분할 헤드라인 추가.
+3. `scripts/report_track_balance.py` 신설: 플랜을 트랙×축×역할(선호/위반)로 나눠
+   vs-쌍 분포를 산출. 쏠림 판정은 max≥40% **또는** 집중도(HHI×쌍수)≥2.5x — "쌍이
+   많아 일부가 <1%"인 건강한 다양성은 오탐 않고, 한 쌍 과반/균등 대비 과집중만 잡음.
+
+**현재 상태 진단 (balance_check variant, seed 42, 3,823 플랜):**
+- 트랙 분할: physical 1,536(40.2%) / dress_code 2,287(59.8%).
+- **Physical: 전 축·역할 쏠림 0** (garment 위반 86쌍 conc 1.4x, color/pattern 선호 conc
+  1.1~1.2x). 트랙 정의대로 깨끗.
+- **Dress-code 위반축도 깨끗** (garment 71쌍 1.7x, color 39쌍 1.8x).
+- **쏠림은 Dress-code 선호축 3곳 + pattern 위반 1곳:**
+  - pattern 선호 `solid/striped` 54%(conc 5.1x) — 코드형 11 아키타입 중 7개가 solid+
+    striped만 허용해 격식 pattern 쌍이 구조적으로 하나뿐 → 어휘 확장(레버 B) 없이는
+    다운샘플만으로 해소 불가.
+  - color 선호 앵커 3색(black/navy/gray) 51%(conc 3.6x), garment 선호 앵커 3옷
+    49%(conc 3.5x) — ANCHOR 보장(A/B 항상 성립)의 뒷면.
+  - pattern 위반 쌍 5개뿐, checkered/leopard 42%.
+- 이 4곳이 다음 작업(레버 B: 격식 허용 어휘 확장 pinstripe/herringbone·burgundy 등)의
+  타깃. 레버 A는 이를 **측정 가능·재현 가능**하게 고정만 함(값은 안 바꿈).
+
+## 15. 2026-07-24 (2차): 시나리오 정리 — 트랙 정의와 충돌하는 항목 제거
+
+**동기.** 균형 수치를 맞추기 위한 작업이 **아님**. §14에서 트랙 정의를 1급으로
+올린 결과, 기존 시나리오 일부가 그 정의와 정면으로 충돌한다는 것이 드러났고 이를
+정리한 것. 충돌 유형 5가지:
+
+| 트랙 정의 | 충돌한 기존 시나리오 |
+| --- | --- |
+| Physical = 물리적으로 적합한 garment 평가 | `casual_leisure` 4개는 물리적 부적합이 아니라 "너무 차려입었다"는 **dress-code 판단**이었음 |
+| Physical 정답이 현재 garment 어휘로 표현 가능해야 함 | 수영 시나리오에 `swimwear` 어휘가 없었고, 태풍·우박·먼지폭풍 4개는 방수·보호 속성 없이 **한파와 동일한 재킷 목록**을 정답으로 씀 |
+| Dress-code의 color/pattern 제약은 설명 가능해야 함 | 졸업식에 결혼식의 흰색 금지를 그대로 복사, 시민권 선서식에 근거 없이 검정·남색·회색만 허용 |
+| 축 내부 vs-쌍이 한 대립으로 몰리지 않아야 함 | dress pattern 위반의 `checkered/leopard`가 40% (단, 아래 "정정 ②" — 이 항목은 실제로는 문제가 아니었음) |
+| 모든 사용자에게 평가 가능한 문항이 있어야 함 | 무대 스태프 24/24명, 테니스 23/24명, 스포츠 3개 각 3명에게 문항 미생성 |
+
+**조치.** 활성 시나리오 59개(physical 24 / dress_code 35)로 정리:
+- 제외 14개 — severe weather 4, casual leisure 4, citizenship oath 1, 생성 희소 5
+- 문구 수정 — aquatic 3개를 "수영복 **위에 걸칠** 커버업" 질문으로 재정의(현 어휘로 표현 가능)
+- 제약 완화 — 졸업식 흰색 금지 제거, business 4개·golf에서 floral 무조건 부적절 완화
+- 24개 profile은 **불변** (SHA256 `5c06493d…3168`) — 시나리오만 건드렸으므로 재생성 불필요
+- `report_track_balance.py`에서 HHI·자동 쏠림 판정 제거 → **쌍 개수와 비율만 출력**
+  (§14의 임계값은 "몇 쌍이 정상인가"를 사전에 못 정해 오탐/미탐 모두 발생)
+
+**결과.** query 생성 3,117 / **평가 가능 2,860** / option plan 3,318,
+1,416개 사용자×시나리오 조합 중 **빈 조합 0**.
+
+**논문에 쓸 규모는 2,860이다 (정정 ①).** 생성된 3,117개 중 **257개(8.2%)에는
+option plan이 없다** — 전부 dress-code이고 그중 pattern 축이 225개다
+(`ultra_formal` 63, `mourning_somber` 46, `wedding_celebration` 43,
+`judicial_civic` 23 …). solid/striped만 허용하는 엄격 시나리오에서는 4지선다를
+구성할 여지가 없어서 생기는 **설계상 필연**이며, 해당 사용자×시나리오 조합은
+다른 축으로 전부 커버되므로 커버리지 1,416/1,416은 그대로다. 그러나 "3,117
+queries"로 보고하면 8.2% 과대 보고이므로 **"2,860 evaluable queries → 3,318
+option plans"**로 쓰고 257개의 사유를 각주로 단다.
+
+**정정 ②: pattern 위반 집중도는 문제가 아니었다.**
+`checkered/leopard` 30.3%를 "잔여 편중"으로 적었으나, **pair 개수로 정규화하면
+9개 축 중 가장 균등하다.** 위반 pattern 어휘가 {checkered, floral, leopard,
+polka_dot} 4개뿐이라 C(4,2)=6이 이론적 상한이고 그 6개를 **전부 실현**했다.
+균등 기대는 각 16.7%이므로 30.3%는 1.8x, 상위 3개 75.2%는 **1.5x**에 불과하다.
+`max%`·`top3%`를 pair 개수가 다른 축끼리 직접 비교하면 pair가 적은 축이 자동으로
+나쁘게 보이는 착시가 생긴다 — 반드시 균등 대비 배율로 볼 것
+(`report_track_balance.py`가 이제 배율을 출력한다).
+이는 균형 문제가 아니라 **어휘 폭의 한계**로 서술해야 한다.
+
+**공개 순서 (균등 대비 top3 배율 기준, 논문 limitations에 쓸 순서):**
+
+| 배율 | 트랙 | 역할 | 축 | pairs | top3 |
+| ---: | --- | --- | --- | ---: | ---: |
+| **6.59x** | dress_code | active | garment | 44 | 45.0% |
+| 3.38x | dress_code | active | color | 36 | 28.2% |
+| 3.15x | dress_code | violation | color | 42 | 22.5% |
+| 2.68x | dress_code | violation | garment | 84 | 9.6% |
+| 2.57x | dress_code | active | pattern | 15 | 51.3% |
+| 2.38x | physical | violation | garment | 77 | 9.3% |
+| 1.67x | physical | active | pattern | 14 | 35.8% |
+| 1.61x | physical | active | color | 30 | 16.1% |
+| 1.50x | dress_code | violation | pattern | 6 | 75.2% |
+
+**실질 취약점은 dress-code garment 선호축 하나다.** 44개 pair가 있어 보이지만
+상위 3개(`blazer/dress` 17.1%, `dress/formal_shirt` 15.1%,
+`blazer/formal_shirt` 12.7%)가 45%이고, 이 셋은 `GARMENT_ANCHOR =
+[blazer, formal_shirt, dress]`의 3개 조합 **전부**다. Physical은 세 축 모두
+1.6~2.4x로 그대로 방어 가능하다.
+
+**정정 ③: per-user 반복은 전역 분포에 보이지 않는다.** 프로필이 앵커 티어마다
+like 1 + dislike 1을 고정하므로, 한 사용자의 A/B 쌍은 여러 시나리오에서 반복된다.
+"모든 사용자에게 항상 유효한 A/B가 존재한다"는 보장을 산 대가이며 버그가 아니지만,
+개인화 벤치마크에서 리뷰어가 가장 먼저 재계산하는 수치이므로 전역 표와 **함께**
+공개한다.
+
+| 데이터셋 / 축 | 사용자당 문항 | distinct pair (min/med) | 최다 pair 점유 (평균/최악) |
+| --- | ---: | ---: | ---: |
+| dress / active garment | 19.0 | 2 / 4 | 50% / **87%** |
+| dress / active pattern | 35.6 | 4 / 4 | 53% / 64% |
+| physical / active pattern | 24.0 | 2 / 3 | 46% / 50% |
+| dress / active color | 35.6 | 9 / 9 | 32% / 49% |
+
+**두 트랙은 별개 데이터셋으로 취급한다.** 표본 수·축 비중을 트랙 간 비교하지
+않으며, `report_track_balance.py`는 트랙 간 비율을 출력하지 않는다.
+
+**결정: 축 커버리지는 시나리오 단위가 아니라 트랙 단위로 요구한다.**
+현재 dress-code 35개의 축 조합은 garment+color+pattern 18 / garment+pattern 11 /
+garment+color 6 — 즉 **garment 100%, pattern 83%, color 69%**이고 세 축을 모두 갖는
+시나리오는 51%뿐. 이를 100%로 만들려면 종교 예배·garden party·visibility 등 17개에
+**관습적 근거가 없는 color/pattern 금지를 새로 발명**해야 하며, 이는 이번에 제거한
+문제(졸업식 흰색 금지)를 그대로 재도입하는 것. 따라서:
+- 각 시나리오는 **실제로 설명 가능한 축만** 제한한다. garden party는 pattern 중심,
+  밝은색 파티는 color 중심인 것이 정상이며 결함이 아니다.
+- garment·color·pattern 세 축은 **dress-code 트랙 전체 수준에서** 커버된다.
+- Physical 트랙의 위반 축은 **garment 단독**이다(설계상 의도).
+- 논문에는 축 커버리지를 트랙 수준 속성으로 기술할 것.
+
+**어설션이 실제로 보증하는 범위 (과장 금지).** `_scenario_is_coded`가 강제하는
+것은 **"dress-code 시나리오는 color/pattern 중 최소 하나를 제약한다"**뿐이다.
+garment 35/35 = 100%는 현재 카탈로그가 만족하는 성질일 뿐 어설션이 강제하지
+않는다. 논문에서 "불변식으로 보장된다"고 쓸 수 있는 것은 앞 문장까지이며,
+garment 100%는 "현 카탈로그에서 관측됨"으로 서술할 것.
+
+### 15.1 이 절이 대체하는 과거 수치
+
+논문·artifact에서는 아래 값 대신 §15를 인용할 것.
+
+| 위치 | 낡은 값 | 현재 값 |
+| --- | --- | --- |
+| §14 본문 | `PHYSICAL_ARCHETYPES 9 / DRESS_CODE_ARCHETYPES 11` | 선언 9 / 14, **실사용 7 / 13** (미사용: `casual_leisure`, `severe_weather`, `sports_spirit`) |
+| §14 진단 | balance_check variant, 3,823 plans | wacv_scenario_v1, **3,318 plans** |
+| §14 리포팅 | HHI×쌍수 ≥ 2.5x 자동 판정 | 임계값 없음 — **균등 대비 배율**과 전체 분포 공개 |
+| README | 60 scenarios / 16 archetypes | **59 scenarios / 실사용 20 archetypes** (선언 23 = physical 9 + dress 14, 미사용 3) |
+| README | 2,760 queries (24 × 60 × 2 슬롯) | **2,860 evaluable / 3,318 plans** |
+
+### 15.2 검증 상태 (2026-07-24 기준)
+
+- **재현성**: profiles / queries / option_plans 3종 모두 새 variant에 재생성 시
+  바이트 동일. profiles SHA256 `5c06493d…3168`.
+- **구성 무결성**: `scripts/validate_options.py` 기준 **0/3,318 실패**.
+  이전 914건은 validator가 "위반축=garment, 선호축∈{color,pattern}"을 하드코딩한
+  탓의 허위 실패였다(914 = color 위반 587 + pattern 위반 327로 정확히 일치).
+  validator를 일반화된 2×2에 맞추고 `POD_VARIANT`을 인식하도록 수정함 —
+  그 전에는 `POD_VARIANT`을 줘도 옛 `data/`(3,823 plans)를 검증했다.
+  변이 테스트 6종 × 8개 축조합 = 48/48 검출 확인.
+- **교란**: preference-blind exploit accuracy color 0.523 / pattern 0.500 /
+  garment 0.529 (전체 0.514), always-solid 베이스라인 0.503,
+  counterbalanced subset 2,726/3,318 (82%).
+- **미완**: 이미지 실현 가능성(`images`/`labels`/`final` 전부 0개), human
+  validation(특히 dress-code implicit 711건의 규범 정답 일치도), 평가 프롬프트에
+  `EVAL_FRAME_CLAUSE` 미전달. **위 수치는 pre-retrieval 통계로만 인용하고,
+  이미지 검색·human validation 후 동일 표를 재계산해 최종 수치로 교체할 것.**
