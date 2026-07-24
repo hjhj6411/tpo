@@ -37,9 +37,14 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.utils import call_llm, load_jsonl, save_jsonl, log_step
 from configs.config import OPTIONS_DIR, QUERIES_DIR, PROFILES_DIR, PROVIDERS, PROVIDER_ENDPOINTS
+from configs.scenarios import EVAL_FRAME_CLAUSE
 
 
-SYSTEM_PROMPT_NO = """\
+# Dress-code judgments are scoped to one convention set. The clause lives in
+# configs/scenarios.py so the catalog and the prompt can never drift apart.
+# Any eval run made before this clause was wired in (2026-07-24) used a
+# different prompt and its numbers are NOT comparable — mark them "pre-clause".
+SYSTEM_PROMPT_NO = f"""\
 You are a fashion advisor.
 
 You will be given:
@@ -48,6 +53,7 @@ You will be given:
 
 Your task:
 Select the single BEST option that best fits the query.
+{EVAL_FRAME_CLAUSE}
 
 OUTPUT FORMAT — CRITICAL:
 You MUST output EXACTLY one character: A, B, C, or D.
@@ -57,7 +63,7 @@ If you write anything other than a single letter, your response is INVALID.
 Your ENTIRE response must be one of: A  B  C  D
 """
 
-SYSTEM_PROMPT_WITH_PROFILE = """\
+SYSTEM_PROMPT_WITH_PROFILE = f"""\
 You are a fashion advisor.
 
 You may be given:
@@ -67,6 +73,7 @@ You may be given:
 
 Your task:
 Select the single BEST option that best fits both the query and the user's preferences.
+{EVAL_FRAME_CLAUSE}
 
 OUTPUT FORMAT — CRITICAL:
 You MUST output EXACTLY one character: A, B, C, or D.
@@ -368,13 +375,31 @@ def evaluate(plans, queries_map, profiles_map,
     return results, strict_correct, tpo_correct, profile_correct, total, breakdown
 
 
+def split_by_track(plans):
+    """Group plans by their recorded track, failing loudly on untagged rows.
+
+    `track` is written by the generators, so an untagged plan means the file
+    predates the track-split release and must not be scored.
+    """
+    missing = [p.get("plan_id", "?") for p in plans if not p.get("track")]
+    if missing:
+        sys.exit(f"  [error] {len(missing)} plans have no 'track' field "
+                 f"(e.g. {missing[:3]}). Regenerate with the current pipeline.")
+    by = defaultdict(list)
+    for p in plans:
+        by[p["track"]].append(p)
+    return dict(sorted(by.items()))
+
+
 def print_report(strict_correct, tpo_correct, profile_correct, total, breakdown,
-                 profile_mode=None, model_name=None):
+                 profile_mode=None, model_name=None, track=None):
     strict_acc = strict_correct / total * 100 if total > 0 else 0
     tpo_acc = tpo_correct / total * 100 if total > 0 else 0
     profile_acc = profile_correct / total * 100 if total > 0 else 0
 
     print("\n" + "=" * 60)
+    if track:
+        print(f"  TRACK:             {track}")
     if profile_mode:
         print(f"  PROFILE MODE:      {profile_mode}")
     if model_name:
@@ -404,10 +429,15 @@ def print_report(strict_correct, tpo_correct, profile_correct, total, breakdown,
         print(f"  {key:18s} strict={s:5.1f}%  tpo={t:5.1f}%  profile={p:5.1f}%  (n={n})")
 
 
-def print_combined_summary(all_summaries):
-    """3개 모드 실행 후 비교 summary table 출력."""
+def print_combined_summary(track, all_summaries):
+    """한 트랙 안에서 3개 모드 실행 후 비교 summary table 출력.
+
+    Physical과 Dress-code는 별개 벤치마크이므로 둘을 합산하는 함수는
+    의도적으로 두지 않는다 — 합산 accuracy는 의미 없는 수치이고 논문에
+    들어가서는 안 된다.
+    """
     print("\n" + "=" * 60)
-    print("  ══ COMBINED SUMMARY ══")
+    print(f"  ══ COMBINED SUMMARY — track: {track} ══")
     print(f"  {'mode':<12} {'model':<32} {'strict':>7} {'tpo':>7} {'profile':>9}")
     print("  " + "-" * 56)
     for s in all_summaries:
@@ -441,6 +471,10 @@ def main():
                         help="생략 시 no / narrative / all 3개 모두 순차 실행")
     parser.add_argument("--concurrency", type=int, default=1,
                         help="병렬 요청 수. vllm은 32, gpt5_mini는 1~8 권장")
+    parser.add_argument("--track", default=None,
+                        help="이 트랙만 채점 (physical | dress_code). "
+                             "기본값은 존재하는 모든 트랙을 각각 따로 채점. "
+                             "트랙 합산 수치는 계산하지 않는다.")
     args = parser.parse_args()
 
     log_step("Text-Only LLM Baseline Eval")
@@ -461,49 +495,62 @@ def main():
     modes_to_run = [args.profile_mode] if args.profile_mode else ["no", "narrative", "all"]
     run_all = (args.profile_mode is None)
 
-    all_summaries = []
+    # Physical과 Dress-code는 별개 벤치마크로 채점한다: 결과 파일도, 리포트도
+    # 트랙별로 분리하고, 트랙 합산 수치는 어디에서도 계산하지 않는다.
+    tracks = split_by_track(plans)
+    if args.track:
+        if args.track not in tracks:
+            sys.exit(f"  [error] --track {args.track} not present "
+                     f"(available: {', '.join(tracks)})")
+        tracks = {args.track: tracks[args.track]}
+    print("  Tracks: " + ", ".join(f"{t}={len(v)}" for t, v in tracks.items()))
 
-    for mode in modes_to_run:
-        model_name = resolve_model_name(args.provider, mode)
+    for track, track_plans in tracks.items():
+        print(f"\n{'═' * 60}")
+        print(f"  ██ TRACK = {track}  ({len(track_plans)} plans)")
+        print(f"{'═' * 60}")
+        all_summaries = []
 
-        print(f"\n{'─' * 60}")
-        print(f"  ▶ profile-mode = {mode}  |  model = {model_name}")
-        print(f"{'─' * 60}")
+        for mode in modes_to_run:
+            model_name = resolve_model_name(args.provider, mode)
 
-        # output 경로: 단일 모드면 기존 로직, 전체 실행이면 항상 mode별 파일
-        if run_all or args.output == OPTIONS_DIR / "text_only_results.jsonl":
-            out_path = OPTIONS_DIR / f"text_only_results_{mode}.jsonl"
-        else:
-            out_path = args.output
+            print(f"\n{'─' * 60}")
+            print(f"  ▶ track = {track} | profile-mode = {mode}  |  model = {model_name}")
+            print(f"{'─' * 60}")
 
-        results, strict_correct, tpo_correct, profile_correct, total, breakdown = evaluate(
-            plans, queries_map, profiles_map,
-            limit=args.limit,
-            provider=args.provider,
-            seed=args.seed,
-            verbose=args.verbose,
-            profile_mode=mode,
-            concurrency=args.concurrency,
-        )
+            # output 경로: 항상 트랙 하위 디렉터리로 분리
+            if run_all or args.output == OPTIONS_DIR / "text_only_results.jsonl":
+                out_path = OPTIONS_DIR / track / f"text_only_results_{mode}.jsonl"
+            else:
+                out_path = args.output.parent / track / args.output.name
 
-        save_jsonl(results, out_path)
-        print(f"\n  Saved {len(results)} result records → {out_path}")
+            results, strict_correct, tpo_correct, profile_correct, total, breakdown = evaluate(
+                track_plans, queries_map, profiles_map,
+                limit=args.limit,
+                provider=args.provider,
+                seed=args.seed,
+                verbose=args.verbose,
+                profile_mode=mode,
+                concurrency=args.concurrency,
+            )
 
-        print_report(strict_correct, tpo_correct, profile_correct, total, breakdown,
-                     profile_mode=mode, model_name=model_name)
+            save_jsonl(results, out_path)
+            print(f"\n  Saved {len(results)} result records → {out_path}")
 
-        all_summaries.append({
-            "profile_mode":    mode,
-            "model_name":      model_name,
-            "strict_correct":  strict_correct,
-            "tpo_correct":     tpo_correct,
-            "profile_correct": profile_correct,
-            "total":           total,
-        })
+            print_report(strict_correct, tpo_correct, profile_correct, total, breakdown,
+                         profile_mode=mode, model_name=model_name, track=track)
 
-    # 3개 모두 돌렸을 때만 combined summary 출력
-    if run_all:
-        print_combined_summary(all_summaries)
+            all_summaries.append({
+                "profile_mode":    mode,
+                "model_name":      model_name,
+                "strict_correct":  strict_correct,
+                "tpo_correct":     tpo_correct,
+                "profile_correct": profile_correct,
+                "total":           total,
+            })
+
+        if run_all:
+            print_combined_summary(track, all_summaries)
 
 
 if __name__ == "__main__":

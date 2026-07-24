@@ -62,9 +62,16 @@ except ImportError:
     _HAVE_PIL = False
 
 
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from configs.scenarios import EVAL_FRAME_CLAUSE
+
 IMAGE_EXTS = [".jpg", ".jpeg", ".png", ".webp"]
 
-SYSTEM_PROMPT_NO = """You are a fashion advisor.
+# Dress-code judgments are scoped to one convention set. The clause lives in
+# configs/scenarios.py so the catalog and the prompt can never drift apart.
+# Any eval run made before this clause was wired in (2026-07-24) used a
+# different prompt and its numbers are NOT comparable — mark them "pre-clause".
+SYSTEM_PROMPT_NO = f"""You are a fashion advisor.
 
 You will be given:
 1. A fashion query describing a situation or occasion
@@ -72,6 +79,7 @@ You will be given:
 
 Your task:
 Select the single BEST option image that best fits the query.
+{EVAL_FRAME_CLAUSE}
 
 OUTPUT FORMAT — CRITICAL:
 You MUST output EXACTLY one character: A, B, C, or D.
@@ -81,7 +89,7 @@ If you write anything other than a single letter, your response is INVALID.
 Your ENTIRE response must be one of: A  B  C  D
 """
 
-SYSTEM_PROMPT_WITH_PROFILE = """You are a fashion advisor.
+SYSTEM_PROMPT_WITH_PROFILE = f"""You are a fashion advisor.
 
 You will be given:
 1. A fashion query (situation or occasion)
@@ -90,6 +98,7 @@ You will be given:
 
 Your task:
 Select the single BEST option image that best fits both the query and the user's preferences.
+{EVAL_FRAME_CLAUSE}
 
 OUTPUT FORMAT — CRITICAL:
 You MUST output EXACTLY one character: A, B, C, or D.
@@ -508,11 +517,12 @@ def evaluate(plans, queries_map, profiles_map, image_root,
 
 # ── report ────────────────────────────────────────────────────────────────
 def print_report(strict_c, tpo_c, prof_c, total, breakdown, pos_hist,
-                 profile_mode=None, model_name=None, fix_correct=None):
+                 profile_mode=None, model_name=None, fix_correct=None, track=None):
     sa = strict_c / total * 100 if total else 0
     ta = tpo_c / total * 100 if total else 0
     pa = prof_c / total * 100 if total else 0
     print("\n" + "=" * 60)
+    if track:        print(f"  TRACK:             {track}")
     if profile_mode: print(f"  PROFILE MODE:      {profile_mode}")
     if model_name:   print(f"  MODEL:             {model_name}")
     if fix_correct:  print(f"  FIXED CORRECT POS: {fix_correct}")
@@ -549,9 +559,15 @@ def print_report(strict_c, tpo_c, prof_c, total, breakdown, pos_hist,
         print(f"  {key:18s} strict={s:5.1f}%  tpo={t:5.1f}%  profile={p:5.1f}%  (n={n})")
 
 
-def print_combined(all_summaries):
+def print_combined(track, all_summaries):
+    """Summary across profile modes WITHIN one track.
+
+    Physical and Dress-code are separate benchmarks; there is deliberately no
+    function here that pools them, because a pooled accuracy is not a
+    meaningful number and must never reach the paper.
+    """
     print("\n" + "=" * 60)
-    print("  ══ COMBINED SUMMARY ══")
+    print(f"  ══ COMBINED SUMMARY — track: {track} ══")
     print(f"  {'mode':<12} {'strict':>7} {'tpo':>7} {'profile':>9}")
     print("  " + "-" * 40)
     for s in all_summaries:
@@ -561,6 +577,22 @@ def print_combined(all_summaries):
         pa = s["profile_correct"]/t*100 if t else 0
         print(f"  {s['profile_mode']:<12} {sa:6.1f}%  {ta:6.1f}%  {pa:7.1f}%")
     print("=" * 60)
+
+
+def split_by_track(plans):
+    """Group plans by their recorded track, failing loudly on untagged rows.
+
+    `track` is written by the generators, so an untagged plan means the file
+    predates the track-split release and must not be scored.
+    """
+    missing = [p.get("plan_id", "?") for p in plans if not p.get("track")]
+    if missing:
+        sys.exit(f"  [error] {len(missing)} plans have no 'track' field "
+                 f"(e.g. {missing[:3]}). Regenerate with the current pipeline.")
+    by = defaultdict(list)
+    for p in plans:
+        by[p["track"]].append(p)
+    return dict(sorted(by.items()))
 
 
 def sanitize(s):
@@ -578,9 +610,13 @@ def main():
     ap.add_argument("--output", type=Path, default=Path("multimodal_results.jsonl"),
                     help="base output path; filename gets _{mode}_{model}[_fix] suffix")
     ap.add_argument("--out-dir", type=Path, default=None,
-                    help="output DIRECTORY; filenames auto-named "
-                         "multimodal_results_{mode}_{model}[_fix].jsonl inside it "
+                    help="output DIRECTORY; results are written to "
+                         "<dir>/{track}/multimodal_results_{mode}_{model}[_fix].jsonl "
                          "(overrides --output's directory)")
+    ap.add_argument("--track", default=None,
+                    help="score only this track (physical | dress_code). "
+                         "Default: score every track present, separately. "
+                         "Tracks are never pooled into a single number.")
     ap.add_argument("--image-root", type=Path, required=True)
     ap.add_argument("--base-urls", type=str, default="http://127.0.0.1:8002/v1",
                     help="comma-separated OpenAI-compat endpoints; round-robined across workers")
@@ -645,36 +681,51 @@ def main():
 
     modes = [args.profile_mode] if args.profile_mode else ["no", "narrative", "all"]
     run_all = args.profile_mode is None
-    all_summaries = []
     model_tag = sanitize(args.model)
 
-    for mode in modes:
-        print(f"\n{'─'*60}\n  ▶ profile-mode = {mode}  |  model = {args.model}\n{'─'*60}")
-        (results, sc, tc, pc, total, breakdown, pos_hist) = evaluate(
-            plans, queries_map, profiles_map, args.image_root,
-            model=args.model, limit=args.limit, seed=args.seed, verbose=args.verbose,
-            profile_mode=mode, concurrency=args.concurrency,
-            image_only_options=args.image_only_options, max_tokens=max_tokens,
-            fix_correct=args.fix_correct)
+    # Physical and Dress-code are scored end to end as separate benchmarks:
+    # separate result files, separate reports, and no pooled number anywhere.
+    tracks = split_by_track(plans)
+    if args.track:
+        if args.track not in tracks:
+            sys.exit(f"  [error] --track {args.track} not present "
+                     f"(available: {', '.join(tracks)})")
+        tracks = {args.track: tracks[args.track]}
+    print("  Tracks: " + ", ".join(f"{t}={len(v)}" for t, v in tracks.items()))
 
-        suffix = f"_{mode}_{model_tag}"
-        if args.fix_correct:
-            suffix += f"_fix{args.fix_correct}"
-        if args.out_dir:
-            out_path = args.out_dir / f"multimodal_results{suffix}.jsonl"
-        elif run_all or args.output == Path("multimodal_results.jsonl"):
-            out_path = args.output.with_name(f"multimodal_results{suffix}.jsonl")
-        else:
-            out_path = args.output.with_name(f"{args.output.stem}{suffix}{args.output.suffix or '.jsonl'}")
-        save_jsonl(results, out_path)   # save_jsonl already mkdirs parents
-        print(f"\n  Saved {len(results)} records → {out_path}")
-        print_report(sc, tc, pc, total, breakdown, pos_hist,
-                     profile_mode=mode, model_name=args.model, fix_correct=args.fix_correct)
-        all_summaries.append({"profile_mode": mode, "strict_correct": sc,
-                              "tpo_correct": tc, "profile_correct": pc, "total": total})
+    for track, track_plans in tracks.items():
+        print(f"\n{'═'*60}\n  ██ TRACK = {track}  ({len(track_plans)} plans)\n{'═'*60}")
+        all_summaries = []
+        for mode in modes:
+            print(f"\n{'─'*60}\n  ▶ track = {track} | profile-mode = {mode}  |  "
+                  f"model = {args.model}\n{'─'*60}")
+            (results, sc, tc, pc, total, breakdown, pos_hist) = evaluate(
+                track_plans, queries_map, profiles_map, args.image_root,
+                model=args.model, limit=args.limit, seed=args.seed, verbose=args.verbose,
+                profile_mode=mode, concurrency=args.concurrency,
+                image_only_options=args.image_only_options, max_tokens=max_tokens,
+                fix_correct=args.fix_correct)
 
-    if run_all:
-        print_combined(all_summaries)
+            suffix = f"_{mode}_{model_tag}"
+            if args.fix_correct:
+                suffix += f"_fix{args.fix_correct}"
+            if args.out_dir:
+                out_path = args.out_dir / track / f"multimodal_results{suffix}.jsonl"
+            elif run_all or args.output == Path("multimodal_results.jsonl"):
+                out_path = args.output.parent / track / f"multimodal_results{suffix}.jsonl"
+            else:
+                out_path = (args.output.parent / track /
+                            f"{args.output.stem}{suffix}{args.output.suffix or '.jsonl'}")
+            save_jsonl(results, out_path)   # save_jsonl already mkdirs parents
+            print(f"\n  Saved {len(results)} records → {out_path}")
+            print_report(sc, tc, pc, total, breakdown, pos_hist,
+                         profile_mode=mode, model_name=args.model,
+                         fix_correct=args.fix_correct, track=track)
+            all_summaries.append({"profile_mode": mode, "strict_correct": sc,
+                                  "tpo_correct": tc, "profile_correct": pc, "total": total})
+
+        if run_all:
+            print_combined(track, all_summaries)
 
 
 if __name__ == "__main__":

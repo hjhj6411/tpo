@@ -47,6 +47,7 @@ Axis coverage is therefore a **track-level** property, not a per-scenario one: a
 - **v8**: hemisphere-ambiguity fix — month-name seasonal cues replaced with season words ("in January" → "in the middle of winter"), since month names flip meaning in the Southern Hemisphere while season words travel with the asker.
 - **v9**: explicit/implicit sharpening after a full 240-seed audit — implicit seeds never state the constraint (8 leaky seeds rewritten), always license the inference (season cues added to 2 under-determined heat seeds), and dress-coded explicit seeds always state the dress expectation (19 seeds strengthened). `severe_weather` implicit seeds necessarily mention the weather (it IS the situation) and should be treated as weak-implicit in explicit-vs-implicit analyses.
 - **v10** (see `docs/redesign_v2_plan.md` §15): scenarios that conflicted with the track definitions were removed rather than rebalanced — `severe_weather` ×4 (used the cold-weather jacket list with no waterproof/protective attribute to express the answer), `casual_leisure` ×4 (an "overdressed" dress-code judgment, not physical unsuitability), citizenship oath ×1 (color restriction with no conventional basis), and 5 that generated for almost no users. `aquatic_water` ×3 were reworded as *cover-up over swimwear* questions since `swimwear` is not in the vocabulary, the graduation white ban (copied from weddings) was dropped, and the blanket floral ban was relaxed for 4 business scenarios and golf. 60 → 59 scenarios; the 24 profiles are unchanged (SHA256 `5c06493d…3168`).
+- **v11** (see `docs/redesign_v2_plan.md` §16): the dress-code garment preference axis was collapsing onto the `blazer/formal_shirt/dress` anchor trio (45% of the axis; one user had 13 of 15 items on a single pair) because only three ANCHOR garments existed and each profile took one like + one dislike, leaving every user exactly **one** formal fallback pair. Widening the scenarios alone does not fix it (measured: 6.59x → 6.99x). Fixed on both sides: `compatible` lists widened in 17 normative-formal scenarios (additions only — `slacks`/`long_skirt`; no new prohibitions), and `GARMENT_ANCHOR` grown to five with **2 likes + 2 dislikes + 1 neutral** per profile (garment quota 3+3 → **4+4**; color stays 3+3, pattern 2+2 — the asymmetry is deliberate and disclosed). Result: top-3 concentration 6.59x → **3.70x**, per-user worst pair share 87% → **28%**. All profiles/queries/plans regenerated as `wacv_scenario_v2`.
 
 ## Canonical Vocabulary
 
@@ -56,7 +57,9 @@ Axis coverage is therefore a **track-level** property, not a per-scenario one: a
 
 **8 preference archetypes × 3 variants = 24 users** (`configs/profiles.py`), each hardcoded so likes/dislikes span multiple garment functional groups. Design rules baked in:
 
-1. **Maximize compatibility** across the 20 scenario archetypes — each variant's 3 garment likes / 3 dislikes leave ~14 neutral garments, so almost every scenario has a clean neutral TPO-compatible vs TPO-incompatible garment pair for the planner. All **1,416 user × scenario combinations (24 × 59) are non-empty**; the residual holes are per-axis, not per-combination (users with no liked color inside the mourning/judicial `{black, navy, gray}` pools — intentional).
+1. **Maximize compatibility** across the 20 scenario archetypes — each variant's 4 garment likes / 4 dislikes leave ~12 neutral garments, so almost every scenario has a clean neutral TPO-compatible vs TPO-incompatible garment pair for the planner. All **1,416 user × scenario combinations (24 × 59) are non-empty**; the residual holes are per-axis, not per-combination (users with no liked color inside the mourning/judicial `{black, navy, gray}` pools — intentional).
+
+   **Per-axis quotas are asymmetric and this must be stated in the paper:** garment **4+4** (2 ANCHOR + 2 FREE per side), color **3+3** (1 ANCHOR + 2 FREE), pattern **2+2**. The extra garment budget buys formal-pair diversity — with five ANCHOR garments (`blazer, formal_shirt, dress, slacks, long_skirt`) at 2 likes + 2 dislikes, each user has **4 formal fallback pairs instead of 1**, and the 5th anchor always stays preference-neutral so the strictest scenarios keep a neutral TPO-compatible garment.
 2. **Strict 2×2 with real dislikes.** B/D always use a profile-disliked value, never a neutral fallback. Every variant has one liked and one disliked value within the dress-code-safe pattern set `{solid, striped}`, so pattern stays a strict like/dislike axis even in formal/mourning/wedding scenarios.
 3. **No value monoculture.** Pattern likes across the pool: solid 13, checkered 12, striped 11, leopard 5, floral 4, polka dot 3 — and every color appears on both the like and dislike side somewhere. `leopard` likes go to bold_expressive/streetwear (plus one adventurous_outdoor variant) where CLIP retrieval is stable; conservative profiles carry it as a dislike.
 
@@ -125,24 +128,55 @@ python -m scripts.report_track_balance --full   # every realized pair (appendix)
 
 Set `POD_VARIANT=<tag>` to redirect all data paths to `data_<tag>/`. Both audit
 scripts honour it, so run them with the same variant that generated the data —
-with `POD_VARIANT` unset they read `data/`.
+with `POD_VARIANT` unset they read `data/`. The current variant is
+`wacv_scenario_v2`:
+
+```bash
+export POD_VARIANT=wacv_scenario_v2
+```
 
 ## Current Scale (pre-retrieval)
 
 Reported per track, never pooled:
 
+Current variant: **`wacv_scenario_v2`** (`data_wacv_scenario_v2/`). The earlier
+`wacv_scenario_v1` is kept for comparison — **do not quote v1 numbers**, they were
+superseded by the ANCHOR widening (`docs/redesign_v2_plan.md` §16).
+
 | | Physical | Dress-code |
 |---|---:|---:|
 | scenarios / archetypes | 24 / 7 | 35 / 13 |
-| option plans | 1,152 | 2,166 |
-| preference axis | color 50%, pattern 50% | color 39.5%, pattern 39.5%, garment 21.1% |
-| TPO violation axis | garment 100% | garment 57.8%, color 27.1%, pattern 15.1% |
+| option plans | 1,152 | 2,188 |
+| preference axis | color 50%, pattern 50% | color 39.1%, pattern 39.0%, garment 21.8% |
+| TPO violation axis | garment 100% | garment 57.2%, color 27.7%, pattern 15.1% |
 
 - 24 users × 59 scenarios = **1,416 combinations, all non-empty**
-- 3,117 queries generated → **2,860 evaluable** (257 have no constructible 4-option plan, all dress-code, 225 of them on the pattern axis where strict-formal scenarios allow only `solid`/`striped`) → **3,318 option plans**
+- 3,139 queries generated → **2,882 evaluable** (257 have no constructible 4-option plan, all dress-code — 226 on the pattern axis where strict-formal scenarios allow only `solid`/`striped`, 31 on garment) → **3,340 option plans**
 - These are **pre-retrieval** numbers. Image realizability and human validation are not yet done; recompute the same tables afterwards before quoting them as final benchmark statistics.
-- The downstream report should headline the **counterbalanced subset** (`validation_report.counterbalanced_ids.json`; currently 2,726/3,318 = 82%), on which the preference-blind value-prior is ≈0.50 by construction
+- The downstream report should headline the **counterbalanced subset** (`validation_report.counterbalanced_ids.json`; currently 2,632/3,340 = 79%), on which the preference-blind value-prior is ≈0.50 by construction. Values appearing fewer than 3 times cannot be counterbalanced at all and are excluded from the subset by definition.
 - Comparable in scale to: MMPB (~500), NaturalBench (~900), BLINK (~3.8k)
+
+**Reference SHA256** (seed 42, bit-identical on regeneration):
+
+```
+profiles.jsonl     6642f47a850acbe63b5f916b4c246a092c6ca49ff45b725387df7e5849d7c68f
+queries.jsonl      fc1c355332d76131fae7558cdcc2a308951cdc39817e92d581ae0576ce468cf5
+option_plans.jsonl 8922488f2b952c357c1c64fa1c3e20d3bec343103e3a7cd96a64c981a976a3cf
+```
+
+## Scoring: two tracks, never pooled
+
+`multimodal_eval.py` and `text_only_eval.py` split plans by their `track` field,
+write results to `<out-dir>/{track}/…`, and report each track separately.
+`--track physical|dress_code` scores one of them. **There is deliberately no code
+path that pools the two into a single accuracy** — a pooled number mixes two
+different benchmarks and must not reach the paper. Plans without a `track` field
+abort the run rather than being scored silently.
+
+Dress-code judgments are scoped by `EVAL_FRAME_CLAUSE` (`configs/scenarios.py`),
+which is interpolated into every eval system prompt. **Any eval run made before
+2026-07-24 predates that wiring and used a different prompt — those numbers are
+not comparable and must be discarded or labelled "pre-clause".**
 
 ## Project Structure
 

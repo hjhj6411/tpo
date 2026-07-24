@@ -784,15 +784,59 @@ option_plans.jsonl 8922488f2b952c357c1c64fa1c3e20d3bec343103e3a7cd96a64c981a976a
 - **무플랜 쿼리는 257건으로 v1과 우연히 같으나 구성이 다르다** (garment 32→31,
   pattern 225→226, archetype 분포도 이동). 프로필 종속이므로 v1 수치를
   이월하지 말 것. 조합 커버리지는 1,416/1,416 유지.
-- **only-A 미세 이슈:** `sweatshirt` nA=2 nB=0, `hoodie` nA=1 nB=0
-  (v1은 `leggings` nA=0 nB=2). n이 극히 작아 실질 영향은 없으나 counterbalanced
-  subset에서 제외된다.
+- **교란 지표는 counterbalanced subset 크기와 함께 보고할 것.**
+  blind exploit accuracy 전체 **0.516** (color 0.524 / pattern 0.501 /
+  garment 0.540), counterbalanced subset **2,632/3,340 = 79%**
+  (v1은 0.514, 2,726/3,318 = 82%). garment의 0.529 → 0.540 상승은 n=478
+  규모에서 노이즈 범위이며, 헤드라인은 subset 기준 수치로 낼 것.
+- **only-A 값은 counterbalance가 원천적으로 불가능하다.** v2에서
+  `sweatshirt` nA=2 nB=0, `hoodie` nA=1 nB=0 (v1은 `leggings` nA=0 nB=2).
+  **n<3인 값은 두 역할에 균등 배치할 수 없으므로 counterbalanced subset에서
+  제외된다** — 결함이 아니라 subset 정의의 귀결이며, 이 문장 그대로 공개하면
+  리뷰어 방어가 된다.
 - **twin inspection 결과 트윈 0건** — garment+color likes 동일 쌍 없음,
   likes+dislikes 전체 동일 쌍 없음. `MANUAL_SWAPS`는 빈 채로 확정.
 - **widening 약한 고리 2개를 human validation 항목에 포함할 것**:
   black-tie의 `slacks`(어휘에 tuxedo/gown이 없어 `blazer`를 이미 대역으로 쓰는
   것과 같은 근사), 그리고 채택하지 않은 mourning `brown`. 사람 판정으로
   뒷받침하면 리뷰 방어 근거가 확보된다.
-- **§15.2의 블로킹 3건은 그대로 남는다**: 이미지 파이프라인
-  (`availability_catalog` 8,265행 전부 `error:KeyError`), human validation,
-  `EVAL_FRAME_CLAUSE` 미전달.
+### 16.6 독립 구현 재현성
+
+이 변경은 **두 환경에서 독립적으로 구현되어 동일한 결과를 냈다.** 별도
+샌드박스에서 레포를 클론해 같은 설계(widening 17건 + ANCHOR 5×(2+2))를
+독립 구현한 결과와, 이 저장소의 적용 결과가 다음 값에서 전부 일치한다:
+
+- dress active garment **3.70x**, physical violation **2.89x**
+- option plans **3,340**, evaluable **2,882**
+- 무플랜 **257 = pattern 226 + garment 31**
+- per-user distinct pairs min 6 / med 8 / max 11, 최악 top share 28%
+
+같은 seed(42)와 같은 결정론적 파이프라인이라 당연한 결과이지만, **서로 다른
+환경의 독립 구현이 파생 통계까지 일치했다**는 것은 재현성 근거로 논문에 쓸 수
+있다 (SHA256 3종 + 이 대조).
+
+### 16.7 §16과 함께 처리한 배관 변경 (데이터 재생성 없음)
+
+- **`EVAL_FRAME_CLAUSE` 연결 (블로킹 해소).** `configs/scenarios.py:101`에
+  정의만 되어 있고 어디에서도 참조되지 않던 문구를 `scripts/multimodal_eval.py`와
+  `scripts/text_only_eval.py`의 시스템 프롬프트 4개 전부에 f-string으로
+  삽입했다. 카탈로그와 프롬프트가 드리프트할 수 없다.
+  **이 시점 이전의 모든 평가 수치는 프롬프트가 달라 재사용 불가**이며,
+  남아 있는 것이 있으면 삭제하거나 "pre-clause"로 표기할 것.
+- **릴리스 분리.** 두 평가 스크립트가 플랜을 `track`으로 나눠 채점하고,
+  결과를 `<out>/{track}/...`에 따로 쓰며, 리포트도 트랙별로 낸다.
+  `--track`으로 한쪽만 채점할 수 있다. **트랙을 합산하는 함수는 두지 않았고**,
+  `print_combined`는 한 트랙 안에서 profile-mode만 비교한다.
+  `track` 필드가 없는 플랜은 `split_by_track`이 즉시 실패시킨다
+  (옛 릴리스 데이터가 조용히 채점되는 것을 차단).
+
+### 16.8 남은 블로킹 (§15.2에서 이월, 2건)
+
+`EVAL_FRAME_CLAUSE`는 16.7에서 해소되어 블로킹이 3건 → **2건**이 되었다.
+
+1. **이미지 파이프라인** — `data/retrieval/availability/availability_catalog.jsonl`
+   8,265행 전부 `garment_pred = "error:KeyError"`. 원인 규명이 최우선이며,
+   이것이 풀려야 최종 멀티모달 수치가 나온다.
+2. **human validation** — dress-code implicit 쿼리의 규범 정답 일치도.
+   설계 시 §16.5의 약한 고리 2건(black-tie `slacks`, 미채택 mourning `brown`)을
+   검증 문항에 포함할 것.
