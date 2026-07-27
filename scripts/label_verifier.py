@@ -1,6 +1,14 @@
 """
 Label Verifier v2 — Rule + 3-judge LLM ensemble.
-Updated: rule_match uses scenario constraints instead of TPO_ATTR_INCOMPATIBILITIES.
+
+STAGE 5 of the pipeline. Promoted from src/ (legacy) to scripts/ on 2026-07-27:
+it is the only implementation of this stage, so leaving it in the legacy tree
+made a live stage look retired. rule_match uses scenario constraints, not the
+retired TPO_ATTR_INCOMPATIBILITIES table.
+
+Keyed on plan_id, like every other downstream consumer: a dress-code query with
+two violation axes emits two plans whose options differ, so verifying by
+query_id would label one plan and skip the other.
 """
 
 import argparse
@@ -10,11 +18,11 @@ from pathlib import Path
 
 import numpy as np
 
-from .utils import (
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from src.utils import (
     call_llm, parse_json_response, save_jsonl, load_jsonl, save_json, log_step,
 )
-
-sys.path.insert(0, str(Path(__file__).parent.parent))
+from scripts.plan_index import PlanIndex
 from configs.config import (
     LABELS_DIR, PROFILES_DIR, OPTIONS_DIR, QUERIES_DIR,
     LABEL_QUALITY_THRESHOLDS, PROVIDERS,
@@ -241,6 +249,7 @@ def verify_instance(plan, profile, query, enable_judges=None):
         }
 
     return {
+        "plan_id": plan.get("plan_id") or plan["query_id"],
         "query_id": plan["query_id"], "user_id": plan["user_id"],
         "scenario_id": plan.get("scenario_id"),
         "active_axis": plan["active_axis"],
@@ -258,11 +267,18 @@ def run_pipeline(plan_path, profile_path, query_path, output_path,
     queries = {q["query_id"]: q for q in load_jsonl(query_path)}
     print(f"  {len(plans)} plans, {len(profiles)} profiles, {len(queries)} queries")
 
+    index = PlanIndex(plans)
+    index.assert_unique()
+
     if output_path.exists():
         existing = load_jsonl(output_path)
-        done = {r["query_id"] for r in existing}
+        # resume on plan_id; older result files carry only query_id, and those
+        # rows cannot distinguish the two plans of a two-axis query, so they are
+        # re-verified rather than trusted.
+        done = {r["plan_id"] for r in existing if r.get("plan_id")}
         results = existing
-        todo = [p for p in plans if p["query_id"] not in done]
+        todo = [p for p in plans
+                if (p.get("plan_id") or p["query_id"]) not in done]
         print(f"  Resuming: {len(done)} already verified")
     else:
         results = []

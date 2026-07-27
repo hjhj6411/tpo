@@ -63,7 +63,9 @@ except ImportError:
 
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from configs.scenarios import EVAL_FRAME_CLAUSE
+from configs.scenarios import (EVAL_FRAME_CLAUSE, EVAL_PRIORITY_CLAUSE_SITUATION,
+                               EVAL_PRIORITY_CLAUSE_PREFERENCE, PROMPT_VERSION)
+from scripts.plan_index import PlanIndex, select_by_manifest
 
 IMAGE_EXTS = [".jpg", ".jpeg", ".png", ".webp"]
 
@@ -80,6 +82,7 @@ You will be given:
 Your task:
 Select the single BEST option image that best fits the query.
 {EVAL_FRAME_CLAUSE}
+{EVAL_PRIORITY_CLAUSE_SITUATION}
 
 OUTPUT FORMAT — CRITICAL:
 You MUST output EXACTLY one character: A, B, C, or D.
@@ -99,6 +102,8 @@ You will be given:
 Your task:
 Select the single BEST option image that best fits both the query and the user's preferences.
 {EVAL_FRAME_CLAUSE}
+{EVAL_PRIORITY_CLAUSE_SITUATION}
+{EVAL_PRIORITY_CLAUSE_PREFERENCE}
 
 OUTPUT FORMAT — CRITICAL:
 You MUST output EXACTLY one character: A, B, C, or D.
@@ -210,12 +215,17 @@ def _resolve_path_cached(image_root_str: str, key: str, opt_key: str,
     return None
 
 
+_PLAN_INDEX = None       # scripts.plan_index.PlanIndex; set in main()
+
+
 def resolve_image_path(plan, opt_key, image_root):
     """Look under plan_id first, then query_id (pre-plan_id collections).
 
-    A query with two violation axes has two plans whose options differ, so a
-    query_id folder is only correct for single-plan queries; the fallback exists
-    for older image sets and warns once.
+    The query_id fallback is allowed ONLY when that query produced exactly one
+    plan. A two-plan query's folder cannot say which of `__vG`/`__vC`/`__vP` its
+    images depict, and guessing would score one plan against the other's options,
+    so the image is treated as missing instead. Same rule as
+    grade_options.scan_images — both go through scripts.plan_index.
     """
     global _qid_fallback_warned
     opt = plan.get("options", {}).get(opt_key, {})
@@ -229,15 +239,85 @@ def resolve_image_path(plan, opt_key, image_root):
         res = _resolve_path_cached(str(image_root), pid, opt_key, explicit)
         if res:
             return Path(res)
+
     qid = plan.get("query_id", "")
-    res = _resolve_path_cached(str(image_root), qid, opt_key, explicit) if qid else None
+    if not qid:
+        return None
+    if _PLAN_INDEX is not None and len(_PLAN_INDEX.qid_to_pids.get(qid, [])) > 1:
+        return None          # ambiguous: never guess between the two plans
+    res = _resolve_path_cached(str(image_root), qid, opt_key, explicit)
     if res:
         if pid and not _qid_fallback_warned:
             _qid_fallback_warned = True
-            print(f"  [WARN] no image under plan_id '{pid}'; falling back to query_id "
-                  f"'{qid}'. Two-plan queries share that folder — re-collect under plan_id.")
+            print(f"  [WARN] no image under plan_id '{pid}'; falling back to the "
+                  f"query_id folder '{qid}' (single-plan query only). Re-collect "
+                  f"images under plan_id.")
         return Path(res)
     return None
+
+
+_MAGIC = ((b"\xff\xd8\xff", "jpeg"), (b"\x89PNG\r\n\x1a\n", "png"),
+          (b"RIFF", "webp"), (b"GIF8", "gif"))
+
+
+def verify_decodable(path):
+    """Raise if `path` is not a real, readable image.
+
+    With PIL this is a true decode (`verify()` catches truncation that
+    `Image.open` alone does not). WITHOUT PIL the encode path just base64s the
+    raw bytes, which succeeds on any garbage — so fall back to a magic-number
+    check, which at least rejects a non-image file with an image extension.
+    """
+    if _HAVE_PIL:
+        with Image.open(path) as img:
+            img.verify()             # decodes far enough to detect corruption
+        with Image.open(path) as img:
+            img.convert("RGB").load()   # verify() leaves the file unusable
+        return "pil"
+    head = Path(path).read_bytes()[:16]
+    if not any(head.startswith(m) for m, _ in _MAGIC):
+        raise ValueError(f"not an image file (magic={head[:8]!r}); "
+                         f"install Pillow for a real decode check")
+    if Path(path).stat().st_size < 128:
+        raise ValueError("file too small to be a usable image")
+    return "magic"
+
+
+def preflight_images(plans, image_root, options=("A", "B", "C", "D")):
+    """Resolve AND decode every option image before any model is called.
+
+    Existence is not enough: a truncated or non-image file passes `exists()` and
+    only fails deep inside the eval loop, after tokens have been spent and with
+    the failure recorded as a per-item `image_failure` rather than a run-level
+    problem. This walks every plan, actually runs the encode path, and reports
+    what is broken up front.
+
+    Returns (ok_plans, broken) where broken is
+    [{plan_id, query_id, missing: [...], undecodable: [(opt, err), ...]}].
+    """
+    ok, broken = [], []
+    for plan in plans:
+        pid = plan.get("plan_id") or plan.get("query_id")
+        missing, bad = [], []
+        for opt_key in options:
+            if opt_key not in plan.get("options", {}):
+                continue
+            path = resolve_image_path(plan, opt_key, image_root)
+            if path is None:
+                missing.append(opt_key)
+                continue
+            try:
+                verify_decodable(str(path))
+                _encode_b64(str(path))
+            except Exception as e:
+                bad.append((opt_key, f"{type(e).__name__}: {e}"))
+        if missing or bad:
+            broken.append({"plan_id": pid, "query_id": plan.get("query_id"),
+                           "missing": sorted(missing),
+                           "undecodable": [{"option": o, "error": e} for o, e in bad]})
+        else:
+            ok.append(plan)
+    return ok, broken
 
 
 def option_to_fallback_text(opt):
@@ -693,9 +773,15 @@ def main():
     ap.add_argument("--fix-correct", choices=["A", "B", "C", "D"], default=None,
                     help="1-2 experiment: pin the TRUE answer at this display slot "
                          "(default: random shuffle, the 1-1 experiment)")
+    ap.add_argument("--plan-id-manifest", type=Path, default=None,
+                    help="score only the plan_ids listed in this manifest, e.g. "
+                         "options/validation_report.counterbalanced_ids.json")
+    ap.add_argument("--evaluate-surviving-only", action="store_true",
+                    help="if preflight finds missing/undecodable images, evaluate the "
+                         "surviving plans instead of aborting (marks the run partial)")
     args = ap.parse_args()
 
-    global _IMG_SIZE, _CLIENTS, _GUIDED, _THINKING
+    global _IMG_SIZE, _CLIENTS, _GUIDED, _THINKING, _PLAN_INDEX
     _IMG_SIZE = args.img_size if args.img_size > 0 else None
     _THINKING = args.enable_thinking
     # thinking is incompatible with guided_choice -> force guided off when thinking
@@ -725,6 +811,40 @@ def main():
           f"| fix-correct: {args.fix_correct}")
     if args.limit:
         print(f"  Limit: {args.limit}")
+
+    # plan_id is the item key; every folder lookup and manifest check goes
+    # through this index so the eval and grading paths agree.
+    _PLAN_INDEX = PlanIndex(plans)
+    _PLAN_INDEX.assert_unique()
+    manifest_meta = {}
+    if args.plan_id_manifest:
+        plans, manifest_meta = select_by_manifest(
+            plans, args.plan_id_manifest, index=_PLAN_INDEX, label="plans")
+
+    # ── preflight: resolve AND decode every image before spending any tokens ──
+    print(f"\n  Preflight: decoding images for {len(plans)} plans "
+          f"({'PIL decode' if _HAVE_PIL else 'magic-number check only — install Pillow'}) …")
+    plans, broken = preflight_images(plans, args.image_root)
+    partial = False
+    if broken:
+        n_missing = sum(len(b["missing"]) for b in broken)
+        n_bad = sum(len(b["undecodable"]) for b in broken)
+        print(f"  [FAIL] {len(broken)} plans have unusable images "
+              f"({n_missing} missing, {n_bad} undecodable). Examples:")
+        for b in broken[:5]:
+            print(f"    {b['plan_id']}: missing={b['missing']} "
+                  f"undecodable={[u['option'] for u in b['undecodable']]}")
+        if not args.evaluate_surviving_only:
+            sys.exit("  Aborting before any model call. Re-collect the images, or "
+                     "pass --evaluate-surviving-only to score the rest "
+                     "(the result is then a PARTIAL benchmark, not a full run).")
+        partial = True
+        print(f"  --evaluate-surviving-only: continuing with {len(plans)} plans "
+              f"(results are PARTIAL).")
+    else:
+        print(f"  Preflight OK: all {len(plans)} plans have 4 decodable images.")
+    if not plans:
+        sys.exit("  [error] no plans left to evaluate.")
 
     modes = [args.profile_mode] if args.profile_mode else ["no", "narrative", "all"]
     run_all = args.profile_mode is None
@@ -769,12 +889,21 @@ def main():
             save_jsonl(results, out_path)   # save_jsonl already mkdirs parents
             # run header: whether the options were image-only, and what was dropped
             meta = {"track": track, "profile_mode": mode, "model": args.model,
+                    # prompt_version 2 = US frame clause + eliminate-then-prefer
+                    # ordering. Runs made under a different version are NOT
+                    # comparable; always report this alongside the accuracies.
+                    "prompt_version": PROMPT_VERSION,
+                    "eval_frame_clause": EVAL_FRAME_CLAUSE,
                     "image_only": bool(args.image_only_options),
                     "allow_text_fallback": bool(args.allow_text_fallback),
+                    "partial": partial,
+                    "n_preflight_broken": len(broken),
+                    "preflight_broken": broken[:200],
                     "n_plans_in_track": len(track_plans),
                     "n_scored": len(results),
                     "n_skipped_missing_images": len(skipped),
-                    "skipped": skipped[:200]}
+                    "skipped": skipped[:200],
+                    **manifest_meta}
             meta_path = out_path.with_suffix(".meta.json")
             with open(meta_path, "w", encoding="utf-8") as f:
                 json.dump(meta, f, ensure_ascii=False, indent=2)

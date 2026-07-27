@@ -29,8 +29,11 @@ Output: one row per (plan, option). A flat independent table.
 import argparse, base64, json, re, time
 from collections import defaultdict
 from pathlib import Path
-import os, requests
+import os, sys, requests
 from requests.adapters import HTTPAdapter
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from scripts.plan_index import PlanIndex
 
 _S = requests.Session()
 _S.mount("https://", HTTPAdapter(pool_connections=16, pool_maxsize=32, max_retries=0))
@@ -109,45 +112,29 @@ def target_text(a):
 _OPT_RE = re.compile(r"(?:^|[^a-zA-Z])([ABCD])(?:[^a-zA-Z]|$)")
 _IMG_EXT = {".jpg", ".jpeg", ".png", ".webp"}
 
-def scan_images(root, plans_by_pid, qid_to_pids):
+def scan_images(root, index):
     """Match each image folder to a plan, pick one image file per option letter.
 
-    Folders are keyed by plan_id. Collections made before the plan_id switch used
-    query_id folder names; those still resolve, but only when the query has a
-    single plan — a two-plan query cannot be disambiguated from a query_id folder,
-    so it is reported as ambiguous rather than silently graded against one plan.
+    Folder resolution is delegated to scripts.plan_index so this grader and
+    multimodal_eval can never disagree about which plan an image belongs to:
+    plan_id wins; a query_id folder resolves only when that query has exactly
+    one plan; a two-plan query_id folder is ambiguous and is skipped.
     """
     root = Path(root)
-    found = []
-    unmatched = []
-    ambiguous = []
+    found, unmatched, ambiguous = [], [], []
     used_qid_fallback = False
     for d in sorted(p for p in root.iterdir() if p.is_dir()):
-        # resolve which plan this folder belongs to: longest plan_id contained in the name
-        pid = None
-        for p in plans_by_pid:
-            if p in d.name:
-                if pid is None or len(p) > len(pid):
-                    pid = p
-        if pid is None:
-            # legacy fallback: folder named after the query_id
-            qid = None
-            for q in qid_to_pids:
-                if q in d.name:
-                    if qid is None or len(q) > len(qid):
-                        qid = q
-            if qid is not None and len(qid_to_pids[qid]) == 1:
-                pid = qid_to_pids[qid][0]
-                if not used_qid_fallback:
-                    used_qid_fallback = True
-                    print(f"  [WARN] folder '{d.name}' has no plan_id; falling back to "
-                          f"query_id -> {pid}. Re-collect images under plan_id folders.")
-            elif qid is not None:
-                ambiguous.append(d.name)
-                continue
+        pid, how = index.resolve_folder_key(d.name)
+        if how == "ambiguous":
+            ambiguous.append(d.name)
+            continue
         if pid is None:
             unmatched.append(d.name)
             continue
+        if how == "query_id" and not used_qid_fallback:
+            used_qid_fallback = True
+            print(f"  [WARN] folder '{d.name}' has no plan_id; falling back to "
+                  f"query_id -> {pid}. Re-collect images under plan_id folders.")
         # collect image files, bucket by option letter
         per_opt = {}
         for f in sorted(d.iterdir()):
@@ -156,8 +143,7 @@ def scan_images(root, plans_by_pid, qid_to_pids):
             m = _OPT_RE.search(f.stem.upper())
             if not m:
                 continue
-            letter = m.group(1)
-            per_opt.setdefault(letter, f)  # first match wins
+            per_opt.setdefault(m.group(1), f)  # first match wins
         for letter, f in per_opt.items():
             found.append((pid, letter, str(f)))
     return found, unmatched, ambiguous
@@ -210,11 +196,10 @@ def run(args):
     plan_rows = load_jsonl(args.plans)
     # plan_id is the primary key: keying by query_id silently dropped one of the two
     # plans for every query with two violation axes (458 queries / 916 plans in v2).
-    plans = {(p.get("plan_id") or p["query_id"]): p for p in plan_rows}
-    qid_to_pids = defaultdict(list)
-    for p in plan_rows:
-        qid_to_pids[p["query_id"]].append(p.get("plan_id") or p["query_id"])
-    found, unmatched, ambiguous = scan_images(args.image_root, plans, qid_to_pids)
+    index = PlanIndex(plan_rows)
+    index.assert_unique()
+    plans = index.by_plan_id
+    found, unmatched, ambiguous = scan_images(args.image_root, index)
     print(f"  scanned {args.image_root}: {len(found)} option images, "
           f"{len({p for p,_,_ in found})} plans matched, {len(unmatched)} folders unmatched")
     if unmatched[:3]:

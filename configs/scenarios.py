@@ -97,8 +97,21 @@ v11 — simple scenario curation:
   produce at least one evaluable item.
 """
 
-CULTURAL_FRAME = 'contemporary_western'
-EVAL_FRAME_CLAUSE = 'Assume contemporary Western / international dress-code conventions when judging what is appropriate for the occasion.'
+CULTURAL_FRAME = 'contemporary_united_states'
+# PROMPT VERSION 2 (2026-07-27). Both evaluators import this single string, so
+# the catalog and the prompts cannot drift. Changing it changes the benchmark
+# task: results produced under a different clause are NOT comparable and must be
+# reported with their prompt_version.
+EVAL_FRAME_CLAUSE = ('Assume mainstream contemporary United States dress conventions, '
+                     'unless the query explicitly states a different rule.')
+# Ordering rule shown to the model on top of the frame clause. Kept next to the
+# clause because the two together define the scored task.
+EVAL_PRIORITY_CLAUSE_SITUATION = (
+    'First eliminate any option that is inappropriate for the stated situation.')
+EVAL_PRIORITY_CLAUSE_PREFERENCE = (
+    'Among the remaining situation-appropriate options, choose the one that best '
+    'matches the user\'s stated preferences.')
+PROMPT_VERSION = 2
 FRAME_SCOPED_ARCHETYPES = {'business_professional',
  'judicial_civic',
  'mourning_somber',

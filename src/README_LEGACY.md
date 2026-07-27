@@ -17,12 +17,14 @@ Three modules are still imported by current code and must stay:
 
 | module | used by |
 |---|---|
-| `utils.py` | `scripts/text_only_eval.py`, `text_exp/*`, `vit/collect_images_clip_retrieval.py` |
+| `utils.py` | `scripts/text_only_eval.py`, `scripts/label_verifier.py`, `text_exp/*`, `vit/collect_images_clip_retrieval.py` |
 | `option_planner.py` | legacy collector path |
 | `image_collector.py` | legacy collector path |
 
-`label_verifier.py` has no caller and no `construction/` replacement; it is the
-only copy of that stage, so it is kept rather than deleted.
+`label_verifier.py` was **promoted out of this directory** to
+`scripts/label_verifier.py` on 2026-07-27. It is the only implementation of
+Stage 5, so leaving it here made a live stage look retired; it is now keyed on
+plan_id like the rest of the downstream tooling.
 
 The superseded generators (`profile_generator.py`, `query_generator.py`,
 `compatibility.py`) were removed on 2026-07-27 — use `construction/` instead.

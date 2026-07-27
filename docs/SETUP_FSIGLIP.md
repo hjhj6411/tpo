@@ -154,7 +154,8 @@ All gates are **fail-open** (VLM failure → pass), so a flaky VLM degrades to p
 
 ```bash
 conda activate pod
-python src/collect_images_siglip_dpv.py \
+# current collector (src/collect_images_siglip_dpv.py was removed)
+python fsiglip/collect_topk_sam3_fsiglip_patch_rank_vlm_garment_axis_patches.py \
   --plan_path data/options/option_plans.jsonl \
   --client-url http://127.0.0.1:1235/knn-service \
   --vlm-urls "http://127.0.0.1:8002/v1,http://127.0.0.1:8003/v1,http://127.0.0.1:8004/v1,http://127.0.0.1:8005/v1" \
@@ -163,9 +164,16 @@ python src/collect_images_siglip_dpv.py \
   --image_root data/images_dpv --output data/images_dpv/collection_log.jsonl \
   --workers 4 --top_k 12 --limit 30 --force
 ```
-Outputs: `data/images_dpv/<query_id>/{A,B,C,D}.jpg` + `collection_log.jsonl` (one record per
-query_id, with per-option `rank_used`/`model_gender`/`model_age`/`pattern_coverage` and
-set-level `set_gender`/`gender_consistent`). Resumable: re-run to continue; `--force` restarts.
+Outputs: `data/images_dpv/<plan_id>/{A,B,C,D}.jpg` + `collection_log.jsonl` (one record per
+**plan_id**, with per-option `rank_used`/`pattern_coverage`). One folder per PLAN, not per
+query: a dress-code query with two violation axes emits two plans (`__vG`/`__vC`/`__vP`)
+whose options differ, so query_id folders would overwrite half the images. Downstream
+(`scripts/grade_options.py`, `scripts/multimodal_eval.py`) reads plan_id folders and only
+falls back to a query_id folder when that query has exactly one plan.
+
+The `model_gender`/`model_age`/`set_gender`/`gender_consistent` fields and the
+`--gender-lock` demographic gate belong to the retired `vit/` collector and are NOT
+produced by the current one. Resumable: re-run to continue; `--force` restarts.
 
 Ablations (compare via the eval in §7):
 ```bash

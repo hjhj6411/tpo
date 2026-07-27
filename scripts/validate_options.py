@@ -406,8 +406,10 @@ def main():
             yx = [pid for pid, a in items if a == y]   # A == y
             m = min(len(xy), len(yx))
             cb_ids += xy[:m] + yx[:m]
-    print("\n  Counterbalanced subset (each value plays A and B equally;")
-    print("  blind value-prior == 50% by construction -> confound-free strict pool):")
+    print("\n  Active-value-prior-matched subset (each ACTIVE-AXIS value plays A and")
+    print("  B equally, so a preference-blind value prior is exactly 50% on it.")
+    print("  This removes the active-axis value prior ONLY — position, garment,")
+    print("  and image-quality confounds are untouched):")
     print(f"    {len(cb_ids)}/{len(inst_meta)} instances "
           f"({len(cb_ids)/max(len(inst_meta),1):.0%})")
 

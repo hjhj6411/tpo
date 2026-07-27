@@ -67,17 +67,26 @@ PROVIDERS = {
 
 Recommended testing workflow:
 
-```bash
-# (1) All-vllm dry run to validate the pipeline end-to-end
-#     (No paid calls; PROVIDERS as shipped except label_judge_tertiary if you
-#      don't have OPENAI_API_KEY — set it to "vllm" too)
-bash scripts/run_pipeline.sh
+There is no single pipeline driver script — run the stages in order. Stages 1–3
+are deterministic and take seconds; Stage 4 (image collection) is the long one.
 
-# (2) Once pipeline works, flip stages to gpt5_mini for final runs
-#     Edit configs/config.py, then:
-export OPENAI_API_KEY=sk-...
-bash scripts/run_pipeline.sh
+```bash
+export POD_VARIANT=wacv_scenario_v2
+
+# Stages 1-3: deterministic construction (no LLM calls)
+python -m construction.profile_generator --n_users 24 --force
+python -m construction.query_generator   --force
+python -m construction.option_planner    --force
+
+# Validate what you just built (must report 0 failures)
+python -m scripts.validate_options
+
+# Reproducibility check: rebuild, compare SHA256, validate, mutation-test
+bash scripts/verify_release.sh
 ```
+
+To use paid providers for the LLM stages, edit `PROVIDERS` in `configs/config.py`
+and `export OPENAI_API_KEY=sk-...` first.
 
 ## Per-Step Partial Runs
 
@@ -85,15 +94,20 @@ bash scripts/run_pipeline.sh
 python -m construction.profile_generator --n_users 5
 python -m construction.query_generator --n_per_user 6
 python -m construction.option_planner --limit 30        # deterministic, fast
-python -m src.image_collector --limit 30
-python -m src.label_verifier --limit 30
-python -m src.quality_audit --n_audit 10
 
-# Evaluation (3 profile variants)
-python -m src.evaluator --profile_variant combined
-python -m src.evaluator --profile_variant keyword_only
-python -m src.evaluator --profile_variant narrative_only
+# Stage 4 — image collection (current collector; see docs/SETUP_FSIGLIP.md)
+python fsiglip/collect_topk_sam3_fsiglip_patch_rank_vlm_garment_axis_patches.py --limit 30
+
+# Stage 5 — label verification (promoted from src/ on 2026-07-27)
+python -m scripts.label_verifier --limit 30
+
+# Evaluation — text-only baseline and the image MCQ, per profile mode
+python -m scripts.text_only_eval --profile-mode narrative --limit 50
+python scripts/multimodal_eval.py --plans ... --image-root ... --model ...
 ```
+
+`src.quality_audit` and `src.evaluator` appear in older notes but do not exist in
+this repo; the evaluators above replace them.
 
 ## CLI Provider Override
 
@@ -101,7 +115,7 @@ To run a single stage with a specific provider without editing config:
 
 ```bash
 python -m construction.profile_generator --provider gpt5_mini --n_users 5
-python -m src.evaluator --provider vllm_vlm --profile_variant combined
+python -m scripts.text_only_eval --provider gpt5_mini --profile-mode narrative
 ```
 
 ## Resumability

@@ -36,8 +36,10 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.utils import call_llm, load_jsonl, save_jsonl, log_step
+from scripts.plan_index import PlanIndex, select_by_manifest
 from configs.config import OPTIONS_DIR, QUERIES_DIR, PROFILES_DIR, PROVIDERS, PROVIDER_ENDPOINTS
-from configs.scenarios import EVAL_FRAME_CLAUSE
+from configs.scenarios import (EVAL_FRAME_CLAUSE, EVAL_PRIORITY_CLAUSE_SITUATION,
+                               EVAL_PRIORITY_CLAUSE_PREFERENCE, PROMPT_VERSION)
 
 
 # Dress-code judgments are scoped to one convention set. The clause lives in
@@ -54,6 +56,7 @@ You will be given:
 Your task:
 Select the single BEST option that best fits the query.
 {EVAL_FRAME_CLAUSE}
+{EVAL_PRIORITY_CLAUSE_SITUATION}
 
 OUTPUT FORMAT — CRITICAL:
 You MUST output EXACTLY one character: A, B, C, or D.
@@ -74,6 +77,8 @@ You may be given:
 Your task:
 Select the single BEST option that best fits both the query and the user's preferences.
 {EVAL_FRAME_CLAUSE}
+{EVAL_PRIORITY_CLAUSE_SITUATION}
+{EVAL_PRIORITY_CLAUSE_PREFERENCE}
 
 OUTPUT FORMAT — CRITICAL:
 You MUST output EXACTLY one character: A, B, C, or D.
@@ -298,6 +303,7 @@ def evaluate(plans, queries_map, profiles_map,
     def process(idx, job):
         plan, query, prompt, display_to_original, correct_display = job
         qid = plan["query_id"]
+        pid = plan.get("plan_id") or qid
         uid = plan["user_id"]
         axis = plan.get("active_axis", "unknown")
         qtype = query.get("query_type", "unknown")
@@ -308,7 +314,7 @@ def evaluate(plans, queries_map, profiles_map,
             predicted = parse_answer(response)
             predicted_original = display_to_original.get(predicted)
         except Exception as e:
-            print(f"  [ERROR] {qid}: {e}")
+            print(f"  [ERROR] {pid}: {e}")
 
         strict_hit = int(predicted_original == "A") if predicted_original else 0
         tpo_hit = TPO_SCORE.get(predicted_original, 0) if predicted_original else 0
@@ -316,6 +322,7 @@ def evaluate(plans, queries_map, profiles_map,
 
         rec = {
             "_idx": idx,
+            "plan_id": pid,
             "query_id": qid,
             "user_id": uid,
             "active_axis": axis,
@@ -471,6 +478,9 @@ def main():
                         help="생략 시 no / narrative / all 3개 모두 순차 실행")
     parser.add_argument("--concurrency", type=int, default=1,
                         help="병렬 요청 수. vllm은 32, gpt5_mini는 1~8 권장")
+    parser.add_argument("--plan-id-manifest", type=Path, default=None,
+                        help="이 manifest에 있는 plan_id만 채점 "
+                             "(예: options/validation_report.counterbalanced_ids.json)")
     parser.add_argument("--track", default=None,
                         help="이 트랙만 채점 (physical | dress_code). "
                              "기본값은 존재하는 모든 트랙을 각각 따로 채점. "
@@ -486,8 +496,21 @@ def main():
     queries_map  = {q["query_id"]: q for q in queries}
     profiles_map = {p["user_id"]:  p for p in profiles}
 
-    print(f"  Plans: {len(plans)}, Queries: {len(queries)}, Profiles: {len(profiles)}")
-    print(f"  Concurrency: {args.concurrency}")
+    # plan_id is the item key: a two-violation-axis query emits two plans that
+    # share a query_id, so uniqueness here is what makes the results addressable.
+    index = PlanIndex(plans)
+    n_ids = index.assert_unique()
+    plan_ids = [p.get("plan_id") or p["query_id"] for p in plans]
+    assert len(plan_ids) == len(set(plan_ids)), "plan_id must be unique"
+
+    manifest_meta = {}
+    if args.plan_id_manifest:
+        plans, manifest_meta = select_by_manifest(
+            plans, args.plan_id_manifest, index=index, label="plans")
+
+    print(f"  Plans: {len(plans)} ({n_ids} unique plan_ids), "
+          f"Queries: {len(queries)}, Profiles: {len(profiles)}")
+    print(f"  Concurrency: {args.concurrency} | prompt_version: {PROMPT_VERSION}")
     if args.limit:
         print(f"  Limit: {args.limit}")
 
@@ -535,7 +558,19 @@ def main():
             )
 
             save_jsonl(results, out_path)
+            meta = {"track": track, "profile_mode": mode, "model": model_name,
+                    # prompt_version 2 = US frame clause + eliminate-then-prefer
+                    # ordering. Not comparable with version 1 numbers.
+                    "prompt_version": PROMPT_VERSION,
+                    "eval_frame_clause": EVAL_FRAME_CLAUSE,
+                    "n_plans_in_track": len(track_plans),
+                    "n_scored": len(results),
+                    **manifest_meta}
+            meta_path = out_path.with_suffix(".meta.json")
+            with open(meta_path, "w", encoding="utf-8") as f:
+                json.dump(meta, f, ensure_ascii=False, indent=2)
             print(f"\n  Saved {len(results)} result records → {out_path}")
+            print(f"  Run header → {meta_path}")
 
             print_report(strict_correct, tpo_correct, profile_correct, total, breakdown,
                          profile_mode=mode, model_name=model_name, track=track)

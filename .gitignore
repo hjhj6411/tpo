@@ -21,3 +21,6 @@ data/images/
 *.csv
 *.faiss
 
+
+# scratch dir written by scripts/verify_release.sh
+data_*_verify/

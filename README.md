@@ -4,7 +4,7 @@ A VLM personalization benchmark that tests whether vision-language models can re
 
 ## Key Design: Canonical Extreme Scenarios
 
-Unlike v1 (random TPO sampling → ambiguous contrasts), v2 uses **59 curated canonical extreme scenarios** across **20 archetypes** (`configs/scenarios.py`) where TPO-compatible vs TPO-incompatible distinctions are **indisputable** — the incompatible garments (and, for dress-coded archetypes, colors/patterns) are wrong on grounds of physical danger, functional impossibility, or near-universal social norm. Dress-code judgments are explicitly scoped to contemporary Western / international conventions (`EVAL_FRAME_CLAUSE`).
+Unlike v1 (random TPO sampling → ambiguous contrasts), v2 uses **59 curated canonical extreme scenarios** across **20 archetypes** (`configs/scenarios.py`) where TPO-compatible vs TPO-incompatible distinctions are **grounded in physical danger, functional impossibility, or widely shared convention** — not in the authors' taste. Physical scenarios rest on the first two and are culture-invariant; dress-code scenarios rest on the third and are therefore explicitly scoped by `EVAL_FRAME_CLAUSE` (currently: mainstream contemporary United States conventions, unless the query states a different rule). The convention-based half is **not yet human-validated** — annotation is planned (§4); until it lands, treat those labels as authored, not verified.
 
 **Physical and Dress-code are two separate datasets.** They are constructed, reported, and scored independently; sample sizes and axis shares are never compared across them. See `docs/redesign_v2_plan.md` §14–§15 for the rationale and the current construction statistics.
 
@@ -55,7 +55,7 @@ Axis coverage is therefore a **track-level** property, not a per-scenario one: a
 
 ## Backward-Designed Profiles
 
-**8 preference archetypes × 3 variants = 24 users** (`configs/profiles.py`), each hardcoded so likes/dislikes span multiple garment functional groups. Design rules baked in:
+**24 rule-generated preference profiles** (`construction/profile_generator.py`, frozen in `configs/profiles.py` as `V2_PROFILE_VARIANTS`). Each profile is built from tier quotas, not hand-authored personas: the ANCHOR values (a fixed small set per axis) are split like/dislike across users so every scenario pool stays populated, RESERVE values `{orange, yellow, pink, white}` are held out of all profiles, and the remaining FREE values fill the quota (garment 4+4, color 3+3, pattern 2+2). No semantic archetype labels exist in v2 — an earlier draft described "8 archetypes × 3 variants", which is the pre-v2 legacy block. Design rules baked in:
 
 1. **Maximize compatibility** across the 20 scenario archetypes — each variant's 4 garment likes / 4 dislikes leave ~12 neutral garments, so almost every scenario has a clean neutral TPO-compatible vs TPO-incompatible garment pair for the planner. All **1,416 user × scenario combinations (24 × 59) are non-empty**; the residual holes are per-axis, not per-combination (users with no liked color inside the mourning/judicial `{black, navy, gray}` pools — intentional).
 
@@ -101,9 +101,9 @@ Stages 1–3 are deterministic (no LLM calls) and fully reproducible from `confi
 
 **Image collection (Stage 4) is the engineered core.** Retrieval is frozen on **Marqo-FashionSigLIP** (`fsiglip/serve_fsiglip_knn.py`, 651k Amazon-fashion corpus; `fsiglip2/` is the second-generation embedding twin). The current collector is `fsiglip/collect_topk_sam3_fsiglip_patch_rank_vlm_garment_axis_patches.py`:
 - **Garment axis — VLM judge.** A closed-vocabulary VLM classification of the worn garment (SAM3-mask *scoring* was rejected: as a localizer it cannot discriminate dress ↔ tank top). SAM3 text-prompted masks localize the garment for patch extraction.
-- **Pattern axis — patch-based with family verification.** Per-tile pattern classification over the garment mask, with a decision-aware pattern-family hit rule (rescues near-miss family matches without admitting errors).
+- **Pattern axis — patch-based.** Per-tile pattern classification over the garment mask against a flat closed vocabulary (`PATTERN_VOCAB`). *Planned, not implemented:* a decision-aware pattern-FAMILY hit rule to rescue near-miss family matches — no family grouping exists in the current collector.
 - **Color axis — per-tile color argmax** that catches Navy↔Blue / Beige↔Brown confusions a single pooled embedding passes.
-- Gates are fail-open; gender consistency and intra-set URL dedup hold within each 4-option set.
+- Gates are fail-open. *Planned, not implemented in the current collector:* gender consistency and intra-set URL dedup within each 4-option set. Both exist only in the retired `vit/collect_images_vit_coverage_v7.py` path and were not carried over to the FashionSigLIP collector.
 
 ## Quick Start
 
@@ -154,7 +154,9 @@ variant were removed; their numbers were superseded by the ANCHOR widening
 - 24 users × 59 scenarios = **1,416 combinations, all non-empty**
 - 3,139 queries generated → **2,882 unique query contexts** (257 have no constructible 4-option plan, all dress-code — 226 on the pattern axis where strict-formal scenarios allow only `solid`/`striped`, 31 on garment) → **3,340 option plans (the item unit)**. Always report the two together as "3,340 option plans / 2,882 unique query contexts": 458 dress-code queries constrain two axes and emit two plans each (`__vG`/`__vC`/`__vP`), so plans outnumber queries and `plan_id` — never `query_id` — is the item key.
 - These are **pre-retrieval** numbers. Image realizability and human validation are not yet done; recompute the same tables afterwards before quoting them as final benchmark statistics.
-- The downstream report should headline the **counterbalanced subset** (`validation_report.counterbalanced_ids.json`; currently 2,632/3,340 = 79%), on which the preference-blind value-prior is ≈0.50 by construction. That file lists **plan_ids** (`{"id_kind": "plan_id", "ids": [...]}`); it previously listed query_ids, which collapsed to 2,261 distinct values and could not address the two plans of a two-axis query separately. Values appearing fewer than 3 times cannot be counterbalanced at all and are excluded from the subset by definition.
+- **Prompt version 2** (2026-07-27). `EVAL_FRAME_CLAUSE` now scopes dress-code judgments to mainstream contemporary **United States** conventions, and both evaluators add an explicit ordering rule ("first eliminate situation-inappropriate options, then prefer"). Results from prompt version 1 are **not comparable** and must not be pooled or trended against version 2; every run records `prompt_version` in its `.meta.json`.
+- Reproducibility is checkable in one command: `bash scripts/verify_release.sh` regenerates the dataset into a scratch variant, compares the three SHA256s, runs the validator, and runs `tests/test_option_validator_mutations.py` (6 mutation classes × 8 plans, must report **48/48 detected** — a validator that cannot fail is not evidence).
+- The downstream report should headline the **active-value-prior-matched subset** (`validation_report.counterbalanced_ids.json`; currently 2,632/3,340 = 79%), on which a preference-blind guess at the ACTIVE-axis value is 0.50 by construction. It matches that one prior only — position, garment, and image-quality confounds are untouched, so it is not a "confound-free" pool. That file lists **plan_ids** (`{"id_kind": "plan_id", "ids": [...]}`); it previously listed query_ids, which collapsed to 2,261 distinct values and could not address the two plans of a two-axis query separately. Values appearing fewer than 3 times cannot be counterbalanced at all and are excluded from the subset by definition.
 - Comparable in scale to: MMPB (~500), NaturalBench (~900), BLINK (~3.8k)
 
 **Reference SHA256** (seed 42, bit-identical on regeneration):
@@ -186,7 +188,7 @@ pod_bench/
 ├── configs/
 │   ├── config.py           # canonical vocabulary, paths, providers (variant-aware)
 │   ├── scenarios.py        # 59 canonical scenarios / 20 archetypes, track-split
-│   └── profiles.py         # 8 preference archetypes × 3 variants = 24 users
+│   └── profiles.py         # 24 rule-generated profiles (ANCHOR/RESERVE/FREE tiers)
 ├── construction/           # Stages 1–3 (deterministic pipeline)
 │   ├── compatibility.py    # user × scenario relaxed 2×2 compatibility
 │   ├── profile_generator.py
