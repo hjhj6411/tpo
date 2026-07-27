@@ -96,7 +96,7 @@ python -m construction.query_generator --n_per_user 6
 python -m construction.option_planner --limit 30        # deterministic, fast
 
 # Stage 4 — image collection (current collector; see docs/SETUP_FSIGLIP.md)
-python fsiglip/collect_topk_sam3_fsiglip_patch_rank_vlm_garment_axis_patches.py --limit 30
+python fsiglip/collector_sam3.py --limit 30
 
 # Stage 5 — label verification (promoted from src/ on 2026-07-27)
 python -m scripts.label_verifier --limit 30

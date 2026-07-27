@@ -99,7 +99,7 @@ Stage 7: Evaluation            (multimodal + text-only MCQ, 3 scores, per-axis/a
 
 Stages 1–3 are deterministic (no LLM calls) and fully reproducible from `configs/` + `construction/` with a fixed seed.
 
-**Image collection (Stage 4) is the engineered core.** Retrieval is frozen on **Marqo-FashionSigLIP** (`fsiglip/serve_fsiglip_knn.py`, 651k Amazon-fashion corpus; `fsiglip2/` is the second-generation embedding twin). The current collector is `fsiglip/collect_topk_sam3_fsiglip_patch_rank_vlm_garment_axis_patches.py`:
+**Image collection (Stage 4) is the engineered core.** Retrieval is frozen on **Marqo-FashionSigLIP** (`fsiglip/serve_fsiglip_knn.py`, 651k Amazon-fashion corpus; `fsiglip2/` is the second-generation embedding twin). The current collector is `fsiglip/collector_sam3.py`:
 - **Garment axis — VLM judge.** A closed-vocabulary VLM classification of the worn garment (SAM3-mask *scoring* was rejected: as a localizer it cannot discriminate dress ↔ tank top). SAM3 text-prompted masks localize the garment for patch extraction.
 - **Pattern axis — patch-based.** Per-tile pattern classification over the garment mask against a flat closed vocabulary (`PATTERN_VOCAB`). *Planned, not implemented:* a decision-aware pattern-FAMILY hit rule to rescue near-miss family matches — no family grouping exists in the current collector.
 - **Color axis — per-tile color argmax** that catches Navy↔Blue / Beige↔Brown confusions a single pooled embedding passes.
@@ -196,7 +196,7 @@ pod_bench/
 │   └── option_planner.py   # counterbalance + confusability + diversity
 ├── fsiglip/                # Stage 4 (frozen FashionSigLIP backend)
 │   ├── extract_fsiglip.py / build_faiss_fsiglip.py / serve_fsiglip_knn.py
-│   └── collect_topk_sam3_fsiglip_patch_rank_vlm_garment_axis_patches.py  # current collector
+│   └── collector_sam3.py  # current collector
 ├── fsiglip2/               # second-generation embedding backend
 ├── scripts/                # eval + validation (multimodal_eval, text_only_eval, validate_options, …)
 ├── docs/                   # SETUP.md, SETUP_FSIGLIP.md, GARMENT_TAXONOMY_REDESIGN.md, …

@@ -155,7 +155,7 @@ All gates are **fail-open** (VLM failure → pass), so a flaky VLM degrades to p
 ```bash
 conda activate pod
 # current collector (src/collect_images_siglip_dpv.py was removed)
-python fsiglip/collect_topk_sam3_fsiglip_patch_rank_vlm_garment_axis_patches.py \
+python fsiglip/collector_sam3.py \
   --plan_path data/options/option_plans.jsonl \
   --client-url http://127.0.0.1:1235/knn-service \
   --vlm-urls "http://127.0.0.1:8002/v1,http://127.0.0.1:8003/v1,http://127.0.0.1:8004/v1,http://127.0.0.1:8005/v1" \

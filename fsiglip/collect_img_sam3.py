@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # Benchmark-output variant of
-# collect_topk_sam3_fsiglip_patch_rank_vlm_garment_axis_patches.py.
+# fsiglip/collector_sam3.py.
 # Retrieval, SAM3 masking, patch scoring, VLM garment judgement, and reranking
 # are unchanged. Intermediate images are temporary; only the top-1 crop for
 # each query-option is kept under benchmark_crops/<query_id>/<option>.jpg.

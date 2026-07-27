@@ -10,7 +10,7 @@
 """
 # 터미널 3: 수집 실행
 conda activate sam3
-python fsiglip/collect_topk_sam3_fsiglip_patch_rank_vlm_garment_axis_patches.py \
+python fsiglip/collector_sam3.py \
   --plan-path data/options/option_plans.jsonl \
   --client-url http://127.0.0.1:1235/knn-service \
   --score-url http://127.0.0.1:1235/score-image-files \
@@ -36,14 +36,30 @@ import tempfile
 import time
 from contextlib import nullcontext
 from dataclasses import dataclass
+import sys
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
+
+# ── variant-aware data root ───────────────────────────────────────────────
+# POD_VARIANT redirects every data path to data_<variant>/ (configs/config.py).
+# Collectors used to hardcode "data/", which silently read the OLD plans when a
+# variant was active — no error, just the wrong dataset. Import the same config
+# the generators and evaluators use so all of them agree.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+try:
+    from configs.config import OPTIONS_DIR, DATA_DIR
+    DEFAULT_PLAN_PATH = OPTIONS_DIR / "option_plans.jsonl"
+except Exception as _e:      # config import is best-effort; fall back to ./data
+    print(f"  [warn] could not import configs.config ({_e}); defaulting to ./data")
+    DATA_DIR = Path("data")
+    DEFAULT_PLAN_PATH = DATA_DIR / "options" / "option_plans.jsonl"
 
 import numpy as np
 import requests
 import torch
 from PIL import Image, ImageDraw, ImageFont
+
 
 
 OPTION_LABELS = ["A", "B", "C", "D"]
@@ -1445,11 +1461,13 @@ def collect_task(session: requests.Session, sam3_processor, task: OptionTask, ar
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser()
 
-    p.add_argument("--plan-path", type=Path, default=Path("data/options/option_plans.jsonl"))
+    p.add_argument("--plan-path", type=Path, default=DEFAULT_PLAN_PATH,
+                   help="option plans; default follows POD_VARIANT")
     p.add_argument("--client-url", default="http://127.0.0.1:1235/knn-service")
     p.add_argument("--score-url", default="")
     p.add_argument("--index-name", default="pod_fashion")
-    p.add_argument("--output-root", type=Path, default=Path("data/retrieval/sam3_fsiglip_patch_rank"))
+    p.add_argument("--output-root", type=Path, default=DATA_DIR / "retrieval/sam3_fsiglip_patch_rank",
+                   help="output root; default follows POD_VARIANT")
 
     p.add_argument("--query-mode", choices=["original", "garment_first"], default="original")
     p.add_argument("--retrieval-k", type=int, default=50)

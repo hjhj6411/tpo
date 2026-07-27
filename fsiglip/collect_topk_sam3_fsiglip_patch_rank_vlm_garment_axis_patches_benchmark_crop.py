@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
-# Benchmark-output variant of
-# collect_topk_sam3_fsiglip_patch_rank_vlm_garment_axis_patches.py.
+# Benchmark-output variant of fsiglip/collector_sam3.py.
 # Retrieval, SAM3 masking, patch scoring, VLM garment judgement, and reranking
 # are unchanged. Intermediate images are temporary; only the top-1 crop for
-# each query-option is kept under benchmark_crops/<query_id>/<option>.jpg.
+# each plan-option is kept under benchmark_crops/<plan_id>/<option>.jpg.
+# One folder per PLAN, not per query: a dress-code query with two violation
+# axes emits two plans (__vG/__vC/__vP) whose options differ, so query_id
+# folders would overwrite half the benchmark images.
 # Only the garment axis is changed: instead of a FashionSigLIP cosine similarity,
 # the SAM3 crop is judged PASS/FAIL by a vision-language model served via vLLM
 # (OpenAI-compatible /v1/chat/completions). garment_score = 1.0 (PASS) or 0.0 (FAIL).
@@ -40,14 +42,30 @@ import tempfile
 import time
 from contextlib import nullcontext
 from dataclasses import dataclass
+import sys
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
+
+# ── variant-aware data root ───────────────────────────────────────────────
+# POD_VARIANT redirects every data path to data_<variant>/ (configs/config.py).
+# Collectors used to hardcode "data/", which silently read the OLD plans when a
+# variant was active — no error, just the wrong dataset. Import the same config
+# the generators and evaluators use so all of them agree.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+try:
+    from configs.config import OPTIONS_DIR, DATA_DIR
+    DEFAULT_PLAN_PATH = OPTIONS_DIR / "option_plans.jsonl"
+except Exception as _e:      # config import is best-effort; fall back to ./data
+    print(f"  [warn] could not import configs.config ({_e}); defaulting to ./data")
+    DATA_DIR = Path("data")
+    DEFAULT_PLAN_PATH = DATA_DIR / "options" / "option_plans.jsonl"
 
 import numpy as np
 import requests
 import torch
 from PIL import Image, ImageDraw, ImageFont
+
 
 
 OPTION_LABELS = ["A", "B", "C", "D"]
@@ -87,6 +105,7 @@ GARMENT_QUERY_TERMS = TEXT_QUERY_GARMENT_VOCAB + DEFAULT_GARMENTS
 @dataclass(frozen=True)
 class OptionTask:
     plan_idx: int
+    plan_id: str
     query_id: str
     user_id: str
     scenario_id: str | None
@@ -195,6 +214,9 @@ def make_tasks(plans: list[dict[str, Any]], options: list[str]) -> list[OptionTa
 
     for plan_idx, plan in enumerate(plans):
         query_id = str(plan.get("query_id") or f"plan_{plan_idx:05d}")
+        # one output folder per PLAN: a two-violation-axis query has two plans
+        # whose options differ, so query_id folders would collide.
+        plan_id = str(plan.get("plan_id") or query_id)
         user_id = str(plan.get("user_id") or "unknown_user")
         opts = plan.get("options") or {}
         garment_vocab = tuple(TEXT_QUERY_GARMENT_VOCAB)
@@ -210,6 +232,7 @@ def make_tasks(plans: list[dict[str, Any]], options: list[str]) -> list[OptionTa
             query_garment = extract_query_garment(option_text, target_garment, garment_vocab)
             tasks.append(OptionTask(
                 plan_idx=plan_idx,
+                plan_id=plan_id,
                 query_id=query_id,
                 user_id=user_id,
                 scenario_id=plan.get("scenario_id"),
@@ -1065,7 +1088,7 @@ def score_garment_vlm(
 
 
 def task_dirs(args: argparse.Namespace, task: OptionTask) -> tuple[Path, Path, Path]:
-    q = slug(task.query_id, 80)
+    q = slug(task.plan_id, 80)
     opt = f"{task.option_label}_{slug(task.option_semantic or 'option', 32)}__{slug(task.option_text, 72)}"
     return (
         args.work_root / "topk_images" / q / opt,
@@ -1099,7 +1122,7 @@ def save_benchmark_crop(records: list[dict[str, Any]], task: OptionTask, args: a
         print(f"[benchmark crop] {dst}")
         return dst
 
-    print(f"[benchmark crop] unavailable: {task.query_id} {task.option_label}")
+    print(f"[benchmark crop] unavailable: {task.plan_id} {task.option_label}")
     return None
 
 
@@ -1355,6 +1378,7 @@ def collect_task(session: requests.Session, sam3_processor, task: OptionTask, ar
 
         rec = {
             "plan_idx": task.plan_idx,
+            "plan_id": task.plan_id,
             "query_id": task.query_id,
             "user_id": task.user_id,
             "scenario_id": task.scenario_id,
@@ -1415,14 +1439,15 @@ def parse_args() -> argparse.Namespace:
         description="Run the unchanged SAM3/FSigLIP/VLM reranking pipeline and save only each query-option's top-1 crop."
     )
 
-    p.add_argument("--plan-path", type=Path, default=Path("data/options/option_plans.jsonl"))
+    p.add_argument("--plan-path", type=Path, default=DEFAULT_PLAN_PATH,
+                   help="option plans; default follows POD_VARIANT")
     p.add_argument("--client-url", default="http://127.0.0.1:1235/knn-service")
     p.add_argument("--score-url", default="")
     p.add_argument("--index-name", default="pod_fashion")
     p.add_argument(
         "--output-root",
         type=Path,
-        default=Path("data/retrieval/sam3_fsiglip_patch_rank_benchmark_crop"),
+        default=DATA_DIR / "retrieval/sam3_fsiglip_patch_rank_benchmark_crop",
     )
 
     p.add_argument("--query-mode", choices=["original", "garment_first"], default="original")
@@ -1597,7 +1622,7 @@ def main() -> None:
         q = retrieval_query(task, args.query_mode)
         print()
         print(
-            f"[{i}/{len(tasks)}] {task.query_id} {task.option_label} | "
+            f"[{i}/{len(tasks)}] {task.plan_id} {task.option_label} | "
             f"query={q} | mask={task.query_garment} | vlm={list(task.vlm_garment_vocab)}"
         )
 
@@ -1609,6 +1634,7 @@ def main() -> None:
             save_benchmark_crop(records, task, args)
 
         append_jsonl(raw_log, [{
+            "plan_id": task.plan_id,
             "query_id": task.query_id,
             "option_label": task.option_label,
             "option_text": task.option_text,
