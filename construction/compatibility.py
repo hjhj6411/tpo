@@ -1,8 +1,12 @@
 """
 Compatibility — clean 2×2 version (RELAXED so all 15 archetypes contribute).
 
-Only color/pattern can be active axes.
-Garment category is always the TPO axis and must be preference-neutral.
+Active axis ∈ {color, pattern, garment_category}; whichever axis carries the TPO
+contrast must be preference-neutral. Garment is the TPO axis for every physical
+scenario, but a dress-code scenario can instead put the norm on color/pattern
+and let garment be the active (preference) axis — see the violation-axis section
+at the bottom. The header line below describes the ORIGINAL design; the relaxed
+and generalized behaviour that actually ships is described after it.
 
 CHANGE vs the original (and WHY)
 --------------------------------

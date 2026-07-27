@@ -84,9 +84,15 @@ PHASE1_CONFIG = {
     "n_users_total": 24,
     "n_users_per_archetype": 3,
     "n_options_per_query": 4,
+    # The generator's coin flip, not the realized split. construction/
+    # query_generator.py draws explicit vs implicit at explicit_ratio=0.5; this
+    # entry documents that default and must match it. The REALIZED distribution
+    # in the shipped data is ~58/42, because EXPLICIT_ONLY_SCENARIOS forces some
+    # scenarios to explicit (their implicit phrasing would not license the
+    # inference). Quote the realized numbers from the data, never these.
     "query_type_distribution": {
-        "explicit_tpo": 0.55,
-        "implicit_tpo": 0.45,
+        "explicit_tpo": 0.5,
+        "implicit_tpo": 0.5,
     },
 }
 
@@ -170,6 +176,10 @@ LABEL_QUALITY_THRESHOLDS = {
     "judge_agreement_min": 2,
 }
 
+# NOT ENFORCED YET — no evaluation gate reads these thresholds; nothing in the
+# pipeline checks a run against them. They are a design intent, not a measured
+# or enforced property. Do NOT cite them in the paper until an eval gate
+# actually reads this dict and fails a run that misses the bounds.
 VISION_ESSENTIALITY_THRESHOLDS = {
     "blind_llm_max_acc": 0.40,
     "captioner_llm_max_acc": 0.45,

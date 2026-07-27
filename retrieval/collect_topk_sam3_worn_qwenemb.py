@@ -30,6 +30,7 @@ DEFAULT_HEADERS = {
 @dataclass(frozen=True)
 class Task:
     plan_idx: int
+    plan_id: str
     query_id: str
     user_id: str
     option_label: str
@@ -103,6 +104,7 @@ def make_tasks(plans: list[dict[str, Any]], options: list[str]) -> list[Task]:
             attrs = opt.get("attributes") or {}
             tasks.append(Task(
                 plan_idx=i,
+                plan_id=str(plan.get("plan_id") or plan.get("query_id") or f"plan_{i:05d}"),
                 query_id=str(plan.get("query_id") or f"plan_{i:05d}"),
                 user_id=str(plan.get("user_id") or "unknown_user"),
                 option_label=label,
@@ -681,12 +683,13 @@ def save_winner_crops(records: list[dict[str, Any]], task: Task, out_root: Path,
     odir = (
         out_root
         / "winner_crops"
-        / slug(task.query_id, 80)
+        / slug(task.plan_id, 80)
         / f"{task.option_label}_{slug(task.option_semantic, 40)}__{slug(task.option_text, 80)}"
     )
     odir.mkdir(parents=True, exist_ok=True)
 
     tsv = [
+        f"plan_id\t{task.plan_id}",
         f"query_id\t{task.query_id}",
         f"option\t{task.option_label}",
         f"option_text\t{task.option_text}",
@@ -831,7 +834,7 @@ def main() -> None:
         for task_i, task in enumerate(tasks, start=1):
             q = retrieval_query(task, args.query_mode)
             print()
-            print(f"[{task_i}/{len(tasks)}] {task.query_id} {task.option_label} | query={q}")
+            print(f"[{task_i}/{len(tasks)}] {task.plan_id} {task.option_label} | query={q}")
 
             results = query_knn(session, args, q)
             if args.score_top_n > 0:
@@ -842,11 +845,12 @@ def main() -> None:
             for rank, item in enumerate(results, start=1):
                 url = str(item.get("image_url") or item.get("url") or "")
                 key = str(item.get("key") or f"rank_{rank:03d}")
-                rec_tmp = tmp_root / slug(task.query_id, 80) / task.option_label / f"rank_{rank:03d}"
+                rec_tmp = tmp_root / slug(task.plan_id, 80) / task.option_label / f"rank_{rank:03d}"
                 img_base = rec_tmp / f"orig__{slug(key, 80)}"
 
                 rec = {
                     "plan_idx": task.plan_idx,
+                    "plan_id": task.plan_id,
                     "query_id": task.query_id,
                     "user_id": task.user_id,
                     "option_label": task.option_label,
@@ -971,6 +975,7 @@ def main() -> None:
                 r.pop("_temp_crop_path", None)
 
             append_jsonl(raw_log, [{
+                "plan_id": task.plan_id,
                 "query_id": task.query_id,
                 "option_label": task.option_label,
                 "retrieval_query": q,

@@ -67,13 +67,13 @@ The 8 archetypes: `classic_formal`, `casual_sporty`, `minimalist`, `adventurous_
 
 ## 4-Option Structure
 
-Each instance has 4 options along one active axis (`active_axis` ∈ {color, pattern}):
-- **A** (tpo_and_preference): liked value + TPO-compatible garment
-- **B** (tpo_only): disliked value + TPO-compatible garment
-- **C** (preference_only): liked value + TPO-violated garment
-- **D** (neither): disliked value + TPO-violated garment
+Each instance has 4 options along one active axis (`active_axis` ∈ {color, pattern, garment_category} — realized as color 1,432 / pattern 1,430 / garment 478):
+- **A** (tpo_and_preference): liked value + TPO-compatible violation axis
+- **B** (tpo_only): disliked value + TPO-compatible violation axis
+- **C** (preference_only): liked value + TPO-violated violation axis
+- **D** (neither): disliked value + TPO-violated violation axis
 
-The garment pair (A/B vs C/D) is always **preference-neutral** for that user, so garment carries only TPO. Non-active axes are fixed to a preference-neutral, TPO-safe value when one exists, else left unfixed.
+The active axis carries preference; a *different* axis carries the TPO contrast and is always **preference-neutral** for that user. Usually the violation axis is the garment, but in dress-code scenarios color or pattern can carry the norm instead, which is what makes garment-active plans possible. Non-active axes are fixed to a preference-neutral, TPO-safe value when one exists, else left unfixed.
 
 The planner (`construction/option_planner.py`) assigns values with three global objectives:
 - **Counterbalance**: each value appears ~equally as A (liked) and B (disliked) across the dataset, so a preference-blind value-prior collapses to ≈0.50.
@@ -139,9 +139,10 @@ export POD_VARIANT=wacv_scenario_v2
 
 Reported per track, never pooled:
 
-Current variant: **`wacv_scenario_v2`** (`data_wacv_scenario_v2/`). The earlier
-`wacv_scenario_v1` is kept for comparison — **do not quote v1 numbers**, they were
-superseded by the ANCHOR widening (`docs/redesign_v2_plan.md` §16).
+Current variant: **`wacv_scenario_v2`** (`data_wacv_scenario_v2/`) — the only
+variant shipped. The earlier `wacv_scenario_v1` and the `balance_check` scratch
+variant were removed; their numbers were superseded by the ANCHOR widening
+(`docs/redesign_v2_plan.md` §16) and must not be quoted.
 
 | | Physical | Dress-code |
 |---|---:|---:|
@@ -151,9 +152,9 @@ superseded by the ANCHOR widening (`docs/redesign_v2_plan.md` §16).
 | TPO violation axis | garment 100% | garment 57.2%, color 27.7%, pattern 15.1% |
 
 - 24 users × 59 scenarios = **1,416 combinations, all non-empty**
-- 3,139 queries generated → **2,882 evaluable** (257 have no constructible 4-option plan, all dress-code — 226 on the pattern axis where strict-formal scenarios allow only `solid`/`striped`, 31 on garment) → **3,340 option plans**
+- 3,139 queries generated → **2,882 unique query contexts** (257 have no constructible 4-option plan, all dress-code — 226 on the pattern axis where strict-formal scenarios allow only `solid`/`striped`, 31 on garment) → **3,340 option plans (the item unit)**. Always report the two together as "3,340 option plans / 2,882 unique query contexts": 458 dress-code queries constrain two axes and emit two plans each (`__vG`/`__vC`/`__vP`), so plans outnumber queries and `plan_id` — never `query_id` — is the item key.
 - These are **pre-retrieval** numbers. Image realizability and human validation are not yet done; recompute the same tables afterwards before quoting them as final benchmark statistics.
-- The downstream report should headline the **counterbalanced subset** (`validation_report.counterbalanced_ids.json`; currently 2,632/3,340 = 79%), on which the preference-blind value-prior is ≈0.50 by construction. Values appearing fewer than 3 times cannot be counterbalanced at all and are excluded from the subset by definition.
+- The downstream report should headline the **counterbalanced subset** (`validation_report.counterbalanced_ids.json`; currently 2,632/3,340 = 79%), on which the preference-blind value-prior is ≈0.50 by construction. That file lists **plan_ids** (`{"id_kind": "plan_id", "ids": [...]}`); it previously listed query_ids, which collapsed to 2,261 distinct values and could not address the two plans of a two-axis query separately. Values appearing fewer than 3 times cannot be counterbalanced at all and are excluded from the subset by definition.
 - Comparable in scale to: MMPB (~500), NaturalBench (~900), BLINK (~3.8k)
 
 **Reference SHA256** (seed 42, bit-identical on regeneration):

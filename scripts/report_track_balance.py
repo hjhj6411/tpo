@@ -34,7 +34,7 @@ Usage:
     python -m scripts.report_track_balance                 # default data dir
     python -m scripts.report_track_balance --plans PATH
     python -m scripts.report_track_balance --full          # every pair, not top-3
-    POD_VARIANT=wacv_scenario_v1 python -m scripts.report_track_balance
+    POD_VARIANT=wacv_scenario_v2 python -m scripts.report_track_balance
 """
 
 import argparse

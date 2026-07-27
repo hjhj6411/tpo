@@ -6,14 +6,20 @@ Dead-simple grader. ONE collection at a time, no method comparison.
 
 Layout assumed:
   <image-root>/
-    U001_..../   (folder name contains the query_id)
+    U001_..._vG/   (folder name contains the plan_id)
         A.jpg  B.jpg  C.jpg  D.jpg   (filename contains the option letter)
-    U002_..../
+    U001_..._vC/
         ...
+
+plan_id — NOT query_id — is the primary key: a dress-code query with two
+violation axes emits two plans (`__vG`/`__vC`/`__vP`) that differ in their
+options, and keying by query_id collapses them into one. Folders named after a
+query_id still resolve when that query has exactly one plan (legacy collections);
+a two-plan query_id folder is ambiguous and gets skipped with a warning.
 
 For each option image we look up its TARGET attributes (garment/color/pattern)
 from option_plans.jsonl and ask the judge a 1-5 score per axis. That's it.
-Output: one row per (query, option). A flat independent table.
+Output: one row per (plan, option). A flat independent table.
 
   python scripts/grade_options.py --image-root data/images_dpv \
       --plans data/options/option_plans.jsonl \
@@ -103,19 +109,43 @@ def target_text(a):
 _OPT_RE = re.compile(r"(?:^|[^a-zA-Z])([ABCD])(?:[^a-zA-Z]|$)")
 _IMG_EXT = {".jpg", ".jpeg", ".png", ".webp"}
 
-def scan_images(root, plans_by_qid):
-    """Match each query folder to a plan, pick one image file per option letter."""
+def scan_images(root, plans_by_pid, qid_to_pids):
+    """Match each image folder to a plan, pick one image file per option letter.
+
+    Folders are keyed by plan_id. Collections made before the plan_id switch used
+    query_id folder names; those still resolve, but only when the query has a
+    single plan — a two-plan query cannot be disambiguated from a query_id folder,
+    so it is reported as ambiguous rather than silently graded against one plan.
+    """
     root = Path(root)
     found = []
     unmatched = []
+    ambiguous = []
+    used_qid_fallback = False
     for d in sorted(p for p in root.iterdir() if p.is_dir()):
-        # resolve which plan this folder belongs to: longest query_id contained in the name
-        qid = None
-        for q in plans_by_qid:
-            if q in d.name:
-                if qid is None or len(q) > len(qid):
-                    qid = q
-        if qid is None:
+        # resolve which plan this folder belongs to: longest plan_id contained in the name
+        pid = None
+        for p in plans_by_pid:
+            if p in d.name:
+                if pid is None or len(p) > len(pid):
+                    pid = p
+        if pid is None:
+            # legacy fallback: folder named after the query_id
+            qid = None
+            for q in qid_to_pids:
+                if q in d.name:
+                    if qid is None or len(q) > len(qid):
+                        qid = q
+            if qid is not None and len(qid_to_pids[qid]) == 1:
+                pid = qid_to_pids[qid][0]
+                if not used_qid_fallback:
+                    used_qid_fallback = True
+                    print(f"  [WARN] folder '{d.name}' has no plan_id; falling back to "
+                          f"query_id -> {pid}. Re-collect images under plan_id folders.")
+            elif qid is not None:
+                ambiguous.append(d.name)
+                continue
+        if pid is None:
             unmatched.append(d.name)
             continue
         # collect image files, bucket by option letter
@@ -129,8 +159,8 @@ def scan_images(root, plans_by_qid):
             letter = m.group(1)
             per_opt.setdefault(letter, f)  # first match wins
         for letter, f in per_opt.items():
-            found.append((qid, letter, str(f)))
-    return found, unmatched
+            found.append((pid, letter, str(f)))
+    return found, unmatched, ambiguous
 
 
 def call_judge(provider, base, model, img, attrs, key=None, timeout=90, retries=3):
@@ -177,12 +207,21 @@ def call_judge(provider, base, model, img, attrs, key=None, timeout=90, retries=
 
 
 def run(args):
-    plans = {p["query_id"]: p for p in load_jsonl(args.plans)}
-    found, unmatched = scan_images(args.image_root, plans)
+    plan_rows = load_jsonl(args.plans)
+    # plan_id is the primary key: keying by query_id silently dropped one of the two
+    # plans for every query with two violation axes (458 queries / 916 plans in v2).
+    plans = {(p.get("plan_id") or p["query_id"]): p for p in plan_rows}
+    qid_to_pids = defaultdict(list)
+    for p in plan_rows:
+        qid_to_pids[p["query_id"]].append(p.get("plan_id") or p["query_id"])
+    found, unmatched, ambiguous = scan_images(args.image_root, plans, qid_to_pids)
     print(f"  scanned {args.image_root}: {len(found)} option images, "
-          f"{len({q for q,_,_ in found})} queries matched, {len(unmatched)} folders unmatched")
+          f"{len({p for p,_,_ in found})} plans matched, {len(unmatched)} folders unmatched")
     if unmatched[:3]:
         print(f"  (unmatched folder examples: {unmatched[:3]})")
+    if ambiguous:
+        print(f"  [WARN] {len(ambiguous)} folders name a query_id that has 2 plans and "
+              f"cannot be resolved; skipped (examples: {ambiguous[:3]})")
 
     if args.provider == "gpt5_nano":
         base = "https://api.openai.com/v1"; model = args.vlm_model or "gpt-5-nano"
@@ -194,17 +233,24 @@ def run(args):
 
     out = Path(args.out)
     existing = load_jsonl(out)
-    done = {f"{r['query_id']}|{r['option']}" for r in existing
+
+    def _key(r):
+        # older result files carry only query_id; fall back so a resume of a
+        # pre-plan_id run still recognizes what it already graded
+        return f"{r.get('plan_id') or r.get('query_id')}|{r['option']}"
+
+    done = {_key(r) for r in existing
             if isinstance(r.get("judge"), dict) and "garment" in r["judge"]}
-    results = [r for r in existing if f"{r['query_id']}|{r['option']}" in done]
+    results = [r for r in existing if _key(r) in done]
 
     jobs = []
-    for qid, letter, path in found:
-        if f"{qid}|{letter}" in done:
+    for pid, letter, path in found:
+        if f"{pid}|{letter}" in done:
             continue
-        attrs = ((plans[qid].get("options") or {}).get(letter) or {}).get("attributes", {}) or {}
-        axis = plans[qid].get("active_axis")
-        jobs.append((qid, letter, path, attrs, axis))
+        attrs = ((plans[pid].get("options") or {}).get(letter) or {}).get("attributes", {}) or {}
+        axis = plans[pid].get("active_axis")
+        qid = plans[pid].get("query_id")
+        jobs.append((pid, qid, letter, path, attrs, axis))
     print(f"  to grade: {len(jobs)} (already done {len(done)})  model={model}")
 
     import threading
@@ -212,19 +258,20 @@ def run(args):
     lock = threading.Lock(); ti = to = 0
 
     def work(job):
-        qid, letter, path, attrs, axis = job
+        pid, qid, letter, path, attrs, axis = job
         return job, call_judge(args.provider, base, model, path, attrs, key=key)
 
     with ThreadPoolExecutor(max_workers=args.workers) as ex:
         futs = [ex.submit(work, j) for j in jobs]
         n = 0
         for fut in as_completed(futs):
-            (qid, letter, path, attrs, axis), d = fut.result()
+            (pid, qid, letter, path, attrs, axis), d = fut.result()
             with lock:
                 u = d.pop("_usage", {}) if isinstance(d, dict) else {}
                 ti += u.get("in", 0); to += u.get("out", 0)
-                results.append({"query_id": qid, "option": letter, "active_axis": axis,
-                                "image_path": path, "target": target_text(attrs), "judge": d})
+                results.append({"plan_id": pid, "query_id": qid, "option": letter,
+                                "active_axis": axis, "image_path": path,
+                                "target": target_text(attrs), "judge": d})
                 n += 1
                 if n % 50 == 0:
                     print(f"  [{n}/{len(jobs)}]")

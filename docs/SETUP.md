@@ -82,9 +82,9 @@ bash scripts/run_pipeline.sh
 ## Per-Step Partial Runs
 
 ```bash
-python -m src.profile_generator --n_users 5
-python -m src.query_generator --n_per_user 6
-python -m src.option_planner --limit 30        # deterministic, fast
+python -m construction.profile_generator --n_users 5
+python -m construction.query_generator --n_per_user 6
+python -m construction.option_planner --limit 30        # deterministic, fast
 python -m src.image_collector --limit 30
 python -m src.label_verifier --limit 30
 python -m src.quality_audit --n_audit 10
@@ -100,7 +100,7 @@ python -m src.evaluator --profile_variant narrative_only
 To run a single stage with a specific provider without editing config:
 
 ```bash
-python -m src.profile_generator --provider gpt5_mini --n_users 5
+python -m construction.profile_generator --provider gpt5_mini --n_users 5
 python -m src.evaluator --provider vllm_vlm --profile_variant combined
 ```
 

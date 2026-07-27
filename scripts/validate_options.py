@@ -5,13 +5,13 @@ validate_options.py — Construction validity & confound audit for POD-Bench v2 
 Paths default to the POD_VARIANT-aware data root (configs.config), so run it the
 same way you run the generators:
 
-    POD_VARIANT=wacv_scenario_v1 python -m scripts.validate_options
+    POD_VARIANT=wacv_scenario_v2 python -m scripts.validate_options
     # or override every path explicitly
     python scripts/validate_options.py \
-        --profiles data_wacv_scenario_v1/profiles/profiles.jsonl \
-        --queries  data_wacv_scenario_v1/queries/queries.jsonl \
-        --plans    data_wacv_scenario_v1/options/option_plans.jsonl \
-        --out      data_wacv_scenario_v1/options/validation_report.json
+        --profiles data_wacv_scenario_v2/profiles/profiles.jsonl \
+        --queries  data_wacv_scenario_v2/queries/queries.jsonl \
+        --plans    data_wacv_scenario_v2/options/option_plans.jsonl \
+        --out      data_wacv_scenario_v2/options/validation_report.json
 
 AXIS ROLES (generalized 2x2)
 ----------------------------
@@ -260,13 +260,16 @@ def main():
     freqB = defaultdict(Counter)   # axis -> Counter(value used as B/non-preferred)
     by = {k: Counter() for k in
           ("axis", "scenario_archetype", "preference_archetype", "user", "query_type")}
-    inst_meta = []  # (axis, a_val, b_val, query_id)
+    # plan_id, not query_id: a dress-code query with two violation axes emits two
+    # plans (`__vG`/`__vC`/`__vP`), and they are separate evaluable instances.
+    inst_meta = []  # (axis, a_val, b_val, plan_id)
     # Physical and Dress-code are reported as two separate datasets.
     track_stats = defaultdict(lambda: {"n": 0, "struct": 0, "tpo": 0,
                                        "active": Counter(), "violation": Counter()})
 
     for plan in plans:
         qid = plan.get("query_id")
+        pid = plan.get("plan_id") or qid
         prof = profiles.get(plan.get("user_id"))
         q = queries.get(qid, {})
 
@@ -287,13 +290,13 @@ def main():
         for e in all_errs:
             err_counter[e.split(":")[0].split("(")[0]] += 1
         if all_errs:
-            failures.append({"query_id": qid, "errors": all_errs})
+            failures.append({"plan_id": pid, "query_id": qid, "errors": all_errs})
 
         if info:
             ax = info["axis"]
             freqA[ax][info["a_val"]] += 1
             freqB[ax][info["b_val"]] += 1
-            inst_meta.append((ax, info["a_val"], info["b_val"], qid))
+            inst_meta.append((ax, info["a_val"], info["b_val"], pid))
             by["axis"][ax] += 1
             by["scenario_archetype"][q.get("scenario_archetype", "?")] += 1
             by["preference_archetype"][
@@ -390,17 +393,17 @@ def main():
     # A value-prior is only neutralized when each value plays A and B EQUALLY.
     # For each unordered pair {x,y}, keep min(#(A=x,B=y), #(A=y,B=x)) of each
     # orientation -> blind value-prior == 50% on the resulting subset by construction.
-    orient = defaultdict(lambda: defaultdict(list))   # axis -> frozenset{x,y} -> [(qid, a_val)]
-    for ax, a, b, qid in inst_meta:
-        orient[ax][frozenset((a, b))].append((qid, a))
+    orient = defaultdict(lambda: defaultdict(list))   # axis -> frozenset{x,y} -> [(plan_id, a_val)]
+    for ax, a, b, pid in inst_meta:
+        orient[ax][frozenset((a, b))].append((pid, a))
     cb_ids = []
     for ax, pairs in orient.items():
         for pair, items in pairs.items():
             if len(pair) < 2:
                 continue
             x, y = tuple(pair)
-            xy = [qid for qid, a in items if a == x]   # A == x
-            yx = [qid for qid, a in items if a == y]   # A == y
+            xy = [pid for pid, a in items if a == x]   # A == x
+            yx = [pid for pid, a in items if a == y]   # A == y
             m = min(len(xy), len(yx))
             cb_ids += xy[:m] + yx[:m]
     print("\n  Counterbalanced subset (each value plays A and B equally;")
@@ -421,6 +424,7 @@ def main():
                               for ax in blind_by_axis},
         "liked_rate": liked_rate,
         "counterbalanced_subset_size": len(cb_ids),
+        "counterbalanced_id_kind": "plan_id",
         "distribution": {k: dict(v) for k, v in by.items()},
         "by_track": {t: {"n": s["n"], "structural_failures": s["struct"],
                          "tpo_failures": s["tpo"],
@@ -430,8 +434,10 @@ def main():
     }
     with open(out, "w", encoding="utf-8") as f:
         json.dump(report, f, ensure_ascii=False, indent=2)
+    # `id_kind` is explicit because this file used to hold query_ids, which collide
+    # whenever one query emitted two plans. Consumers must key on plan_id.
     with open(out.with_suffix(".counterbalanced_ids.json"), "w", encoding="utf-8") as f:
-        json.dump(cb_ids, f)
+        json.dump({"id_kind": "plan_id", "n": len(cb_ids), "ids": cb_ids}, f)
     print(f"\n  ✓ report -> {out}")
     print(f"  ✓ counterbalanced ids -> {out.with_suffix('.counterbalanced_ids.json')}\n")
 

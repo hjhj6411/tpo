@@ -100,6 +100,7 @@ def option_to_text(opt: dict[str, Any]) -> str:
 @dataclass(frozen=True)
 class OptionTask:
     plan_idx: int
+    plan_id: str
     query_id: str
     user_id: str
     scenario_id: str | None
@@ -119,6 +120,10 @@ def make_tasks(plans: list[dict[str, Any]], options: list[str]) -> list[OptionTa
     tasks: list[OptionTask] = []
     for plan_idx, plan in enumerate(plans):
         query_id = str(plan.get("query_id") or f"plan_{plan_idx:05d}")
+        # plan_id is the collection key: a dress-code query with two violation
+        # axes emits two plans whose options differ, so one folder per query_id
+        # would overwrite half the images.
+        plan_id = str(plan.get("plan_id") or query_id)
         user_id = str(plan.get("user_id") or "unknown_user")
         opts = plan.get("options") or {}
         for label in options:
@@ -128,6 +133,7 @@ def make_tasks(plans: list[dict[str, Any]], options: list[str]) -> list[OptionTa
             attrs = opt.get("attributes") or {}
             tasks.append(OptionTask(
                 plan_idx=plan_idx,
+                plan_id=plan_id,
                 query_id=query_id,
                 user_id=user_id,
                 scenario_id=plan.get("scenario_id"),
@@ -234,7 +240,7 @@ def collect_one(task: OptionTask, args: argparse.Namespace) -> list[dict[str, An
     if args.score_top_n > 0:
         results = results[:args.score_top_n]
 
-    qdir = args.output_root / "images" / slugify(task.query_id)
+    qdir = args.output_root / "images" / slugify(task.plan_id)
     odir_name = f"{task.option_label}_{slugify(task.option_semantic or 'option', 40)}__{slugify(task.option_text, 64)}"
     odir = qdir / odir_name
     records: list[dict[str, Any]] = []
@@ -256,6 +262,7 @@ def collect_one(task: OptionTask, args: argparse.Namespace) -> list[dict[str, An
             )
         records.append({
             "plan_idx": task.plan_idx,
+            "plan_id": task.plan_id,
             "query_id": task.query_id,
             "user_id": task.user_id,
             "scenario_id": task.scenario_id,
@@ -505,7 +512,7 @@ def score_candidate(args_tuple: tuple[int, dict[str, Any], argparse.Namespace]) 
     color = rec.get("target_color") or ""
     garment = rec.get("target_garment") or ""
     pattern = rec.get("target_pattern") or ""
-    rec_id = f"{slugify(rec.get('query_id'))}__{rec.get('option_label')}__rank_{int(rec.get('original_rank') or 0):03d}"
+    rec_id = f"{slugify(rec.get('plan_id'))}__{rec.get('option_label')}__rank_{int(rec.get('original_rank') or 0):03d}"
 
     color_score, color_parsed, color_err = call_vlm_score(
         image_path=image_path,
@@ -559,7 +566,7 @@ def relpath(path: str | None, base: Path) -> str | None:
 def grouped_rerank(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
     groups: dict[tuple[str, str], list[dict[str, Any]]] = {}
     for rec in records:
-        groups.setdefault((str(rec.get("query_id")), str(rec.get("option_label"))), []).append(rec)
+        groups.setdefault((str(rec.get("plan_id")), str(rec.get("option_label"))), []).append(rec)
     out: list[dict[str, Any]] = []
     for _key, rows in groups.items():
         rows.sort(key=lambda r: (float(r.get("combined_score") or 0.0), float(r.get("similarity") or 0.0)), reverse=True)
@@ -570,9 +577,9 @@ def grouped_rerank(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 
 def build_gallery(records: list[dict[str, Any]], output_root: Path, title: str, show_k: int) -> Path:
-    by_query: dict[str, dict[str, list[dict[str, Any]]]] = {}
+    by_plan: dict[str, dict[str, list[dict[str, Any]]]] = {}
     for rec in records:
-        by_query.setdefault(str(rec["query_id"]), {}).setdefault(str(rec["option_label"]), []).append(rec)
+        by_plan.setdefault(str(rec["plan_id"]), {}).setdefault(str(rec["option_label"]), []).append(rec)
 
     css = """
     body { font-family: Arial, sans-serif; margin: 24px; background: #fafafa; color: #222; }
@@ -600,11 +607,11 @@ def build_gallery(records: list[dict[str, Any]], output_root: Path, title: str, 
         f"<h1>{html.escape(title)}</h1>",
         f"<div class='meta'>records={len(records)} · showing top {show_k} after rerank per option · formula=sqrt(pattern*color*garment)</div>",
     ]
-    for query_id in sorted(by_query):
-        option_map = by_query[query_id]
+    for plan_id in sorted(by_plan):
+        option_map = by_plan[plan_id]
         first = next(iter(next(iter(option_map.values()))), {})
         html_parts.append("<section class='query'>")
-        html_parts.append(f"<h2>{html.escape(query_id)}</h2>")
+        html_parts.append(f"<h2>{html.escape(plan_id)}</h2>")
         html_parts.append(
             "<div class='qmeta'>"
             f"user={html.escape(str(first.get('user_id', '')))} · "
@@ -732,7 +739,7 @@ def main() -> None:
 
     if args.dry_run:
         for t in tasks[:20]:
-            print(f"  {t.query_id} {t.option_label}: {t.option_text} | c={t.target_color} p={t.target_pattern} g={t.target_garment}")
+            print(f"  {t.plan_id} {t.option_label}: {t.option_text} | c={t.target_color} p={t.target_pattern} g={t.target_garment}")
         if len(tasks) > 20:
             print(f"  ... {len(tasks) - 20} more tasks")
         return
@@ -758,7 +765,7 @@ def main() -> None:
                 append_jsonl(raw_log, rows)
                 raw_records.extend(rows)
             except Exception as e:
-                errors.append({"query_id": task.query_id, "option_label": task.option_label, "error": str(e)})
+                errors.append({"plan_id": task.plan_id, "query_id": task.query_id, "option_label": task.option_label, "error": str(e)})
             done += 1
             if done % 10 == 0 or done == len(tasks):
                 print(f"  retrieve [{done}/{len(tasks)}] records={len(raw_records)} errors={len(errors)}")
@@ -772,7 +779,7 @@ def main() -> None:
                     append_jsonl(raw_log, rows)
                     raw_records.extend(rows)
                 except Exception as e:
-                    errors.append({"query_id": task.query_id, "option_label": task.option_label, "error": str(e)})
+                    errors.append({"plan_id": task.plan_id, "query_id": task.query_id, "option_label": task.option_label, "error": str(e)})
                 done += 1
                 if done % 10 == 0 or done == len(tasks):
                     print(f"  retrieve [{done}/{len(tasks)}] records={len(raw_records)} errors={len(errors)}")

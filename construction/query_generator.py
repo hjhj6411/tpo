@@ -2,10 +2,15 @@
 STAGE 2 — Query Generator (clean 2×2).
 
 Builds one query record per compatible (user, scenario, active_axis) with
-active_axis in {color, pattern}. Garment is NOT fixed here — the planner
-(STAGE 3) chooses a neutral compatible/incompatible garment pair so that the
-GARMENT alone carries the TPO contrast while the selected active axis carries
-the like/dislike preference contrast.
+active_axis in {color, pattern, garment_category} (see ALLOWED_ACTIVE_AXES
+below) — garment-active instances exist only for dress-code scenarios, where
+color or pattern can carry the TPO norm instead.
+
+The violation axis is NOT fixed here — the planner (STAGE 3) picks a neutral
+compatible/incompatible pair on some *other* axis, so that axis alone carries
+the TPO contrast while the selected active axis carries the like/dislike
+preference contrast. For physical scenarios that other axis is always the
+garment.
 
 Updated for the cleaned pattern vocabulary:
 - fallback pattern values use only canonical, stable patterns

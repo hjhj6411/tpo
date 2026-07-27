@@ -184,10 +184,13 @@ def _encode_b64(path_str: str):
     return mime, base64.b64encode(data).decode()
 
 
+_qid_fallback_warned = False
+
+
 @lru_cache(maxsize=8192)
-def _resolve_path_cached(image_root_str: str, qid: str, opt_key: str,
+def _resolve_path_cached(image_root_str: str, key: str, opt_key: str,
                          explicit: str | None):
-    """Resolve image path with the original priority, cached by (root,qid,opt)."""
+    """Resolve image path with the original priority, cached by (root,key,opt)."""
     image_root = Path(image_root_str)
     if explicit:
         p = Path(explicit)
@@ -197,25 +200,44 @@ def _resolve_path_cached(image_root_str: str, qid: str, opt_key: str,
         if p2.exists():
             return str(p2)
     for ext in IMAGE_EXTS:
-        p = image_root / qid / f"{opt_key}{ext}"
+        p = image_root / key / f"{opt_key}{ext}"
         if p.exists():
             return str(p)
     for ext in IMAGE_EXTS:
-        p = image_root / f"{qid}_{opt_key}{ext}"
+        p = image_root / f"{key}_{opt_key}{ext}"
         if p.exists():
             return str(p)
     return None
 
 
 def resolve_image_path(plan, opt_key, image_root):
+    """Look under plan_id first, then query_id (pre-plan_id collections).
+
+    A query with two violation axes has two plans whose options differ, so a
+    query_id folder is only correct for single-plan queries; the fallback exists
+    for older image sets and warns once.
+    """
+    global _qid_fallback_warned
     opt = plan.get("options", {}).get(opt_key, {})
     explicit = opt.get("image_path") or opt.get("image_url")
     if not explicit:
         plan_images = plan.get("images", {})
         explicit = plan_images.get(opt_key)
+
+    pid = plan.get("plan_id", "")
+    if pid:
+        res = _resolve_path_cached(str(image_root), pid, opt_key, explicit)
+        if res:
+            return Path(res)
     qid = plan.get("query_id", "")
-    res = _resolve_path_cached(str(image_root), qid, opt_key, explicit)
-    return Path(res) if res else None
+    res = _resolve_path_cached(str(image_root), qid, opt_key, explicit) if qid else None
+    if res:
+        if pid and not _qid_fallback_warned:
+            _qid_fallback_warned = True
+            print(f"  [WARN] no image under plan_id '{pid}'; falling back to query_id "
+                  f"'{qid}'. Two-plan queries share that folder — re-collect under plan_id.")
+        return Path(res)
+    return None
 
 
 def option_to_fallback_text(opt):
@@ -236,7 +258,7 @@ def option_to_fallback_text(opt):
 def build_multimodal_messages(query, profile, shuffled_options, plan, image_root,
                               profile_mode="narrative",
                               system_prompt=SYSTEM_PROMPT_NO,
-                              image_only_options=False):
+                              image_only_options=True):
     qtext = query.get("query_text", "").strip()
 
     profile_text = ""
@@ -386,8 +408,8 @@ def parse_answer_thinking(response):
 def evaluate(plans, queries_map, profiles_map, image_root,
              model, limit=0, seed=42, verbose=False,
              profile_mode="narrative", concurrency=1,
-             image_only_options=False, max_tokens=4,
-             fix_correct=None):
+             image_only_options=True, max_tokens=4,
+             fix_correct=None, allow_text_fallback=False):
     """fix_correct: None -> random shuffle (1-1 position-pref experiment).
        'A'/'B'/'C'/'D' -> place the TRUE answer (orig key 'A') at that display
        position, others fill remaining slots in order (1-2 fixed-position exp)."""
@@ -401,12 +423,26 @@ def evaluate(plans, queries_map, profiles_map, image_root,
         system_prompt = SYSTEM_PROMPT_WITH_PROFILE
 
     jobs = []
+    skipped = []          # plans dropped because an image is missing
     for plan in plans:
         qid = plan["query_id"]; uid = plan["user_id"]
+        pid = plan.get("plan_id") or qid
         query = queries_map.get(qid)
         profile = profiles_map.get(uid, {})
         if query is None:
             continue
+
+        # An image-MCQ item with a missing image is not an image-MCQ item. Unless
+        # a text fallback is explicitly allowed, drop the plan instead of quietly
+        # turning it into a text question.
+        if not allow_text_fallback:
+            missing = [k for k in plan.get("options", {})
+                       if resolve_image_path(plan, k, image_root) is None]
+            if missing:
+                skipped.append({"plan_id": pid, "query_id": qid,
+                                "missing_options": sorted(missing)})
+                continue
+
         option_items = list(plan["options"].items())   # [("A",{...}),...]
 
         if fix_correct in ("A", "B", "C", "D"):
@@ -445,6 +481,7 @@ def evaluate(plans, queries_map, profiles_map, image_root,
     def process(idx, job):
         plan, query, profile, shuffled, display_to_original, correct_display = job
         qid = plan["query_id"]; uid = plan["user_id"]
+        pid = plan.get("plan_id") or qid
         axis = plan.get("active_axis", "unknown")
         qtype = query.get("query_type", "unknown")
         response = predicted = predicted_original = None
@@ -458,11 +495,12 @@ def evaluate(plans, queries_map, profiles_map, image_root,
             predicted = parse_answer_thinking(response) if _THINKING else parse_answer(response)
             predicted_original = display_to_original.get(predicted)
         except Exception as e:
-            print(f"  [ERROR] {qid}: {e}")
+            print(f"  [ERROR] {pid}: {e}")
         strict_hit  = int(predicted_original == "A") if predicted_original else 0
         tpo_hit     = TPO_SCORE.get(predicted_original, 0) if predicted_original else 0
         profile_hit = PROFILE_SCORE.get(predicted_original, 0) if predicted_original else 0
-        rec = {"_idx": idx, "query_id": qid, "user_id": uid, "active_axis": axis,
+        rec = {"_idx": idx, "plan_id": pid, "query_id": qid,
+               "user_id": uid, "active_axis": axis,
                "query_type": qtype, "scenario_id": plan.get("scenario_id"),
                "profile_mode": profile_mode, "correct_display": correct_display,
                "predicted": predicted, "predicted_original": predicted_original,
@@ -512,7 +550,7 @@ def evaluate(plans, queries_map, profiles_map, image_root,
     for r in results:
         r.pop("_idx")
     return (results, strict_correct, tpo_correct, profile_correct, total,
-            breakdown, dict(pos_hist))
+            breakdown, dict(pos_hist), skipped)
 
 
 # ── report ────────────────────────────────────────────────────────────────
@@ -629,7 +667,16 @@ def main():
     ap.add_argument("--profile-mode", choices=["no", "narrative", "all"], default=None,
                     help="omit to run no/narrative/all sequentially")
     ap.add_argument("--concurrency", type=int, default=4)
-    ap.add_argument("--image-only-options", action="store_true")
+    ap.add_argument("--image-only-options", dest="image_only_options",
+                    action="store_true", default=True,
+                    help="options are images only, never described in text (default on)")
+    ap.add_argument("--text-fallback-options", dest="image_only_options",
+                    action="store_false",
+                    help="describe an option in text when its image cannot be encoded; "
+                         "this makes the item partly text-solvable — not the benchmark task")
+    ap.add_argument("--allow-text-fallback", action="store_true",
+                    help="evaluate plans even when an option image is missing "
+                         "(default: skip them and exit 1 if any were skipped)")
     ap.add_argument("--img-size", type=int, default=768,
                     help="downscale long edge to this before encoding (0 = no resize)")
     ap.add_argument("--max-tokens", type=int, default=0,
@@ -693,18 +740,21 @@ def main():
         tracks = {args.track: tracks[args.track]}
     print("  Tracks: " + ", ".join(f"{t}={len(v)}" for t, v in tracks.items()))
 
+    total_skipped = 0
     for track, track_plans in tracks.items():
         print(f"\n{'═'*60}\n  ██ TRACK = {track}  ({len(track_plans)} plans)\n{'═'*60}")
         all_summaries = []
         for mode in modes:
             print(f"\n{'─'*60}\n  ▶ track = {track} | profile-mode = {mode}  |  "
                   f"model = {args.model}\n{'─'*60}")
-            (results, sc, tc, pc, total, breakdown, pos_hist) = evaluate(
+            (results, sc, tc, pc, total, breakdown, pos_hist, skipped) = evaluate(
                 track_plans, queries_map, profiles_map, args.image_root,
                 model=args.model, limit=args.limit, seed=args.seed, verbose=args.verbose,
                 profile_mode=mode, concurrency=args.concurrency,
                 image_only_options=args.image_only_options, max_tokens=max_tokens,
-                fix_correct=args.fix_correct)
+                fix_correct=args.fix_correct,
+                allow_text_fallback=args.allow_text_fallback)
+            total_skipped += len(skipped)
 
             suffix = f"_{mode}_{model_tag}"
             if args.fix_correct:
@@ -717,7 +767,22 @@ def main():
                 out_path = (args.output.parent / track /
                             f"{args.output.stem}{suffix}{args.output.suffix or '.jsonl'}")
             save_jsonl(results, out_path)   # save_jsonl already mkdirs parents
+            # run header: whether the options were image-only, and what was dropped
+            meta = {"track": track, "profile_mode": mode, "model": args.model,
+                    "image_only": bool(args.image_only_options),
+                    "allow_text_fallback": bool(args.allow_text_fallback),
+                    "n_plans_in_track": len(track_plans),
+                    "n_scored": len(results),
+                    "n_skipped_missing_images": len(skipped),
+                    "skipped": skipped[:200]}
+            meta_path = out_path.with_suffix(".meta.json")
+            with open(meta_path, "w", encoding="utf-8") as f:
+                json.dump(meta, f, ensure_ascii=False, indent=2)
             print(f"\n  Saved {len(results)} records → {out_path}")
+            print(f"  Run header → {meta_path}")
+            if skipped:
+                print(f"  [WARN] skipped {len(skipped)} plans with missing option images "
+                      f"(e.g. {[s['plan_id'] for s in skipped[:3]]})")
             print_report(sc, tc, pc, total, breakdown, pos_hist,
                          profile_mode=mode, model_name=args.model,
                          fix_correct=args.fix_correct, track=track)
@@ -726,6 +791,13 @@ def main():
 
         if run_all:
             print_combined(track, all_summaries)
+
+    if total_skipped:
+        print(f"\n  [FAIL] {total_skipped} plan-runs were skipped for missing option "
+              f"images. The reported accuracies cover only the plans that had all "
+              f"four images — do NOT quote them as full-benchmark numbers. Re-collect "
+              f"the missing images, or pass --allow-text-fallback to score anyway.")
+        sys.exit(1)
 
 
 if __name__ == "__main__":

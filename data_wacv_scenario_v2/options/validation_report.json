@@ -50,6 +50,7 @@
     }
   },
   "counterbalanced_subset_size": 2632,
+  "counterbalanced_id_kind": "plan_id",
   "distribution": {
     "axis": {
       "color": 1432,

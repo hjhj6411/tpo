@@ -90,6 +90,7 @@ GARMENT_QUERY_TERMS = TEXT_QUERY_GARMENT_VOCAB + DEFAULT_GARMENTS
 @dataclass(frozen=True)
 class OptionTask:
     plan_idx: int
+    plan_id: str
     query_id: str
     user_id: str
     scenario_id: str | None
@@ -198,6 +199,9 @@ def make_tasks(plans: list[dict[str, Any]], options: list[str]) -> list[OptionTa
 
     for plan_idx, plan in enumerate(plans):
         query_id = str(plan.get("query_id") or f"plan_{plan_idx:05d}")
+        # one output folder per PLAN: a two-violation-axis query has two plans
+        # whose options differ, so query_id folders would collide.
+        plan_id = str(plan.get("plan_id") or query_id)
         user_id = str(plan.get("user_id") or "unknown_user")
         opts = plan.get("options") or {}
         garment_vocab = tuple(TEXT_QUERY_GARMENT_VOCAB)
@@ -213,6 +217,7 @@ def make_tasks(plans: list[dict[str, Any]], options: list[str]) -> list[OptionTa
             query_garment = extract_query_garment(option_text, target_garment, garment_vocab)
             tasks.append(OptionTask(
                 plan_idx=plan_idx,
+                plan_id=plan_id,
                 query_id=query_id,
                 user_id=user_id,
                 scenario_id=plan.get("scenario_id"),
@@ -1111,7 +1116,7 @@ def score_garment_vlm(
 
 
 def task_dirs(args: argparse.Namespace, task: OptionTask) -> tuple[Path, Path, Path]:
-    q = slug(task.query_id, 80)
+    q = slug(task.plan_id, 80)
     opt = f"{task.option_label}_{slug(task.option_semantic or 'option', 32)}__{slug(task.option_text, 72)}"
     return (
         args.output_root / "topk_images" / q / opt,
@@ -1135,6 +1140,7 @@ def save_ranked_images(records: list[dict[str, Any]], task: OptionTask, args: ar
     ]
 
     tsv = [
+        f"plan_id\t{task.plan_id}",
         f"query_id\t{task.query_id}",
         f"option\t{task.option_label}",
         f"option_text\t{task.option_text}",
@@ -1430,6 +1436,7 @@ def collect_task(session: requests.Session, sam3_processor, task: OptionTask, ar
 
         rec = {
             "plan_idx": task.plan_idx,
+            "plan_id": task.plan_id,
             "query_id": task.query_id,
             "user_id": task.user_id,
             "scenario_id": task.scenario_id,
@@ -1665,13 +1672,14 @@ def main() -> None:
         q = retrieval_query(task, args.query_mode)
         print()
         print(
-            f"[{i}/{len(tasks)}] {task.query_id} {task.option_label} | "
+            f"[{i}/{len(tasks)}] {task.plan_id} {task.option_label} | "
             f"query={q} | mask={task.query_garment} | vlm={list(task.vlm_garment_vocab)}"
         )
 
         records = collect_task(session, sam3_processor, task, args)
 
         append_jsonl(raw_log, [{
+            "plan_id": task.plan_id,
             "query_id": task.query_id,
             "option_label": task.option_label,
             "option_text": task.option_text,
