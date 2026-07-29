@@ -51,7 +51,10 @@ VALUE_DISPLAY_NAMES = {
     "leather_jacket": "leather jacket",
     "puffer_jacket": "puffer jacket",
     "fleece_jacket": "fleece jacket",
-    "trench_coat": "trench coat",
+    "pea_coat": "pea coat",
+    "long_coat": "long coat",
+    "suit_vest": "suit vest",
+    "polo_shirt": "polo shirt",
     "jeans": "jeans",
     "slacks": "slacks",
     "shorts": "shorts",
@@ -160,11 +163,14 @@ NORMATIVE_FORMAL_ARCHETYPES = FRAME_SCOPED_ARCHETYPES - {"club_code"}
 # formal fallback pair, so the dress-code garment preference axis collapsed onto
 # the three anchor-trio matchups (45% of the axis, per-user worst 87%). The
 # strictest scenarios (black-tie gala, opera premiere) admitted nothing else at
-# all. Five anchors at 2+2 give each user C(2,2)-crossed 4 formal pairs and the
-# strictest scenarios C(5,2)=10 globally. Requires the compat-side widening of
+# all. Seven anchors at 2+2 leave three neutral per user, preserving formal
+# fallback supply while widening the global pair vocabulary. Requires the compat-side widening of
 # the 17 normative-formal scenarios (docs/redesign_v2_plan.md §16) — S1 below
 # fails loudly if that widening is reverted.
-GARMENT_ANCHOR = ["blazer", "formal_shirt", "dress", "slacks", "long_skirt"]
+GARMENT_ANCHOR = [
+    "blazer", "formal_shirt", "dress", "slacks", "long_skirt",
+    "suit_vest", "long_coat",
+]
 COLOR_ANCHOR = ["black", "navy", "gray"]
 COLOR_RESERVE = ["orange", "yellow", "pink", "white"]   # hard-RESERVE
 PATTERN_QUIET = ["solid", "striped"]                     # 1 like + 1 dislike split
@@ -250,7 +256,7 @@ def derive_and_validate_tiers():
 # them on each side so formal scenarios admit non-ANCHOR garment pairs
 # (otherwise the garment axis collapses to blazer/formal_shirt/dress
 # matchups — observed 70% of the axis).
-FORMAL_FREE_GARMENTS = ["sweater", "cardigan", "trench_coat"]
+FORMAL_FREE_GARMENTS = ["sweater", "cardigan", "pea_coat"]
 
 # Post-generation manual touch-ups from profile inspection. SWAPS exchange a
 # value between two variants, so every global like/dislike tally — and the
@@ -332,7 +338,7 @@ def _cells_alive_everywhere(g_likes, g_dis, c_likes, c_dis, p_likes, p_dis):
 def generate_rule_variants(seed=42, n_variants=24):
     """Generate preference variants — pool-free, globally balanced.
 
-    R1 garment: 1 ANCHOR like + 1 ANCHOR dislike (balanced); FREE 2+2 by
+    R1 garment: 2 ANCHOR likes + 2 ANCHOR dislikes (balanced); FREE 2+2 by
                 exhaustive enumeration over the WHOLE free vocabulary,
                 preferring combos with >=1 formal-compatible FREE garment
                 on each side (keeps coded scenarios' garment pairs off the
@@ -369,8 +375,8 @@ def generate_rule_variants(seed=42, n_variants=24):
     random.Random(seed + 4649).shuffle(expr_pairs)
 
     for idx in range(n_variants):
-        # ---- R1 garment: ANCHOR 2+2 (balanced), 1 anchor left neutral ----
-        # The 5th anchor stays preference-neutral for this user, which is what
+        # ---- R1 garment: ANCHOR 2+2 (balanced), 3 anchors left neutral ----
+        # Three anchors stay preference-neutral for this user, which is what
         # keeps a neutral TPO-compatible garment available in the strictest
         # scenarios (same ANCHOR-arithmetic guarantee the 3x(1+1) design relied
         # on, now with two anchors on each preference side).

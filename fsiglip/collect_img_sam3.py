@@ -36,6 +36,7 @@ import mimetypes
 import os
 import re
 import shutil
+import sys
 import tempfile
 import time
 from contextlib import nullcontext
@@ -65,18 +66,20 @@ DEFAULT_GARMENTS = [
     "blazer", "outerwear",
     "cardigan", "hoodie", "sweater", "sweatshirt",
     "tank top", "sleeveless top", "camisole top", "crop top",
-    "t shirt", "tee", "tee shirt", "formal shirt", "dress shirt", "top",
-    "windbreaker", "leather jacket", "puffer jacket", "fleece jacket", "trench coat",
+    "t shirt", "tee", "tee shirt", "formal shirt", "dress shirt", "polo shirt", "polo", "top",
+    "suit vest", "waistcoat",
+    "windbreaker", "leather jacket", "puffer jacket", "fleece jacket",
+    "pea coat", "peacoat", "wool coat", "wool overcoat",
     "mini skirt", "long skirt",
     "slacks", "pants", "trousers", "jeans", "shorts", "leggings",
     "dress", "gown",
 ]
 
 TEXT_QUERY_GARMENT_VOCAB = [
-    "t shirt", "tank top", "formal shirt",
+    "t shirt", "tank top", "formal shirt", "polo shirt",
     "sweatshirt", "sweater", "hoodie", "cardigan",
-    "blazer", "windbreaker", "leather jacket", "puffer jacket",
-    "fleece jacket", "trench coat",
+    "blazer", "suit vest", "windbreaker", "leather jacket", "puffer jacket",
+    "fleece jacket", "pea coat", "wool coat",
     "jeans", "slacks", "shorts", "leggings",
     "dress", "mini skirt", "long skirt",
 ]
@@ -154,7 +157,7 @@ def unique_norm(items: list[Any] | tuple[Any, ...]) -> list[str]:
 def extract_query_garment(text: str, fallback: str, candidates: list[str] | tuple[str, ...] = ()) -> str:
     """Extract only the garment axis from a composed query.
 
-    Example: "plaid navy tank top" -> "tank top". This intentionally does not
+    Example: "checkered navy tank top" -> "tank top". This intentionally does not
     add umbrella prompts such as "top", "outerwear", "garment", or aliases not
     present in the query.
     """
@@ -733,19 +736,6 @@ def draw_patch_overlay(crop: Image.Image, crop_mask: np.ndarray, patches: list[d
     out.convert("RGB").save(out_path, quality=95)
 
 
-PATTERN_VOCAB = [
-    "plain solid-colored",
-    "striped",
-    "plaid",
-    "checkered",
-    "polka dot",
-    "floral",
-    "camouflage",
-    "houndstooth",
-    "animal print",
-]
-
-
 def canonical_pattern(pattern: str) -> str:
     p = norm(pattern)
     if p in {"plain", "solid"}:
@@ -757,6 +747,88 @@ def canonical_pattern(pattern: str) -> str:
     return p
 
 
+# The closed vocabulary the patch argmax votes over. It is DERIVED from the
+# benchmark's own pattern axis rather than written out by hand, because a
+# hand-written list silently goes stale: this one had drifted to a pre-revision
+# set that still carried `plaid`, `camouflage`, `houndstooth` and `animal print`
+# while missing `leopard` entirely — so leopard targets got an anchor prepended,
+# and that prepended anchor then had to out-score its own synonym "animal print"
+# to count. Deriving it means the anchors follow configs/config.py from now on.
+#
+# The fallback is the axis as of this writing, used only when config cannot be
+# imported (this module is also run as a standalone script from fsiglip/).
+_PATTERN_AXIS_FALLBACK = ["solid", "striped", "checkered", "floral",
+                          "polka_dot", "leopard"]
+try:
+    _repo_root = str(Path(__file__).resolve().parent.parent)
+    if _repo_root not in sys.path:
+        sys.path.insert(0, _repo_root)
+    from configs.config import FASHION_ATTRIBUTE_AXES as _AXES
+    _PATTERN_AXIS = list(_AXES["pattern"])
+except Exception as _e:                                    # pragma: no cover
+    print(f"  [warn] configs.config unavailable ({type(_e).__name__}: {_e}); "
+          f"PATTERN_VOCAB falls back to {_PATTERN_AXIS_FALLBACK}, which may be "
+          f"stale relative to the benchmark axis")
+    _PATTERN_AXIS = list(_PATTERN_AXIS_FALLBACK)
+
+PATTERN_VOCAB = [canonical_pattern(p) for p in _PATTERN_AXIS]
+
+# Synonym groups, in the style of GARMENT_EQUIV_GROUPS. Empty now that the
+# vocabulary is exactly the benchmark's own patterns and contains no two
+# anchors meaning the same thing. Add a group only for TRUE synonyms; visually
+# distinct patterns must stay separate or the verdict stops discriminating.
+PATTERN_EQUIV_GROUPS: list[set[str]] = []
+
+
+def pattern_equivalence_set(pattern: str, strict: bool = False) -> set[str]:
+    """Anchors that count as a hit for this pattern target.
+
+    Mirrors garment_equivalence_set: strict mode demands the exact anchor,
+    otherwise true synonyms count too. With no groups defined this always
+    returns just the target, i.e. the original exact-anchor rule.
+    """
+    p = norm(pattern)
+    members = {p}
+    if strict:
+        return members
+    for grp in PATTERN_EQUIV_GROUPS:
+        if p in grp:
+            members |= grp
+    return members
+
+
+def score_patch_rows(
+    session: requests.Session,
+    args: argparse.Namespace,
+    axis: str,
+    vocab: list[str],
+    prompt_template: str,
+    patches: list[dict[str, Any]],
+) -> list[dict[str, float]]:
+    """Encode these patches ONCE against every anchor on the axis.
+
+    The scoring service re-encodes every image on every call, so asking it one
+    target at a time re-encodes the same patches for each of them. With a
+    colour patch grid of ~300 tiles and 13 colour targets that is 12x more work
+    than the answer needs, and it is the dominant cost of a sweep.
+
+    The returned rows carry a score for EVERY anchor, so one call answers every
+    target on that axis — pass them to score_patch_vocab(rows=...). This is only
+    correct because the vocabulary now contains every target (it is derived from
+    the benchmark axis), so no target gets an anchor prepended and no two
+    targets see different anchor sets.
+    """
+    vocab = [norm(v) for v in vocab]
+    texts = {f"{axis}::{v}": prompt_template.format(v) for v in vocab}
+    return score_image_files(
+        session=session,
+        args=args,
+        texts=texts,
+        image_paths=[x["path"] for x in patches],
+        batch_size=args.score_batch,
+    )
+
+
 def score_patch_vocab(
     session: requests.Session,
     args: argparse.Namespace,
@@ -766,6 +838,8 @@ def score_patch_vocab(
     prompt_template: str,
     margin: float,
     patches: list[dict[str, Any]],
+    accept: set[str] | None = None,
+    rows: list[dict[str, float]] | None = None,
 ) -> dict[str, Any]:
     """
     Closed-vocabulary patch voting; the same rule for every target:
@@ -773,6 +847,12 @@ def score_patch_vocab(
         score = (# patches whose argmax anchor is the target) / (# patches)
 
     One anchor per vocabulary entry, no per-class aliases or hard negatives.
+
+    `accept` widens what counts as "the target" to a set of anchors that mean
+    the same thing (leopard / animal print). It defaults to the target alone,
+    which reproduces the original rule exactly — with accept == {target} the
+    hit test below is character-for-character the old one, so no existing
+    target's score can move because of this parameter.
     """
     t = norm(target)
     if not patches:
@@ -781,17 +861,19 @@ def score_patch_vocab(
     vocab = [norm(v) for v in vocab]
     if t not in vocab:
         vocab = [t] + vocab
+    accept = {norm(a) for a in (accept or {t})} & set(vocab)
+    accept.add(t)
 
-    texts = {f"{axis}::{v}": prompt_template.format(v) for v in vocab}
-    rows = score_image_files(
-        session=session,
-        args=args,
-        texts=texts,
-        image_paths=[x["path"] for x in patches],
-        batch_size=args.score_batch,
-    )
+    if rows is None:
+        rows = score_patch_rows(session, args, axis, vocab, prompt_template, patches)
+    elif t not in vocab:
+        # Supplied rows were encoded against a vocabulary that has no anchor for
+        # this target, so its score would silently read 0. Re-score rather than
+        # report a wrong number.
+        rows = score_patch_rows(session, args, axis, vocab, prompt_template, patches)
 
     target_key = f"{axis}::{t}"
+    accept_keys = {f"{axis}::{a}" for a in accept}
     tile_scores = []
 
     for patch, row in zip(patches, rows):
@@ -804,10 +886,16 @@ def score_patch_vocab(
         else:
             pred_key = max(row, key=lambda k: float(row[k]))
             pred = pred_key.split("::", 1)[-1]
-            target_score = float(row.get(target_key, 0.0))
-            other_score = max([float(v) for k, v in row.items() if k != target_key] or [0.0])
+            # "the target" is the best of its accepted anchors, and the margin
+            # is measured against the best anchor OUTSIDE that set — otherwise a
+            # synonym would be its own strongest competitor and every leopard
+            # patch would look like a near-tie
+            target_score = max([float(v) for k, v in row.items()
+                                if k in accept_keys] or [0.0])
+            other_score = max([float(v) for k, v in row.items()
+                               if k not in accept_keys] or [0.0])
             tile_margin = target_score - other_score
-            hit = (pred_key == target_key) and (tile_margin >= margin)
+            hit = (pred_key in accept_keys) and (tile_margin >= margin)
 
         tile_scores.append({
             "index": patch["index"],
@@ -836,6 +924,7 @@ def score_patch_vocab(
         "score": score,
         "mode": f"patch_vocab_argmax_{axis}",
         "target": t,
+        "accept": sorted(accept),
         "vocab": vocab,
         "margin": margin,
         "formula": "num_target_patches / num_patches",
@@ -847,20 +936,39 @@ def score_patch_vocab(
     }
 
 
-def score_pattern_patches(session: requests.Session, args: argparse.Namespace, pattern: str, patches: list[dict[str, Any]]) -> dict[str, Any]:
+PATCH_PROMPT_TEMPLATE = "a close-up of {} clothing fabric"
+
+
+def pattern_patch_rows(session, args, patches) -> list[dict[str, float]]:
+    """One encode of these patches against every pattern anchor."""
+    return score_patch_rows(session, args, "pattern", PATTERN_VOCAB,
+                            PATCH_PROMPT_TEMPLATE, patches)
+
+
+def color_patch_rows(session, args, patches) -> list[dict[str, float]]:
+    """One encode of these patches against every colour anchor."""
+    return score_patch_rows(session, args, "color", DEFAULT_COLORS,
+                            PATCH_PROMPT_TEMPLATE, patches)
+
+
+def score_pattern_patches(session: requests.Session, args: argparse.Namespace, pattern: str, patches: list[dict[str, Any]], rows: list[dict[str, float]] | None = None) -> dict[str, Any]:
     p = norm(pattern)
     if not p:
         return {"score": 1.0, "mode": "missing_pattern_target", "tile_scores": []}
 
+    target = canonical_pattern(p)
     return score_patch_vocab(
         session=session,
         args=args,
         axis="pattern",
-        target=canonical_pattern(p),
+        target=target,
         vocab=PATTERN_VOCAB,
         prompt_template="a close-up of {} clothing fabric",
         margin=args.pattern_margin,
         patches=patches,
+        accept=pattern_equivalence_set(target,
+                                       getattr(args, "pattern_strict", False)),
+        rows=rows,
     )
 
 
@@ -869,6 +977,7 @@ def score_color_patches(
     args: argparse.Namespace,
     color: str,
     patches: list[dict[str, Any]],
+    rows: list[dict[str, float]] | None = None,
 ) -> dict[str, Any]:
     c = norm(color)
     if not c:
@@ -883,6 +992,7 @@ def score_color_patches(
         prompt_template="a close-up of {} clothing fabric",
         margin=args.color_margin,
         patches=patches,
+        rows=rows,
     )
 
 
@@ -896,21 +1006,24 @@ GARMENT_VOCAB = TEXT_QUERY_GARMENT_VOCAB
 # visually confusable outerwear categories are intentionally NOT merged, so the
 # VLM verdict actually discriminates them.
 GARMENT_EQUIV_GROUPS = [
-    {"tank top", "sleeveless top", "camisole top", "camisole", "crop top"},
+    {"tank top", "sleeveless top", "camisole top", "camisole"},
     {"t shirt", "tee", "tee shirt"},
     {"formal shirt", "dress shirt"},
+    {"polo shirt", "polo"},
     {"jeans", "denim pants", "denim"},
     {"dress", "gown"},
-    {"sweater", "pullover", "knit sweater", "cardigan", "knitwear"},
-    {"hoodie", "sweatshirt"},
+    {"sweater", "pullover", "knit sweater", "knitwear"},
     {"fleece", "fleece jacket"},
+    {"pea coat", "peacoat"},
+    {"wool coat", "long coat", "wool overcoat", "overcoat"},
+    {"suit vest", "waistcoat"},
     {"slacks", "pants", "trousers"},
 ]
 
 
-def garment_equivalence_set(garment: str, strict: bool) -> set[str]:
+def garment_equivalence_set(garment: str, allow_equivalence: bool = False) -> set[str]:
     g = norm(garment)
-    if strict:
+    if not allow_equivalence:
         return {g}
     members = {g}
     for grp in GARMENT_EQUIV_GROUPS:
@@ -927,7 +1040,7 @@ def assert_vocab_covers_targets(tasks: list["OptionTask"]) -> None:
         if not g:
             continue
         vocab = set(t.vlm_garment_vocab or GARMENT_VOCAB)
-        if not (garment_equivalence_set(g, strict=False) & vocab):
+        if not (garment_equivalence_set(g, allow_equivalence=True) & vocab):
             uncovered[g] = uncovered.get(g, 0) + 1
     if uncovered:
         detail = ", ".join(f"{g!r} x{n}" for g, n in sorted(uncovered.items(), key=lambda kv: -kv[1]))
@@ -945,11 +1058,13 @@ VLM_GARMENT_PROMPT = (
     "Classify that garment into exactly ONE of these categories:\n"
     "{options}\n\n"
     "Rules:\n"
-    "- Outerwear, keep these distinct: a trench coat is a long belted "
-    "raincoat-style coat; a fleece jacket is a soft brushed insulating jacket; a puffer jacket is "
+    "- Outerwear, keep these distinct: a pea coat is a short double-breasted wool coat; "
+    "a wool coat reaches roughly the knee or below; a fleece jacket is a soft brushed "
+    "insulating jacket; a puffer jacket is "
     "a quilted insulated jacket; a windbreaker is a thin lightweight nylon "
     "shell; a leather jacket is a leather outerwear jacket; a blazer is a "
     "structured tailored jacket worn on its own.\n"
+    "- A suit vest is a sleeveless tailored waistcoat, not a fleece or puffer vest.\n"
     "{other_rule}"
     "Answer with only the category name, exactly as written above, and nothing else."
 )
@@ -1047,7 +1162,8 @@ def score_garment_vlm(
             "model": args.vlm_model,
         }
 
-    equiv = garment_equivalence_set(g, args.garment_strict)
+    allow_equivalence = bool(getattr(args, "allow_garment_equivalence", False))
+    equiv = garment_equivalence_set(g, allow_equivalence=allow_equivalence)
     verdict = pred in equiv
     score = 1.0 if verdict else 0.0
     return score, {
@@ -1056,7 +1172,7 @@ def score_garment_vlm(
         "predicted": pred,
         "verdict": "PASS" if verdict else "FAIL",
         "score": score,
-        "strict": bool(args.garment_strict),
+        "allow_equivalence": allow_equivalence,
         "vocab": vocab,
         "equivalence_set": sorted(equiv),
         "raw_response": str(content)[:500],
@@ -1491,10 +1607,15 @@ def parse_args() -> argparse.Namespace:
                         "NOT a genuine wrong-garment FAIL. skip: drop with skip_reason=garment_vlm_error "
                         "(re-runnable, never a false PASS). uncertain: keep the candidate, rank it by "
                         "pattern*color only, skip_reason=garment_uncertain.")
-    p.add_argument("--garment-strict", action="store_true",
-                   help="PASS only if the VLM's predicted category equals the target exactly. "
-                        "Default (off) also accepts true synonyms (e.g. tank top/camisole), "
-                        "but never merges coat/jacket/blazer.")
+    p.add_argument("--pattern-strict", action="store_true",
+                   help="A pattern patch counts only if the VLM's top anchor is "
+                        "the exact target. Default (off) also accepts true "
+                        "synonyms — leopard/animal print — which otherwise split "
+                        "the vote and undercount the target.")
+    p.add_argument("--allow-garment-equivalence", action="store_true",
+                   help="Opt in to true-synonym matching. The default requires the VLM's "
+                        "predicted category to equal the target exactly; distinct benchmark "
+                        "labels are never merged.")
     p.add_argument("--garment-fail-skip", action="store_true", default=True,
                    help="Mark garment-FAIL crops with skip_reason=garment_fail (default on).")
     p.add_argument("--no-garment-fail-skip", dest="garment_fail_skip", action="store_false")

@@ -52,7 +52,7 @@ Return ONLY compact JSON:
 
 garment (does the main garment TYPE match the target type?):
   5 = exactly the target garment type.
-  4 = same functional category, minor sub-type difference (e.g. coat vs trench coat).
+  4 = same functional category, minor sub-type difference (e.g. pea coat vs long coat).
   3 = related but clearly different cut/type.
   2 = wrong garment but same broad area (a top when a top was wanted, etc.).
   1 = different garment entirely, or no identifiable garment.

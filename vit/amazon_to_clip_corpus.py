@@ -38,17 +38,18 @@ from pathlib import Path
 # Broad clothing keywords (used only if --clothing-only). Footwear/accessories
 # are excluded so the index stays focused on garments the benchmark uses.
 CLOTHING_KW = [
-    "shirt", "t-shirt", "tshirt", "tee", "blouse", "sweater", "pullover",
+    "shirt", "t-shirt", "tshirt", "tee", "polo", "blouse", "sweater", "pullover",
     "cardigan", "hoodie", "sweatshirt", "jacket", "coat", "overcoat",
-    "trench", "blazer", "fleece", "puffer", "windbreaker", "anorak", "dress",
+    "pea coat", "peacoat", "wool coat", "blazer", "fleece", "puffer",
+    "windbreaker", "anorak", "dress",
     "gown", "skirt", "pants", "trousers", "chinos", "slacks", "jeans",
-    "shorts", "suit", "tank top", "camisole", "vest",
+    "shorts", "legging", "suit", "tank top", "camisole", "vest", "waistcoat",
 ]
 EXCLUDE_KW = [
     "shoe", "boot", "sneaker", "sandal", "sock", "glove", "hat", "cap",
     "scarf", "belt", "bag", "wallet", "watch", "jewelry", "necklace",
     "earring", "ring ", "sunglass", "underwear", "bra", "panty", "lingerie",
-    "swimsuit", "bikini", "legging", "tights", "stocking",
+    "swimsuit", "bikini", "tights", "stocking",
 ]
 
 

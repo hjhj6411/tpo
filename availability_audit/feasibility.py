@@ -111,23 +111,23 @@ def pick_fixed_color(neutral_colors, p_like, p_dislike, compat_garment,
 if __name__ == "__main__":
     # self-test on a synthetic support matrix (module-level rebind)
     _SUPPORT = {
-        "trench_coat":  {"striped": {"n": 12, "colors": {"navy": 7, "beige": 4}},
+        "pea_coat":  {"striped": {"n": 12, "colors": {"navy": 7, "beige": 4}},
                          "leopard": {"n": 1, "colors": {"beige": 1}},
                          "solid":   {"n": 140, "colors": {"beige": 60, "navy": 50}}},
         "puffer_jacket": {"striped": {"n": 4, "colors": {"navy": 3}},
                           "leopard": {"n": 0, "colors": {}},
                           "solid":   {"n": 180, "colors": {"black": 90, "navy": 60}}},
     }
-    assert support("trench_coat", "striped") == 12
+    assert support("pea_coat", "striped") == 12
     assert support("puffer_jacket", "striped", "navy") == 3
     # leopard puffer edge missing -> rectangle infeasible
     assert not option_set_is_retrievable("striped", "leopard",
-                                         "trench_coat", "puffer_jacket")
+                                         "pea_coat", "puffer_jacket")
     # striped/solid rectangle feasible
     assert option_set_is_retrievable("solid", "striped",
-                                     "trench_coat", "puffer_jacket")
-    assert set_support("solid", "striped", "trench_coat", "puffer_jacket") == 4
+                                     "pea_coat", "puffer_jacket")
+    assert set_support("solid", "striped", "pea_coat", "puffer_jacket") == 4
     c, s = pick_fixed_color(["navy", "beige", "black"], "solid", "striped",
-                            "trench_coat", "puffer_jacket")
+                            "pea_coat", "puffer_jacket")
     assert c == "navy" and s == 3, (c, s)
     print("feasibility self-test OK")

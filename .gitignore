@@ -4,6 +4,7 @@ __pycache__/
 .env
 data/
 _no_use/
+availability_audit/
 *.egg-info/
 dist/
 build/

@@ -19,10 +19,22 @@ class _NoGrad:
     def __enter__(self): return None
     def __exit__(self, *a): return False
 
+class _ArrayTensor:
+    def __init__(self, value): self.value = np.asarray(value)
+    def to(self, *a, **k): return self
+    @property
+    def T(self): return _ArrayTensor(self.value.T)
+    def __matmul__(self, other): return _ArrayTensor(self.value @ other.value)
+    def __getitem__(self, item): return _ArrayTensor(self.value[item])
+    def detach(self): return self
+    def float(self): return self
+    def cpu(self): return self
+    def numpy(self): return self.value
+
 torch_stub = types.ModuleType("torch")
 torch_stub.no_grad = _NoGrad
 torch_stub.autocast = lambda *a, **k: _NoGrad()
-torch_stub.from_numpy = lambda x: x
+torch_stub.from_numpy = _ArrayTensor
 torch_stub.cuda = types.SimpleNamespace(is_available=lambda: False)
 sys.modules["torch"] = torch_stub
 sys.modules["open_clip"] = types.ModuleType("open_clip")
@@ -171,6 +183,52 @@ check("http URL cached (1 download for 2 requests), same object returned",
 rules = {r.rule for r in srv.app.url_map.iter_rules()}
 check("existing routes intact",
       {"/knn-service", "/knn-service-ensemble", "/patch-coverage",
-       "/patch-color-coverage", "/health"} <= rules, rules)
+       "/patch-color-coverage", "/score-image-files", "/health"} <= rules, rules)
+
+# 9) /score-image-files preserves order and per-image errors when batching.
+old_load = srv._load_pil_cached
+old_encode_images = srv._encode_images_norm
+old_encode_text = srv._encode_norm
+old_batch_size = srv._SCORE_IMAGE_BATCH_SIZE
+old_device = srv._state.get("device")
+score_calls = []
+score_features = {
+    "a": [1.0, 0.0],
+    "b": [0.0, 1.0],
+    "c": [0.25, 0.75],
+}
+def fake_score_load(src):
+    if src == "bad":
+        raise ValueError("bad image")
+    return src
+def fake_encode_images(images):
+    score_calls.append(list(images))
+    return _ArrayTensor([score_features[x] for x in images])
+srv._load_pil_cached = fake_score_load
+srv._encode_images_norm = fake_encode_images
+srv._encode_norm = lambda prompts: np.eye(len(prompts), dtype="float32")
+srv._SCORE_IMAGE_BATCH_SIZE = 2
+srv._state["device"] = "cpu"
+r = client.post(
+    "/score-image-files",
+    json={"texts": {"left": "L", "right": "R"},
+          "image_paths": ["a", "b", "bad", "c"]},
+)
+score_rows = r.get_json()["scores"]
+check("score-image batching preserves order and isolates a bad image",
+      score_calls == [["a", "b"], ["c"]]
+      and score_rows[0] == {"left": 1.0, "right": 0.0}
+      and score_rows[1] == {"left": 0.0, "right": 1.0}
+      and "error" in score_rows[2]
+      and score_rows[3] == {"left": 0.25, "right": 0.75},
+      {"calls": score_calls, "rows": score_rows})
+srv._load_pil_cached = old_load
+srv._encode_images_norm = old_encode_images
+srv._encode_norm = old_encode_text
+srv._SCORE_IMAGE_BATCH_SIZE = old_batch_size
+if old_device is None:
+    srv._state.pop("device", None)
+else:
+    srv._state["device"] = old_device
 
 print(f"\nALL {ok} SERVER CHECKS PASSED")

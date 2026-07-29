@@ -84,18 +84,20 @@ DEFAULT_GARMENTS = [
     "blazer", "outerwear",
     "cardigan", "hoodie", "sweater", "sweatshirt",
     "tank top", "sleeveless top", "camisole top", "crop top",
-    "t shirt", "tee", "tee shirt", "formal shirt", "dress shirt", "top",
-    "windbreaker", "leather jacket", "puffer jacket", "fleece jacket", "trench coat",
+    "t shirt", "tee", "tee shirt", "formal shirt", "dress shirt", "polo shirt", "polo", "top",
+    "suit vest", "waistcoat",
+    "windbreaker", "leather jacket", "puffer jacket", "fleece jacket",
+    "pea coat", "peacoat", "wool coat", "wool overcoat",
     "mini skirt", "long skirt",
     "slacks", "pants", "trousers", "jeans", "shorts", "leggings",
     "dress", "gown",
 ]
 
 TEXT_QUERY_GARMENT_VOCAB = [
-    "t shirt", "tank top", "formal shirt",
+    "t shirt", "tank top", "formal shirt", "polo shirt",
     "sweatshirt", "sweater", "hoodie", "cardigan",
-    "blazer", "windbreaker", "leather jacket", "puffer jacket",
-    "fleece jacket", "trench coat",
+    "blazer", "suit vest", "windbreaker", "leather jacket", "puffer jacket",
+    "fleece jacket", "pea coat", "wool coat",
     "jeans", "slacks", "shorts", "leggings",
     "dress", "mini skirt", "long skirt",
 ]
@@ -174,7 +176,7 @@ def unique_norm(items: list[Any] | tuple[Any, ...]) -> list[str]:
 def extract_query_garment(text: str, fallback: str, candidates: list[str] | tuple[str, ...] = ()) -> str:
     """Extract only the garment axis from a composed query.
 
-    Example: "plaid navy tank top" -> "tank top". This intentionally does not
+    Example: "checkered navy tank top" -> "tank top". This intentionally does not
     add umbrella prompts such as "top", "outerwear", "garment", or aliases not
     present in the query.
     """
@@ -800,19 +802,6 @@ def draw_patch_overlay(crop: Image.Image, crop_mask: np.ndarray, patches: list[d
     out.convert("RGB").save(out_path, quality=95)
 
 
-PATTERN_VOCAB = [
-    "plain solid-colored",
-    "striped",
-    "plaid",
-    "checkered",
-    "polka dot",
-    "floral",
-    "camouflage",
-    "houndstooth",
-    "animal print",
-]
-
-
 def canonical_pattern(pattern: str) -> str:
     p = norm(pattern)
     if p in {"plain", "solid"}:
@@ -822,6 +811,27 @@ def canonical_pattern(pattern: str) -> str:
     if p == "checked":
         return "checkered"
     return p
+
+
+# The closed vocabulary the patch argmax votes over, DERIVED from the
+# benchmark's own pattern axis instead of written out by hand. The hand-written
+# version went stale: it still carried `plaid`, `camouflage`, `houndstooth` and
+# `animal print` from a pre-revision axis while missing `leopard` entirely, so
+# leopard targets had an anchor prepended for them alone and then had to
+# out-score their own synonym "animal print" to count as a hit. Deriving it
+# means the anchors follow configs/config.py from here on.
+_PATTERN_AXIS_FALLBACK = ["solid", "striped", "checkered", "floral",
+                          "polka_dot", "leopard"]
+try:
+    from configs.config import FASHION_ATTRIBUTE_AXES as _AXES
+    _PATTERN_AXIS = list(_AXES["pattern"])
+except Exception as _e:      # a SILENT fallback would re-hide a stale vocabulary
+    print(f"  [warn] configs.config unavailable ({type(_e).__name__}: {_e}); "
+          f"PATTERN_VOCAB falls back to {_PATTERN_AXIS_FALLBACK}, which may be "
+          f"stale relative to the benchmark axis")
+    _PATTERN_AXIS = list(_PATTERN_AXIS_FALLBACK)
+
+PATTERN_VOCAB = [canonical_pattern(p) for p in _PATTERN_AXIS]
 
 
 def score_patch_vocab(
@@ -963,21 +973,24 @@ GARMENT_VOCAB = TEXT_QUERY_GARMENT_VOCAB
 # visually confusable outerwear categories are intentionally NOT merged, so the
 # VLM verdict actually discriminates them.
 GARMENT_EQUIV_GROUPS = [
-    {"tank top", "sleeveless top", "camisole top", "camisole", "crop top"},
+    {"tank top", "sleeveless top", "camisole top", "camisole"},
     {"t shirt", "tee", "tee shirt"},
     {"formal shirt", "dress shirt"},
+    {"polo shirt", "polo"},
     {"jeans", "denim pants", "denim"},
     {"dress", "gown"},
-    {"sweater", "pullover", "knit sweater", "cardigan", "knitwear"},
-    {"hoodie", "sweatshirt"},
+    {"sweater", "pullover", "knit sweater", "knitwear"},
     {"fleece", "fleece jacket"},
+    {"pea coat", "peacoat"},
+    {"wool coat", "long coat", "wool overcoat", "overcoat"},
+    {"suit vest", "waistcoat"},
     {"slacks", "pants", "trousers"},
 ]
 
 
-def garment_equivalence_set(garment: str, strict: bool) -> set[str]:
+def garment_equivalence_set(garment: str, allow_equivalence: bool = False) -> set[str]:
     g = norm(garment)
-    if strict:
+    if not allow_equivalence:
         return {g}
     members = {g}
     for grp in GARMENT_EQUIV_GROUPS:
@@ -994,7 +1007,7 @@ def assert_vocab_covers_targets(tasks: list["OptionTask"]) -> None:
         if not g:
             continue
         vocab = set(t.vlm_garment_vocab or GARMENT_VOCAB)
-        if not (garment_equivalence_set(g, strict=False) & vocab):
+        if not (garment_equivalence_set(g, allow_equivalence=True) & vocab):
             uncovered[g] = uncovered.get(g, 0) + 1
     if uncovered:
         detail = ", ".join(f"{g!r} x{n}" for g, n in sorted(uncovered.items(), key=lambda kv: -kv[1]))
@@ -1012,11 +1025,13 @@ VLM_GARMENT_PROMPT = (
     "Classify that garment into exactly ONE of these categories:\n"
     "{options}\n\n"
     "Rules:\n"
-    "- Outerwear, keep these distinct: a trench coat is a long belted "
-    "raincoat-style coat; a fleece jacket is a soft brushed insulating jacket; a puffer jacket is "
+    "- Outerwear, keep these distinct: a pea coat is a short double-breasted wool coat; "
+    "a wool coat reaches roughly the knee or below; a fleece jacket is a soft brushed "
+    "insulating jacket; a puffer jacket is "
     "a quilted insulated jacket; a windbreaker is a thin lightweight nylon "
     "shell; a leather jacket is a leather outerwear jacket; a blazer is a "
     "structured tailored jacket worn on its own.\n"
+    "- A suit vest is a sleeveless tailored waistcoat, not a fleece or puffer vest.\n"
     "{other_rule}"
     "Answer with only the category name, exactly as written above, and nothing else."
 )
@@ -1114,7 +1129,8 @@ def score_garment_vlm(
             "model": args.vlm_model,
         }
 
-    equiv = garment_equivalence_set(g, args.garment_strict)
+    allow_equivalence = bool(getattr(args, "allow_garment_equivalence", False))
+    equiv = garment_equivalence_set(g, allow_equivalence=allow_equivalence)
     verdict = pred in equiv
     score = 1.0 if verdict else 0.0
     return score, {
@@ -1123,7 +1139,7 @@ def score_garment_vlm(
         "predicted": pred,
         "verdict": "PASS" if verdict else "FAIL",
         "score": score,
-        "strict": bool(args.garment_strict),
+        "allow_equivalence": allow_equivalence,
         "vocab": vocab,
         "equivalence_set": sorted(equiv),
         "raw_response": str(content)[:500],
@@ -1586,10 +1602,10 @@ def parse_args() -> argparse.Namespace:
                         "NOT a genuine wrong-garment FAIL. skip: drop with skip_reason=garment_vlm_error "
                         "(re-runnable, never a false PASS). uncertain: keep the candidate, rank it by "
                         "pattern*color only, skip_reason=garment_uncertain.")
-    p.add_argument("--garment-strict", action="store_true",
-                   help="PASS only if the VLM's predicted category equals the target exactly. "
-                        "Default (off) also accepts true synonyms (e.g. tank top/camisole), "
-                        "but never merges coat/jacket/blazer.")
+    p.add_argument("--allow-garment-equivalence", action="store_true",
+                   help="Opt in to true-synonym matching. The default requires the VLM's "
+                        "predicted category to equal the target exactly; distinct benchmark "
+                        "labels are never merged.")
     p.add_argument("--garment-fail-skip", action="store_true", default=True,
                    help="Mark garment-FAIL crops with skip_reason=garment_fail (default on).")
     p.add_argument("--no-garment-fail-skip", dest="garment_fail_skip", action="store_false")

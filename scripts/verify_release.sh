@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # verify_release.sh — reproduce the shipped dataset and prove it is unchanged.
 #
-#   scripts/verify_release.sh [VARIANT]      (default: wacv_scenario_v2)
+#   scripts/verify_release.sh [VARIANT]      (default: wacv_scenario_v3)
 #
 # Regenerates profiles/queries/option_plans into a scratch variant, compares the
 # three SHA256s against the released files, runs the construction validator, and
@@ -11,7 +11,7 @@
 # ever read, never overwritten.
 set -euo pipefail
 
-VARIANT="${1:-wacv_scenario_v2}"
+VARIANT="${1:-wacv_scenario_v3}"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 

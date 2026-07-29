@@ -12,12 +12,15 @@ POD-Bench user preference variants — two independent blocks.
 `V2_PROFILE_VARIANTS` (the profiles v2 actually ships)
     The 24 rule-generated profiles of variant `wacv_scenario_v2`, garment
     quota 4+4, frozen here in the same literal form so the released dataset is
-    readable without running the generator. `construction.profile_generator`
-    remains the source of truth — `check_v2_profiles_match_generator()`
-    re-derives the list and raises if the snapshot has gone stale.
+    readable without running the generator. The generator now targets v3;
+    `check_v2_profiles_match_generator()` protects this historical snapshot
+    and the released v2 artifact hash instead of re-deriving it with v3 rules.
 
 Neither block carries persona semantics; both are raw preference lists.
 """
+
+import hashlib
+from pathlib import Path
 
 PROFILE_VARIANTS = [{'garment_likes': ['blazer', 'formal_shirt', 'sweater'],
   'garment_dislikes': ['hoodie', 'shorts', 'windbreaker'],
@@ -346,22 +349,28 @@ def get_v2_variants():
 
 
 def check_v2_profiles_match_generator():
-    """Re-derive the v2 profiles and compare against the frozen snapshot.
+    """Validate the frozen v2 snapshot without rewriting it for v3.
 
-    Raises if they differ. Kept out of import time so this module stays free of
-    heavy imports; call it from tests or the audit entry point.
+    The current generator now targets the 23-label v3 vocabulary, so re-deriving
+    v2 with it would be a category error. Instead, validate the historical
+    snapshot structure and the released v2 artifact hash.
     """
-    from construction.profile_generator import generate_rule_variants
-    derived = [v for _, _, v in generate_rule_variants(seed=42, n_variants=24)]
-    if derived != V2_PROFILE_VARIANTS:
-        diff = [i for i, (a, b) in enumerate(zip(derived, V2_PROFILE_VARIANTS))
-                if a != b]
-        raise AssertionError(
-            f"V2_PROFILE_VARIANTS is stale: {len(derived)} derived vs "
-            f"{len(V2_PROFILE_VARIANTS)} frozen, first differing index(es) "
-            f"{diff[:5]}. Regenerate the snapshot from "
-            f"construction.profile_generator.")
-    return f"V2_PROFILE_VARIANTS matches the generator ({len(derived)} variants)"
+    assert len(V2_PROFILE_VARIANTS) == 24
+    for i, variant in enumerate(V2_PROFILE_VARIANTS):
+        likes = set(variant["garment_likes"])
+        dislikes = set(variant["garment_dislikes"])
+        assert len(likes) == len(dislikes) == 4, f"v2 profile {i}: garment quota"
+        assert not likes & dislikes, f"v2 profile {i}: garment overlap"
+
+    path = Path(__file__).resolve().parent.parent / (
+        "data_wacv_scenario_v2/profiles/profiles.jsonl")
+    expected = "6642f47a850acbe63b5f916b4c246a092c6ca49ff45b725387df7e5849d7c68f"
+    assert path.exists(), f"v2 profile artifact missing: {path}"
+    actual = hashlib.sha256(path.read_bytes()).hexdigest()
+    assert actual == expected, f"v2 profile artifact hash drift: {actual}"
+    return (
+        f"V2_PROFILE_VARIANTS preserved ({len(V2_PROFILE_VARIANTS)} variants); "
+        f"released profiles hash {actual}")
 
 
 if __name__ == "__main__":

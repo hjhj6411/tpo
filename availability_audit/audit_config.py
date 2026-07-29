@@ -33,6 +33,7 @@ GARMENT_RETRIEVAL_ALIASES = {
     "t_shirt":        ["t-shirt", "tee shirt"],
     "tank_top":       ["tank top", "sleeveless top", "camisole top"],
     "formal_shirt":   ["formal shirt", "dress shirt", "button-up shirt"],
+    "polo_shirt":     ["polo shirt", "collared polo"],
     "sweatshirt":     ["sweatshirt", "crewneck sweatshirt"],
     "sweater":        ["sweater", "pullover", "knit sweater"],
     "hoodie":         ["hoodie", "hooded sweatshirt"],
@@ -42,7 +43,9 @@ GARMENT_RETRIEVAL_ALIASES = {
     "leather_jacket": ["leather jacket"],
     "puffer_jacket":  ["puffer jacket", "quilted down jacket"],
     "fleece_jacket":  ["fleece jacket", "fleece zip-up jacket"],
-    "trench_coat":    ["trench coat", "long belted coat"],
+    "pea_coat":       ["pea coat", "peacoat"],
+    "long_coat":      ["wool coat", "wool overcoat"],
+    "suit_vest":      ["suit vest", "tailored waistcoat"],
     "jeans":          ["jeans", "denim pants"],
     "slacks":         ["slacks", "dress pants", "trousers"],
     "shorts":         ["shorts"],
@@ -65,18 +68,18 @@ def n_min(planned_uses: int, max_reuse_per_image: int = 2, safety_buffer: int = 
 
 # ── pilot pairs (section 13 of README) ────────────────────
 PILOT_RARE_PAIRS = [
-    ("striped", "trench_coat"), ("striped", "puffer_jacket"),
+    ("striped", "pea_coat"), ("striped", "puffer_jacket"),
     ("leopard", "sweatshirt"), ("polka_dot", "windbreaker"),
     ("floral", "fleece_jacket"), ("checkered", "puffer_jacket"),
     ("leopard", "fleece_jacket"), ("polka_dot", "leather_jacket"),
-    ("floral", "trench_coat"), ("leopard", "trench_coat"),
+    ("floral", "long_coat"), ("striped", "suit_vest"),
 ]
 PILOT_COMMON_PAIRS = [
     ("solid", "puffer_jacket"), ("striped", "formal_shirt"),
     ("checkered", "formal_shirt"), ("floral", "dress"),
-    ("solid", "hoodie"), ("striped", "t_shirt"),
+    ("solid", "polo_shirt"), ("striped", "t_shirt"),
     ("leopard", "dress"), ("polka_dot", "dress"),
-    ("solid", "trench_coat"), ("checkered", "long_skirt"),
+    ("solid", "long_coat"), ("checkered", "long_skirt"),
 ]
 
 # ── import-time validation against canonical vocabulary ──

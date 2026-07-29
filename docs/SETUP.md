@@ -71,7 +71,7 @@ There is no single pipeline driver script â€” run the stages in order. Stages 1â
 are deterministic and take seconds; Stage 4 (image collection) is the long one.
 
 ```bash
-export POD_VARIANT=wacv_scenario_v2
+export POD_VARIANT=wacv_scenario_v3
 
 # Stages 1-3: deterministic construction (no LLM calls)
 python -m construction.profile_generator --n_users 24 --force

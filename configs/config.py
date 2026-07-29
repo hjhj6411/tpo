@@ -47,10 +47,18 @@ FASHION_ATTRIBUTE_AXES = {
     "garment_category": [
         # tops
         "t_shirt", "tank_top", "formal_shirt",
+        # polo_shirt: its collar separates it from a collarless tee and a woven formal shirt.
+        "polo_shirt",
         "sweatshirt", "sweater", "hoodie", "cardigan",
         # outerwear
-        "blazer", "windbreaker", "leather_jacket", "puffer_jacket",
-        "fleece_jacket", "trench_coat",
+        "blazer",
+        # suit_vest: sleeveless tailoring is visually distinct from blazers and insulated vests.
+        "suit_vest",
+        "windbreaker", "leather_jacket", "puffer_jacket", "fleece_jacket",
+        # pea_coat: a short double-breasted wool silhouette differs from long coats and puffers.
+        "pea_coat",
+        # long_coat: knee/calf length distinguishes it from the short pea coat and blazer.
+        "long_coat",
         # bottoms
         "jeans", "slacks", "shorts", "leggings",
         # one-piece / skirts
@@ -59,10 +67,10 @@ FASHION_ATTRIBUTE_AXES = {
 }
 
 GARMENT_FUNCTIONAL_GROUPS = {
-    "basic_tops":       ["t_shirt", "tank_top", "formal_shirt"],
+    "basic_tops":       ["t_shirt", "tank_top", "formal_shirt", "polo_shirt"],
     "soft_tops":        ["sweatshirt", "sweater", "hoodie", "cardigan"],
-    "light_outerwear":  ["windbreaker", "leather_jacket", "blazer"],
-    "heavy_outerwear":  ["fleece_jacket", "puffer_jacket", "trench_coat"],
+    "light_outerwear":  ["windbreaker", "leather_jacket", "blazer", "suit_vest"],
+    "heavy_outerwear":  ["fleece_jacket", "puffer_jacket", "pea_coat", "long_coat"],
     "bottoms":          ["jeans", "slacks", "shorts", "leggings"],
     "dress_skirt":      ["dress", "mini_skirt", "long_skirt"],
 }

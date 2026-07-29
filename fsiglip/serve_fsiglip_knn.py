@@ -42,6 +42,10 @@ Query text is embedded with the SAME FashionSigLIP model used to build the index
 L2-normalized, searched against IndexFlatIP (cosine).
 
   python serve_fsiglip_knn.py --port 1235 --gpu 0
+
+Optional: `FSIGLIP_SCORE_IMAGE_BATCH_SIZE=4` batches that many local patch
+images per FashionSigLIP forward pass. The default is 1, preserving the
+original per-image execution and memory footprint on crowded GPUs.
 """
 import argparse, json, io, base64, os, threading
 from collections import Counter, OrderedDict
@@ -78,6 +82,11 @@ _DEFAULT_COLORS = ["black", "white", "gray", "navy", "blue", "red", "pink",
 
 app = Flask(__name__)
 _state = {}
+try:
+    _SCORE_IMAGE_BATCH_SIZE = max(
+        1, int(os.environ.get("FSIGLIP_SCORE_IMAGE_BATCH_SIZE", "1")))
+except ValueError:
+    _SCORE_IMAGE_BATCH_SIZE = 1
 
 
 def _load(corpus, device):
@@ -439,15 +448,38 @@ def score_image_files():
     except Exception as e:
         return jsonify({"error": f"text_encode_failed: {e}"}), 500
 
-    out = []
-    for src in paths:
+    out = [None] * len(paths)
+    batch_size = _SCORE_IMAGE_BATCH_SIZE
+    for start in range(0, len(paths), batch_size):
+        loaded = []
+        positions = []
+        for pos, src in enumerate(paths[start:start + batch_size], start):
+            try:
+                loaded.append(_load_pil_cached(str(src)))
+                positions.append(pos)
+            except Exception as e:
+                out[pos] = {"error": str(e)[:200]}
+
+        if not loaded:
+            continue
         try:
-            img = _load_pil_cached(str(src))
-            feat = _encode_images_norm([img])
-            sims = (feat @ anchors_t.T)[0].detach().float().cpu().numpy()
-            out.append({k: float(v) for k, v in zip(keys, sims)})
-        except Exception as e:
-            out.append({"error": str(e)[:200]})
+            feats = _encode_images_norm(loaded)
+            batch_sims = (feats @ anchors_t.T).detach().float().cpu().numpy()
+            for pos, sims in zip(positions, batch_sims):
+                out[pos] = {k: float(v) for k, v in zip(keys, sims)}
+        except Exception as batch_error:
+            # Preserve the old per-image error isolation if a larger forward
+            # pass fails (for example because the GPU is short on free VRAM).
+            if len(loaded) == 1:
+                out[positions[0]] = {"error": str(batch_error)[:200]}
+                continue
+            for pos, img in zip(positions, loaded):
+                try:
+                    feat = _encode_images_norm([img])
+                    sims = (feat @ anchors_t.T)[0].detach().float().cpu().numpy()
+                    out[pos] = {k: float(v) for k, v in zip(keys, sims)}
+                except Exception as e:
+                    out[pos] = {"error": str(e)[:200]}
 
     return jsonify({"scores": out})
 

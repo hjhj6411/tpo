@@ -2,9 +2,12 @@ CUDA_VISIBLE_DEVICES=1 vllm serve Qwen/Qwen3-VL-Reranker-8B   --port 8010 --runn
 
 vllm serve Qwen/Qwen3-VL-32B-Instruct   --port 8002 --max-model-len 32768   --limit-mm-per-prompt '{"image": 1}'   --tensor-parallel-size 
 
-python fsiglip/serve_fsiglip_knn.py --port 1235 --gpu 0
+python fsiglip/serve_fsiglip_knn.py --port 1235 --gpu 1
 
-
+for i in 0 1 2 3; do
+  CUDA_VISIBLE_DEVICES=$i vllm serve Qwen/Qwen3-VL-4B-Instruct \
+    --port 800$((i+1)) --max-model-len 8192 &
+done
 
 python scripts/diag_rerank_scores.py \
   --plans data/options/option_plans.jsonl \
