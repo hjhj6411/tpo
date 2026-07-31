@@ -24,11 +24,11 @@ top-3 reach 45% against a 6.8% uniform expectation, i.e. 6.6x.
 PER-USER CONCENTRATION
 ----------------------
 Pooled pair distributions hide repetition inside a single user's items. Because
-each profile fixes one liked and one disliked value per anchor tier, a user's
-A/B pair can repeat across many scenarios; this is the cost of guaranteeing that
-every user always has a valid A/B. For a personalization benchmark the
-per-user distinct-pair count is the number reviewers recompute first, so it is
-reported alongside the pooled view.
+each profile fixes small liked/disliked sets per axis, a user's A/B pair can
+repeat across many scenarios; this is the cost of guaranteeing that every user
+has valid A/B choices wherever the construction permits them. For a
+personalization benchmark the per-user distinct-pair count is the number
+reviewers recompute first, so it is reported alongside the pooled view.
 
 Usage:
     python -m scripts.report_track_balance                 # default data dir

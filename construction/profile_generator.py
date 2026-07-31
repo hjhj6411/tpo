@@ -141,19 +141,18 @@ def narrative_fallback(likes, dislikes):
 
 
 # ════════════════════════════════════════════════════════════════════
-# Tier-quota rules (R1-R4) — see docs/redesign_v2_plan.md §5
+# Axis-quota rules (R1-R5) — see docs/redesign_v2_plan.md §5
 #
-# Vocabulary tiers are DERIVED from the scenario catalog, then validated
+# The garment tiers are DERIVED from the scenario catalog, then validated
 # against the fixed sets below so catalog drift fails loudly instead of
 # silently breaking the by-construction guarantees.
 #   ANCHOR  — compatible across every normative-formal coded scenario
-#             -> garment takes 2 likes + 2 dislikes (R1), color 1+1 (R2)
-#   RESERVE — never assigned to preferences; supplies TPO-violation
-#             values (color axis only — pattern has no RESERVE tier:
-#             every pattern may carry preference, and per-user neutrality
-#             for violations/backgrounds comes from the 2 EXPRESSIVE
-#             values each profile leaves unassigned)
-#   FREE    — persona variety, sampled from anonymous style pools
+#             -> garment takes 2 likes + 2 dislikes (R1)
+#   FREE    — the remaining garments; garment takes 2+2 subject to R4
+#
+# Color has no tiers in wacv_scenario_v4: all 13 colors participate in one
+# globally balanced 3-like / 3-dislike assignment subject to R5. Pattern keeps
+# its QUIET/EXPRESSIVE split unchanged.
 # ════════════════════════════════════════════════════════════════════
 
 NORMATIVE_FORMAL_ARCHETYPES = FRAME_SCOPED_ARCHETYPES - {"club_code"}
@@ -171,8 +170,6 @@ GARMENT_ANCHOR = [
     "blazer", "formal_shirt", "dress", "slacks", "long_skirt",
     "suit_vest", "long_coat",
 ]
-COLOR_ANCHOR = ["black", "navy", "gray"]
-COLOR_RESERVE = ["orange", "yellow", "pink", "white"]   # hard-RESERVE
 PATTERN_QUIET = ["solid", "striped"]                     # 1 like + 1 dislike split
 # Expressive patterns: 1 like + 1 dislike per profile, balanced globally
 # (each value 6x like / 6x dislike across 24 variants). The 2 unassigned
@@ -180,21 +177,6 @@ PATTERN_QUIET = ["solid", "striped"]                     # 1 like + 1 dislike sp
 # TPO-violation and background values — so unlike color there is no hard
 # RESERVE, and every pattern can appear in A/B pairs somewhere.
 PATTERN_EXPRESSIVE = ["floral", "checkered", "polka_dot", "leopard"]
-
-# scenarios exempt from the S2 check (documented in the design doc):
-# safety_visibility's incompatible side is guaranteed by ANCHOR arithmetic
-# instead; greenscreen's {green, blue} is instruction-scoped (explicit seeds).
-# festive_bright forbids exactly the 3 ANCHOR colors {black,navy,gray}: R2
-# gives every user exactly one anchor like + one anchor dislike, so exactly one
-# anchor is always neutral -> a preference-neutral violation color is always
-# available (same ANCHOR-arithmetic guarantee as safety_visibility).
-S2_EXCEPTION_SCENARIOS = {
-    "visib_night_road_run", "visib_night_bike_commute",
-    "visib_dawn_roadside_cleanup", "stage_greenscreen_shoot",
-    "festive_holiday_party", "festive_bright_theme_party", "festive_street_fiesta",
-}
-# (sports_spirit's incompatible team/rival colors are hard-RESERVE, so they
-#  satisfy S2 directly and need no exception.)
 
 # Historical exceptions used only to reproduce the frozen seed-42 profiles.
 # These scenarios are excluded from the active evaluation catalog.
@@ -204,43 +186,24 @@ PROFILE_BOUNDARY_SCENARIOS = {
 }
 
 def derive_and_validate_tiers():
-    """Recompute tiers from the catalog and assert they match the rule
-    constants. Returns (garment_free, color_free)."""
+    """Validate the garment tier and return (garment_free, all_colors)."""
     norm = [s for s in PROFILE_GENERATION_SCENARIOS
             if s.get("archetype") in NORMATIVE_FORMAL_ARCHETYPES]
     if not norm:
         raise ValueError("no normative-formal scenarios found in catalog")
 
     g_common = set(FASHION_ATTRIBUTE_AXES["garment_category"])
-    c_common = set(FASHION_ATTRIBUTE_AXES["color"])
     for s in norm:
         g_common &= set(s["garment_category"]["compatible"])
-        c = s.get("color")
-        if c and c.get("incompatible"):
-            c_common &= set(c["compatible"])
 
     if not set(GARMENT_ANCHOR) <= g_common:
         raise ValueError(
             f"S1 violated: garment ANCHOR {GARMENT_ANCHOR} not compatible in "
             f"every normative-formal scenario (common={sorted(g_common)})")
-    if not set(COLOR_ANCHOR) <= c_common:
-        raise ValueError(
-            f"color ANCHOR {COLOR_ANCHOR} not universally compatible "
-            f"(common={sorted(c_common)})")
-
-    for s in PROFILE_GENERATION_SCENARIOS:  # S2: violation-value supply guaranteed
-        c = s.get("color")
-        if (c and c.get("incompatible")
-                and s["scenario_id"] not in S2_EXCEPTION_SCENARIOS
-                and not set(c["incompatible"]) & set(COLOR_RESERVE)):
-            raise ValueError(
-                f"S2 violated: {s['scenario_id']} incompatible colors "
-                f"{c['incompatible']} contain no hard-RESERVE color")
 
     garment_free = [g for g in FASHION_ATTRIBUTE_AXES["garment_category"]
                     if g not in GARMENT_ANCHOR]
-    color_free = [c for c in FASHION_ATTRIBUTE_AXES["color"]
-                  if c not in COLOR_ANCHOR + COLOR_RESERVE]
+    color_free = list(FASHION_ATTRIBUTE_AXES["color"])
     return garment_free, color_free
 
 
@@ -343,9 +306,8 @@ def generate_rule_variants(seed=42, n_variants=24):
                 preferring combos with >=1 formal-compatible FREE garment
                 on each side (keeps coded scenarios' garment pairs off the
                 ANCHOR trio), then least global use, subject to R4.
-    R2 color:   1 ANCHOR like + 1 dislike (balanced); FREE 2+2
-                least-globally-used over the whole FREE color vocabulary;
-                RESERVE colors never assigned.
+    R2 color:   3 likes + 3 dislikes over all 13 colors, least-globally-used
+                across profiles and subject to R5. There are no color tiers.
     R3 pattern: solid/striped alternating 1+1 + 1 like / 1 dislike from the
                 EXPRESSIVE set (balanced ordered pairs — every value 6x like
                 and 6x dislike; the 2 unassigned expressive values stay
@@ -364,7 +326,7 @@ def generate_rule_variants(seed=42, n_variants=24):
     rng = random.Random(seed)
     use = {k: Counter() for k in
            ("ga_like", "ga_dis", "gf_like", "gf_dis",
-            "ca_like", "ca_dis", "cf_like", "cf_dis")}
+            "c_like", "c_dis")}
     out = []
 
     # R3 expressive: the 12 ordered (like, dislike) pairs, each twice across
@@ -429,42 +391,44 @@ def generate_rule_variants(seed=42, n_variants=24):
         p_likes = [quiet_like, e_like]
         p_dis = [quiet_dis, e_dis]
 
-        # ---- R2 color: ANCHOR 1+1 + FREE 2+2 with R5 (exhaustive) ----
-        ca_like = _balanced_choice(COLOR_ANCHOR, use["ca_like"], [], rng)
-        ca_dis = _balanced_choice(
-            [c for c in COLOR_ANCHOR if c != ca_like],
-            use["ca_dis"], [], rng)
+        # ---- R2 color: unrestricted 3+3 with R5 (exhaustive) ----
+        # The old 3-anchor color split consumed five draws from the shared RNG
+        # per profile (three like candidates, then two dislike candidates).
+        # Preserve those draws so this color-only v4 change does not perturb
+        # the next profile's garment assignment.
+        for _ in range(5):
+            rng.random()
+
         c_combos = []
-        for lp in combinations(color_free, 2):
+        for lp in combinations(color_free, 3):
             dis_pool = [c for c in color_free if c not in lp]
-            for dp in combinations(dis_pool, 2):
-                load = (use["cf_like"][lp[0]] + use["cf_like"][lp[1]]
-                        + use["cf_dis"][dp[0]] + use["cf_dis"][dp[1]])
+            for dp in combinations(dis_pool, 3):
+                load = (sum(use["c_like"][c] for c in lp)
+                        + sum(use["c_dis"][c] for c in dp))
                 c_combos.append((load, r2.random(), lp, dp))
         c_combos.sort()
         for _, _, lp, dp in c_combos:
             if _cells_alive_everywhere(likes, dislikes,
-                                       [ca_like] + list(lp), [ca_dis] + list(dp),
+                                       list(lp), list(dp),
                                        p_likes, p_dis):
-                cf_likes, cf_dis = list(lp), list(dp)
+                c_likes, c_dis = list(lp), list(dp)
                 break
         else:
             raise RuntimeError(
-                f"R5 failed for variant {idx}: no FREE color assignment "
+                f"R5 failed for variant {idx}: no color assignment "
                 f"keeps every non-boundary (user, scenario) cell alive")
 
         for cnt, vals in (("ga_like", ga_likes), ("ga_dis", ga_dislikes),
                           ("gf_like", gf_likes), ("gf_dis", gf_dis),
-                          ("ca_like", [ca_like]), ("ca_dis", [ca_dis]),
-                          ("cf_like", cf_likes), ("cf_dis", cf_dis)):
+                          ("c_like", c_likes), ("c_dis", c_dis)):
             for v in vals:
                 use[cnt][v] += 1
 
         out.append(("global", idx, {
             "garment_likes": likes,
             "garment_dislikes": dislikes,
-            "color_likes": [ca_like] + cf_likes,
-            "color_dislikes": [ca_dis] + cf_dis,
+            "color_likes": c_likes,
+            "color_dislikes": c_dis,
             "pattern_likes": p_likes,
             "pattern_dislikes": p_dis,
         }))
@@ -472,8 +436,7 @@ def generate_rule_variants(seed=42, n_variants=24):
 
 
 def validate_rule_profiles(variants):
-    """Assert R1-R4 hold for the generated set; return a summary string."""
-    reserve_c = set(COLOR_RESERVE)
+    """Assert R1-R5 hold for the generated set; return a summary string."""
     quiet_split = Counter()
     expr_like = Counter()
     expr_dis = Counter()
@@ -483,15 +446,13 @@ def validate_rule_profiles(variants):
         pl, pd = set(v["pattern_likes"]), set(v["pattern_dislikes"])
         tag = f"{arch_id}/{var_idx}"
         assert not gl & gd and not cl & cd and not pl & pd, f"{tag}: overlap"
-        # garment carries 4+4 (ANCHOR 2 + FREE 2 per side); color stays 3+3.
+        # Garment carries 4+4 (ANCHOR 2 + FREE 2 per side); color stays 3+3
+        # but is drawn freely from the full vocabulary.
         # The asymmetry is deliberate — it buys formal garment pair diversity —
         # and must be disclosed in the paper's methodology.
         assert len(gl) == len(gd) == 4 and len(cl) == len(cd) == 3, f"{tag}: quota"
         assert len(gl & set(GARMENT_ANCHOR)) == 2, f"{tag}: R1 like quota"
         assert len(gd & set(GARMENT_ANCHOR)) == 2, f"{tag}: R1 dislike quota"
-        assert len(cl & set(COLOR_ANCHOR)) == 1, f"{tag}: R2 like quota"
-        assert len(cd & set(COLOR_ANCHOR)) == 1, f"{tag}: R2 dislike quota"
-        assert not (cl | cd) & reserve_c, f"{tag}: R2 RESERVE color leak"
         assert len(pl) == len(pd) == 2, f"{tag}: R3 quota"
         assert len(pl & set(PATTERN_QUIET)) == 1 and len(pd & set(PATTERN_QUIET)) == 1, \
             f"{tag}: R3 quiet split"
@@ -513,7 +474,7 @@ def validate_rule_profiles(variants):
         assert expr_like[v] == expr_dis[v] == per_val, \
             (f"expressive unbalanced: {v} like={expr_like[v]} "
              f"dislike={expr_dis[v]} (target {per_val})")
-    return (f"R1-R4 OK: {len(variants)} variants, quiet {dict(quiet_split)}, "
+    return (f"R1-R5 OK: {len(variants)} variants, quiet {dict(quiet_split)}, "
             f"expressive like {dict(expr_like)} / dislike {dict(expr_dis)}")
 
 
@@ -557,7 +518,7 @@ def generate_profile(user_idx, pool_id, variant_idx, variant,
 
 def run_pipeline(n_users, output_path, force=False, provider=None,
                  legacy=False, seed=42):
-    mode = "legacy hand-authored variants" if legacy else "tier-quota rules R1-R4"
+    mode = "legacy hand-authored variants" if legacy else "axis-quota rules R1-R5"
     log_step(f"Profile Generator v5 — {mode}, {n_users} users")
 
     if output_path.exists() and not force:
@@ -622,7 +583,7 @@ def main():
                         help="Kept for CLI compatibility; ignored by deterministic generator.")
     parser.add_argument("--legacy", action="store_true",
                         help="Use the hand-authored configs/profiles.py variants "
-                             "instead of the tier-quota rules (pre-v2 behavior).")
+                             "instead of the axis-quota rules (pre-v2 behavior).")
     parser.add_argument("--seed", type=int, default=42)
     args = parser.parse_args()
     run_pipeline(args.n_users, args.output, args.force, args.provider,

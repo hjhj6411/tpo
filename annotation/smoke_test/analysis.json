@@ -1,0 +1,178 @@
+{
+  "annotations": "annotation/smoke_test/cell_annotations.jsonl",
+  "records": 20,
+  "warnings": [],
+  "auto_accepted_records": 0,
+  "library_summary": {
+    "total": 1661,
+    "available": 16,
+    "excluded": 4,
+    "pending": 1641
+  },
+  "selection": {
+    "selected_cells": 16,
+    "rank_observations": 16,
+    "true_rank_distribution": {
+      "1": 3,
+      "2": 2,
+      "3": 3,
+      "4": 3,
+      "5": 3,
+      "8": 1,
+      "9": 1
+    },
+    "top1_agreement": 0.1875,
+    "rank_le_3": 0.5,
+    "rank_le_5": 0.875,
+    "mrr": 0.411632,
+    "display_position_distribution": {
+      "2": 3,
+      "3": 3,
+      "4": 4,
+      "5": 1,
+      "6": 3,
+      "7": 1,
+      "8": 1
+    }
+  },
+  "exclusion_reason_distribution": {
+    "mask_failure": 4
+  },
+  "judge_all": {
+    "cells": 0,
+    "candidate_judgments": 0,
+    "valid": 0,
+    "invalid": 0,
+    "precision_at_1": null,
+    "n_at_1": 0,
+    "precision_at_5": null,
+    "n_at_5": 0,
+    "precision_at_10": null,
+    "n_at_10": 0,
+    "auc": {
+      "score": {
+        "auc": null,
+        "n": 0
+      },
+      "pattern_score": {
+        "auc": null,
+        "n": 0
+      },
+      "color_score": {
+        "auc": null,
+        "n": 0
+      },
+      "garment_score": {
+        "auc": null,
+        "n": 0
+      }
+    }
+  },
+  "cell_confusion": {
+    "human_labeled_cells": 20,
+    "score_threshold_to_minimum_nonzero_count": {
+      "0": {
+        "1": {
+          "n": 20,
+          "predicted_available__human_available": 16,
+          "predicted_available__human_unavailable": 0,
+          "predicted_unavailable__human_available": 0,
+          "predicted_unavailable__human_unavailable": 4
+        },
+        "3": {
+          "n": 20,
+          "predicted_available__human_available": 16,
+          "predicted_available__human_unavailable": 0,
+          "predicted_unavailable__human_available": 0,
+          "predicted_unavailable__human_unavailable": 4
+        },
+        "5": {
+          "n": 20,
+          "predicted_available__human_available": 14,
+          "predicted_available__human_unavailable": 0,
+          "predicted_unavailable__human_available": 2,
+          "predicted_unavailable__human_unavailable": 4
+        },
+        "10": {
+          "n": 20,
+          "predicted_available__human_available": 10,
+          "predicted_available__human_unavailable": 0,
+          "predicted_unavailable__human_available": 6,
+          "predicted_unavailable__human_unavailable": 4
+        }
+      },
+      "0.3": {
+        "1": {
+          "n": 20,
+          "predicted_available__human_available": 16,
+          "predicted_available__human_unavailable": 0,
+          "predicted_unavailable__human_available": 0,
+          "predicted_unavailable__human_unavailable": 4
+        },
+        "3": {
+          "n": 20,
+          "predicted_available__human_available": 15,
+          "predicted_available__human_unavailable": 0,
+          "predicted_unavailable__human_available": 1,
+          "predicted_unavailable__human_unavailable": 4
+        },
+        "5": {
+          "n": 20,
+          "predicted_available__human_available": 14,
+          "predicted_available__human_unavailable": 0,
+          "predicted_unavailable__human_available": 2,
+          "predicted_unavailable__human_unavailable": 4
+        },
+        "10": {
+          "n": 20,
+          "predicted_available__human_available": 10,
+          "predicted_available__human_unavailable": 0,
+          "predicted_unavailable__human_available": 6,
+          "predicted_unavailable__human_unavailable": 4
+        }
+      },
+      "0.5": {
+        "1": {
+          "n": 20,
+          "predicted_available__human_available": 15,
+          "predicted_available__human_unavailable": 0,
+          "predicted_unavailable__human_available": 1,
+          "predicted_unavailable__human_unavailable": 4
+        },
+        "3": {
+          "n": 20,
+          "predicted_available__human_available": 15,
+          "predicted_available__human_unavailable": 0,
+          "predicted_unavailable__human_available": 1,
+          "predicted_unavailable__human_unavailable": 4
+        },
+        "5": {
+          "n": 20,
+          "predicted_available__human_available": 12,
+          "predicted_available__human_unavailable": 0,
+          "predicted_unavailable__human_available": 4,
+          "predicted_unavailable__human_unavailable": 4
+        },
+        "10": {
+          "n": 20,
+          "predicted_available__human_available": 7,
+          "predicted_available__human_unavailable": 0,
+          "predicted_unavailable__human_available": 9,
+          "predicted_unavailable__human_unavailable": 4
+        }
+      }
+    }
+  },
+  "recheck": {
+    "pairs": 0,
+    "decision_agreement": null,
+    "exact_agreement": null
+  },
+  "timing": {
+    "human_cells_timed": 20,
+    "mean_seconds_per_cell": 5.175,
+    "median_seconds_per_cell": 5.25,
+    "estimated_hours_for_target": 2.387687,
+    "target_cells": 1661
+  }
+}

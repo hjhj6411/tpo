@@ -1,0 +1,1057 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>POD-Bench Cell Annotator</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #17211b;
+      --muted: #607067;
+      --paper: #f5f5ef;
+      --panel: #ffffff;
+      --line: #d9ddd5;
+      --forest: #174d36;
+      --forest-2: #286c4e;
+      --amber: #bb6b18;
+      --red: #a23a32;
+      --blue: #2c5f8a;
+      --shadow: 0 8px 30px rgba(25, 45, 34, .09);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 10% -10%, #dce8dd 0, transparent 27rem),
+        var(--paper);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+    }
+
+    button, select { font: inherit; }
+    button { cursor: pointer; }
+
+    .shell {
+      width: min(1560px, 100%);
+      margin: 0 auto;
+      padding: 18px 22px 116px;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      margin: 0 -8px 18px;
+      padding: 14px 16px;
+      border: 1px solid rgba(217, 221, 213, .86);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, .94);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    .topline, .statusline {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .eyebrow {
+      color: var(--forest-2);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 4px 0 0;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(24px, 3vw, 39px);
+      font-weight: 600;
+      letter-spacing: -.025em;
+    }
+
+    .combo span { color: var(--forest); }
+    .badges { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    .badge {
+      padding: 6px 9px;
+      border-radius: 999px;
+      background: #e8eee8;
+      color: #365445;
+      font-size: 12px;
+      font-weight: 750;
+    }
+
+    .badge.partial {
+      background: #fff0d8;
+      color: #854b0d;
+      border: 1px solid #eac690;
+    }
+
+    .badge.recheck {
+      background: #e7edf6;
+      color: #30567e;
+      border: 1px solid #bfd0e2;
+    }
+
+    .statusline {
+      margin-top: 12px;
+      padding-top: 11px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .status-items {
+      display: flex;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+
+    .status-items strong { color: var(--ink); }
+
+    .progress {
+      min-width: 250px;
+      flex: 1;
+      max-width: 470px;
+    }
+
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 5px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .track {
+      height: 8px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: #e6e8e2;
+    }
+
+    .fill {
+      width: 0;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--forest), #55a277);
+      transition: width .25s ease;
+    }
+
+    .notice {
+      display: none;
+      margin: 14px 0;
+      padding: 15px 17px;
+      border: 1px solid #e4cfaa;
+      border-radius: 13px;
+      background: #fff8e9;
+      color: #6e4b1c;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .notice.visible { display: block; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(150px, 1fr));
+      gap: 14px;
+    }
+
+    .card {
+      position: relative;
+      overflow: hidden;
+      border: 2px solid transparent;
+      border-radius: 14px;
+      background: var(--panel);
+      box-shadow: 0 3px 14px rgba(31, 47, 38, .07);
+      transition: border-color .15s ease, transform .15s ease, box-shadow .15s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 22px rgba(31, 47, 38, .13);
+    }
+
+    .card.selected {
+      border-color: var(--forest-2);
+      box-shadow: 0 0 0 3px rgba(40, 108, 78, .15);
+    }
+
+    .card.valid { border-color: var(--forest-2); }
+    .card.invalid { border-color: var(--red); }
+
+    .image-button {
+      display: block;
+      width: 100%;
+      height: clamp(145px, 15vw, 235px);
+      padding: 0;
+      overflow: hidden;
+      border: 0;
+      background:
+        linear-gradient(135deg, #edf0ea 25%, #e6eae3 25%, #e6eae3 50%,
+          #edf0ea 50%, #edf0ea 75%, #e6eae3 75%);
+      background-size: 24px 24px;
+    }
+
+    .image-button img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: contain;
+    }
+
+    .image-button img.original { object-fit: contain; }
+
+    .card-footer {
+      min-height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 7px;
+    }
+
+    .position {
+      width: 35px;
+      height: 35px;
+      border: 0;
+      border-radius: 50%;
+      background: #e8ede8;
+      color: var(--ink);
+      font-weight: 850;
+    }
+
+    .selected .position, .valid .position {
+      background: var(--forest);
+      color: #fff;
+    }
+
+    .invalid .position {
+      background: var(--red);
+      color: #fff;
+    }
+
+    .debug-score {
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 11px;
+    }
+
+    .empty {
+      grid-column: 1 / -1;
+      padding: 80px 24px;
+      border: 2px dashed #c9d0c8;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, .65);
+      text-align: center;
+    }
+
+    .empty strong {
+      display: block;
+      margin-bottom: 8px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 27px;
+    }
+
+    .empty p {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .footerbar {
+      position: fixed;
+      z-index: 30;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      border-top: 1px solid rgba(203, 209, 201, .9);
+      background: rgba(250, 250, 246, .96);
+      box-shadow: 0 -8px 28px rgba(31, 47, 38, .09);
+      backdrop-filter: blur(12px);
+    }
+
+    .footer-inner {
+      width: min(1560px, 100%);
+      min-height: 92px;
+      margin: 0 auto;
+      padding: 12px 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+    }
+
+    .actions, .navigation {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      min-height: 40px;
+      padding: 9px 14px;
+      border: 1px solid #cbd2ca;
+      border-radius: 10px;
+      background: #fff;
+      color: var(--ink);
+      font-weight: 750;
+    }
+
+    .btn:hover { border-color: #89998f; }
+    .btn.primary {
+      border-color: var(--forest);
+      background: var(--forest);
+      color: #fff;
+    }
+    .btn.danger {
+      border-color: #d9afa9;
+      color: var(--red);
+      background: #fff7f5;
+    }
+    .btn:disabled {
+      cursor: not-allowed;
+      opacity: .45;
+    }
+
+    .keys {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.55;
+      text-align: center;
+    }
+
+    kbd {
+      min-width: 22px;
+      display: inline-block;
+      padding: 1px 5px;
+      border: 1px solid #c9cec7;
+      border-bottom-width: 2px;
+      border-radius: 5px;
+      background: #fff;
+      color: var(--ink);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 11px;
+      text-align: center;
+    }
+
+    .modal {
+      position: fixed;
+      z-index: 100;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 28px;
+      background: rgba(13, 19, 16, .76);
+    }
+
+    .modal.open { display: flex; }
+
+    .modal-panel {
+      width: min(920px, 100%);
+      max-height: 92vh;
+      overflow: auto;
+      border-radius: 18px;
+      background: #fff;
+      box-shadow: 0 24px 70px rgba(0, 0, 0, .3);
+    }
+
+    .modal-header {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 15px;
+      padding: 14px 17px;
+      border-bottom: 1px solid var(--line);
+      background: #fff;
+    }
+
+    .modal-body { padding: 17px; }
+    .modal-image {
+      width: 100%;
+      max-height: 72vh;
+      object-fit: contain;
+      border-radius: 10px;
+      background: #eef0eb;
+    }
+
+    .reason-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(220px, 1fr));
+      gap: 9px;
+    }
+
+    .reason {
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fff;
+      text-align: left;
+    }
+
+    .reason:hover { border-color: var(--red); }
+    .reason kbd { margin-right: 8px; }
+
+    .toast {
+      position: fixed;
+      z-index: 120;
+      top: 20px;
+      left: 50%;
+      max-width: min(600px, 90vw);
+      padding: 11px 16px;
+      transform: translate(-50%, -120px);
+      border-radius: 10px;
+      background: #18241d;
+      color: #fff;
+      box-shadow: var(--shadow);
+      transition: transform .2s ease;
+    }
+
+    .toast.show { transform: translate(-50%, 0); }
+    .toast.error { background: #8c302b; }
+
+    @media (max-width: 1060px) {
+      .grid { grid-template-columns: repeat(3, minmax(150px, 1fr)); }
+      .keys { display: none; }
+    }
+
+    @media (max-width: 680px) {
+      .shell { padding: 10px 10px 150px; }
+      header { border-radius: 12px; }
+      .grid { grid-template-columns: repeat(2, minmax(130px, 1fr)); gap: 8px; }
+      .image-button { height: 170px; }
+      .footer-inner { align-items: flex-start; flex-direction: column; }
+      .footerbar { position: fixed; }
+      .reason-list { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <div class="topline">
+        <div>
+          <div class="eyebrow">POD-Bench · SAM3 crop review</div>
+          <h1 class="combo" id="combo">불러오는 중…</h1>
+        </div>
+        <div class="badges">
+          <span class="badge" id="modeBadge">SELECT</span>
+          <span class="badge partial" id="partialBadge" hidden>PARTIAL</span>
+          <span class="badge recheck" id="recheckBadge" hidden>RECHECK</span>
+          <span class="badge" id="viewBadge">CROP</span>
+        </div>
+      </div>
+      <div class="statusline">
+        <div class="status-items">
+          <span>사용량 <strong id="usage">–</strong></span>
+          <span>mask 실패 <strong id="maskFailures">–</strong></span>
+          <span>채점 후보 <strong id="scored">–</strong></span>
+          <span>저장 crop <strong id="saved">–</strong></span>
+          <span>session <strong id="sessionPosition">–</strong></span>
+        </div>
+        <div class="progress">
+          <div class="progress-label">
+            <span>전체 진행률</span>
+            <span id="progressText">0 / 0</span>
+          </div>
+          <div class="track"><div class="fill" id="progressFill"></div></div>
+        </div>
+      </div>
+    </header>
+
+    <div class="notice" id="notice"></div>
+    <main class="grid" id="grid" aria-live="polite"></main>
+  </div>
+
+  <div class="footerbar">
+    <div class="footer-inner">
+      <div class="actions">
+        <button class="btn danger" id="excludeBtn">배제 <kbd>x</kbd></button>
+        <button class="btn" id="skipBtn">건너뛰기 <kbd>s</kbd></button>
+        <button class="btn primary" id="confirmBtn">확정 <kbd>Enter</kbd></button>
+        <button class="btn" id="toggleBtn">원본 보기 <kbd>o</kbd></button>
+      </div>
+      <div class="keys" id="keyHelp">
+        <kbd>1</kbd>–<kbd>9</kbd>, <kbd>0</kbd> 선택 ·
+        <kbd>x</kbd> 배제 · <kbd>s</kbd> 건너뛰기<br>
+        <kbd>←</kbd><kbd>→</kbd> 이동 · <kbd>Enter</kbd> 확정 ·
+        <kbd>o</kbd> crop/원본
+      </div>
+      <div class="navigation">
+        <button class="btn" id="prevBtn"><kbd>←</kbd> 이전</button>
+        <button class="btn" id="nextBtn">다음 <kbd>→</kbd></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="imageModal" role="dialog" aria-modal="true"
+       aria-label="이미지 확대">
+    <div class="modal-panel">
+      <div class="modal-header">
+        <strong id="modalTitle">이미지</strong>
+        <div>
+          <button class="btn" id="modalToggle">원본 보기 <kbd>o</kbd></button>
+          <button class="btn" id="modalClose">닫기 <kbd>Esc</kbd></button>
+        </div>
+      </div>
+      <div class="modal-body">
+        <img class="modal-image" id="modalImage" alt="확대 이미지">
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="reasonModal" role="dialog" aria-modal="true"
+       aria-label="배제 사유">
+    <div class="modal-panel">
+      <div class="modal-header">
+        <strong>배제 사유를 선택하세요</strong>
+        <button class="btn" id="reasonClose">취소 <kbd>Esc</kbd></button>
+      </div>
+      <div class="modal-body">
+        <div class="reason-list" id="reasonList"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status"></div>
+
+  <script>
+    "use strict";
+
+    const state = {
+      bootstrap: null,
+      cell: null,
+      index: 0,
+      selected: new Set(),
+      judgments: new Map(),
+      original: false,
+      cellStarted: performance.now(),
+      submitting: false,
+      modalCandidate: null,
+    };
+
+    const $ = (id) => document.getElementById(id);
+    const appBaseUrl = (() => {
+      const url = new URL(window.location.href);
+      url.search = "";
+      url.hash = "";
+      if (url.pathname.endsWith("/static/annotator.html")) {
+        url.pathname = url.pathname.slice(0, -"static/annotator.html".length);
+      } else if (!url.pathname.endsWith("/")) {
+        url.pathname += "/";
+      }
+      return url;
+    })();
+
+    function appUrl(path) {
+      return new URL(String(path).replace(/^\/+/, ""), appBaseUrl).toString();
+    }
+
+    const reasonLabels = {
+      no_such_garment: "해당 garment 자체가 아님",
+      pattern_absent: "대상 pattern이 없음",
+      color_mismatch: "대상 color와 불일치",
+      structural_texture: "누빔선·리브 등 구조 텍스처 오검출",
+      mask_failure: "SAM3 crop/mask 실패",
+      multi_person_or_unclear: "여러 사람 또는 판정 불명확",
+      other: "기타",
+    };
+
+    function mediaUrl(kind, candidate) {
+      const params = new URLSearchParams({
+        cell: state.cell.key,
+        key: candidate.url_key,
+      });
+      return appUrl(`media/${kind}?${params.toString()}`);
+    }
+
+    function toast(message, error = false) {
+      const node = $("toast");
+      node.textContent = message;
+      node.classList.toggle("error", error);
+      node.classList.add("show");
+      clearTimeout(node._timer);
+      node._timer = setTimeout(() => node.classList.remove("show"), 2200);
+    }
+
+    function api(path, options = {}) {
+      const url = appUrl(path);
+      return new Promise((resolve, reject) => {
+        const request = new XMLHttpRequest();
+        request.open(options.method || "GET", url, true);
+        request.timeout = 30000;
+        Object.entries(options.headers || {}).forEach(([name, value]) => {
+          request.setRequestHeader(name, value);
+        });
+        request.onload = () => {
+          let data = {};
+          try {
+            data = request.responseText ? JSON.parse(request.responseText) : {};
+          } catch {
+            reject(new Error(`Invalid JSON response (${url})`));
+            return;
+          }
+          if (request.status >= 200 && request.status < 300) {
+            resolve(data);
+          } else {
+            reject(new Error(
+              data.error || `${request.status} ${request.statusText} (${url})`
+            ));
+          }
+        };
+        request.onerror = () => reject(new Error(`Network error (${url})`));
+        request.ontimeout = () => reject(new Error(`Request timeout (${url})`));
+        request.send(options.body || null);
+      });
+    }
+
+    function updateProgress(progress) {
+      const completed = progress.completed || 0;
+      const total = progress.total || 0;
+      $("progressText").textContent = `${completed.toLocaleString()} / ${total.toLocaleString()}`;
+      $("progressFill").style.width = total ? `${100 * completed / total}%` : "0%";
+    }
+
+    function imageModeLabel() {
+      return state.original ? "ORIGINAL" : "CROP";
+    }
+
+    function updateViewButtons() {
+      $("viewBadge").textContent = imageModeLabel();
+      $("toggleBtn").childNodes[0].textContent =
+        state.original ? "crop 보기 " : "원본 보기 ";
+      $("modalToggle").childNodes[0].textContent =
+        state.original ? "crop 보기 " : "원본 보기 ";
+    }
+
+    function candidateImage(candidate) {
+      if (state.original && candidate.original_available) {
+        return mediaUrl("original", candidate);
+      }
+      return mediaUrl("crop", candidate);
+    }
+
+    function updateImages() {
+      document.querySelectorAll("[data-image-position]").forEach((img) => {
+        const position = Number(img.dataset.imagePosition);
+        const candidate = state.cell.candidates[position - 1];
+        img.src = candidateImage(candidate);
+        img.classList.toggle("original", state.original);
+      });
+      if ($("imageModal").classList.contains("open") && state.modalCandidate) {
+        $("modalImage").src = candidateImage(state.modalCandidate);
+      }
+      updateViewButtons();
+    }
+
+    function debugText(candidate) {
+      if (state.bootstrap.scores_hidden) return "";
+      const parts = [
+        `rank ${candidate.true_rank}`,
+        `score ${Number(candidate.score || 0).toFixed(3)}`,
+        `p ${candidate.pattern_score ?? "–"}`,
+        `c ${candidate.color_score ?? "–"}`,
+        `g ${candidate.garment_score ?? "–"}`,
+      ];
+      return parts.join(" · ");
+    }
+
+    function renderGrid() {
+      const grid = $("grid");
+      grid.replaceChildren();
+      if (!state.cell.candidates.length) {
+        const empty = document.createElement("section");
+        empty.className = "empty";
+        empty.innerHTML = `
+          <strong>채점된 후보 없음</strong>
+          <p>mask 실패 ${state.cell.mask_failures.toLocaleString()}건.
+          자동 배제하지 않습니다. 원인을 확인한 뒤 명시적으로 판정하세요.</p>`;
+        grid.append(empty);
+        return;
+      }
+
+      state.cell.candidates.forEach((candidate, index) => {
+        const position = index + 1;
+        const card = document.createElement("article");
+        card.className = "card";
+        card.dataset.position = String(position);
+        if (state.bootstrap.mode === "judge-all") {
+          const value = state.judgments.get(position);
+          if (value === true) card.classList.add("valid");
+          if (value === false) card.classList.add("invalid");
+        } else if (state.selected.has(position)) {
+          card.classList.add("selected");
+        }
+
+        const imageButton = document.createElement("button");
+        imageButton.className = "image-button";
+        imageButton.type = "button";
+        imageButton.title = "원본 크기로 확대";
+        const image = document.createElement("img");
+        image.dataset.imagePosition = String(position);
+        image.alt = `후보 ${position}`;
+        image.src = candidateImage(candidate);
+        image.addEventListener("error", () => {
+          image.alt = state.original
+            ? `후보 ${position} — 원본을 불러올 수 없음`
+            : `후보 ${position} — crop 파일 없음`;
+        }, {once: true});
+        imageButton.append(image);
+        imageButton.addEventListener("click", () => openImage(candidate, position));
+
+        const footer = document.createElement("div");
+        footer.className = "card-footer";
+        const number = document.createElement("button");
+        number.type = "button";
+        number.className = "position";
+        number.textContent = position === 10 ? "0" : String(position);
+        number.title = state.bootstrap.mode === "judge-all"
+          ? "유효 → 무효 → 미판정 순환"
+          : "이 후보 선택";
+        number.addEventListener("click", () => choosePosition(position));
+        footer.append(number);
+        if (!state.bootstrap.scores_hidden) {
+          const debug = document.createElement("span");
+          debug.className = "debug-score";
+          debug.textContent = debugText(candidate);
+          footer.append(debug);
+        }
+
+        card.append(imageButton, footer);
+        grid.append(card);
+      });
+    }
+
+    function renderCell() {
+      if (!state.cell || state.cell.done) {
+        $("combo").textContent = "이 세션의 모든 cell을 완료했습니다";
+        $("grid").innerHTML = `
+          <section class="empty"><strong>Session complete</strong>
+          <p>서버 원장과 attribute library에 즉시 저장되었습니다.</p></section>`;
+        ["excludeBtn", "skipBtn", "confirmBtn", "toggleBtn",
+         "prevBtn", "nextBtn"].forEach((id) => $(id).disabled = true);
+        return;
+      }
+      const {color, garment, pattern} = state.cell;
+      $("combo").innerHTML =
+        `<span>${escapeHtml(color)}</span> / ${escapeHtml(garment)} / ${escapeHtml(pattern)}`;
+      $("usage").textContent =
+        `${state.cell.usage.toLocaleString()}개 옵션`;
+      $("maskFailures").textContent =
+        `${state.cell.mask_failures.toLocaleString()} / ${state.cell.n_candidates.toLocaleString()}`;
+      $("scored").textContent = state.cell.n_scored.toLocaleString();
+      $("saved").textContent = state.cell.n_saved_crops.toLocaleString();
+      $("sessionPosition").textContent =
+        `${state.index + 1} / ${state.cell.session_total}`;
+      $("recheckBadge").hidden = !state.cell.recheck;
+      updateProgress(state.cell.progress);
+
+      const notice = $("notice");
+      const messages = [];
+      if (state.bootstrap.partial) {
+        messages.push(
+          `PARTIAL snapshot: ${state.bootstrap.screen_cells_loaded.toLocaleString()} / ` +
+          `${state.bootstrap.screen_cells_expected.toLocaleString()} cells만 완료되었습니다.`
+        );
+      }
+      if (!state.cell.candidates.length) {
+        messages.push(
+          "저장 crop이 없습니다. mask 실패는 부재의 증거가 아니므로 자동 배제하지 않습니다."
+        );
+      }
+      if (state.cell.already_submitted && !state.cell.recheck) {
+        messages.push("이 세션에서 이미 판정된 cell입니다. 다시 확정하면 새 레코드가 append됩니다.");
+      }
+      notice.textContent = messages.join(" ");
+      notice.classList.toggle("visible", Boolean(messages.length));
+
+      $("prevBtn").disabled = state.index <= 0;
+      $("nextBtn").disabled = state.index >= state.cell.session_total - 1;
+      $("confirmBtn").disabled =
+        state.bootstrap.mode === "select" && state.selected.size === 0;
+      $("excludeBtn").disabled = state.bootstrap.mode === "judge-all";
+      state.original = false;
+      updateViewButtons();
+      renderGrid();
+    }
+
+    function escapeHtml(value) {
+      const node = document.createElement("span");
+      node.textContent = String(value);
+      return node.innerHTML;
+    }
+
+    async function loadCell(index) {
+      if (!state.bootstrap.progress.session_total) {
+        state.cell = {done: true};
+        renderCell();
+        return;
+      }
+      const cell = await api(`api/cell?index=${index}`);
+      state.index = index;
+      state.cell = cell;
+      state.selected.clear();
+      state.judgments.clear();
+      state.cellStarted = performance.now();
+      renderCell();
+    }
+
+    function choosePosition(position) {
+      if (!state.cell || position < 1 || position > state.cell.candidates.length) {
+        return;
+      }
+      if (state.bootstrap.mode === "judge-all") {
+        const current = state.judgments.get(position);
+        if (current === undefined) state.judgments.set(position, true);
+        else if (current === true) state.judgments.set(position, false);
+        else state.judgments.delete(position);
+      } else {
+        if (state.selected.has(position)) {
+          state.selected.delete(position);
+        } else {
+          if (state.bootstrap.pick_n === 1) state.selected.clear();
+          if (state.selected.size < state.bootstrap.pick_n) {
+            state.selected.add(position);
+          } else {
+            toast(`최대 ${state.bootstrap.pick_n}장까지 선택할 수 있습니다`, true);
+          }
+        }
+      }
+      $("confirmBtn").disabled =
+        state.bootstrap.mode === "select" && state.selected.size === 0;
+      renderGrid();
+      if (state.bootstrap.mode === "select" &&
+          state.bootstrap.pick_n === 1 &&
+          state.selected.size === 1) {
+        submitSelected();
+      }
+    }
+
+    async function postDecision(payload) {
+      if (state.submitting) return;
+      state.submitting = true;
+      try {
+        const result = await api("api/annotate", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({
+            cell_key: state.cell.key,
+            seconds: (performance.now() - state.cellStarted) / 1000,
+            ...payload,
+          }),
+        });
+        updateProgress(result.progress);
+        toast("저장 완료");
+        if (state.index < state.cell.session_total - 1) {
+          await loadCell(state.index + 1);
+        } else {
+          state.cell = {done: true};
+          renderCell();
+        }
+      } catch (error) {
+        toast(error.message, true);
+      } finally {
+        state.submitting = false;
+      }
+    }
+
+    function submitSelected() {
+      if (!state.selected.size) {
+        toast("먼저 이미지를 선택하세요", true);
+        return;
+      }
+      postDecision({
+        decision: "selected",
+        positions: [...state.selected].sort((a, b) => a - b),
+      });
+    }
+
+    function submitJudgeAll() {
+      if (state.judgments.size !== state.cell.candidates.length) {
+        toast("보여준 후보를 모두 유효/무효로 표시하세요", true);
+        return;
+      }
+      postDecision({
+        judgments: [...state.judgments.entries()].map(
+          ([display_position, valid]) => ({display_position, valid})
+        ),
+      });
+    }
+
+    function confirmCurrent() {
+      if (state.bootstrap.mode === "judge-all") submitJudgeAll();
+      else submitSelected();
+    }
+
+    function openReasons() {
+      if (state.bootstrap.mode === "judge-all") return;
+      $("reasonModal").classList.add("open");
+    }
+
+    function closeReasons() {
+      $("reasonModal").classList.remove("open");
+    }
+
+    function exclude(reason) {
+      closeReasons();
+      postDecision({decision: "excluded", reason});
+    }
+
+    function openImage(candidate, position) {
+      state.modalCandidate = candidate;
+      $("modalTitle").textContent = `화면 위치 ${position}`;
+      $("modalImage").src = candidateImage(candidate);
+      $("imageModal").classList.add("open");
+    }
+
+    function closeImage() {
+      $("imageModal").classList.remove("open");
+      state.modalCandidate = null;
+    }
+
+    function toggleOriginal() {
+      state.original = !state.original;
+      updateImages();
+      const missing = state.original &&
+        state.cell.candidates.every((candidate) => !candidate.original_available);
+      if (missing) toast("이 cell의 원본 URL을 찾지 못했습니다", true);
+    }
+
+    async function navigate(delta) {
+      if (!state.cell || state.cell.done) return;
+      const next = state.index + delta;
+      if (next < 0 || next >= state.cell.session_total) return;
+      await loadCell(next);
+    }
+
+    async function skipCurrent() {
+      if (!state.cell || state.cell.done) return;
+      if (state.index < state.cell.session_total - 1) {
+        await loadCell(state.index + 1);
+      } else {
+        state.cell = {done: true};
+        renderCell();
+      }
+    }
+
+    function buildReasons(reasons) {
+      const list = $("reasonList");
+      list.replaceChildren();
+      reasons.forEach((reason, index) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "reason";
+        button.innerHTML =
+          `<kbd>${index + 1}</kbd>${escapeHtml(reasonLabels[reason] || reason)}` +
+          `<div class="debug-score">${escapeHtml(reason)}</div>`;
+        button.addEventListener("click", () => exclude(reason));
+        list.append(button);
+      });
+    }
+
+    function keyPosition(key) {
+      if (key === "0") return 10;
+      if (/^[1-9]$/.test(key)) return Number(key);
+      return null;
+    }
+
+    document.addEventListener("keydown", (event) => {
+      if (state.submitting) return;
+      if ($("reasonModal").classList.contains("open")) {
+        if (event.key === "Escape") closeReasons();
+        const position = keyPosition(event.key);
+        if (position && position <= state.bootstrap.exclusion_reasons.length) {
+          exclude(state.bootstrap.exclusion_reasons[position - 1]);
+        }
+        return;
+      }
+      if ($("imageModal").classList.contains("open")) {
+        if (event.key === "Escape") closeImage();
+        if (event.key.toLowerCase() === "o") toggleOriginal();
+        return;
+      }
+      const position = keyPosition(event.key);
+      if (position !== null) {
+        event.preventDefault();
+        choosePosition(position);
+        return;
+      }
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        navigate(-1);
+      } else if (event.key === "ArrowRight") {
+        event.preventDefault();
+        navigate(1);
+      } else if (event.key === "Enter") {
+        event.preventDefault();
+        confirmCurrent();
+      } else if (event.key.toLowerCase() === "x") {
+        event.preventDefault();
+        openReasons();
+      } else if (event.key.toLowerCase() === "s") {
+        event.preventDefault();
+        skipCurrent();
+      } else if (event.key.toLowerCase() === "o") {
+        event.preventDefault();
+        toggleOriginal();
+      }
+    });
+
+    $("excludeBtn").addEventListener("click", openReasons);
+    $("skipBtn").addEventListener("click", skipCurrent);
+    $("confirmBtn").addEventListener("click", confirmCurrent);
+    $("toggleBtn").addEventListener("click", toggleOriginal);
+    $("prevBtn").addEventListener("click", () => navigate(-1));
+    $("nextBtn").addEventListener("click", () => navigate(1));
+    $("modalClose").addEventListener("click", closeImage);
+    $("modalToggle").addEventListener("click", toggleOriginal);
+    $("reasonClose").addEventListener("click", closeReasons);
+    $("imageModal").addEventListener("click", (event) => {
+      if (event.target === $("imageModal")) closeImage();
+    });
+    $("reasonModal").addEventListener("click", (event) => {
+      if (event.target === $("reasonModal")) closeReasons();
+    });
+
+    async function init() {
+      try {
+        state.bootstrap = await api("api/bootstrap");
+        $("modeBadge").textContent = state.bootstrap.mode.toUpperCase();
+        $("partialBadge").hidden = !state.bootstrap.partial;
+        buildReasons(state.bootstrap.exclusion_reasons);
+        if (state.bootstrap.mode === "judge-all") {
+          $("keyHelp").innerHTML =
+            "<kbd>1</kbd>–<kbd>9</kbd>, <kbd>0</kbd> 유효→무효 순환 · " +
+            "<kbd>s</kbd> 건너뛰기<br><kbd>←</kbd><kbd>→</kbd> 이동 · " +
+            "<kbd>Enter</kbd> 전수 판정 확정 · <kbd>o</kbd> crop/원본";
+          $("confirmBtn").childNodes[0].textContent = "전수 판정 확정 ";
+        }
+        updateProgress(state.bootstrap.progress);
+        await loadCell(0);
+      } catch (error) {
+        $("combo").textContent = "Annotator를 시작할 수 없습니다";
+        $("grid").innerHTML =
+          `<section class="empty"><strong>Server error</strong><p>${escapeHtml(error.message)}</p></section>`;
+        toast(error.message, true);
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

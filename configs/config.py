@@ -9,6 +9,8 @@ Design goals:
 - keep skirt split as `mini_skirt` / `long_skirt`
 - remove camouflage from the canonical pattern vocabulary
 - add leopard as a single canonical animal-print pattern label
+- wacv_scenario_v4 removes color preference tiers: all 13 colors are eligible
+  for the globally balanced 3-like / 3-dislike profile assignment
 """
 
 import os
@@ -17,6 +19,8 @@ from pathlib import Path
 ROOT = Path(__file__).parent.parent
 
 # ── Variant-aware data root ───────────────────────────────
+# Current release: wacv_scenario_v4. Keep selection explicit so historical
+# variants remain addressable, e.g. POD_VARIANT=wacv_scenario_v3.
 _VARIANT = os.environ.get("POD_VARIANT", "").strip()
 DATA_DIR = ROOT / (f"data_{_VARIANT}" if _VARIANT else "data")
 
@@ -37,6 +41,9 @@ PHASE1_AXES = ["color", "pattern", "garment_category"]
 # Important: these are benchmark labels, not a full fashion taxonomy.
 # Do not add aliases here. Synonyms should be handled only in retrieval/verifier logic.
 FASHION_ATTRIBUTE_AXES = {
+    # v4 profile construction uses this complete vocabulary as one free,
+    # globally balanced pool (3 likes + 3 dislikes per user). There is no
+    # color ANCHOR or RESERVE tier.
     "color": [
         "black", "white", "gray", "navy", "blue", "red", "pink", "orange",
         "yellow", "green", "brown", "beige", "purple",

@@ -1,0 +1,6760 @@
+{
+  "variant": "wacv_scenario_v4",
+  "schema": "color|garment|pattern -> images[]",
+  "screen_sources": [
+    "/home1/hjhj6411/pod_bench/availability_audit/images"
+  ],
+  "screen_partial": false,
+  "cells": {
+    "black|t_shirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "black|t_shirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "black|t_shirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "black|t_shirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "black|t_shirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "black|t_shirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "black|tank_top|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "black|tank_top|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "black|tank_top|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "black|tank_top|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "black|tank_top|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "black|tank_top|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "black|formal_shirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "black|formal_shirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "black|formal_shirt|checkered": {
+      "status": "available",
+      "images": [
+        {
+          "path": "images_final/black/checkered_formal_shirt/1.jpg",
+          "true_rank": 8,
+          "url_key": "18b9a56419fc41a9c4bc"
+        }
+      ]
+    },
+    "black|formal_shirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "black|formal_shirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "black|formal_shirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "black|polo_shirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "black|polo_shirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "black|polo_shirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "black|polo_shirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "black|polo_shirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "black|polo_shirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "black|sweatshirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "black|sweatshirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "black|sweatshirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "black|sweatshirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "black|sweatshirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "black|sweatshirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "black|sweater|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "black|sweater|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "black|sweater|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "black|sweater|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "black|sweater|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "black|sweater|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "black|hoodie|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "black|hoodie|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "black|hoodie|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "black|hoodie|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "black|hoodie|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "black|hoodie|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "black|cardigan|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "black|cardigan|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "black|cardigan|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "black|cardigan|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "black|cardigan|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "black|cardigan|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "black|blazer|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "black|blazer|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "black|blazer|checkered": {
+      "status": "available",
+      "images": [
+        {
+          "path": "images_final/black/checkered_blazer/1.jpg",
+          "true_rank": 4,
+          "url_key": "1cfa22d7e34c305e8f52"
+        }
+      ]
+    },
+    "black|blazer|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "black|blazer|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "black|blazer|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "black|suit_vest|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "black|suit_vest|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "black|suit_vest|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "black|suit_vest|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "black|suit_vest|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "black|suit_vest|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "black|windbreaker|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "black|windbreaker|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "black|windbreaker|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "black|windbreaker|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "black|windbreaker|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "black|windbreaker|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "black|leather_jacket|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "black|leather_jacket|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "black|leather_jacket|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "black|leather_jacket|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "black|leather_jacket|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "black|puffer_jacket|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "black|puffer_jacket|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "black|puffer_jacket|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "black|puffer_jacket|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "black|fleece_jacket|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "black|fleece_jacket|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "black|fleece_jacket|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "black|fleece_jacket|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "black|fleece_jacket|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "black|fleece_jacket|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "black|pea_coat|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "black|pea_coat|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "black|pea_coat|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "black|pea_coat|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "black|pea_coat|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "black|pea_coat|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "black|long_coat|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "black|long_coat|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "black|long_coat|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "black|long_coat|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "black|long_coat|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "black|long_coat|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "black|jeans|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "black|jeans|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "black|jeans|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "black|jeans|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "black|jeans|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "black|jeans|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "black|slacks|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "black|slacks|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "black|slacks|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "black|slacks|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "black|slacks|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "black|slacks|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "black|shorts|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "black|shorts|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "black|shorts|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "black|shorts|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "black|shorts|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "black|shorts|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "black|leggings|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "black|leggings|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "black|leggings|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "black|leggings|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "black|leggings|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "black|leggings|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "black|dress|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "black|dress|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "black|dress|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "black|dress|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "black|dress|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "black|dress|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "black|mini_skirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "black|mini_skirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "black|mini_skirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "black|mini_skirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "black|mini_skirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "black|mini_skirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "black|long_skirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "black|long_skirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "black|long_skirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "black|long_skirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "black|long_skirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "black|long_skirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "white|t_shirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "white|t_shirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "white|t_shirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "white|t_shirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "white|t_shirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "white|t_shirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "white|tank_top|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "white|tank_top|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "white|tank_top|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "white|tank_top|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "white|tank_top|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "white|formal_shirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "white|formal_shirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "white|formal_shirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "white|formal_shirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "white|formal_shirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "white|formal_shirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "white|polo_shirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "white|polo_shirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "white|polo_shirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "white|polo_shirt|floral": {
+      "status": "available",
+      "images": [
+        {
+          "path": "images_final/white/floral_polo_shirt/1.jpg",
+          "true_rank": 9,
+          "url_key": "39d82ef3ad6eed825aa0"
+        }
+      ]
+    },
+    "white|polo_shirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "white|polo_shirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "white|sweatshirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "white|sweatshirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "white|sweatshirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "white|sweatshirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "white|sweatshirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "white|sweatshirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "white|sweater|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "white|sweater|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "white|sweater|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "white|sweater|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "white|sweater|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "white|sweater|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "white|hoodie|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "white|hoodie|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "white|hoodie|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "white|hoodie|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "white|hoodie|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "white|hoodie|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "white|cardigan|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "white|cardigan|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "white|cardigan|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "white|cardigan|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "white|blazer|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "white|blazer|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "white|blazer|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "white|blazer|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "white|blazer|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "white|blazer|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "white|suit_vest|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "white|suit_vest|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "white|suit_vest|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "white|suit_vest|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "white|suit_vest|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "white|suit_vest|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "white|windbreaker|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "white|windbreaker|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "white|windbreaker|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "white|windbreaker|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "white|windbreaker|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "white|windbreaker|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "white|leather_jacket|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "white|leather_jacket|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "white|leather_jacket|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "white|leather_jacket|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "white|puffer_jacket|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "white|puffer_jacket|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "white|puffer_jacket|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "white|puffer_jacket|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "white|puffer_jacket|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "white|fleece_jacket|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "white|fleece_jacket|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "white|fleece_jacket|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "white|fleece_jacket|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "white|fleece_jacket|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "white|pea_coat|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "white|pea_coat|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "white|pea_coat|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "white|pea_coat|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "white|pea_coat|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "white|long_coat|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "white|long_coat|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "white|long_coat|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "white|long_coat|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "white|long_coat|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "white|long_coat|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "white|jeans|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "white|jeans|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "white|jeans|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "white|jeans|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "white|slacks|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "white|slacks|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "white|slacks|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "white|slacks|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "white|slacks|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "white|slacks|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "white|shorts|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "white|shorts|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "white|shorts|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "white|shorts|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "white|shorts|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "white|shorts|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "white|leggings|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "white|leggings|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "white|leggings|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "white|leggings|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "white|leggings|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "white|leggings|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "white|dress|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "white|dress|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "white|dress|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "white|dress|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "white|dress|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "white|dress|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "white|mini_skirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "white|mini_skirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "white|mini_skirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "white|mini_skirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "white|mini_skirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "white|long_skirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "white|long_skirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "white|long_skirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "white|long_skirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "white|long_skirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "white|long_skirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|t_shirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|t_shirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|t_shirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|t_shirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|t_shirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|t_shirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|tank_top|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|tank_top|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|tank_top|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|tank_top|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|tank_top|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|tank_top|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|formal_shirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|formal_shirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|formal_shirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|formal_shirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|formal_shirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|formal_shirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|polo_shirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|polo_shirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|polo_shirt|checkered": {
+      "status": "available",
+      "images": [
+        {
+          "path": "images_final/gray/checkered_polo_shirt/1.jpg",
+          "true_rank": 1,
+          "url_key": "6b805113fbbf8d9539e7"
+        }
+      ]
+    },
+    "gray|polo_shirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|polo_shirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|polo_shirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|sweatshirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|sweatshirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|sweatshirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|sweatshirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|sweatshirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|sweatshirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|sweater|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|sweater|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|sweater|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|sweater|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|sweater|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|sweater|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|hoodie|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|hoodie|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|hoodie|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|hoodie|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|hoodie|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|hoodie|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|cardigan|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|cardigan|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|cardigan|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|cardigan|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|blazer|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|blazer|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|blazer|checkered": {
+      "status": "available",
+      "images": [
+        {
+          "path": "images_final/gray/checkered_blazer/1.jpg",
+          "true_rank": 4,
+          "url_key": "e1be00edb680e307f75d"
+        }
+      ]
+    },
+    "gray|blazer|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|blazer|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|blazer|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|suit_vest|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|suit_vest|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|suit_vest|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|suit_vest|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|suit_vest|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|suit_vest|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|windbreaker|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|windbreaker|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|windbreaker|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|windbreaker|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|windbreaker|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|windbreaker|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|leather_jacket|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|leather_jacket|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|leather_jacket|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|leather_jacket|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|puffer_jacket|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|puffer_jacket|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|puffer_jacket|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|puffer_jacket|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|puffer_jacket|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|fleece_jacket|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|fleece_jacket|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|fleece_jacket|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|fleece_jacket|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|fleece_jacket|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|pea_coat|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|pea_coat|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|pea_coat|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|pea_coat|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|pea_coat|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|pea_coat|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|long_coat|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|long_coat|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|long_coat|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|long_coat|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|long_coat|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|long_coat|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|jeans|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|jeans|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|jeans|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|jeans|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|jeans|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|jeans|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|slacks|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|slacks|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|slacks|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|slacks|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|slacks|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|slacks|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|shorts|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|shorts|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|shorts|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|shorts|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|shorts|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|shorts|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|leggings|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|leggings|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|leggings|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|leggings|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|leggings|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|dress|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|dress|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|dress|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|dress|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|dress|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|dress|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|mini_skirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|mini_skirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|mini_skirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|mini_skirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|mini_skirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|mini_skirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|long_skirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|long_skirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|long_skirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|long_skirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|long_skirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "gray|long_skirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|t_shirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|t_shirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|t_shirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|t_shirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|t_shirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|t_shirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|tank_top|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|tank_top|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|tank_top|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|tank_top|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|tank_top|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|tank_top|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|formal_shirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|formal_shirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|formal_shirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|formal_shirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|formal_shirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|formal_shirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|polo_shirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|polo_shirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|polo_shirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|polo_shirt|floral": {
+      "status": "available",
+      "images": [
+        {
+          "path": "images_final/navy/floral_polo_shirt/1.jpg",
+          "true_rank": 5,
+          "url_key": "021d4835ffbe815aa549"
+        }
+      ]
+    },
+    "navy|polo_shirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|polo_shirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|sweatshirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|sweatshirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|sweatshirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|sweatshirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|sweatshirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|sweater|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|sweater|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|sweater|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|sweater|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|sweater|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|hoodie|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|hoodie|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|hoodie|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|hoodie|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|hoodie|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|hoodie|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|cardigan|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|cardigan|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|cardigan|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|blazer|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|blazer|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|blazer|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|blazer|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|blazer|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|blazer|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|suit_vest|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|suit_vest|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|suit_vest|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|suit_vest|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|suit_vest|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|suit_vest|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|windbreaker|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|windbreaker|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|windbreaker|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|windbreaker|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|windbreaker|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|windbreaker|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|leather_jacket|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|leather_jacket|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|leather_jacket|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|leather_jacket|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|leather_jacket|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|puffer_jacket|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|puffer_jacket|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|puffer_jacket|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|puffer_jacket|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|puffer_jacket|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|fleece_jacket|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|fleece_jacket|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|fleece_jacket|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|fleece_jacket|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|fleece_jacket|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|fleece_jacket|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|pea_coat|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|pea_coat|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|pea_coat|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|long_coat|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|long_coat|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|long_coat|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|long_coat|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|long_coat|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|long_coat|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|jeans|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|jeans|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|jeans|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|jeans|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|jeans|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|slacks|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|slacks|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|slacks|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|slacks|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|slacks|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|slacks|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|shorts|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|shorts|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|shorts|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|shorts|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|shorts|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|shorts|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|leggings|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|leggings|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|leggings|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|leggings|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|leggings|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|dress|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|dress|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|dress|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|dress|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|dress|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|dress|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|mini_skirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|mini_skirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|mini_skirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|mini_skirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|mini_skirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|long_skirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|long_skirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|long_skirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|long_skirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|long_skirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "navy|long_skirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|t_shirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|t_shirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|t_shirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|t_shirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|t_shirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|t_shirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|tank_top|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|tank_top|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|tank_top|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|tank_top|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|tank_top|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|tank_top|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|formal_shirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|formal_shirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|formal_shirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|formal_shirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|formal_shirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|formal_shirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|polo_shirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|polo_shirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|polo_shirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|polo_shirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|polo_shirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|polo_shirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|sweatshirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|sweatshirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|sweatshirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|sweatshirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|sweatshirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|sweatshirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|sweater|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|sweater|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|sweater|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|sweater|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|sweater|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|sweater|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|hoodie|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|hoodie|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|hoodie|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|hoodie|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|hoodie|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|hoodie|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|cardigan|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|cardigan|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|cardigan|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|cardigan|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|cardigan|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|cardigan|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|blazer|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|blazer|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|blazer|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|blazer|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|blazer|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|blazer|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|suit_vest|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|suit_vest|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|suit_vest|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|suit_vest|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|suit_vest|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|suit_vest|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|windbreaker|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|windbreaker|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|windbreaker|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|windbreaker|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|windbreaker|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|leather_jacket|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|leather_jacket|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|leather_jacket|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|leather_jacket|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|puffer_jacket|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|puffer_jacket|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|puffer_jacket|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|fleece_jacket|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|fleece_jacket|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|fleece_jacket|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|fleece_jacket|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|fleece_jacket|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|fleece_jacket|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|pea_coat|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|pea_coat|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|pea_coat|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|pea_coat|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|pea_coat|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|long_coat|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|long_coat|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|long_coat|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|long_coat|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|long_coat|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|long_coat|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|jeans|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|jeans|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|jeans|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|jeans|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|slacks|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|slacks|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|slacks|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|slacks|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|slacks|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|slacks|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|shorts|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|shorts|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|shorts|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|shorts|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|shorts|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|shorts|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|leggings|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|leggings|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|leggings|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|leggings|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|dress|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|dress|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|dress|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|dress|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|dress|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|dress|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|mini_skirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|mini_skirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|mini_skirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|mini_skirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|mini_skirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|mini_skirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|long_skirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|long_skirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|long_skirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|long_skirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "blue|long_skirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "red|t_shirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "red|t_shirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "red|t_shirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "red|t_shirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "red|t_shirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "red|t_shirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "red|tank_top|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "red|tank_top|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "red|tank_top|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "red|tank_top|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "red|tank_top|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "red|tank_top|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "red|formal_shirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "red|formal_shirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "red|formal_shirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "red|formal_shirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "red|formal_shirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "red|formal_shirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "red|polo_shirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "red|polo_shirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "red|polo_shirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "red|polo_shirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "red|polo_shirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "red|polo_shirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "red|sweatshirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "red|sweatshirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "red|sweatshirt|checkered": {
+      "status": "excluded",
+      "reason": "mask_failure",
+      "images": []
+    },
+    "red|sweatshirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "red|sweatshirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "red|sweatshirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "red|sweater|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "red|sweater|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "red|sweater|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "red|sweater|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "red|sweater|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "red|sweater|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "red|hoodie|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "red|hoodie|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "red|hoodie|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "red|hoodie|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "red|hoodie|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "red|hoodie|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "red|cardigan|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "red|cardigan|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "red|cardigan|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "red|cardigan|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "red|cardigan|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "red|blazer|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "red|blazer|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "red|blazer|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "red|blazer|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "red|blazer|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "red|blazer|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "red|suit_vest|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "red|suit_vest|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "red|suit_vest|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "red|suit_vest|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "red|suit_vest|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "red|suit_vest|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "red|windbreaker|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "red|windbreaker|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "red|windbreaker|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "red|windbreaker|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "red|leather_jacket|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "red|leather_jacket|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "red|leather_jacket|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "red|puffer_jacket|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "red|puffer_jacket|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "red|puffer_jacket|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "red|puffer_jacket|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "red|fleece_jacket|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "red|fleece_jacket|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "red|fleece_jacket|checkered": {
+      "status": "available",
+      "images": [
+        {
+          "path": "images_final/red/checkered_fleece_jacket/1.jpg",
+          "true_rank": 2,
+          "url_key": "852bb4af11cd27fc0fde"
+        }
+      ]
+    },
+    "red|fleece_jacket|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "red|fleece_jacket|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "red|fleece_jacket|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "red|pea_coat|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "red|pea_coat|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "red|pea_coat|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "red|long_coat|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "red|long_coat|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "red|long_coat|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "red|long_coat|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "red|jeans|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "red|jeans|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "red|jeans|checkered": {
+      "status": "available",
+      "images": [
+        {
+          "path": "images_final/red/checkered_jeans/1.jpg",
+          "true_rank": 3,
+          "url_key": "d5eb9ca05df7d05ebb8b"
+        }
+      ]
+    },
+    "red|jeans|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "red|jeans|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "red|jeans|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "red|slacks|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "red|slacks|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "red|slacks|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "red|slacks|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "red|slacks|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "red|slacks|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "red|shorts|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "red|shorts|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "red|shorts|checkered": {
+      "status": "available",
+      "images": [
+        {
+          "path": "images_final/red/checkered_shorts/1.jpg",
+          "true_rank": 3,
+          "url_key": "4ff0aee32175810fafe0"
+        }
+      ]
+    },
+    "red|shorts|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "red|shorts|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "red|shorts|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "red|leggings|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "red|leggings|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "red|leggings|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "red|leggings|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "red|leggings|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "red|dress|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "red|dress|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "red|dress|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "red|dress|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "red|dress|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "red|dress|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "red|mini_skirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "red|mini_skirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "red|mini_skirt|checkered": {
+      "status": "available",
+      "images": [
+        {
+          "path": "images_final/red/checkered_mini_skirt/1.jpg",
+          "true_rank": 5,
+          "url_key": "5afec578fd6a4ba84633"
+        }
+      ]
+    },
+    "red|mini_skirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "red|mini_skirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "red|mini_skirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "red|long_skirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "red|long_skirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "red|long_skirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "red|long_skirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "red|long_skirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "red|long_skirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|t_shirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|t_shirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|t_shirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|t_shirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|t_shirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|t_shirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|tank_top|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|tank_top|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|tank_top|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|tank_top|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|tank_top|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|tank_top|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|formal_shirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|formal_shirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|formal_shirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|formal_shirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|formal_shirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|formal_shirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|polo_shirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|polo_shirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|polo_shirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|polo_shirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|polo_shirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|polo_shirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|sweatshirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|sweatshirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|sweatshirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|sweatshirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|sweatshirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|sweater|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|sweater|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|sweater|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|sweater|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|sweater|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|sweater|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|hoodie|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|hoodie|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|hoodie|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|hoodie|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|hoodie|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|hoodie|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|cardigan|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|cardigan|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|cardigan|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|cardigan|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|cardigan|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|cardigan|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|blazer|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|blazer|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|blazer|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|blazer|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|blazer|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|blazer|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|suit_vest|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|suit_vest|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|suit_vest|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|suit_vest|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|suit_vest|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|suit_vest|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|windbreaker|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|windbreaker|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|windbreaker|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|windbreaker|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|windbreaker|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|leather_jacket|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|leather_jacket|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|leather_jacket|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|leather_jacket|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|puffer_jacket|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|puffer_jacket|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|puffer_jacket|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|puffer_jacket|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|puffer_jacket|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|fleece_jacket|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|fleece_jacket|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|fleece_jacket|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|fleece_jacket|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|fleece_jacket|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|fleece_jacket|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|pea_coat|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|pea_coat|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|pea_coat|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|pea_coat|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|pea_coat|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|long_coat|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|long_coat|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|long_coat|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|long_coat|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|long_coat|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|long_coat|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|jeans|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|jeans|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|jeans|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|jeans|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|jeans|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|jeans|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|slacks|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|slacks|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|slacks|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|slacks|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|slacks|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|shorts|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|shorts|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|shorts|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|shorts|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|shorts|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|leggings|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|leggings|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|leggings|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|leggings|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|leggings|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|leggings|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|dress|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|dress|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|dress|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|dress|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|dress|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|mini_skirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|mini_skirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|mini_skirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|mini_skirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|mini_skirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|mini_skirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|long_skirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|long_skirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|long_skirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|long_skirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|long_skirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "pink|long_skirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|t_shirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|t_shirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|t_shirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|t_shirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|t_shirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|t_shirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|tank_top|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|tank_top|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|tank_top|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|tank_top|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|tank_top|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|tank_top|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|formal_shirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|formal_shirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|formal_shirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|formal_shirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|formal_shirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|formal_shirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|polo_shirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|polo_shirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|polo_shirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|polo_shirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|polo_shirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|polo_shirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|sweatshirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|sweatshirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|sweatshirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|sweatshirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|sweatshirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|sweatshirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|sweater|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|sweater|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|sweater|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|sweater|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|sweater|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|sweater|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|hoodie|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|hoodie|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|hoodie|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|hoodie|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|hoodie|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|hoodie|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|cardigan|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|cardigan|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|cardigan|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|cardigan|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|cardigan|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|cardigan|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|blazer|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|blazer|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|blazer|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|blazer|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|blazer|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|blazer|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|suit_vest|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|suit_vest|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|suit_vest|checkered": {
+      "status": "excluded",
+      "reason": "mask_failure",
+      "images": []
+    },
+    "orange|suit_vest|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|suit_vest|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|suit_vest|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|windbreaker|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|windbreaker|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|windbreaker|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|windbreaker|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|windbreaker|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|windbreaker|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|leather_jacket|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|leather_jacket|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|puffer_jacket|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|puffer_jacket|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|puffer_jacket|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|puffer_jacket|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|puffer_jacket|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|fleece_jacket|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|fleece_jacket|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|fleece_jacket|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|fleece_jacket|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|fleece_jacket|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|fleece_jacket|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|pea_coat|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|pea_coat|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|pea_coat|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|pea_coat|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|pea_coat|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|pea_coat|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|long_coat|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|long_coat|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|long_coat|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|long_coat|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|long_coat|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|long_coat|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|jeans|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|jeans|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|jeans|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|jeans|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|jeans|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|jeans|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|slacks|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|slacks|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|slacks|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|slacks|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|slacks|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|slacks|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|shorts|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|shorts|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|shorts|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|shorts|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|shorts|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|shorts|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|leggings|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|leggings|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|leggings|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|leggings|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|leggings|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|leggings|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|dress|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|dress|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|dress|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|dress|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|dress|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|dress|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|mini_skirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|mini_skirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|mini_skirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|mini_skirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|mini_skirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|mini_skirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|long_skirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|long_skirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|long_skirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|long_skirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|long_skirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "orange|long_skirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|t_shirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|t_shirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|t_shirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|t_shirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|t_shirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|t_shirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|tank_top|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|tank_top|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|tank_top|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|tank_top|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|tank_top|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|tank_top|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|formal_shirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|formal_shirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|formal_shirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|formal_shirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|formal_shirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|formal_shirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|polo_shirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|polo_shirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|polo_shirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|polo_shirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|polo_shirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|polo_shirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|sweatshirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|sweatshirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|sweatshirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|sweatshirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|sweatshirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|sweatshirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|sweater|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|sweater|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|sweater|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|sweater|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|sweater|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|sweater|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|hoodie|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|hoodie|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|hoodie|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|hoodie|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|hoodie|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|hoodie|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|cardigan|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|cardigan|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|cardigan|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|cardigan|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|blazer|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|blazer|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|blazer|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|blazer|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|blazer|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|blazer|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|suit_vest|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|suit_vest|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|suit_vest|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|suit_vest|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|suit_vest|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|suit_vest|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|windbreaker|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|windbreaker|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|windbreaker|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|windbreaker|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|windbreaker|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|windbreaker|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|leather_jacket|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|leather_jacket|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|leather_jacket|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|leather_jacket|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|leather_jacket|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|puffer_jacket|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|puffer_jacket|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|puffer_jacket|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|puffer_jacket|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|puffer_jacket|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|fleece_jacket|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|fleece_jacket|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|fleece_jacket|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|fleece_jacket|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|fleece_jacket|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|fleece_jacket|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|pea_coat|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|pea_coat|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|pea_coat|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|pea_coat|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|pea_coat|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|pea_coat|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|long_coat|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|long_coat|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|long_coat|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|long_coat|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|long_coat|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|long_coat|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|jeans|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|jeans|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|jeans|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|jeans|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|jeans|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|jeans|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|slacks|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|slacks|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|slacks|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|slacks|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|slacks|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|slacks|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|shorts|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|shorts|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|shorts|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|shorts|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|shorts|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|shorts|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|leggings|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|leggings|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|leggings|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|leggings|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|leggings|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|leggings|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|dress|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|dress|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|dress|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|dress|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|dress|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|dress|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|mini_skirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|mini_skirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|mini_skirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|mini_skirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|mini_skirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|mini_skirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|long_skirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|long_skirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|long_skirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|long_skirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|long_skirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "yellow|long_skirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "green|t_shirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "green|t_shirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "green|t_shirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "green|t_shirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "green|t_shirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "green|t_shirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "green|tank_top|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "green|tank_top|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "green|tank_top|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "green|tank_top|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "green|tank_top|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "green|tank_top|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "green|formal_shirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "green|formal_shirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "green|formal_shirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "green|formal_shirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "green|formal_shirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "green|formal_shirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "green|polo_shirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "green|polo_shirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "green|polo_shirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "green|polo_shirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "green|polo_shirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "green|polo_shirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "green|sweatshirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "green|sweatshirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "green|sweatshirt|checkered": {
+      "status": "excluded",
+      "reason": "mask_failure",
+      "images": []
+    },
+    "green|sweatshirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "green|sweatshirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "green|sweatshirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "green|sweater|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "green|sweater|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "green|sweater|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "green|sweater|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "green|sweater|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "green|sweater|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "green|hoodie|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "green|hoodie|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "green|hoodie|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "green|hoodie|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "green|hoodie|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "green|hoodie|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "green|cardigan|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "green|cardigan|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "green|cardigan|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "green|blazer|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "green|blazer|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "green|blazer|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "green|blazer|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "green|blazer|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "green|suit_vest|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "green|suit_vest|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "green|suit_vest|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "green|suit_vest|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "green|suit_vest|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "green|suit_vest|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "green|windbreaker|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "green|windbreaker|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "green|windbreaker|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "green|windbreaker|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "green|windbreaker|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "green|windbreaker|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "green|leather_jacket|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "green|leather_jacket|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "green|leather_jacket|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "green|leather_jacket|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "green|leather_jacket|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "green|puffer_jacket|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "green|puffer_jacket|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "green|puffer_jacket|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "green|puffer_jacket|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "green|fleece_jacket|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "green|fleece_jacket|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "green|fleece_jacket|checkered": {
+      "status": "excluded",
+      "reason": "mask_failure",
+      "images": []
+    },
+    "green|fleece_jacket|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "green|fleece_jacket|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "green|fleece_jacket|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "green|pea_coat|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "green|pea_coat|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "green|pea_coat|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "green|pea_coat|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "green|long_coat|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "green|long_coat|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "green|long_coat|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "green|long_coat|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "green|long_coat|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "green|jeans|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "green|jeans|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "green|jeans|checkered": {
+      "status": "available",
+      "images": [
+        {
+          "path": "images_final/green/checkered_jeans/1.jpg",
+          "true_rank": 1,
+          "url_key": "b7c8b0e0a184188ae162"
+        }
+      ]
+    },
+    "green|jeans|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "green|jeans|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "green|jeans|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "green|slacks|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "green|slacks|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "green|slacks|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "green|shorts|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "green|shorts|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "green|shorts|checkered": {
+      "status": "available",
+      "images": [
+        {
+          "path": "images_final/green/checkered_shorts/1.jpg",
+          "true_rank": 2,
+          "url_key": "372b8b13072f5e0ef84a"
+        }
+      ]
+    },
+    "green|shorts|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "green|shorts|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "green|shorts|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "green|leggings|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "green|leggings|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "green|leggings|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "green|leggings|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "green|dress|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "green|dress|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "green|dress|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "green|dress|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "green|dress|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "green|dress|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "green|mini_skirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "green|mini_skirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "green|mini_skirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "green|mini_skirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "green|mini_skirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "green|mini_skirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "green|long_skirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "green|long_skirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "green|long_skirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "green|long_skirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "green|long_skirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "green|long_skirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|t_shirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|t_shirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|t_shirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|t_shirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|t_shirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|t_shirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|tank_top|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|tank_top|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|tank_top|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|tank_top|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|tank_top|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|tank_top|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|formal_shirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|formal_shirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|formal_shirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|formal_shirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|formal_shirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|formal_shirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|polo_shirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|polo_shirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|polo_shirt|checkered": {
+      "status": "available",
+      "images": [
+        {
+          "path": "images_final/brown/checkered_polo_shirt/1.jpg",
+          "true_rank": 1,
+          "url_key": "9c12e328efaa2a475b8b"
+        }
+      ]
+    },
+    "brown|polo_shirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|polo_shirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|polo_shirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|sweatshirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|sweatshirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|sweatshirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|sweatshirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|sweatshirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|sweatshirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|sweater|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|sweater|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|sweater|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|sweater|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|sweater|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|sweater|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|hoodie|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|hoodie|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|hoodie|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|hoodie|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|hoodie|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|hoodie|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|cardigan|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|cardigan|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|cardigan|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|cardigan|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|cardigan|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|blazer|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|blazer|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|blazer|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|blazer|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|blazer|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|blazer|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|suit_vest|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|suit_vest|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|suit_vest|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|suit_vest|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|suit_vest|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|suit_vest|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|windbreaker|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|windbreaker|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|windbreaker|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|windbreaker|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|windbreaker|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|windbreaker|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|leather_jacket|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|leather_jacket|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|leather_jacket|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|leather_jacket|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|leather_jacket|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|puffer_jacket|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|puffer_jacket|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|puffer_jacket|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|puffer_jacket|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|puffer_jacket|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|fleece_jacket|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|fleece_jacket|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|fleece_jacket|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|fleece_jacket|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|fleece_jacket|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|fleece_jacket|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|pea_coat|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|pea_coat|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|pea_coat|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|pea_coat|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|pea_coat|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|pea_coat|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|long_coat|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|long_coat|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|long_coat|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|long_coat|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|long_coat|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|long_coat|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|jeans|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|jeans|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|jeans|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|jeans|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|jeans|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|jeans|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|slacks|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|slacks|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|slacks|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|shorts|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|shorts|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|shorts|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|shorts|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|shorts|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|shorts|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|leggings|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|leggings|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|leggings|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|leggings|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|leggings|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|dress|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|dress|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|dress|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|dress|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|dress|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|dress|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|mini_skirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|mini_skirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|mini_skirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|long_skirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|long_skirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|long_skirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "brown|long_skirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|t_shirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|t_shirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|t_shirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|t_shirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|t_shirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|t_shirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|tank_top|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|tank_top|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|tank_top|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|tank_top|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|tank_top|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|tank_top|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|formal_shirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|formal_shirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|formal_shirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|formal_shirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|formal_shirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|formal_shirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|polo_shirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|polo_shirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|polo_shirt|checkered": {
+      "status": "available",
+      "images": [
+        {
+          "path": "images_final/beige/checkered_polo_shirt/1.jpg",
+          "true_rank": 3,
+          "url_key": "48dd708367593e738afc"
+        }
+      ]
+    },
+    "beige|polo_shirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|polo_shirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|polo_shirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|sweatshirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|sweatshirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|sweatshirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|sweater|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|sweater|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|sweater|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|sweater|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|sweater|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|sweater|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|hoodie|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|hoodie|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|hoodie|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|hoodie|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|hoodie|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|hoodie|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|cardigan|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|cardigan|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|cardigan|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|cardigan|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|cardigan|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|blazer|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|blazer|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|blazer|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|blazer|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|blazer|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|blazer|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|suit_vest|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|suit_vest|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|suit_vest|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|suit_vest|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|suit_vest|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|suit_vest|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|windbreaker|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|windbreaker|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|windbreaker|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|windbreaker|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|windbreaker|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|leather_jacket|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|leather_jacket|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|leather_jacket|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|leather_jacket|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|leather_jacket|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|puffer_jacket|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|puffer_jacket|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|puffer_jacket|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|puffer_jacket|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|fleece_jacket|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|fleece_jacket|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|fleece_jacket|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|fleece_jacket|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|pea_coat|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|pea_coat|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|pea_coat|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|pea_coat|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|long_coat|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|long_coat|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|long_coat|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|long_coat|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|long_coat|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|long_coat|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|jeans|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|jeans|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|jeans|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|jeans|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|jeans|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|jeans|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|slacks|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|slacks|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|slacks|checkered": {
+      "status": "available",
+      "images": [
+        {
+          "path": "images_final/beige/checkered_slacks/1.jpg",
+          "true_rank": 5,
+          "url_key": "4fa2c7e0d4f33d0cc520"
+        }
+      ]
+    },
+    "beige|slacks|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|slacks|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|slacks|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|shorts|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|shorts|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|shorts|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|shorts|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|shorts|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|shorts|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|leggings|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|leggings|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|leggings|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|leggings|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|leggings|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|dress|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|dress|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|dress|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|dress|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|dress|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|dress|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|mini_skirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|mini_skirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|mini_skirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|mini_skirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|mini_skirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|mini_skirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|long_skirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|long_skirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|long_skirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|long_skirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|long_skirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "beige|long_skirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|t_shirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|t_shirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|t_shirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|t_shirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|t_shirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|tank_top|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|tank_top|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|tank_top|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|tank_top|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|tank_top|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|tank_top|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|formal_shirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|formal_shirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|formal_shirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|formal_shirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|formal_shirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|formal_shirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|polo_shirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|polo_shirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|polo_shirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|polo_shirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|polo_shirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|polo_shirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|sweatshirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|sweatshirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|sweatshirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|sweatshirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|sweatshirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|sweatshirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|sweater|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|sweater|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|sweater|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|sweater|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|sweater|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|hoodie|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|hoodie|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|hoodie|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|hoodie|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|hoodie|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|hoodie|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|cardigan|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|cardigan|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|cardigan|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|cardigan|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|cardigan|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|cardigan|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|blazer|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|blazer|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|blazer|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|blazer|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|blazer|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|blazer|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|suit_vest|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|suit_vest|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|suit_vest|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|suit_vest|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|suit_vest|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|suit_vest|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|windbreaker|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|windbreaker|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|windbreaker|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|leather_jacket|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|leather_jacket|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|leather_jacket|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|leather_jacket|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|leather_jacket|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|puffer_jacket|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|puffer_jacket|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|puffer_jacket|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|puffer_jacket|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|puffer_jacket|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|fleece_jacket|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|fleece_jacket|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|fleece_jacket|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|fleece_jacket|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|fleece_jacket|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|pea_coat|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|pea_coat|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|pea_coat|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|pea_coat|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|pea_coat|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|long_coat|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|long_coat|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|long_coat|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|long_coat|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|long_coat|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|long_coat|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|jeans|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|jeans|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|jeans|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|jeans|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|jeans|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|jeans|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|slacks|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|slacks|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|slacks|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|slacks|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|shorts|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|shorts|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|shorts|checkered": {
+      "status": "available",
+      "images": [
+        {
+          "path": "images_final/purple/checkered_shorts/1.jpg",
+          "true_rank": 4,
+          "url_key": "c459e60bb59b0552fd4e"
+        }
+      ]
+    },
+    "purple|shorts|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|shorts|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|shorts|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|leggings|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|leggings|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|leggings|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|leggings|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|leggings|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|dress|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|dress|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|dress|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|dress|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|dress|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|mini_skirt|solid": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|mini_skirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|mini_skirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|mini_skirt|floral": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|mini_skirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|mini_skirt|leopard": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|long_skirt|striped": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|long_skirt|checkered": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|long_skirt|polka_dot": {
+      "status": "pending",
+      "images": []
+    },
+    "purple|long_skirt|leopard": {
+      "status": "pending",
+      "images": []
+    }
+  },
+  "summary": {
+    "total": 1661,
+    "available": 16,
+    "excluded": 4,
+    "pending": 1641
+  }
+}

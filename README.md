@@ -49,6 +49,7 @@ Axis coverage is therefore a **track-level** property, not a per-scenario one: a
 - **v10** (see `docs/redesign_v2_plan.md` §15): scenarios that conflicted with the track definitions were removed rather than rebalanced — `severe_weather` ×4 (used the cold-weather jacket list with no waterproof/protective attribute to express the answer), `casual_leisure` ×4 (an "overdressed" dress-code judgment, not physical unsuitability), citizenship oath ×1 (color restriction with no conventional basis), and 5 that generated for almost no users. `aquatic_water` ×3 were reworded as *cover-up over swimwear* questions since `swimwear` is not in the vocabulary, the graduation white ban (copied from weddings) was dropped, and the blanket floral ban was relaxed for 4 business scenarios and golf. 60 → 59 scenarios; the 24 profiles are unchanged (SHA256 `5c06493d…3168`).
 - **v11** (see `docs/redesign_v2_plan.md` §16): the dress-code garment preference axis was collapsing onto the `blazer/formal_shirt/dress` anchor trio (45% of the axis; one user had 13 of 15 items on a single pair) because only three ANCHOR garments existed and each profile took one like + one dislike, leaving every user exactly **one** formal fallback pair. Widening the scenarios alone does not fix it (measured: 6.59x → 6.99x). Fixed on both sides: `compatible` lists widened in 17 normative-formal scenarios (additions only — `slacks`/`long_skirt`; no new prohibitions), and `GARMENT_ANCHOR` grown to five with **2 likes + 2 dislikes + 1 neutral** per profile (garment quota 3+3 → **4+4**; color stays 3+3, pattern 2+2 — the asymmetry is deliberate and disclosed). Result: top-3 concentration 6.59x → **3.70x**, per-user worst pair share 87% → **28%**. All profiles/queries/plans regenerated as `wacv_scenario_v2`.
 - **v12** (`wacv_scenario_v3`; see `docs/wacv_scenario_v3_report.md`): garment vocabulary expanded from 20 to 23 by replacing `trench_coat` with `pea_coat`/`long_coat` and adding `suit_vest`/`polo_shirt`. All 73 profile scenarios and the profile anchors were rebuilt. Dress garment top-3 concentration is **2.59x**, with 0 construction failures.
+- **v13** (`wacv_scenario_v4`; see `docs/wacv_scenario_v4_report.md`): the color ANCHOR/RESERVE tiers were removed. Each profile now receives 3 liked and 3 disliked colors from the full 13-color vocabulary by least-used-first global assignment, subject to the existing cell-liveness predicate. Garment and pattern tiers, quotas, scenarios, and vocabularies are unchanged; v3 remains preserved.
 
 ## Canonical Vocabulary
 
@@ -56,19 +57,17 @@ Axis coverage is therefore a **track-level** property, not a per-scenario one: a
 
 ## Backward-Designed Profiles
 
-**24 rule-generated preference profiles** (`construction/profile_generator.py`). Each profile is built from tier quotas, not hand-authored personas: the ANCHOR values (a fixed small set per axis) are split like/dislike across users so every scenario pool stays populated, RESERVE values `{orange, yellow, pink, white}` are held out of all profiles, and the remaining FREE values fill the quota (garment 4+4, color 3+3, pattern 2+2). `configs/profiles.py` retains the historical v2 snapshot; v3 is generated from the current rules. No semantic archetype labels exist in v3.
+**24 rule-generated preference profiles** (`construction/profile_generator.py`). Each profile is built from explicit axis quotas, not hand-authored personas. Garment keeps its ANCHOR/FREE construction and pattern keeps its QUIET/EXPRESSIVE split. Color has no tiers in v4: all 13 colors are eligible for the 3 liked and 3 disliked slots, assigned globally least-used-first subject to the existing cell-liveness predicate. `configs/profiles.py` retains the historical v2 snapshot; v3 data remains frozen and v4 is generated from the current rules. No semantic archetype labels exist in v3 or v4.
 
-1. **Maximize compatibility** across the 20 scenario archetypes — each variant's 4 garment likes / 4 dislikes leave ~12 neutral garments, so almost every scenario has a clean neutral TPO-compatible vs TPO-incompatible garment pair for the planner. All **1,416 user × scenario combinations (24 × 59) are non-empty**; the residual holes are per-axis, not per-combination (users with no liked color inside the mourning/judicial `{black, navy, gray}` pools — intentional).
+1. **Maximize compatibility** across the 20 scenario archetypes — each variant's 4 garment likes / 4 dislikes leave ~12 neutral garments, so almost every scenario has a clean neutral TPO-compatible vs TPO-incompatible garment pair for the planner. In v4, **1,414 of 1,416 user × scenario combinations (24 × 59) are non-empty**. The two accepted holes are `U007 × stage_greenscreen_shoot` and `U019 × stage_tv_interview`; each has an active garment pair but no preference-neutral compatible/incompatible pair on either remaining violation axis.
 
-   **Per-axis quotas are asymmetric and this must be stated in the paper:** garment **4+4** (2 ANCHOR + 2 FREE per side), color **3+3** (1 ANCHOR + 2 FREE), pattern **2+2**. The seven garment anchors are `blazer, formal_shirt, dress, slacks, long_skirt, suit_vest, long_coat`; 2 are liked, 2 disliked, and 3 stay preference-neutral per user.
+   **Per-axis quotas are asymmetric and this must be stated in the paper:** garment **4+4** (2 ANCHOR + 2 FREE per side), color **3+3** (freely assigned from all 13 colors), pattern **2+2**. The seven garment anchors are `blazer, formal_shirt, dress, slacks, long_skirt, suit_vest, long_coat`; 2 are liked, 2 disliked, and 3 stay preference-neutral per user.
 2. **Strict 2×2 with real dislikes.** B/D always use a profile-disliked value, never a neutral fallback. Every variant has one liked and one disliked value within the dress-code-safe pattern set `{solid, striped}`, so pattern stays a strict like/dislike axis even in formal/mourning/wedding scenarios.
-3. **No value monoculture.** Pattern likes across the pool: solid 13, checkered 12, striped 11, leopard 5, floral 4, polka dot 3 — and every color appears on both the like and dislike side somewhere. `leopard` likes go to bold_expressive/streetwear (plus one adventurous_outdoor variant) where CLIP retrieval is stable; conservative profiles carry it as a dislike.
-
-The 8 archetypes: `classic_formal`, `casual_sporty`, `minimalist`, `adventurous_outdoor`, `elegant`, `streetwear`, `relaxed_neutral`, `bold_expressive`.
+3. **No value monoculture.** Pattern allocation is unchanged and deterministic: `solid`/`striped` each appear as a like for 12 users, and each expressive pattern appears as a like for 6 and a dislike for 6. All 13 colors appear on both sides; each color is assigned to 10–12 users overall, with 5–6 likes and 5–6 dislikes. Profiles have no semantic archetype labels.
 
 ## 4-Option Structure
 
-Each instance has 4 options along one active axis (`active_axis` ∈ {color, pattern, garment_category} — v3 realizes color 1,448 / pattern 1,431 / garment 461):
+Each instance has 4 options along one active axis (`active_axis` ∈ {color, pattern, garment_category} — v4 realizes color 1,262 / pattern 1,330 / garment 435):
 - **A** (tpo_and_preference): liked value + TPO-compatible violation axis
 - **B** (tpo_only): disliked value + TPO-compatible violation axis
 - **C** (preference_only): liked value + TPO-violated violation axis
@@ -77,7 +76,7 @@ Each instance has 4 options along one active axis (`active_axis` ∈ {color, pat
 The active axis carries preference; a *different* axis carries the TPO contrast and is always **preference-neutral** for that user. Usually the violation axis is the garment, but in dress-code scenarios color or pattern can carry the norm instead, which is what makes garment-active plans possible. Non-active axes are fixed to a preference-neutral, TPO-safe value when one exists, else left unfixed.
 
 The planner (`construction/option_planner.py`) assigns values with three global objectives:
-- **Counterbalance**: each value appears ~equally as A (liked) and B (disliked) across the dataset, so a preference-blind value-prior collapses to ≈0.50.
+- **Counterbalance**: each value is pushed toward equal A (liked) and B (disliked) use. The full v4 dataset's preference-blind value-prior accuracy is 0.540; the released active-value-prior-matched subset is exactly 0.50 by construction.
 - **Confusability avoidance**: visually confusable (A, B) color pairs (black↔navy, gray↔navy, …) and (compat, incompat) garment pairs (jeans↔slacks, fleece jacket↔hoodie, …) carry a large soft penalty. After the fix, confusable color pairs dropped 45% → 19%, and the remainder are forced by dress-code pools (`{black, navy, gray}`) — flag those in judging.
 - **Diversity**: per-user and per-scenario repetition of the same (a, b, garment-pair) signature is penalized; identical signatures within a user×scenario: 0.
 
@@ -130,44 +129,44 @@ python -m scripts.report_track_balance --full   # every realized pair (appendix)
 Set `POD_VARIANT=<tag>` to redirect all data paths to `data_<tag>/`. Both audit
 scripts honour it, so run them with the same variant that generated the data —
 with `POD_VARIANT` unset they read `data/`. The current variant is
-`wacv_scenario_v3`:
+`wacv_scenario_v4`:
 
 ```bash
-export POD_VARIANT=wacv_scenario_v3
+export POD_VARIANT=wacv_scenario_v4
 ```
 
 ## Current Scale (pre-retrieval)
 
 Reported per track, never pooled:
 
-Current variant: **`wacv_scenario_v3`** (`data_wacv_scenario_v3/`). The
-`wacv_scenario_v2` data and hashes remain preserved as historical artifacts.
+Current variant: **`wacv_scenario_v4`** (`data_wacv_scenario_v4/`). The v2 and
+v3 data and hashes remain preserved as historical artifacts.
 
 | | Physical | Dress-code |
 |---|---:|---:|
 | scenarios / archetypes | 24 / 7 | 35 / 13 |
-| option plans | 1,152 | 2,188 |
-| preference axis | color 50%, pattern 50% | color 39.9%, pattern 39.1%, garment 21.1% |
-| TPO violation axis | garment 100% | garment 56.9%, color 27.9%, pattern 15.2% |
+| option plans | 1,152 | 1,875 |
+| preference axis | color 50%, pattern 50% | color 36.6%, pattern 40.2%, garment 23.2% |
+| TPO violation axis | garment 100% | garment 54.6%, color 29.3%, pattern 16.1% |
 
-- 24 users × 59 scenarios = **1,416 combinations, all non-empty**
-- 3,125 queries generated → **2,859 unique query contexts represented** → **3,340 option plans (the item unit)**. Plans outnumber represented queries because dress-code queries can emit multiple violation-axis variants; `plan_id` — never `query_id` — is the item key.
+- 24 users × 59 scenarios = **1,414 / 1,416 non-empty combinations**; the two accepted holes are listed in `docs/wacv_scenario_v4_report.md`.
+- 2,942 queries generated → **2,611 unique query contexts represented** → **3,027 option plans (the item unit)**. Plans outnumber represented queries because dress-code queries can emit multiple violation-axis variants; `plan_id` — never `query_id` — is the item key.
 - These are **pre-retrieval** numbers. Image realizability and human validation are not yet done; recompute the same tables afterwards before quoting them as final benchmark statistics.
 - **Prompt version 2** (2026-07-27). `EVAL_FRAME_CLAUSE` now scopes dress-code judgments to mainstream contemporary **United States** conventions, and both evaluators add an explicit ordering rule ("first eliminate situation-inappropriate options, then prefer"). Results from prompt version 1 are **not comparable** and must not be pooled or trended against version 2; every run records `prompt_version` in its `.meta.json`.
 - Reproducibility is checkable in one command: `bash scripts/verify_release.sh` regenerates the dataset into a scratch variant, compares the three SHA256s, runs the validator, and runs `tests/test_option_validator_mutations.py` (6 mutation classes × 8 plans, must report **48/48 detected** — a validator that cannot fail is not evidence).
-- The downstream report should headline the **active-value-prior-matched subset** (`validation_report.counterbalanced_ids.json`; currently 2,672/3,340 = 80%), on which a preference-blind guess at the ACTIVE-axis value is 0.50 by construction. It matches that one prior only — position, garment, and image-quality confounds are untouched, so it is not a "confound-free" pool. That file lists **plan_ids** (`{"id_kind": "plan_id", "ids": [...]}`). Values appearing fewer than 3 times cannot be counterbalanced at all and are excluded from the subset by definition.
+- The downstream report should headline the **active-value-prior-matched subset** (`validation_report.counterbalanced_ids.json`; currently 2,186/3,027 = 72.2%), on which a preference-blind guess at the ACTIVE-axis value is 0.50 by construction. It matches that one prior only — position, garment, and image-quality confounds are untouched, so it is not a "confound-free" pool. That file lists **plan_ids** (`{"id_kind": "plan_id", "ids": [...]}`). Values appearing fewer than 3 times cannot be counterbalanced at all and are excluded from the subset by definition.
 - Comparable in scale to: MMPB (~500), NaturalBench (~900), BLINK (~3.8k)
 
 **Reference SHA256** (seed 42, bit-identical on regeneration):
 
 ```
-profiles.jsonl     c91f848ca634e4a787841e71036a254f93d0fae4c78cc534d3409bb8e837c7dd
-queries.jsonl      a85832fec48ad5fd8adff06066ae90d4ab3d88e306e8cd527492f5aff2056864
-option_plans.jsonl fa0a5b3fb8f903b1d01669c936b014c37d9d683f842003bb9f08f5ae067a7982
+profiles.jsonl     1a760a7d7ba445e30ab583b1f3f5986f5ef50a45b994bb619eb33033dec30aa9
+queries.jsonl      357efb3301c1e74fea7d785ae8a248dfb1c0f8f16b00bf4f99478d12d908efc8
+option_plans.jsonl 727a79804e79f5def16dc3543f5ecebe8e4d04982842bc4c90ce252f8078982f
 ```
 
-Historical v2 SHA256 values remain recorded in
-`docs/wacv_scenario_v3_report.md`.
+Historical v2 and v3 SHA256 values remain recorded in
+`docs/wacv_scenario_v3_report.md` and `docs/wacv_scenario_v4_report.md`.
 
 ## Scoring: two tracks, never pooled
 
@@ -190,7 +189,7 @@ pod_bench/
 ├── configs/
 │   ├── config.py           # canonical vocabulary, paths, providers (variant-aware)
 │   ├── scenarios.py        # 59 canonical scenarios / 20 archetypes, track-split
-│   └── profiles.py         # 24 rule-generated profiles (ANCHOR/RESERVE/FREE tiers)
+│   └── profiles.py         # 24 rule-generated profiles (axis-specific quotas)
 ├── construction/           # Stages 1–3 (deterministic pipeline)
 │   ├── compatibility.py    # user × scenario relaxed 2×2 compatibility
 │   ├── profile_generator.py
