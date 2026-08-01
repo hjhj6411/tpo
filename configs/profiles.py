@@ -173,14 +173,18 @@ PROFILE_VARIANTS = [{'garment_likes': ['blazer', 'formal_shirt', 'sweater'],
 # literal form as the legacy block above so the released dataset can be read
 # without executing the generator.
 #
-# SOURCE OF TRUTH IS STILL construction.profile_generator. This list is a
-# snapshot; check_v2_profiles_match_generator() below re-derives it and fails
-# loudly if the two ever diverge, so nobody can edit one and ship the other.
+# This is a frozen historical snapshot, NOT a mirror of the current generator.
+# check_v2_profiles_match_generator() guards the snapshot and the released v2
+# artifact hash; it deliberately does not re-derive the list, because every
+# variant since v3 has changed the generation rules.
 #
-# Structure (docs/redesign_v2_plan.md §16): garment 4+4 (2 of the 5 ANCHOR
-# garments liked, 2 disliked, 1 left preference-neutral) + color 3+3 (1 ANCHOR)
-# + pattern 2+2 (1 quiet + 1 expressive per side). The RESERVE colors
-# {orange, yellow, pink, white} never appear in any profile by design.
+# Structure as of v2 (docs/redesign_v2_plan.md §16): garment 4+4 (2 of the 5
+# ANCHOR garments liked, 2 disliked, 1 left preference-neutral) + color 3+3
+# (1 ANCHOR) + pattern 2+2 (1 quiet + 1 expressive per side). The RESERVE
+# colors {orange, yellow, pink, white} never appear in any profile by design.
+# None of those three tier schemes survives into v5: color lost its tiers in
+# v4 and pattern lost its quiet/expressive split in v5, where `solid` became
+# the axis baseline. Read the current rules from construction/profile_generator.
 
 V2_PROFILE_VARIANTS = [{'garment_likes': ['formal_shirt', 'slacks', 'cardigan', 'windbreaker'],
   'garment_dislikes': ['blazer', 'dress', 'sweater', 'mini_skirt'],

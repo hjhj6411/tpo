@@ -103,6 +103,19 @@ v12 (`wacv_scenario_v3`) — garment vocabulary expansion:
   keep suit_vest/long_coat formal-safe, pea_coat semi-formal, and polo_shirt
   limited to casual, business-casual, club, and daytime-social contexts.
 - Add sweater/cardigan to the six designated semi-formal scenarios.
+
+v14 (`wacv_scenario_v5`) — wedding_reception pattern constraint corrected:
+- v7 classified `floral` as incompatible alongside `leopard`. Floral guest
+  attire is an ordinary choice at a wedding reception in mainstream US
+  convention, and there is no conventional basis for filing it with loud
+  animal print; spring and summer wedding etiquette guides recommend it as
+  standard. `floral` moves to compatible and `polka_dot` joins incompatible.
+- This is the same correction v10 already made for the four business
+  scenarios and golf, where a blanket floral ban was relaxed; leaving the
+  wedding as the only holdout was inconsistent. The neighbouring scenario
+  `social_gallery_opening` already classifies floral as compatible.
+- Only `wedding_reception` changes. No other wedding or celebration scenario,
+  and no scenario ID, seed, justification, or garment/color list, is touched.
 """
 
 from .config import FASHION_ATTRIBUTE_AXES
@@ -1368,8 +1381,8 @@ CANONICAL_SCENARIOS = [{'scenario_id': 'cold_blizzard_outdoor',
                    'couple.',
   'color': {'compatible': ['black', 'navy', 'gray'],
             'incompatible': ['white']},
-  'pattern': {'compatible': ['solid', 'striped'],
-              'incompatible': ['leopard', 'floral']},
+  'pattern': {'compatible': ['solid', 'striped', 'floral'],
+              'incompatible': ['leopard', 'polka_dot']},
   'query_seeds': {'explicit': ['Attending a wedding reception in a hotel ballroom; smart attire '
                                'expected. What should I wear?',
                                "Going to a friend's wedding reception this weekend; proper guest "

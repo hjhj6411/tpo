@@ -6,6 +6,20 @@ human-checked image library. It also records the point at which plan-level
 image realization currently stops. It is not a proposal for a replacement
 pipeline.
 
+> **Superseded for construction, current for annotation.** Sections 1–6 are the
+> record of the v4 run and stay as written. The two open construction decisions
+> in §7 were resolved on 2026-08-01 by rebuilding Stages 1–3 as
+> `wacv_scenario_v5`, which consumes the library described in §4 as a generation
+> input and reaches 2,571 / 2,641 four-image plans (97.3%) instead of 1,012 /
+> 3,027 (33.4%). §7 below is rewritten accordingly; see
+> `docs/wacv_scenario_v5_report.md`. The annotation artifacts, their hashes and
+> the screening funnel are unchanged and still authoritative.
+>
+> **§8 is a correction to §3–§5, not a continuation of them.** The garment
+> vocabulary used to screen the `long_coat` and `pea_coat` cells contained a
+> hypernym (`wool coat`). The code is fixed; those 139 cells are queued for
+> re-collection and their current verdicts should be treated as provisional.
+
 ## Current outcome
 
 - Construction produced 3,027 `plan_id` items, each with options A--D.
@@ -336,24 +350,212 @@ Deleting or deduplicating old files was not part of this session.
 
 ## 7. Next reproducible stage
 
-The next stage is plan assembly, not another annotation sweep.
+### Resolved on 2026-08-01 by `wacv_scenario_v5`
 
-1. Decide whether the 803 incomplete plans are excluded or regenerated with
-   explicit background attributes. Do not add an implicit fallback only in
-   the image assembler.
-2. Decide whether to keep the current 1,012 strict survivors or regenerate
-   plans that touch one of the 424 excluded cells. The 660 plans missing only
-   one option image are the smallest recovery target.
-3. Freeze a `plan_id` manifest, then rerun track, active-axis, scenario, and
-   counterbalance reports on that manifest.
-4. Materialize exactly four files per retained plan under
-   `data_wacv_scenario_v4/images/<plan_id>/{A,B,C,D}.jpg`, resolving paths only
-   through `attribute_library.json`.
-5. Run `scripts.multimodal_eval.preflight_images` through the evaluator CLI
+1. ~~Decide whether the 803 incomplete plans are excluded or regenerated with
+   explicit background attributes.~~ **Resolved: regenerated.** The cause was
+   the pattern axis carrying a preference on `solid`, which left users with no
+   preference-neutral plain background. `solid` is now the baseline level of
+   the axis — never assigned as a like or a dislike — and the background
+   pattern is pinned to it whenever pattern is neither the preference nor the
+   TPO axis. Incomplete image keys fall from 803 to **12**, all on the color
+   axis, all cases where `scenario-compatible ∩ user-neutral` is genuinely
+   empty. No implicit fallback was added anywhere, in the assembler or
+   elsewhere; those 12 stay unfixed and unrealizable by design.
+2. ~~Decide whether to keep the current 1,012 strict survivors or regenerate
+   plans that touch one of the 424 excluded cells.~~ **Resolved: regenerated.**
+   Keeping the survivors was rejected because the 33.4% reduction is not random
+   — it moved the track split from 38:62 to 31:69 and the physical preference
+   axis from 50:50 to 42:58, undoing the planner's counterbalance. Stage 3 now
+   takes `annotation/attribute_library.json` as a generation input and applies
+   availability as a candidate constraint *before* the balance objectives, so
+   the balance is optimized inside the feasible set. Result: **2,571 / 2,641
+   four-image plans (97.3%)**, no empty scenario, no scenario below 17 of 24
+   users. Details in `docs/wacv_scenario_v5_report.md`.
+
+### Remaining
+
+The next stage is plan assembly, not another annotation sweep. All paths below
+refer to `wacv_scenario_v5`.
+
+3. **Re-collect the 139 `long_coat` / `pea_coat` cells** and re-annotate them.
+   The garment vocabulary they were screened under was contaminated by a
+   hypernym; the code is fixed but the cells are not. See §8. This blocks the
+   manifest freeze, because it changes which cells are available.
+4. Annotate the 27 unannotated `solid` cells, a half-day pass that converts
+   directly into additional four-image plans.
+5. Freeze a `plan_id` manifest, then rerun track, active-axis, scenario, and
+   counterbalance reports **on that manifest**. Do not copy the 2,641-plan
+   construction report forward as if it were the manifest report.
+6. Materialize exactly four files per retained plan under
+   `data_wacv_scenario_v5/images/<plan_id>/{A,B,C,D}.jpg`, resolving paths only
+   through `attribute_library.json`. Never glob `annotation/images_final/`: it
+   holds 99 superseded files that the library no longer references.
+7. Run `scripts.multimodal_eval.preflight_images` through the evaluator CLI
    before any GPU evaluation. Missing or undecodable images must fail the
    preflight rather than silently falling back to text.
-6. Run independent image grading and the multimodal/text-only evaluations,
+8. Run independent image grading and the multimodal/text-only evaluations,
    keeping physical and dress-code results separate.
 
-No construction files, option-plan semantics, conda environments, Slurm jobs,
-or long GPU experiments were changed as part of writing this process record.
+Known and deliberately deferred: 58 plans fail the four-image test because the
+availability check runs against the query's background pattern before
+`--solid-baseline` replaces it with `solid`. Closing that ordering gap changes
+the plan set and therefore the released hashes, so it belongs to a later
+variant, not to a patch on this one.
+
+No conda environments, Slurm jobs, or long GPU experiments were changed as part
+of writing this process record. The v5 construction change is confined to
+`configs/scenarios.py`, `construction/option_planner.py` and
+`construction/profile_generator.py`; `data_wacv_scenario_v4/` and all
+annotation artifacts are untouched.
+
+## 8. Garment vocabulary contamination (`wool coat`) and its correction
+
+Status: **code fixed 2026-08-01; the 139 affected cells are NOT yet
+re-collected.** Nothing in `annotation/` has been modified.
+
+### 8-1. What was wrong
+
+`wool coat` was used as a stand-in label for the canonical garment `long_coat`.
+It is not a synonym but a **hypernym**: a pea coat is also a wool coat, and so
+is a duffle coat. A label that sits above its target in the taxonomy cannot be
+made safe by a better model — an image of a pea coat answered as "wool coat" is
+simply correct.
+
+It had entered four places at once, because the garment vocabulary was
+hand-copied into every consumer instead of being derived from
+`configs/config.py` the way the pattern axis already was:
+
+| Site | Form |
+| --- | --- |
+| `construction/option_planner.py` `GARMENT_SEARCH_PHRASE` | `"long_coat": "wool coat"` — the only non-identity entry of 23 |
+| `fsiglip/collector_sam3.py`, `collect_img_sam3.py`, `collect_topk_..._benchmark_crop.py` | `wool coat` inside the closed VLM vocabulary and the parsing dictionary |
+| `GARMENT_EQUIV_GROUPS` in the same three files | `{"wool coat", "long coat", "wool overcoat", "overcoat"}` |
+| `availability_audit/audit_config.py`, `scripts/build_faiss_index.py` | `long_coat -> ["wool coat", "wool overcoat"]` retrieval aliases |
+
+### 8-2. What actually happened to the shipped library — two different paths
+
+The contamination reached the two collection paths differently, and the
+distinction matters for what re-collection should be expected to change.
+
+**The path that produced the current library: `availability_audit/screen_sam3.py`.**
+It imports its scorers from `fsiglip/collect_img_sam3.py`. Its *retrieval* was
+never contaminated — `measure_cell` builds the query from the canonical name, and
+the stored queries confirm it (`"black long coat"`, `"gray long coat"`, never
+`"wool coat"`). What was contaminated is the **closed vocabulary shown to the
+VLM**. `score_garment_vlm` appends the target to the vocabulary when it is
+absent, so the model was shown a 24-item list holding `wool coat`, `long coat`
+and `pea coat` as siblings, while the prompt told it in the same breath that
+*"a pea coat is a short double-breasted wool coat"*. The run config records
+`allow_garment_equivalence = False`, so PASS required an exact match: any coat
+the model resolved to the hypernym was **rejected**, not falsely accepted. This
+depresses availability, and it depresses it hardest for pea coats, which the
+prompt actively invited the model to call `wool coat`. Measured on the screen
+rows: `garment_score = 1.0` for 4,099/7,800 `long_coat` candidates but only
+1,677/7,800 for `pea_coat`, and `pea_coat`'s human exclusions are dominated by
+`no_such_garment` (30 of 42).
+
+The run manifest did not catch it either: `screen_sam3_config.json` records
+`garment_vocabulary` as the canonical 23 underscore labels, because that field
+is built from `FASHION_ATTRIBUTE_AXES` — not from the list actually handed to
+the VLM. The manifest and the model disagreed and nothing compared them. The
+recorded `allow_garment_equivalence: false` is now pinned rather than read from
+a flag, since the alias layer it referred to no longer exists.
+
+**The per-plan path (`fsiglip/collector_sam3.py`, Stage 4 proper, not yet run at
+scale).** This one reads `search_query` out of `option_plans.jsonl`, so it would
+have retrieved `long_coat` cells with the literal string `"gray wool coat"` —
+the retrieval-side contamination, pulling pea coats into long_coat cells. Fixed
+before it ever ran.
+
+Both defects are removed by the same change; only the second matches the
+"long_coat absorbs pea coat candidates" story, and it never reached the shipped
+library.
+
+### 8-3. The correction
+
+The principle is one line: **the garment vocabulary is the canonical 23 in
+`configs/config.py`, and nothing else — no aliases, no hypernyms, no synonym
+layer.**
+
+- `GARMENT_SEARCH_PHRASE["long_coat"]` is now `"long coat"`, making all 23
+  entries identity mappings. The two coats were introduced in v12 as a
+  *length*-specific pair, and only the canonical names encode that.
+- All three `fsiglip/` collectors derive `GARMENT_VOCAB` from
+  `configs.config.FASHION_ATTRIBUTE_AXES["garment_category"]`, with a loud
+  (never silent) fallback. `TEXT_QUERY_GARMENT_VOCAB`, `DEFAULT_GARMENTS` and
+  `GARMENT_QUERY_TERMS` are now the same list. The 16 aliases that used to live
+  in `DEFAULT_GARMENTS` were verified unused against all 12,108 real search
+  queries.
+- `GARMENT_EQUIV_GROUPS`, `garment_equivalence_set()` and
+  `--allow-garment-equivalence` are deleted from all three collectors. The table
+  never affected a verdict (`allow_equivalence` defaulted to False) but was
+  passed `allow_equivalence=True` by `assert_vocab_covers_targets`, the one
+  guard against vocabulary drift — which it therefore silenced. Six of its
+  twelve groups were hypernyms and three swallowed a sibling of the canonical
+  23: `wool coat` ⊃ `pea coat`, `pants` ⊃ `jeans`/`leggings`, `knitwear` ⊃
+  `cardigan`.
+- `VLM_GARMENT_PROMPT` now separates the coats by **length and closure**, and
+  says explicitly not to judge by fabric, since both are usually wool.
+- Retrieval aliases for `long_coat` are reduced to the canonical name in
+  `availability_audit/audit_config.py` and `scripts/build_faiss_index.py`.
+- `--only-garments` was added to all three collectors so the re-collection can
+  touch only the affected cells.
+
+Verified after the change: all three collectors expose exactly 23 categories,
+`wool coat` is absent, and `assert_vocab_covers_targets` passes silently on all
+10,564 options of the current plan set — the guard is now load-bearing again.
+
+`fsiglip/collect_img_sam3.py` is **not** a dead copy and must not be archived:
+`availability_audit/screen_sam3.py` imports its scorers, which makes it the
+implementation behind the shipped library. `vit/` keeps the old contaminated
+vocabulary and is marked RETIRED in its header; `retrieval/` carries no garment
+vocabulary at all.
+
+Unresolved, for the author: `fsiglip/run_benchmark_crop_4gpu.sh` calls
+`collect_topk_..._benchmark_crop.py`, while README and `docs/SETUP*.md` point at
+`collector_sam3.py`. All three files are now fixed identically, so no path is
+contaminated, but the duplication should be collapsed to one canonical
+collector.
+
+### 8-4. Re-collection procedure (not yet run — needs GPU and a human pass)
+
+```bash
+# 1. revert the 139 affected cells to pending, preserving the old verdict
+#    under a "superseded" key — do not delete the previous decision
+# 2. re-collect only those cells
+python -m fsiglip.collector_sam3 \
+    --plan-path data_wacv_scenario_v5/options/option_plans.jsonl \
+    --only-garments long_coat,pea_coat \
+    --output-root <new output root>
+# 3. human re-review, then update annotation/attribute_library.json and record
+#    its new hash here and in README
+# 4. regenerate the option plans against the new library (do NOT reuse the
+#    current plan set) and rerun the balance reports on the new manifest
+```
+
+Review guidance for the human pass — the UI label must read `long coat` /
+`pea coat`, never `wool coat`:
+
+> pea coat = hip length, double-breasted, wide lapels
+> long coat = knee length or below, usually single-breasted
+> **Judge by length, not by fabric.** Both are usually wool.
+
+Success criteria. `pea_coat` availability should rise from 22/64 (34%) and its
+`no_such_garment` exclusions should fall from 30. `long_coat` availability may
+**drop** from 64/75 (85%); that is a success signal, not a failure, if the old
+number was inflated by pea coats. Report both together. If all three numbers are
+unchanged, the contamination hypothesis is wrong and the before/after images
+must be compared directly.
+
+### 8-5. `slacks` spot check (done)
+
+`pants` was the other hypernym that swallowed siblings (`jeans`, `leggings`).
+`slacks` was retrieved under its canonical name and sits at 87% availability, so
+it was not re-collected; instead 20 available cells were inspected — all 11
+`solid` cells plus 9 patterned ones. **No jeans and no leggings appear**: no
+five-pocket denim construction, no denim wash, nothing skin-tight and knit.
+Two cells are borderline on formality rather than category (`gray|slacks|solid`
+is a soft elastic-waist knit trouser, `purple|slacks|solid` reads as a utility
+or scrubs trouser) and the patterned cells skew to wide-leg palazzo silhouettes,
+which is a property of the corpus. No action taken.

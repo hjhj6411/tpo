@@ -1,4 +1,5 @@
 __pycache__/
+vlm_eval/results/
 *.pyc
 *.pyo
 .env

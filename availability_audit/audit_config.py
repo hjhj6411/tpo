@@ -44,7 +44,12 @@ GARMENT_RETRIEVAL_ALIASES = {
     "puffer_jacket":  ["puffer jacket", "quilted down jacket"],
     "fleece_jacket":  ["fleece jacket", "fleece zip-up jacket"],
     "pea_coat":       ["pea coat", "peacoat"],
-    "long_coat":      ["wool coat", "wool overcoat"],
+    # `wool coat` / `wool overcoat` are HYPERNYMS, not synonyms: a pea coat is
+    # also a wool coat, so these aliases retrieved pea coats into the long_coat
+    # bank. Recall expansion must never cross into a sibling of the canonical
+    # 23 — the two coats are distinguished by LENGTH, and only the canonical
+    # name encodes that.
+    "long_coat":      ["long coat"],
     "suit_vest":      ["suit vest", "tailored waistcoat"],
     "jeans":          ["jeans", "denim pants"],
     "slacks":         ["slacks", "dress pants", "trousers"],

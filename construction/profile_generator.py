@@ -1,5 +1,5 @@
 """
-Profile Generator v4 — deterministic preference-only narratives.
+Profile Generator v5 — deterministic preference-only narratives.
 
 This version deliberately avoids demographic or biographical context.
 Narratives are generated from the structured like/dislike attributes only.
@@ -9,6 +9,54 @@ Updated for the cleaned garment/pattern vocabulary:
 - formal_shirt is rendered as "formal shirt"
 - leopard is rendered as "leopard print"
 - underscore labels are rendered as human-readable fashion terms
+
+── v5: `solid` is the BASELINE of the pattern axis, not a pattern value ──────
+
+Colour and garment have no null level: clothing is always *some* garment in
+*some* colour. The pattern axis is different — a plain garment has no pattern,
+and `solid` is the name of that absence. In factorial terms `solid` is the
+control condition, not a fifth treatment level.
+
+v4 treated it as an ordinary value and gave every user a like or a dislike over
+it (the QUIET tier drew 1 like + 1 dislike from {solid, striped}). Two things
+broke as a result, and both were structural rather than incidental:
+
+1. **No preference-neutral plain option existed for anyone.** The background
+   axis — the third axis, held identical across A/B/C/D — must be neutral for
+   that user and safe for the scenario. Its pattern candidates were
+   {solid, striped, checkered} (the loud patterns are excluded on purpose so
+   the background can never become a second visual cue). Every user had both
+   `solid` and `striped` as preference values, so users who also owned
+   `checkered` had an empty candidate pool. 799 plans ended up with no pattern
+   at all, which makes an exact `color|garment|pattern` image key impossible;
+   six scenarios lost every item.
+
+2. **Pattern could never be the TPO axis in formal scenarios.** A violation
+   pair needs a compatible-AND-neutral value and an incompatible-AND-neutral
+   value. Formal dress codes admit essentially {solid, striped}, both of which
+   were preference values for every user, so the compatible-neutral side was
+   empty for all 24 profiles. Measured on v4: of 679 candidate queries, exactly
+   0 could put the violation on pattern. The benchmark could not express
+   "leopard print is wrong at a funeral" — its single most representative
+   contrast.
+
+v5 therefore assigns preference over the five PATTERNED values only and leaves
+`solid` neutral for everyone. The quota is unchanged (2 likes + 2 dislikes, two
+neutral values per user); what changes is that the assignment vocabulary is 5
+values instead of 6 and that one of each user's two neutral patterns is always
+`solid`. `solid` is also compatible in all 29 pattern-constrained scenarios and
+has 100% image availability, so it needs no special-casing downstream.
+
+Cost, disclosed rather than hidden: in the 13 scenarios whose compatible
+pattern set is {solid, striped} (or {solid}), pattern can no longer be the
+PREFERENCE axis, because a like/dislike pair cannot be formed from one value.
+That is a property of the situation — where there is no room to choose a
+pattern there is no room to express a pattern taste — and the same scenarios
+gain the pattern-violation items that v4 could not construct at all.
+
+PATTERN_QUIET / PATTERN_EXPRESSIVE are retained as inactive constants so the
+v4 tiers stay readable next to the data they produced. They must not be used
+by the v5 assignment path.
 """
 
 import argparse
@@ -170,12 +218,23 @@ GARMENT_ANCHOR = [
     "blazer", "formal_shirt", "dress", "slacks", "long_skirt",
     "suit_vest", "long_coat",
 ]
-PATTERN_QUIET = ["solid", "striped"]                     # 1 like + 1 dislike split
-# Expressive patterns: 1 like + 1 dislike per profile, balanced globally
-# (each value 6x like / 6x dislike across 24 variants). The 2 unassigned
-# values stay preference-neutral per user, supplying that user's
-# TPO-violation and background values — so unlike color there is no hard
-# RESERVE, and every pattern can appear in A/B pairs somewhere.
+# `solid` is the BASELINE level of the pattern axis, not a pattern value.
+# Unlike color and garment, the pattern axis has a null level: a plain garment
+# has no pattern. v4 treated that null as an ordinary value and gave every user
+# a like/dislike over it, which left no preference-neutral plain option for any
+# user. Preference is therefore assigned over the five PATTERNED values only,
+# and `solid` stays neutral for every user (full rationale in the module
+# docstring).
+PATTERN_BASELINE = "solid"
+PATTERN_PREFERENCE = ["striped", "checkered", "floral", "polka_dot", "leopard"]
+
+# ── inactive: the v4 two-tier pattern split ───────────────────────────────
+# Kept so the rule that produced data_wacv_scenario_v4/ stays readable next to
+# the data. QUIET drew 1 like + 1 dislike from {solid, striped} for every user
+# — the assignment over the baseline that v5 removed — and EXPRESSIVE drew
+# 1 + 1 from the four loud patterns. Neither list is read by the v5 assignment
+# path; do not reintroduce them there.
+PATTERN_QUIET = ["solid", "striped"]
 PATTERN_EXPRESSIVE = ["floral", "checkered", "polka_dot", "leopard"]
 
 # Historical exceptions used only to reproduce the frozen seed-42 profiles.
@@ -308,11 +367,12 @@ def generate_rule_variants(seed=42, n_variants=24):
                 ANCHOR trio), then least global use, subject to R4.
     R2 color:   3 likes + 3 dislikes over all 13 colors, least-globally-used
                 across profiles and subject to R5. There are no color tiers.
-    R3 pattern: solid/striped alternating 1+1 + 1 like / 1 dislike from the
-                EXPRESSIVE set (balanced ordered pairs — every value 6x like
-                and 6x dislike; the 2 unassigned expressive values stay
-                preference-neutral per user, supplying violation/background
-                values).
+    R3 pattern: 2 likes + 2 dislikes over the five PATTERNED values,
+                least-globally-used first, alternating by profile index which
+                side draws first. `solid` is the axis baseline and is never
+                assigned, so every user has it plus one patterned value as
+                their preference-neutral patterns, supplying the
+                violation/background values.
     R4:         FREE garment picks must keep every scenario's
                 preference-neutral garment pair alive (physical included).
 
@@ -329,12 +389,10 @@ def generate_rule_variants(seed=42, n_variants=24):
             "c_like", "c_dis")}
     out = []
 
-    # R3 expressive: the 12 ordered (like, dislike) pairs, each twice across
-    # the 24 variants -> every expressive value lands exactly 6x as like and
-    # 6x as dislike.
-    expr_pairs = [(l, d) for l in PATTERN_EXPRESSIVE
-                  for d in PATTERN_EXPRESSIVE if l != d] * 2
-    random.Random(seed + 4649).shuffle(expr_pairs)
+    # R3 pattern: global least-used-first counters over PATTERN_PREFERENCE.
+    # These consume no draws from `rng`, so the garment and color assignments
+    # below are bit-identical to what they would be without them.
+    pat_like_use = Counter(); pat_dis_use = Counter(); pat_use = Counter()
 
     for idx in range(n_variants):
         # ---- R1 garment: ANCHOR 2+2 (balanced), 3 anchors left neutral ----
@@ -382,14 +440,24 @@ def generate_rule_variants(seed=42, n_variants=24):
                 f"R4 failed for variant {idx}: no FREE garment "
                 f"assignment keeps all scenario pools alive")
 
-        # ---- R3 pattern: quiet 1+1 split + expressive 1+1 ----
-        # (chosen before color so the R5 cell-liveness predicate can see
-        # the full variant when picking the color combo)
-        quiet_like = "solid" if idx % 2 == 0 else "striped"
-        quiet_dis = "striped" if quiet_like == "solid" else "solid"
-        e_like, e_dis = expr_pairs[idx % len(expr_pairs)]
-        p_likes = [quiet_like, e_like]
-        p_dis = [quiet_dis, e_dis]
+        # ---- R3 pattern: 2+2 over the five PATTERNED values ----
+        # `solid` (the baseline) is never assigned. Selection is the same
+        # tier-free, least-used-first global assignment v4 already uses for
+        # color. Consumes no RNG draws, so garment/color draws are unchanged.
+        p_likes, p_dis = [], []
+        # alternate which side draws first so neither side is systematically
+        # constrained by the other's picks
+        order = ["like", "dis", "like", "dis"] if idx % 2 == 0 else \
+                ["dis", "like", "dis", "like"]
+        for side in order:
+            cand = [v for v in PATTERN_PREFERENCE if v not in p_likes and v not in p_dis]
+            if side == "like":
+                pick = min(cand, key=lambda v: (pat_like_use[v], pat_use[v], v))
+                p_likes.append(pick); pat_like_use[pick] += 1
+            else:
+                pick = min(cand, key=lambda v: (pat_dis_use[v], pat_use[v], v))
+                p_dis.append(pick); pat_dis_use[pick] += 1
+            pat_use[pick] += 1
 
         # ---- R2 color: unrestricted 3+3 with R5 (exhaustive) ----
         # The old 3-anchor color split consumed five draws from the shared RNG
@@ -403,8 +471,12 @@ def generate_rule_variants(seed=42, n_variants=24):
         for lp in combinations(color_free, 3):
             dis_pool = [c for c in color_free if c not in lp]
             for dp in combinations(dis_pool, 3):
-                load = (sum(use["c_like"][c] for c in lp)
-                        + sum(use["c_dis"][c] for c in dp))
+                # minimise total load first, then the PEAK load of any single
+                # colour: sum alone lets one colour drift ahead of the rest
+                # whenever R5 rejects the flattest combos.
+                loads = ([use["c_like"][c] for c in lp]
+                         + [use["c_dis"][c] for c in dp])
+                load = (sum(loads), max(loads))
                 c_combos.append((load, r2.random(), lp, dp))
         c_combos.sort()
         for _, _, lp, dp in c_combos:
@@ -437,7 +509,6 @@ def generate_rule_variants(seed=42, n_variants=24):
 
 def validate_rule_profiles(variants):
     """Assert R1-R5 hold for the generated set; return a summary string."""
-    quiet_split = Counter()
     expr_like = Counter()
     expr_dis = Counter()
     for arch_id, var_idx, v in variants:
@@ -454,28 +525,27 @@ def validate_rule_profiles(variants):
         assert len(gl & set(GARMENT_ANCHOR)) == 2, f"{tag}: R1 like quota"
         assert len(gd & set(GARMENT_ANCHOR)) == 2, f"{tag}: R1 dislike quota"
         assert len(pl) == len(pd) == 2, f"{tag}: R3 quota"
-        assert len(pl & set(PATTERN_QUIET)) == 1 and len(pd & set(PATTERN_QUIET)) == 1, \
-            f"{tag}: R3 quiet split"
-        assert len(pl & set(PATTERN_EXPRESSIVE)) == 1 \
-            and len(pd & set(PATTERN_EXPRESSIVE)) == 1, f"{tag}: R3 expressive quota"
+        assert PATTERN_BASELINE not in pl and PATTERN_BASELINE not in pd, \
+            f"{tag}: R3 baseline must stay preference-neutral"
+        assert pl <= set(PATTERN_PREFERENCE) and pd <= set(PATTERN_PREFERENCE), \
+            f"{tag}: R3 patterned-only quota"
         assert _garment_pairs_alive_everywhere(v["garment_likes"],
                                                v["garment_dislikes"]), f"{tag}: R4"
         assert _cells_alive_everywhere(
             v["garment_likes"], v["garment_dislikes"],
             v["color_likes"], v["color_dislikes"],
             v["pattern_likes"], v["pattern_dislikes"]), f"{tag}: R5"
-        quiet_split[(pl & set(PATTERN_QUIET)).pop()] += 1
-        expr_like[(pl & set(PATTERN_EXPRESSIVE)).pop()] += 1
-        expr_dis[(pd & set(PATTERN_EXPRESSIVE)).pop()] += 1
-    assert quiet_split["solid"] == quiet_split["striped"] == len(variants) // 2, \
-        f"quiet split unbalanced: {dict(quiet_split)}"
-    per_val = len(variants) // len(PATTERN_EXPRESSIVE)
-    for v in PATTERN_EXPRESSIVE:
-        assert expr_like[v] == expr_dis[v] == per_val, \
-            (f"expressive unbalanced: {v} like={expr_like[v]} "
-             f"dislike={expr_dis[v]} (target {per_val})")
-    return (f"R1-R5 OK: {len(variants)} variants, quiet {dict(quiet_split)}, "
-            f"expressive like {dict(expr_like)} / dislike {dict(expr_dis)}")
+        for x in pl: expr_like[x] += 1
+        for x in pd: expr_dis[x] += 1
+    lo_l, hi_l = min(expr_like.values()), max(expr_like.values())
+    lo_d, hi_d = min(expr_dis.values()), max(expr_dis.values())
+    assert hi_l - lo_l <= 1 and hi_d - lo_d <= 1, \
+        f"pattern assignment unbalanced: like={dict(expr_like)} dis={dict(expr_dis)}"
+    assert expr_like[PATTERN_BASELINE] == 0 and expr_dis[PATTERN_BASELINE] == 0, \
+        "baseline pattern must never be assigned"
+    return (f"R1-R5 OK: {len(variants)} variants, "
+            f"pattern like {dict(expr_like)} / dislike {dict(expr_dis)}, "
+            f"baseline '{PATTERN_BASELINE}' neutral for all")
 
 
 def generate_profile(user_idx, pool_id, variant_idx, variant,

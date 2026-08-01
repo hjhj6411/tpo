@@ -73,29 +73,33 @@ DEFAULT_COLORS = [
     "orange", "yellow", "green", "brown", "beige", "purple",
 ]
 
-DEFAULT_GARMENTS = [
-    "blazer", "outerwear",
-    "cardigan", "hoodie", "sweater", "sweatshirt",
-    "tank top", "sleeveless top", "camisole top", "crop top",
-    "t shirt", "tee", "tee shirt", "formal shirt", "dress shirt", "polo shirt", "polo", "top",
-    "suit vest", "waistcoat",
-    "windbreaker", "leather jacket", "puffer jacket", "fleece jacket",
-    "pea coat", "peacoat", "wool coat", "wool overcoat",
-    "mini skirt", "long skirt",
-    "slacks", "pants", "trousers", "jeans", "shorts", "leggings",
-    "dress", "gown",
-]
-
-TEXT_QUERY_GARMENT_VOCAB = [
+# Canonical garment vocabulary — single source of truth.
+# The pattern axis already imports from configs.config (see PATTERN_VOCAB
+# below); garment stayed hardcoded and drifted, which is how `wool coat`
+# entered as a stand-in for `long_coat`. `wool coat` is not a synonym of
+# `long coat` but a hypernym that also covers `pea coat`, so it pulled pea
+# coats into long_coat cells and left pea_coat at 34% availability.
+_GARMENT_AXIS_FALLBACK = [
     "t shirt", "tank top", "formal shirt", "polo shirt",
     "sweatshirt", "sweater", "hoodie", "cardigan",
     "blazer", "suit vest", "windbreaker", "leather jacket", "puffer jacket",
-    "fleece jacket", "pea coat", "wool coat",
+    "fleece jacket", "pea coat", "long coat",
     "jeans", "slacks", "shorts", "leggings",
     "dress", "mini skirt", "long skirt",
 ]
+try:
+    from configs.config import FASHION_ATTRIBUTE_AXES as _AXES
+    GARMENT_VOCAB = [g.replace("_", " ") for g in _AXES["garment_category"]]
+except Exception as _e:   # a SILENT fallback would re-hide a stale vocabulary
+    print(f"  [warn] configs.config unavailable ({type(_e).__name__}: {_e}); "
+          f"GARMENT_VOCAB falls back to the frozen list, which may be stale.")
+    GARMENT_VOCAB = list(_GARMENT_AXIS_FALLBACK)
 
-GARMENT_QUERY_TERMS = TEXT_QUERY_GARMENT_VOCAB + DEFAULT_GARMENTS
+# No aliases, no hypernyms, no umbrella terms. Verified against all 12,108
+# real search queries: these 23 terms parse every one of them correctly.
+TEXT_QUERY_GARMENT_VOCAB = GARMENT_VOCAB
+DEFAULT_GARMENTS = GARMENT_VOCAB
+GARMENT_QUERY_TERMS = GARMENT_VOCAB
 
 
 @dataclass(frozen=True)
@@ -913,40 +917,20 @@ def score_color_patches(
     )
 
 
-# Closed garment vocabulary used by the text-query generation pipeline.
-# VLM classification uses this full list, not only the garments present in one
-# option set.
-GARMENT_VOCAB = TEXT_QUERY_GARMENT_VOCAB
-
-# Symmetric equivalence classes: only true synonyms are merged, and every entry
-# is either a valid target garment or a plausible VLM synonym for one. The
-# visually confusable outerwear categories are intentionally NOT merged, so the
-# VLM verdict actually discriminates them.
-GARMENT_EQUIV_GROUPS = [
-    {"tank top", "sleeveless top", "camisole top", "camisole"},
-    {"t shirt", "tee", "tee shirt"},
-    {"formal shirt", "dress shirt"},
-    {"polo shirt", "polo"},
-    {"jeans", "denim pants", "denim"},
-    {"dress", "gown"},
-    {"sweater", "pullover", "knit sweater", "knitwear"},
-    {"fleece", "fleece jacket"},
-    {"pea coat", "peacoat"},
-    {"wool coat", "long coat", "wool overcoat", "overcoat"},
-    {"suit vest", "waistcoat"},
-    {"slacks", "pants", "trousers"},
-]
-
-
-def garment_equivalence_set(garment: str, allow_equivalence: bool = False) -> set[str]:
-    g = norm(garment)
-    if not allow_equivalence:
-        return {g}
-    members = {g}
-    for grp in GARMENT_EQUIV_GROUPS:
-        if g in grp:
-            members |= grp
-    return members
+# The garment alias layer (GARMENT_EQUIV_GROUPS / garment_equivalence_set /
+# --allow-garment-equivalence) was DELETED here. It contributed nothing to the
+# VLM verdict — `allow_equivalence` defaulted to False, so the equivalence set
+# was always just {target} — while the one place that did enable it,
+# assert_vocab_covers_targets, used it to accept `wool coat` as a synonym of
+# `long coat`. The only safety net for vocabulary drift was silenced by the
+# alias table it was supposed to be independent of.
+#
+# Six of the twelve groups were hypernyms, not synonyms, and three of those
+# swallowed a sibling from the canonical 23: `wool coat` covers `pea coat`,
+# `pants` covers `jeans` and `leggings`, `knitwear` covers `cardigan`. Do not
+# reintroduce this table, even "cleaned up" — a correct alias list still lowers
+# the detection power of assert_vocab_covers_targets, which is the only thing
+# standing between a stale vocabulary and a silently mislabeled cell.
 
 
 def assert_vocab_covers_targets(tasks: list["OptionTask"]) -> None:
@@ -957,7 +941,7 @@ def assert_vocab_covers_targets(tasks: list["OptionTask"]) -> None:
         if not g:
             continue
         vocab = set(t.vlm_garment_vocab or GARMENT_VOCAB)
-        if not (garment_equivalence_set(g, allow_equivalence=True) & vocab):
+        if g not in vocab:
             uncovered[g] = uncovered.get(g, 0) + 1
     if uncovered:
         detail = ", ".join(f"{g!r} x{n}" for g, n in sorted(uncovered.items(), key=lambda kv: -kv[1]))
@@ -975,8 +959,10 @@ VLM_GARMENT_PROMPT = (
     "Classify that garment into exactly ONE of these categories:\n"
     "{options}\n\n"
     "Rules:\n"
-    "- Outerwear, keep these distinct: a pea coat is a short double-breasted wool coat; "
-    "a wool coat reaches roughly the knee or below; a fleece jacket is a soft brushed "
+    "- Outerwear, keep these distinct. Judge coats by LENGTH and CLOSURE, never by "
+    "fabric (both coats below are usually wool): a pea coat is hip-length and "
+    "double-breasted with wide lapels; a long coat reaches the knee or below and is "
+    "usually single-breasted; a fleece jacket is a soft brushed "
     "insulating jacket; a puffer jacket is "
     "a quilted insulated jacket; a windbreaker is a thin lightweight nylon "
     "shell; a leather jacket is a leather outerwear jacket; a blazer is a "
@@ -1079,9 +1065,8 @@ def score_garment_vlm(
             "model": args.vlm_model,
         }
 
-    allow_equivalence = bool(getattr(args, "allow_garment_equivalence", False))
-    equiv = garment_equivalence_set(g, allow_equivalence=allow_equivalence)
-    verdict = pred in equiv
+    # The VLM picks one of the canonical 23; PASS requires an exact match.
+    verdict = pred == g
     score = 1.0 if verdict else 0.0
     return score, {
         "mode": "vlm_garment_classify",
@@ -1089,9 +1074,7 @@ def score_garment_vlm(
         "predicted": pred,
         "verdict": "PASS" if verdict else "FAIL",
         "score": score,
-        "allow_equivalence": allow_equivalence,
         "vocab": vocab,
-        "equivalence_set": sorted(equiv),
         "raw_response": str(content)[:500],
         "model": args.vlm_model,
     }
@@ -1492,6 +1475,12 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--limit", type=int, default=1)
     p.add_argument("--offset", type=int, default=0)
     p.add_argument("--options", default="A,B,C,D")
+    p.add_argument("--only-garments", default="",
+                   help="Comma-separated canonical garment categories (e.g. "
+                        "'long_coat,pea_coat'). Keeps only the options whose "
+                        "target garment is in the list, so a targeted "
+                        "re-collection cannot disturb cells that are already "
+                        "settled. Underscore or space form both work.")
 
     p.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
 
@@ -1551,10 +1540,8 @@ def parse_args() -> argparse.Namespace:
                         "NOT a genuine wrong-garment FAIL. skip: drop with skip_reason=garment_vlm_error "
                         "(re-runnable, never a false PASS). uncertain: keep the candidate, rank it by "
                         "pattern*color only, skip_reason=garment_uncertain.")
-    p.add_argument("--allow-garment-equivalence", action="store_true",
-                   help="Opt in to true-synonym matching. The default requires the VLM's "
-                        "predicted category to equal the target exactly; distinct benchmark "
-                        "labels are never merged.")
+    # --allow-garment-equivalence was removed with the alias table it drove.
+    # An exact match against the canonical 23 is now the only garment verdict.
     p.add_argument("--garment-fail-skip", action="store_true", default=True,
                    help="Mark garment-FAIL crops with skip_reason=garment_fail (default on).")
     p.add_argument("--no-garment-fail-skip", dest="garment_fail_skip", action="store_false")
@@ -1618,6 +1605,20 @@ def main() -> None:
             plans = plans[: args.limit]
 
     tasks = make_tasks(plans, options)
+
+    if getattr(args, "only_garments", ""):
+        wanted = {norm(x) for x in str(args.only_garments).split(",") if x.strip()}
+        unknown = wanted - set(GARMENT_VOCAB)
+        if unknown:
+            raise SystemExit(
+                f"--only-garments contains categories outside the canonical "
+                f"vocabulary: {sorted(unknown)}. Valid values: {GARMENT_VOCAB}")
+        before = len(tasks)
+        tasks = [t for t in tasks if norm(t.target_garment) in wanted]
+        print(f"  --only-garments {sorted(wanted)}: {len(tasks)}/{before} options kept")
+        if not tasks:
+            raise SystemExit(f"No options matched --only-garments={args.only_garments!r}")
+
     assert_vocab_covers_targets(tasks)
 
     print("=" * 96)

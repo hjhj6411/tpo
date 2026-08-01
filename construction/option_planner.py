@@ -46,7 +46,8 @@ from pathlib import Path
 from .utils import save_jsonl, load_jsonl, log_step
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from configs.config import OPTIONS_DIR, PROFILES_DIR, QUERIES_DIR
+from configs.config import (OPTIONS_DIR, PROFILES_DIR, QUERIES_DIR,
+                            FASHION_ATTRIBUTE_AXES)
 from configs.scenarios import get_scenario_by_id
 from .compatibility import is_pattern_garment_compatible
 
@@ -77,6 +78,179 @@ CONFUSABLE_GARMENT_PAIRS = {frozenset(p) for p in [
 ]}
 # garment as ACTIVE axis reuses the garment confusability table
 CONFUSABLE_ACTIVE_PAIRS["garment_category"] = CONFUSABLE_GARMENT_PAIRS
+
+
+# ── availability-constrained planning (annotated cell library) ─────────
+# When a cell library is loaded (--cell-library), every candidate considered
+# by the pair/value assigners must place ALL FOUR options on cells whose exact
+# color|garment_category|pattern key is human-annotated "available".
+# Design invariants:
+#   * HARD candidate filter applied BEFORE the soft objectives, so
+#     counterbalance / confusability / per-user variety keep optimizing
+#     inside the feasible set (never a post-hoc drop).
+#   * Candidates whose four triples cannot be fully specified (unfixed
+#     background axis — PROCESS.md §6 "incomplete image keys") BYPASS the
+#     check unchanged: the incomplete-key policy is a separate explicit
+#     decision and this filter stays orthogonal to it. No implicit fill.
+#   * assign_ab_values is untouched: active (A,B) values and their
+#     counterbalance are assigned exactly as before.
+_AVAILABLE_CELLS = None
+
+
+def load_cell_library(path):
+    """Load annotation/attribute_library.json and activate the filter."""
+    global _AVAILABLE_CELLS
+    import json
+    lib = json.loads(Path(path).read_text())
+    _AVAILABLE_CELLS = {k for k, v in lib.get("cells", {}).items()
+                        if v.get("status") == "available"}
+    return len(_AVAILABLE_CELLS)
+
+
+def _cells_ok(triples, fill_pool=None):
+    """triples: iterable of (color, garment, pattern) for options A-D.
+    True when the filter is off, when all four exact cells are available, or
+    (fill mode) when one preference-neutral background value completes them.
+    Without fill mode an incomplete triple bypasses the check unchanged."""
+    if _AVAILABLE_CELLS is None:
+        return True
+    triples = list(triples)
+    if any(t[1] is None for t in triples):
+        return True
+    incomplete = any(t[0] is None or t[2] is None for t in triples)
+    if incomplete:
+        if not (_FILL_BACKGROUND and fill_pool):
+            return True  # incomplete key → orthogonal policy, bypass
+        filled, _ = _fill_missing(triples, fill_pool)
+        return filled is not None
+    return all(f"{c}|{g}|{p}" in _AVAILABLE_CELLS for c, g, p in triples)
+
+
+def _value_violation_triples(active, axis, a, b, g, cv, iv, fixed_attrs):
+    """Mirror plan_option_variant's value-violation branch attribute build."""
+    base = dict(fixed_attrs or {})
+    base.pop("garment_category", None)
+    base.pop(axis, None)
+    out = []
+    for av, vv in ((a, cv), (b, cv), (a, iv), (b, iv)):
+        attrs = dict(base)
+        attrs[active] = av
+        attrs[axis] = vv
+        out.append((attrs.get("color"), g, attrs.get("pattern")))
+    return out
+
+
+def _garment_violation_triples(active, a, b, cg, ig, fixed_attrs):
+    """Mirror plan_option_variant's garment-violation branch."""
+    base = dict(fixed_attrs or {})
+    base.pop("garment_category", None)
+    out = []
+    for av, gv in ((a, cg), (b, cg), (a, ig), (b, ig)):
+        attrs = dict(base)
+        attrs[active] = av
+        out.append((attrs.get("color"), gv, attrs.get("pattern")))
+    return out
+
+
+def _garment_active_triples(axis, liked_g, disliked_g, cv, iv, fixed_attrs):
+    """Mirror plan_option_variant's garment-ACTIVE branch, including the
+    background-pattern drop when it clashes with either A/B garment."""
+    base = dict(fixed_attrs or {})
+    base.pop("garment_category", None)
+    base.pop(axis, None)
+    bgp = base.get("pattern")
+    if bgp and not all(is_pattern_garment_compatible(bgp, g)
+                       for g in (liked_g, disliked_g)):
+        base.pop("pattern", None)
+    out = []
+    for gv, vv in ((liked_g, cv), (disliked_g, cv), (liked_g, iv), (disliked_g, iv)):
+        attrs = dict(base)
+        attrs[axis] = vv
+        out.append((attrs.get("color"), gv, attrs.get("pattern")))
+    return out
+
+
+# ── explicit background-axis fill (PROCESS.md §6/§7-1) ────────────────
+# When the plan's third (background) axis has no fixed value, the four
+# options cannot be placed on an exact three-axis image cell, so the whole
+# plan is unusable (the 803/808 "incomplete image keys" set).
+#
+# PROCESS.md forbids an implicit fallback ("missing pattern -> solid") and
+# requires any fill policy to be explicit, regenerated and revalidated.
+# This implements that policy under an opt-in flag. A filled value must be:
+#   1. preference-NEUTRAL for that user (never a like or a dislike, so the
+#      background can never leak preference signal or become a 5th option axis)
+#   2. TPO-safe: scenario-compatible when the scenario constrains that axis;
+#      when the axis is unconstrained (all physical scenarios), any value is
+#      situation-appropriate by definition
+#   3. pattern/garment compatible with every garment in the plan
+#   4. available as an image for ALL FOUR options
+# Selection is balanced least-used-first per (user, scenario) so the fill can
+# never collapse into a monoculture (e.g. every background becoming "solid",
+# which would itself be a visual cue).
+def _third_axis(a, b):
+    rest = [x for x in ("color", "pattern", "garment_category") if x not in (a, b)]
+    return rest[0] if rest else None
+
+
+_FILL_BACKGROUND = False
+_SOLID_BASELINE = False   # hold the pattern axis at its baseline level when
+                          # pattern is neither the preference nor the TPO axis
+_FILL_TIER = 1   # 1 = neutral only; 2 = allow low-salience non-neutral as last resort
+LOW_SALIENCE_PATTERNS = ["solid", "striped", "checkered"]
+_PROFILES = {}
+_BG_USE = Counter()
+
+
+def _profile_pref(uid, axis, value):
+    sa = (_PROFILES.get(uid) or {}).get("structured_attributes", {}).get(axis, {})
+    if value in sa.get("likes", []):
+        return "like"
+    if value in sa.get("dislikes", []):
+        return "dislike"
+    return "neutral"
+
+
+def _background_pool(query, bg_axis, garments):
+    """Ordered candidate values for an unfixed background axis (never garment)."""
+    if _SOLID_BASELINE and bg_axis == "pattern":
+        return ["solid"]
+    if not _FILL_BACKGROUND or bg_axis not in ("color", "pattern"):
+        return []
+    scenario = get_scenario_by_id(query["scenario_id"]) or {}
+    cons = scenario.get(bg_axis)
+    if cons:
+        pool = list(cons.get("compatible") or [])
+    else:
+        pool = list(FASHION_ATTRIBUTE_AXES[bg_axis])
+    uid = query.get("user_id", "?")
+    neutral = [v for v in pool if _profile_pref(uid, bg_axis, v) == "neutral"]
+    # Tier 2 last resort: a LOW-SALIENCE value that is scenario-compatible but
+    # not preference-neutral. Sound only because the background is IDENTICAL
+    # across A-D, so it adds a constant, never a contrast between options; it
+    # is recorded per plan so the non-neutral subset stays auditable.
+    tier2 = []
+    if _FILL_TIER >= 2:
+        low = LOW_SALIENCE_PATTERNS if bg_axis == "pattern" else []
+        tier2 = [v for v in pool if v not in neutral and v in low]
+    out = neutral + tier2
+    if bg_axis == "pattern":
+        out = [v for v in out
+               if all(is_pattern_garment_compatible(v, g) for g in garments if g)]
+    return out
+
+
+def _fill_missing(triples, pool):
+    """Return (filled_triples, value) for the first pool value that makes all
+    four cells available, balanced least-used-first. (None, None) if none."""
+    idx = 2 if any(t[2] is None for t in triples) else 0  # pattern else color
+    ranked = sorted(pool, key=lambda v: (_BG_USE[v], v))
+    for v in ranked:
+        filled = [tuple(v if j == idx else t[j] for j in range(3)) for t in triples]
+        if _AVAILABLE_CELLS is None or all(
+                f"{c}|{g}|{p}" in _AVAILABLE_CELLS for c, g, p in filled):
+            return filled, v
+    return None, None
 
 
 def _violation_garment_scope(scenario, axis):
@@ -110,7 +284,11 @@ GARMENT_QUERY_ALIAS = {
     "puffer_jacket": "puffer jacket",
     "fleece_jacket": "fleece jacket",
     "pea_coat": "pea coat",
-    "long_coat": "wool coat",
+    # `wool coat` is a HYPERNYM — a pea coat is also a wool coat. Using it as
+    # long_coat's search phrase pulled pea coats into long_coat cells and
+    # starved the pea_coat cells (34% availability, lowest of all 23).
+    # Every other entry is the canonical name; this one must be too.
+    "long_coat": "long coat",
     "suit_vest": "suit vest",
     "polo_shirt": "polo shirt",
     "jeans": "jeans",
@@ -219,6 +397,10 @@ def assign_ab_values(queries, seed=42):
         user_b = Counter()
         pair_use = Counter()       # global {A,B} pair usage
         user_pair = Counter()      # per-user {A,B} pair usage
+        scen_pair = Counter()      # per-SCENARIO {A,B} pair usage: without it a
+                                   # pair that is feasible for many users inside
+                                   # the same scenario recurs across all of them,
+                                   # even though each user's own rotation is fine
 
         def dof(q):
             # fewest degrees of freedom first → place constrained queries before easy ones
@@ -238,6 +420,7 @@ def assign_ab_values(queries, seed=42):
                     pr = frozenset((av, bv))
                     key = (
                         user_pair[(uid, pr)],
+                        scen_pair[(q.get("scenario_id", "?"), pr)],
                         pair_use[pr],
                         user_a[(uid, av)] + user_b[(uid, bv)],
                         net[av] - net[bv],
@@ -254,6 +437,7 @@ def assign_ab_values(queries, seed=42):
             user_b[(uid, b)] += 1
             pair_use[frozenset((a, b))] += 1
             user_pair[(uid, frozenset((a, b)))] += 1
+            scen_pair[(q.get("scenario_id", "?"), frozenset((a, b)))] += 1
             assignment[q["query_id"]] = (a, b)
     return assignment
 
@@ -271,18 +455,36 @@ def _value_violation_feasible(query, axis, ab_values):
     scope = _violation_garment_scope(get_scenario_by_id(query["scenario_id"]), axis)
     garments = [g for g in dict.fromkeys(query.get("compatible_garments", []))
                 if scope is None or g in scope]
+    a_val, b_val = ab_values.get(query["query_id"], (None, None))
+
+    def avail(g, cv, iv):
+        if not (a_val and b_val):
+            return True
+        return _cells_ok(
+            _value_violation_triples(
+                query["active_axis"], axis, a_val, b_val, g, cv, iv,
+                query.get("fixed_attrs")),
+            _background_pool(query, _third_axis(query["active_axis"], axis), (g,)))
+
     if axis == "color":
         patterns = _option_patterns(query, ab_values)
         return any(
             all(is_pattern_garment_compatible(p, g) for p in patterns)
+            and avail(g, cv, iv)
             for g in garments
+            for cv in pools["compatible_neutral"]
+            for iv in pools["incompatible_neutral"]
+            if cv != iv
         )
     # axis == "pattern": violation values replace the fixed pattern
     for g in garments:
         for cv in pools["compatible_neutral"]:
             for iv in pools["incompatible_neutral"]:
+                if cv == iv:
+                    continue
                 if (is_pattern_garment_compatible(cv, g)
-                        and is_pattern_garment_compatible(iv, g)):
+                        and is_pattern_garment_compatible(iv, g)
+                        and avail(g, cv, iv)):
                     return True
     return False
 
@@ -302,15 +504,29 @@ def _garment_active_violation_feasible(query, axis, ab_values):
     scope = _violation_garment_scope(get_scenario_by_id(query["scenario_id"]), axis)
     if scope is not None and not {liked_g, disliked_g} <= scope:
         return False
+
+    def avail(cv, iv):
+        return _cells_ok(
+            _garment_active_triples(
+                axis, liked_g, disliked_g, cv, iv, query.get("fixed_attrs")),
+            _background_pool(query, _third_axis("garment_category", axis),
+                             (liked_g, disliked_g)))
+
     if axis == "pattern":
         return any(
             all(is_pattern_garment_compatible(p, g)
                 for p in (cv, iv) for g in (liked_g, disliked_g))
+            and avail(cv, iv)
             for cv in pools["compatible_neutral"]
             for iv in pools["incompatible_neutral"]
             if cv != iv
         )
-    return True
+    return any(
+        avail(cv, iv)
+        for cv in pools["compatible_neutral"]
+        for iv in pools["incompatible_neutral"]
+        if cv != iv
+    )
 
 
 def assign_violation_axes(queries, ab_values, seed=42):
@@ -357,6 +573,7 @@ def assign_violation_values(queries, ab_values, violation_axes, seed=42):
     val_use = Counter()
     user_val_use = Counter()
     inc_use = Counter()
+    comp_use = Counter()      # balance the COMPATIBLE side too, not just the pair
     g_use = Counter()
     user_g_use = Counter()
 
@@ -374,6 +591,7 @@ def assign_violation_values(queries, ab_values, violation_axes, seed=42):
         confusable = CONFUSABLE_ACTIVE_PAIRS.get(axis, set())
         base_patterns = _option_patterns(q, ab_values) if axis == "color" else set()
         scope = _violation_garment_scope(get_scenario_by_id(sid), axis)
+        a_val, b_val = ab_values.get(qid, (None, None))
 
         candidates = []
         for g in dict.fromkeys(q.get("compatible_garments", [])):
@@ -386,12 +604,20 @@ def assign_violation_values(queries, ab_values, violation_axes, seed=42):
                     patterns = base_patterns | ({cv, iv} if axis == "pattern" else set())
                     if not all(is_pattern_garment_compatible(p, g) for p in patterns):
                         continue
+                    if a_val and b_val and not _cells_ok(
+                            _value_violation_triples(
+                                q["active_axis"], axis, a_val, b_val, g, cv, iv,
+                                q.get("fixed_attrs")),
+                            _background_pool(
+                                q, _third_axis(q["active_axis"], axis), (g,))):
+                        continue
                     score = (
                         CONFUSABLE_PAIR_PENALTY * (frozenset((cv, iv)) in confusable)
                         + 8 * user_val_use[(uid, axis, cv, iv)]
                         + 4 * val_use[(sid, axis, cv, iv)]
                         + 2 * user_g_use[(uid, g)]
                         + 2 * inc_use[(axis, iv)]
+                        + 2 * comp_use[(axis, cv)]
                         + g_use[(sid, g)]
                     )
                     candidates.append((score, rng.random(), g, cv, iv))
@@ -400,6 +626,7 @@ def assign_violation_values(queries, ab_values, violation_axes, seed=42):
 
         _, _, g, cv, iv = min(candidates)
         assignment[qid] = (g, cv, iv)
+        comp_use[(axis, cv)] += 1
         val_use[(sid, axis, cv, iv)] += 1
         user_val_use[(uid, axis, cv, iv)] += 1
         inc_use[(axis, iv)] += 1
@@ -442,6 +669,12 @@ def assign_garment_active_values(queries, ab_values, violation_axes, seed=42):
                         is_pattern_garment_compatible(p, g)
                         for p in (cv, iv) for g in (liked_g, disliked_g)):
                     continue
+                if not _cells_ok(
+                        _garment_active_triples(
+                            axis, liked_g, disliked_g, cv, iv, q.get("fixed_attrs")),
+                        _background_pool(q, _third_axis("garment_category", axis),
+                                         (liked_g, disliked_g))):
+                    continue
                 score = (
                     CONFUSABLE_PAIR_PENALTY * (frozenset((cv, iv)) in confusable)
                     + 8 * user_val_use[(uid, axis, cv, iv)]
@@ -483,6 +716,7 @@ def assign_garment_pairs(queries, ab_values, seed=42):
         patterns = _option_patterns(q, ab_values)
         comp = list(dict.fromkeys(q.get("compatible_garments", [])))
         inc = list(dict.fromkeys(q.get("incompatible_garments", [])))
+        a_val, b_val = ab_values.get(q["query_id"], (None, None))
         candidates = []
         for cg in comp:
             for ig in inc:
@@ -493,6 +727,12 @@ def assign_garment_pairs(queries, ab_values, seed=42):
                     for pattern in patterns
                     for garment in (cg, ig)
                 ):
+                    continue
+                if a_val and b_val and not _cells_ok(
+                        _garment_violation_triples(
+                            axis, a_val, b_val, cg, ig, q.get("fixed_attrs")),
+                        _background_pool(q, _third_axis(axis, "garment_category"),
+                                         (cg, ig))):
                     continue
                 score = (
                     CONFUSABLE_PAIR_PENALTY * (frozenset((cg, ig)) in CONFUSABLE_GARMENT_PAIRS)
@@ -550,6 +790,13 @@ def plan_option_variant(profile, query, ab_values, violation_axis,
     fixed_attrs = dict(query.get("fixed_attrs", {}))
     fixed_attrs.pop("garment_category", None)
 
+    # Baseline control for the nuisance axis: when pattern is neither the
+    # preference axis nor the TPO axis, every option is plain. Identical
+    # across A-D, so it adds no contrast; "solid" is scenario-compatible in
+    # all 29 pattern-constrained scenarios and unconstrained elsewhere.
+    if _SOLID_BASELINE and "pattern" not in (active_axis, violation_axis):
+        fixed_attrs["pattern"] = "solid"
+
     if active_axis == "garment_category":
         # ── garment-ACTIVE template: A/C wear the liked garment, B/D the
         # disliked one (both scenario-compatible); the TPO contrast lives on
@@ -583,12 +830,26 @@ def plan_option_variant(profile, query, ab_values, violation_axis,
         option_patterns = _option_patterns(query, ab_values)
         if pair is None:
             rng = random.Random(_stable_seed(query["query_id"]))
-            compat_garment = _pick_garment(
-                query, "compatible_garments", rng, patterns=option_patterns
-            )
-            incompat_garment = _pick_garment(
-                query, "incompatible_garments", rng, patterns=option_patterns
-            )
+            feasible = []
+            for cg in dict.fromkeys(query.get("compatible_garments", [])):
+                for ig in dict.fromkeys(query.get("incompatible_garments", [])):
+                    if cg == ig:
+                        continue
+                    if not all(is_pattern_garment_compatible(p, g)
+                               for p in option_patterns for g in (cg, ig)):
+                        continue
+                    if not _cells_ok(
+                            _garment_violation_triples(
+                                active_axis, liked_v, disliked_v, cg, ig,
+                                query.get("fixed_attrs")),
+                            _background_pool(
+                                query, _third_axis(active_axis, "garment_category"),
+                                (cg, ig))):
+                        continue
+                    feasible.append((cg, ig))
+            if not feasible:
+                return None, "no_available_garment_pair"
+            compat_garment, incompat_garment = feasible[rng.randrange(len(feasible))]
         else:
             compat_garment, incompat_garment = pair
         if not compat_garment or not incompat_garment or compat_garment == incompat_garment:
@@ -620,6 +881,31 @@ def plan_option_variant(profile, query, ab_values, violation_axis,
 
     label_map = {"A": "tpo_and_preference", "B": "tpo_only",
                  "C": "preference_only", "D": "neither"}
+
+    # ── explicit background-axis fill (opt-in; see _background_pool) ──
+    background_fill = None
+    if _FILL_BACKGROUND:
+        bg_axis = _third_axis(active_axis, violation_axis)
+        if bg_axis in ("color", "pattern") and not attrs_a.get(bg_axis):
+            garments = {a.get("garment_category")
+                        for a in (attrs_a, attrs_b, attrs_c, attrs_d)}
+            pool = _background_pool(query, bg_axis, tuple(sorted(g for g in garments if g)))
+            if not pool:
+                return None, "no_neutral_background_value"
+            triples = [(a.get("color"), a.get("garment_category"), a.get("pattern"))
+                       for a in (attrs_a, attrs_b, attrs_c, attrs_d)]
+            filled, value = _fill_missing(triples, pool)
+            if filled is None:
+                return None, "no_available_background_value"
+            for a in (attrs_a, attrs_b, attrs_c, attrs_d):
+                a[bg_axis] = value
+            fixed_attrs[bg_axis] = value
+            _BG_USE[value] += 1
+            background_fill = {
+                "axis": bg_axis, "value": value,
+                "preference": _profile_pref(query.get("user_id", "?"), bg_axis, value),
+            }
+
     options = {}
     for k, attrs in [("A", attrs_a), ("B", attrs_b), ("C", attrs_c), ("D", attrs_d)]:
         options[k] = {
@@ -646,6 +932,7 @@ def plan_option_variant(profile, query, ab_values, violation_axis,
         "violation_value": violation_value,
         "tpo_compatible_value": tpo_compatible_value,
         "main_category": compat_garment,
+        "background_fill": background_fill,   # None unless explicitly filled
         "options": options,
     }
     return plan, None
@@ -738,6 +1025,9 @@ def run_pipeline(profile_path, query_path, output_path, force=False, limit=0, se
                  pattern_downsample=True):
     log_step("STAGE 3 — Option Planner (clean 2×2 + strict disliked B/D)")
     profiles = {p["user_id"]: p for p in load_jsonl(profile_path)}
+    global _PROFILES
+    _PROFILES = profiles
+    _BG_USE.clear()
     queries = load_jsonl(query_path)
     print(f"  {len(profiles)} profiles, {len(queries)} queries")
 
@@ -949,7 +1239,36 @@ def main():
     parser.add_argument("--no_pattern_downsample", action="store_true",
                         help="keep every solid-striped pattern plan (skip the "
                              "pair-family balance step)")
+    parser.add_argument("--cell-library", type=Path, default=None,
+                        help="annotation/attribute_library.json; when given, "
+                             "candidates whose four options do not all land on "
+                             "human-annotated 'available' cells are filtered "
+                             "out BEFORE the balance objectives (incomplete-key "
+                             "plans bypass unchanged)")
+    parser.add_argument("--solid-baseline", action="store_true",
+                        help="hold the pattern axis at 'solid' whenever pattern "
+                             "is neither the preference nor the TPO axis")
+    parser.add_argument("--fill-tier", type=int, default=1, choices=[1, 2],
+                        help="1: background fill must be preference-neutral; "
+                             "2: also allow a low-salience non-neutral value "
+                             "(solid/striped/checkered) as a last resort")
+    parser.add_argument("--fill-background", action="store_true",
+                        help="explicitly assign a preference-NEUTRAL, TPO-safe, "
+                             "image-available value to the background axis when "
+                             "construction left it unfixed (PROCESS.md 7-1). "
+                             "Off by default: no implicit fallback.")
     args = parser.parse_args()
+    if args.solid_baseline:
+        globals()["_SOLID_BASELINE"] = True
+        print("  Pattern baseline control: solid when pattern is the nuisance axis")
+    if args.fill_background:
+        globals()["_FILL_BACKGROUND"] = True
+        globals()["_FILL_TIER"] = args.fill_tier
+        print("  Explicit background-axis fill: ON")
+    if args.cell_library:
+        n = load_cell_library(args.cell_library)
+        print(f"  Cell-availability filter ON: {n} available cells "
+              f"({args.cell_library})")
     run_pipeline(args.profile_path, args.query_path, args.output,
                  args.force, args.limit, args.seed,
                  pattern_downsample=not args.no_pattern_downsample)

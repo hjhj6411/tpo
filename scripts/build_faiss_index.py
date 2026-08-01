@@ -76,8 +76,10 @@ GARMENT_TITLE_KEYWORDS: dict[str, list[str]] = {
     "suit_vest":   ["suit vest", "waistcoat"],
     "jacket":      ["jacket", "denim jacket", "leather jacket"],
     "pea_coat":    ["pea coat", "peacoat"],
-    "long_coat":   ["wool coat", "wool overcoat", "overcoat"],
-    "coat":        ["coat", "overcoat", "wool coat"],
+    "long_coat":   ["long coat"],
+    # generic "coat" bucket: keep only if a coarse class is genuinely needed.
+    # It must never be used to populate long_coat cells.
+    "coat":        ["coat"],
     "blazer":      ["blazer", "suit jacket"],
     "fleece":       ["fleece"],
     "windbreaker": ["windbreaker", "wind jacket", "rain jacket", "anorak"],

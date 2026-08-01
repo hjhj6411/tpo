@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+# RETIRED — the fsiglip/ path is canonical. Left unmodified on purpose.
+# Its garment vocabulary still contains the `wool coat` hypernym and the
+# GARMENT_EQUIV_GROUPS alias table that were removed from fsiglip/ (see
+# FIX_GARMENT_VOCAB.md). Do not run it and do not copy its vocabulary; if this
+# backend is ever revived, take the garment axis from configs/config.py the way
+# fsiglip/collector_sam3.py now does.
+#
 # ViT-L/14 embedding variant of
 # fsiglip/collector_sam3.py.
 # Only the garment axis is changed: instead of a FashionSigLIP cosine similarity,
