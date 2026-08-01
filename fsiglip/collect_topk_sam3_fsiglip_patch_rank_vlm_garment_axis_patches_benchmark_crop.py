@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+# NOT IN USE (author, 2026-08-01). `run_benchmark_crop_4gpu.sh`, the only
+# caller, is retired. The live collection path is
+# availability_audit/screen_sam3.py (screening) -> annotation/serve_annotator.py
+# (selection), scored by fsiglip/collect_img_sam3.py.
+# Kept in sync with the other collectors anyway — its garment vocabulary is
+# derived from configs/config.py — so reviving it cannot reintroduce the
+# `wool coat` hypernym. See docs/PROCESS.md §8.
 # Benchmark-output variant of fsiglip/collector_sam3.py.
 # Retrieval, SAM3 masking, patch scoring, VLM garment judgement, and reranking
 # are unchanged. Intermediate images are temporary; only the top-1 crop for

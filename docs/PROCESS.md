@@ -512,27 +512,107 @@ implementation behind the shipped library. `vit/` keeps the old contaminated
 vocabulary and is marked RETIRED in its header; `retrieval/` carries no garment
 vocabulary at all.
 
-Unresolved, for the author: `fsiglip/run_benchmark_crop_4gpu.sh` calls
-`collect_topk_..._benchmark_crop.py`, while README and `docs/SETUP*.md` point at
-`collector_sam3.py`. All three files are now fixed identically, so no path is
-contaminated, but the duplication should be collapsed to one canonical
-collector.
+Resolved by the author (2026-08-01): `fsiglip/run_benchmark_crop_4gpu.sh` is not
+in use, so `collect_topk_..._benchmark_crop.py` is not an execution path either.
+The live pipeline is `availability_audit/screen_sam3.py` for screening and
+`annotation/serve_annotator.py` for selection. All three collector copies were
+fixed identically regardless, so no path can reintroduce the hypernym.
 
-### 8-4. Re-collection procedure (not yet run — needs GPU and a human pass)
+### 8-4. Re-collection runbook (screen → reset → re-annotate)
+
+The workflow is the one already in use: `availability_audit/screen_sam3.py`
+produces candidates, `annotation/serve_annotator.py` makes the final selection.
+`fsiglip/run_benchmark_crop_4gpu.sh` and
+`fsiglip/collect_topk_..._benchmark_crop.py` are **not** part of it.
+
+Nothing below touches the 21 other garments. `availability_audit/images/`,
+`annotation/cell_annotations.jsonl` and `annotation/attribute_library.json` are
+only read until step 2 explicitly appends to the log.
+
+#### Step 1 — re-screen the two coats (GPU, long)
+
+Serve FashionSigLIP on 1235 and the four VLM workers on 8001–8004 first, then:
 
 ```bash
-# 1. revert the 139 affected cells to pending, preserving the old verdict
-#    under a "superseded" key — do not delete the previous decision
-# 2. re-collect only those cells
-python -m fsiglip.collector_sam3 \
-    --plan-path data_wacv_scenario_v5/options/option_plans.jsonl \
-    --only-garments long_coat,pea_coat \
-    --output-root <new output root>
-# 3. human re-review, then update annotation/attribute_library.json and record
-#    its new hash here and in README
-# 4. regenerate the option plans against the new library (do NOT reuse the
-#    current plan set) and rerun the balance reports on the new manifest
+cd ~/pod_bench
+conda activate sam3
+
+python -m availability_audit.screen_sam3 \
+  --garments long_coat,pea_coat \
+  --out-dir availability_audit/images_coat_redo \
+  --client-url http://127.0.0.1:1235/knn-service \
+  --score-url  http://127.0.0.1:1235/score-image-files \
+  --gpus 0,1,2,3 --vlm-ports 8001,8002,8003,8004
 ```
+
+13 colours × 2 garments × 6 patterns = **156 cells in 13 colour waves**. A fresh
+`--out-dir` is required, not a convenience: the run manifest now records
+`vlm_garment_vocabulary`, so the same-conditions guard correctly refuses to mix
+these measurements into `availability_audit/images/`, which was screened under
+the contaminated vocabulary. `--redo` combined with `--garments` is rejected
+outright — it would delete the whole directory's results, not just the subset.
+
+Each worker reports the garment vocabulary it will actually show the VLM and
+the parent aborts before measuring a single cell if it is not the benchmark
+axis. That check is the one that was missing.
+
+#### Step 2 — retract the old coat verdicts
+
+```bash
+# dry run: writes nothing, prints exactly what would change
+python -m annotation.reset_cells --garments long_coat,pea_coat
+
+# then, to apply
+python -m annotation.reset_cells --garments long_coat,pea_coat --apply \
+  --reason "rescreened under corrected garment vocabulary (PROCESS.md 8)" \
+  --annotator <your name>
+```
+
+Expected: 139 target cells, 86 `available` + 53 `excluded`, 139 verdicts
+retracted. `cell_annotations.jsonl` stays append-only — a `reset` record carries
+the verdict it supersedes, and `attribute_library.json` is not written by this
+script. The annotator rebuilds the library from the log on its next start.
+
+#### Step 3 — re-annotate
+
+```bash
+conda activate pod
+
+python -m annotation.serve_annotator \
+  --variant wacv_scenario_v4 \
+  --screen-dir availability_audit/images_coat_redo \
+  --port 8765
+```
+
+The queue is exactly the 139 reset cells: target cells come from the plans and
+the full attribute grid, while the annotatable set is the intersection with the
+loaded snapshot, which holds only coats.
+
+**Use `--variant wacv_scenario_v4` here, not v5.** Target keys define which
+cells `build_library` writes, and v4's 1,661-cell universe is the one the
+library was built on. v5's plans need only 1,137 cells, so annotating under v5
+would rebuild the library with 524 fewer cells — no verdict would be lost (the
+log is the source of truth) but the shipped library and its pinned hash would
+silently narrow.
+
+Three cells v5 needs are coats that were never annotated at all
+(`beige|pea_coat|solid`, `red|long_coat|solid`, `red|pea_coat|solid`); they sit
+outside the v4 target set and are not part of this pass. They belong with the
+other 18 never-annotated v5 cells in §7 step 4.
+
+#### Step 4 — after the human pass
+
+1. Record the new `annotation/attribute_library.json` hash here and in README.
+2. Regenerate the option plans against the new library — do **not** reuse the
+   current plan set:
+   ```bash
+   export POD_VARIANT=wacv_scenario_v5
+   python -m construction.option_planner --force \
+       --cell-library annotation/attribute_library.json --solid-baseline
+   ```
+3. Rerun `scripts.validate_options` and `scripts.report_track_balance`, and
+   update the provisional hash in README and
+   `docs/wacv_scenario_v5_report.md`.
 
 Review guidance for the human pass — the UI label must read `long coat` /
 `pea coat`, never `wool coat`:

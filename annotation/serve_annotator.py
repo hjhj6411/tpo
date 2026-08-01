@@ -478,6 +478,26 @@ def latest_records(
     return latest
 
 
+# A `reset` record retracts whatever verdict came before it, sending the cell
+# back to the queue without deleting anything: cell_annotations.jsonl stays
+# append-only, so the superseded decision is still readable. Used when the
+# measurement behind a verdict is invalidated — the `wool coat` garment
+# vocabulary contamination is the case it was written for (docs/PROCESS.md §8).
+VERDICT_DECISIONS = {"selected", "excluded"}
+SETTLING_DECISIONS = VERDICT_DECISIONS | {"reset"}
+
+
+def settled_records(records: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    """Cells whose most recent verdict-or-reset is an actual verdict.
+
+    A cell whose latest such record is a `reset` is deliberately absent, which
+    is what puts it back into the annotation queue.
+    """
+    return {key: record
+            for key, record in latest_records(records, SETTLING_DECISIONS).items()
+            if record.get("decision") in VERDICT_DECISIONS}
+
+
 def public_candidate(candidate: dict[str, Any], position: int,
                      show_scores: bool) -> dict[str, Any]:
     row = {
@@ -557,7 +577,7 @@ class AppState:
     def completed_keys(self) -> set[str]:
         if self.args.mode == "judge-all":
             return set(latest_records(self.records, {"judge_all"}))
-        return set(latest_records(self.records, {"selected", "excluded"}))
+        return set(settled_records(self.records))
 
     def progress(self) -> dict[str, int]:
         completed = self.completed_keys() & set(self.all_target_keys)
@@ -626,7 +646,11 @@ def copy_selected_crops(
 
 
 def build_library(state: AppState) -> dict[str, Any]:
-    latest = latest_records(state.records, {"selected", "excluded"})
+    latest = settled_records(state.records)
+    retracted = {key: record
+                 for key, record in latest_records(state.records,
+                                                   SETTLING_DECISIONS).items()
+                 if record.get("decision") == "reset"}
     old = {}
     if state.library_path.is_file():
         try:
@@ -664,6 +688,16 @@ def build_library(state: AppState) -> dict[str, Any]:
             }
             if previous.get("judge_all"):
                 cells_out[key]["judge_all"] = previous["judge_all"]
+            reset = retracted.get(key)
+            if reset is not None:
+                # Keep the retracted verdict visible in the library, not only in
+                # the append-only log, so a before/after comparison after
+                # re-collection does not need to replay cell_annotations.jsonl.
+                cells_out[key]["reset"] = {
+                    "reason": reset.get("reason"),
+                    "ts": reset.get("ts"),
+                    "superseded": reset.get("superseded"),
+                }
 
     judge_latest = latest_records(state.records, {"judge_all"})
     for key, record in judge_latest.items():
@@ -839,7 +873,7 @@ def queue_cells(
     if args.recheck:
         if args.mode != "select":
             raise SystemExit("[error] --recheck is supported in select mode")
-        bases = latest_records(records, {"selected", "excluded"})
+        bases = settled_records(records)
         eligible = sorted(available_keys & set(bases))
         random.Random(args.seed).shuffle(eligible)
         queue = eligible[:args.recheck]
@@ -848,7 +882,7 @@ def queue_cells(
         if args.mode == "judge-all":
             completed = set(latest_records(records, {"judge_all"}))
         else:
-            completed = set(latest_records(records, {"selected", "excluded"}))
+            completed = set(settled_records(records))
         queue = list(available_keys - completed)
         if args.order == "usage":
             queue.sort(key=lambda key: (
