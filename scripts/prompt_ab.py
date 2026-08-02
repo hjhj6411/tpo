@@ -190,7 +190,7 @@ def main() -> int:
     ap.add_argument("--timeout", type=float, default=120.0)
     ap.add_argument("--workers", type=int, default=8)
     ap.add_argument("--prompts", default="A_current,B_minimal,C_bare,D_bare_plus_vest")
-    ap.add_argument("--out", type=Path, default=REPO / "prompt_ab_results.json")
+    ap.add_argument("--out", type=Path, default=REPO / "_local" / "prompt_ab_results.json")
     args = ap.parse_args()
 
     bases = [Path(b) for b in args.image_base] or [
@@ -283,6 +283,7 @@ def main() -> int:
         top = ", ".join(f"{t}->{p}={c}" for (t, p), c in conf.most_common(5))
         print(f"    {name:18s} {top or '(none)'}")
 
+    args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(
         {"vocab": GARMENT_VOCAB, "per_garment": args.per_garment,
          "seed": args.seed, "results": results}, indent=1))
