@@ -26,7 +26,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from configs.config import OPTIONS_DIR, PROFILES_DIR, QUERIES_DIR
-from src.utils import load_jsonl
+from scripts.utils import load_jsonl
 
 
 EXPECTED = {

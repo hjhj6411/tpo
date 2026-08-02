@@ -41,7 +41,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from configs.config import OPTIONS_DIR, QUERIES_DIR, PROFILES_DIR
-from src.utils import call_llm, load_jsonl, log_step, save_jsonl
+from scripts.utils import call_llm, load_jsonl, log_step, save_jsonl
 from text_exp.text_eval import (
     INPUT_FORMATS,
     TPO_SCORE,

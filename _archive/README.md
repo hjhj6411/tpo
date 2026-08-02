@@ -9,6 +9,7 @@ The live pipeline is `configs/` → `construction/` → `fsiglip/` → `scripts/
 
 | directory | what it was | why it is here |
 |---|---|---|
+| `src/` | the pre-`construction/` pipeline: legacy collectors, `option_planner.py`, `image_collector.py` | superseded by `construction/` + `fsiglip/`. Its one live module, `utils.py`, was promoted to `scripts/utils.py` before the move — see `_archive/src/README_LEGACY.md`. **Do not read it as documentation of the benchmark**; it predates the v2 vocabulary revision |
 | `before_configs/` | snapshot of `configs/` (profiles, scenarios) before the v2 vocabulary revision | physical evidence for the revision history quoted in `docs/redesign_v2_plan.md` |
 | `vit/` | ViT-L/14 collection path | superseded by `fsiglip/collector_sam3.py`. Its garment vocabulary still carries the retired `wool coat` hypernym and the `GARMENT_EQUIV_GROUPS` alias table — **do not copy vocabulary out of here** (see `docs/FIX_GARMENT_VOCAB.md`) |
 | `QwenEmb/` | Qwen3-VL-Embedding retrieval backend trial | not adopted; Stage 4 is frozen on Marqo-FashionSigLIP. Setup record in `docs/SETUP_QWENEMB.md` |

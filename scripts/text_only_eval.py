@@ -35,7 +35,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.utils import call_llm, load_jsonl, save_jsonl, log_step
+from scripts.utils import call_llm, load_jsonl, save_jsonl, log_step
 from scripts.plan_index import PlanIndex, select_by_manifest
 from configs.config import OPTIONS_DIR, QUERIES_DIR, PROFILES_DIR, PROVIDERS, PROVIDER_ENDPOINTS
 from configs.scenarios import (EVAL_FRAME_CLAUSE, EVAL_PRIORITY_CLAUSE_SITUATION,

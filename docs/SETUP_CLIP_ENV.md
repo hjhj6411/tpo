@@ -1,5 +1,11 @@
 # SETUP_CLIP_ENV.md — clip-retrieval in an isolated conda env
 
+> **Retired pipeline.** Stage 4 retrieval is frozen on Marqo-FashionSigLIP
+> (`fsiglip/`, see `SETUP_FSIGLIP.md`). The collector this document sets up now
+> lives at `_archive/src/collect_images_clip_retrieval.py` and is not run. Kept
+> as the record of why retrieval needs its own conda env — that constraint
+> still holds for the fsiglip env.
+
 The pod analysis env and the image-retrieval stack pin **incompatible numpy /
 pyarrow** versions. Installing clip-retrieval into the pod env breaks the numpy
 your option-planning / eval code depends on. So image retrieval runs in its own
@@ -9,7 +15,7 @@ What lives where:
 - **pod env**  → profile/query/option generation, validation, text-only eval
   (already done; do NOT pip-install clip-retrieval here).
 - **clip env** → img2dataset, clip-retrieval inference/index/back, and
-  `src/collect_images_clip_retrieval.py`.
+  `_archive/src/collect_images_clip_retrieval.py`.
 
 The collector itself only needs `requests` + `Pillow` (+ optional `scikit-image`
 for the SSIM gate). The VLM attribute check is an HTTP call to your vLLM server
@@ -160,7 +166,7 @@ curl -s -X POST http://127.0.0.1:1234/knn-service \
 
 Or use the built-in self-test (validates the whole client path, not just curl):
 ```bash
-python src/collect_images_clip_retrieval.py --backend local \
+python _archive/src/collect_images_clip_retrieval.py --backend local \
   --client-url http://127.0.0.1:1234/knn-service --indice-name pod_fashion --selftest
 ```
 It fires one KNN query for "navy wool coat" and prints up to 5 candidate URLs.
@@ -171,11 +177,11 @@ In a second `clip`-env shell (vLLM VLM up on :8002):
 ```bash
 conda activate clip
 # pilot
-python src/collect_images_clip_retrieval.py --backend local \
+python _archive/src/collect_images_clip_retrieval.py --backend local \
   --client-url http://127.0.0.1:1234/knn-service --indice-name pod_fashion \
   --limit 30 --verify lenient --top_k 20
 # full run (resumable; re-run to continue, skips done query_ids)
-python src/collect_images_clip_retrieval.py --backend local \
+python _archive/src/collect_images_clip_retrieval.py --backend local \
   --client-url http://127.0.0.1:1234/knn-service --indice-name pod_fashion \
   --verify lenient --top_k 20
 ```

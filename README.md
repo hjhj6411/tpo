@@ -235,8 +235,8 @@ pod_bench/
 │   └── collector_sam3.py  # current collector
 ├── scripts/                # eval + validation (multimodal_eval, text_only_eval, validate_options, …)
 ├── docs/                   # SETUP.md, SETUP_FSIGLIP.md, GARMENT_TAXONOMY_REDESIGN.md, …
-├── src/                    # legacy collectors (not used by the current pipeline)
 ├── _archive/               # retired pipelines, kept for provenance — nothing here runs
+│   ├── src/                # legacy collectors (utils.py promoted to scripts/)
 │   ├── before_configs/     # pre-revision configs/profiles/scenarios snapshot
 │   ├── vit/                # retired ViT-L/14 collection path
 │   ├── QwenEmb/            # Qwen3-VL-Embedding backend trial (not adopted)
