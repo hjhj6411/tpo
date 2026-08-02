@@ -37,3 +37,6 @@ data/images/
 
 # scratch dir written by scripts/verify_release.sh
 data_*_verify/
+
+# assembled benchmark images (rebuild from attribute_library.json)
+data_wacv_scenario_v5/images/

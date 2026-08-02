@@ -1,0 +1,5547 @@
+{
+ "variant": "wacv_scenario_v5",
+ "schema": "color|garment_category|pattern -> images/<color>/<pattern>_<garment>.jpg",
+ "n_cells": 1108,
+ "cells": {
+  "beige|blazer|checkered": {
+   "file": "beige/checkered_blazer.jpg",
+   "source": "images_final/beige/checkered_blazer/1.jpg",
+   "url_key": "dcdbb6bf9cc6f9ab5f9b"
+  },
+  "beige|blazer|floral": {
+   "file": "beige/floral_blazer.jpg",
+   "source": "images_final/beige/floral_blazer/1.jpg",
+   "url_key": "40866d64f32ee9458ce7"
+  },
+  "beige|blazer|leopard": {
+   "file": "beige/leopard_blazer.jpg",
+   "source": "images_final/beige/leopard_blazer/1.jpg",
+   "url_key": "f4b3e8774b99c12d9cac"
+  },
+  "beige|blazer|solid": {
+   "file": "beige/solid_blazer.jpg",
+   "source": "images_final/beige/solid_blazer/1.jpg",
+   "url_key": "d507b6f9640467739388"
+  },
+  "beige|blazer|striped": {
+   "file": "beige/striped_blazer.jpg",
+   "source": "images_final/beige/striped_blazer/1.jpg",
+   "url_key": "7f25d4114cb85b1291c4"
+  },
+  "beige|cardigan|polka_dot": {
+   "file": "beige/polka_dot_cardigan.jpg",
+   "source": "images_final/beige/polka_dot_cardigan/1.jpg",
+   "url_key": "f5bbc68bf38ffa31f174"
+  },
+  "beige|cardigan|striped": {
+   "file": "beige/striped_cardigan.jpg",
+   "source": "images_final/beige/striped_cardigan/1.jpg",
+   "url_key": "8c9ee10b6296789a9e87"
+  },
+  "beige|dress|checkered": {
+   "file": "beige/checkered_dress.jpg",
+   "source": "images_final/beige/checkered_dress/2.jpg",
+   "url_key": "597c3fc43f692afbb96e"
+  },
+  "beige|dress|floral": {
+   "file": "beige/floral_dress.jpg",
+   "source": "images_final/beige/floral_dress/1.jpg",
+   "url_key": "140857cc06799d96bb67"
+  },
+  "beige|dress|leopard": {
+   "file": "beige/leopard_dress.jpg",
+   "source": "images_final/beige/leopard_dress/1.jpg",
+   "url_key": "56699f3a90a43d43c759"
+  },
+  "beige|dress|polka_dot": {
+   "file": "beige/polka_dot_dress.jpg",
+   "source": "images_final/beige/polka_dot_dress/1.jpg",
+   "url_key": "ef575aac1f72cb2c1e47"
+  },
+  "beige|dress|solid": {
+   "file": "beige/solid_dress.jpg",
+   "source": "images_final/beige/solid_dress/1.jpg",
+   "url_key": "c3f5ee5ea213faa5e3d7"
+  },
+  "beige|dress|striped": {
+   "file": "beige/striped_dress.jpg",
+   "source": "images_final/beige/striped_dress/1.jpg",
+   "url_key": "20eb2c0f238818a636c7"
+  },
+  "beige|fleece_jacket|solid": {
+   "file": "beige/solid_fleece_jacket.jpg",
+   "source": "images_final/beige/solid_fleece_jacket/1.jpg",
+   "url_key": "df3c16c80fa74997e66b"
+  },
+  "beige|formal_shirt|checkered": {
+   "file": "beige/checkered_formal_shirt.jpg",
+   "source": "images_final/beige/checkered_formal_shirt/1.jpg",
+   "url_key": "d30eff2e8890e4bf4c21"
+  },
+  "beige|formal_shirt|floral": {
+   "file": "beige/floral_formal_shirt.jpg",
+   "source": "images_final/beige/floral_formal_shirt/1.jpg",
+   "url_key": "1b957fbea0b372b1e26c"
+  },
+  "beige|formal_shirt|leopard": {
+   "file": "beige/leopard_formal_shirt.jpg",
+   "source": "images_final/beige/leopard_formal_shirt/1.jpg",
+   "url_key": "cf85b1e382841d96f21a"
+  },
+  "beige|formal_shirt|polka_dot": {
+   "file": "beige/polka_dot_formal_shirt.jpg",
+   "source": "images_final/beige/polka_dot_formal_shirt/1.jpg",
+   "url_key": "a532a99eb762e1c71e6a"
+  },
+  "beige|formal_shirt|solid": {
+   "file": "beige/solid_formal_shirt.jpg",
+   "source": "images_final/beige/solid_formal_shirt/1.jpg",
+   "url_key": "c1465df82dae9f82a091"
+  },
+  "beige|formal_shirt|striped": {
+   "file": "beige/striped_formal_shirt.jpg",
+   "source": "images_final/beige/striped_formal_shirt/1.jpg",
+   "url_key": "af4e67e0a86b92b70127"
+  },
+  "beige|hoodie|checkered": {
+   "file": "beige/checkered_hoodie.jpg",
+   "source": "images_final/beige/checkered_hoodie/1.jpg",
+   "url_key": "f07cae0a75c9a38607c4"
+  },
+  "beige|hoodie|leopard": {
+   "file": "beige/leopard_hoodie.jpg",
+   "source": "images_final/beige/leopard_hoodie/1.jpg",
+   "url_key": "826e33bb64af4aece345"
+  },
+  "beige|hoodie|solid": {
+   "file": "beige/solid_hoodie.jpg",
+   "source": "images_final/beige/solid_hoodie/1.jpg",
+   "url_key": "0e8e4d7ce32ed153c492"
+  },
+  "beige|hoodie|striped": {
+   "file": "beige/striped_hoodie.jpg",
+   "source": "images_final/beige/striped_hoodie/2.jpg",
+   "url_key": "0b55bd1c037edf7c67c3"
+  },
+  "beige|jeans|solid": {
+   "file": "beige/solid_jeans.jpg",
+   "source": "images_final/beige/solid_jeans/1.jpg",
+   "url_key": "25592284fce059b43729"
+  },
+  "beige|leather_jacket|solid": {
+   "file": "beige/solid_leather_jacket.jpg",
+   "source": "images_final/beige/solid_leather_jacket/1.jpg",
+   "url_key": "a0a9233da811771e947f"
+  },
+  "beige|leggings|solid": {
+   "file": "beige/solid_leggings.jpg",
+   "source": "images_final/beige/solid_leggings/1.jpg",
+   "url_key": "bd5c993e14975c46e7e2"
+  },
+  "beige|long_coat|checkered": {
+   "file": "beige/checkered_long_coat.jpg",
+   "source": "images_final/beige/checkered_long_coat/2.jpg",
+   "url_key": "67c6914a61b03f097a46"
+  },
+  "beige|long_coat|floral": {
+   "file": "beige/floral_long_coat.jpg",
+   "source": "images_final/beige/floral_long_coat/2.jpg",
+   "url_key": "234a262fe3c049915e14"
+  },
+  "beige|long_coat|leopard": {
+   "file": "beige/leopard_long_coat.jpg",
+   "source": "images_final/beige/leopard_long_coat/2.jpg",
+   "url_key": "19f00e5097f1ce6ce350"
+  },
+  "beige|long_coat|solid": {
+   "file": "beige/solid_long_coat.jpg",
+   "source": "images_final/beige/solid_long_coat/3.jpg",
+   "url_key": "fa68f319afa2116b58e3"
+  },
+  "beige|long_coat|striped": {
+   "file": "beige/striped_long_coat.jpg",
+   "source": "images_final/beige/striped_long_coat/1.jpg",
+   "url_key": "6da6488985cc13450389"
+  },
+  "beige|long_skirt|checkered": {
+   "file": "beige/checkered_long_skirt.jpg",
+   "source": "images_final/beige/checkered_long_skirt/1.jpg",
+   "url_key": "a76575625afdcb2ea292"
+  },
+  "beige|long_skirt|floral": {
+   "file": "beige/floral_long_skirt.jpg",
+   "source": "images_final/beige/floral_long_skirt/1.jpg",
+   "url_key": "e2ecdb928cd3ee198aa7"
+  },
+  "beige|long_skirt|leopard": {
+   "file": "beige/leopard_long_skirt.jpg",
+   "source": "images_final/beige/leopard_long_skirt/1.jpg",
+   "url_key": "c3d2d2f1ae1261d25c5f"
+  },
+  "beige|long_skirt|solid": {
+   "file": "beige/solid_long_skirt.jpg",
+   "source": "images_final/beige/solid_long_skirt/1.jpg",
+   "url_key": "4d03ea4a8b812a714054"
+  },
+  "beige|mini_skirt|checkered": {
+   "file": "beige/checkered_mini_skirt.jpg",
+   "source": "images_final/beige/checkered_mini_skirt/1.jpg",
+   "url_key": "5fde8fc1517589a7d6ef"
+  },
+  "beige|mini_skirt|floral": {
+   "file": "beige/floral_mini_skirt.jpg",
+   "source": "images_final/beige/floral_mini_skirt/1.jpg",
+   "url_key": "fd9bf555b429f807bb77"
+  },
+  "beige|mini_skirt|leopard": {
+   "file": "beige/leopard_mini_skirt.jpg",
+   "source": "images_final/beige/leopard_mini_skirt/1.jpg",
+   "url_key": "95f109bb05384ca265bc"
+  },
+  "beige|mini_skirt|polka_dot": {
+   "file": "beige/polka_dot_mini_skirt.jpg",
+   "source": "images_final/beige/polka_dot_mini_skirt/1.jpg",
+   "url_key": "70bd9eac05aed5a88959"
+  },
+  "beige|mini_skirt|solid": {
+   "file": "beige/solid_mini_skirt.jpg",
+   "source": "images_final/beige/solid_mini_skirt/1.jpg",
+   "url_key": "ff569bbeff3c20c048b9"
+  },
+  "beige|mini_skirt|striped": {
+   "file": "beige/striped_mini_skirt.jpg",
+   "source": "images_final/beige/striped_mini_skirt/1.jpg",
+   "url_key": "7cb9216a19a4d2752327"
+  },
+  "beige|polo_shirt|checkered": {
+   "file": "beige/checkered_polo_shirt.jpg",
+   "source": "images_final/beige/checkered_polo_shirt/1.jpg",
+   "url_key": "70f300360d8017e064f4"
+  },
+  "beige|polo_shirt|solid": {
+   "file": "beige/solid_polo_shirt.jpg",
+   "source": "images_final/beige/solid_polo_shirt/1.jpg",
+   "url_key": "4b48c58f638222f4be15"
+  },
+  "beige|polo_shirt|striped": {
+   "file": "beige/striped_polo_shirt.jpg",
+   "source": "images_final/beige/striped_polo_shirt/1.jpg",
+   "url_key": "4ebff7b925bdb52c91e5"
+  },
+  "beige|shorts|checkered": {
+   "file": "beige/checkered_shorts.jpg",
+   "source": "images_final/beige/checkered_shorts/1.jpg",
+   "url_key": "fbf65afe99a9fba43b25"
+  },
+  "beige|shorts|floral": {
+   "file": "beige/floral_shorts.jpg",
+   "source": "images_final/beige/floral_shorts/1.jpg",
+   "url_key": "3bd7556a01ca9c5159a1"
+  },
+  "beige|shorts|leopard": {
+   "file": "beige/leopard_shorts.jpg",
+   "source": "images_final/beige/leopard_shorts/1.jpg",
+   "url_key": "eaed076fef173e382a16"
+  },
+  "beige|shorts|polka_dot": {
+   "file": "beige/polka_dot_shorts.jpg",
+   "source": "images_final/beige/polka_dot_shorts/1.jpg",
+   "url_key": "2782701437a4d402bbd7"
+  },
+  "beige|shorts|solid": {
+   "file": "beige/solid_shorts.jpg",
+   "source": "images_final/beige/solid_shorts/1.jpg",
+   "url_key": "dfbe7ce7ddedb5737599"
+  },
+  "beige|shorts|striped": {
+   "file": "beige/striped_shorts.jpg",
+   "source": "images_final/beige/striped_shorts/1.jpg",
+   "url_key": "bb0fbd9cb7a7810abea7"
+  },
+  "beige|slacks|checkered": {
+   "file": "beige/checkered_slacks.jpg",
+   "source": "images_final/beige/checkered_slacks/1.jpg",
+   "url_key": "4fa2c7e0d4f33d0cc520"
+  },
+  "beige|slacks|floral": {
+   "file": "beige/floral_slacks.jpg",
+   "source": "images_final/beige/floral_slacks/1.jpg",
+   "url_key": "43b296d0e326f705dc8a"
+  },
+  "beige|slacks|leopard": {
+   "file": "beige/leopard_slacks.jpg",
+   "source": "images_final/beige/leopard_slacks/1.jpg",
+   "url_key": "4193301b8fc41af290d6"
+  },
+  "beige|slacks|polka_dot": {
+   "file": "beige/polka_dot_slacks.jpg",
+   "source": "images_final/beige/polka_dot_slacks/1.jpg",
+   "url_key": "1e26cbd20e0358d746da"
+  },
+  "beige|slacks|solid": {
+   "file": "beige/solid_slacks.jpg",
+   "source": "images_final/beige/solid_slacks/1.jpg",
+   "url_key": "bb0cc75d41c5eb16cb3e"
+  },
+  "beige|slacks|striped": {
+   "file": "beige/striped_slacks.jpg",
+   "source": "images_final/beige/striped_slacks/1.jpg",
+   "url_key": "e70c9ca3738245c869b0"
+  },
+  "beige|suit_vest|checkered": {
+   "file": "beige/checkered_suit_vest.jpg",
+   "source": "images_final/beige/checkered_suit_vest/1.jpg",
+   "url_key": "2fc548068954e245cb8d"
+  },
+  "beige|suit_vest|solid": {
+   "file": "beige/solid_suit_vest.jpg",
+   "source": "images_final/beige/solid_suit_vest/1.jpg",
+   "url_key": "f40115205a82ae5956b5"
+  },
+  "beige|sweater|floral": {
+   "file": "beige/floral_sweater.jpg",
+   "source": "images_final/beige/floral_sweater/1.jpg",
+   "url_key": "af17af86314a03a804b0"
+  },
+  "beige|sweater|leopard": {
+   "file": "beige/leopard_sweater.jpg",
+   "source": "images_final/beige/leopard_sweater/1.jpg",
+   "url_key": "cea5f802c8e188bdfc9d"
+  },
+  "beige|sweater|solid": {
+   "file": "beige/solid_sweater.jpg",
+   "source": "images_final/beige/solid_sweater/1.jpg",
+   "url_key": "c2670124fe93eb09e8b5"
+  },
+  "beige|sweater|striped": {
+   "file": "beige/striped_sweater.jpg",
+   "source": "images_final/beige/striped_sweater/1.jpg",
+   "url_key": "a57c963ea006c30d81ab"
+  },
+  "beige|t_shirt|checkered": {
+   "file": "beige/checkered_t_shirt.jpg",
+   "source": "images_final/beige/checkered_t_shirt/1.jpg",
+   "url_key": "90d5d96a0cdc200f98c4"
+  },
+  "beige|t_shirt|floral": {
+   "file": "beige/floral_t_shirt.jpg",
+   "source": "images_final/beige/floral_t_shirt/2.jpg",
+   "url_key": "7c066d04f71f6fed47ad"
+  },
+  "beige|t_shirt|leopard": {
+   "file": "beige/leopard_t_shirt.jpg",
+   "source": "images_final/beige/leopard_t_shirt/1.jpg",
+   "url_key": "bb37c665130a98f3373f"
+  },
+  "beige|t_shirt|polka_dot": {
+   "file": "beige/polka_dot_t_shirt.jpg",
+   "source": "images_final/beige/polka_dot_t_shirt/1.jpg",
+   "url_key": "d0573c748381ca170355"
+  },
+  "beige|t_shirt|solid": {
+   "file": "beige/solid_t_shirt.jpg",
+   "source": "images_final/beige/solid_t_shirt/1.jpg",
+   "url_key": "0a81a40ac7bd6ebc58df"
+  },
+  "beige|t_shirt|striped": {
+   "file": "beige/striped_t_shirt.jpg",
+   "source": "images_final/beige/striped_t_shirt/1.jpg",
+   "url_key": "fb975a7afca3fb7685b6"
+  },
+  "beige|tank_top|checkered": {
+   "file": "beige/checkered_tank_top.jpg",
+   "source": "images_final/beige/checkered_tank_top/1.jpg",
+   "url_key": "b8e60037fc1752a47e6c"
+  },
+  "beige|tank_top|floral": {
+   "file": "beige/floral_tank_top.jpg",
+   "source": "images_final/beige/floral_tank_top/1.jpg",
+   "url_key": "31cf7b8dd027eee33a05"
+  },
+  "beige|tank_top|leopard": {
+   "file": "beige/leopard_tank_top.jpg",
+   "source": "images_final/beige/leopard_tank_top/1.jpg",
+   "url_key": "c28182360ae65affa330"
+  },
+  "beige|tank_top|polka_dot": {
+   "file": "beige/polka_dot_tank_top.jpg",
+   "source": "images_final/beige/polka_dot_tank_top/1.jpg",
+   "url_key": "e88521411eca4e1ff2a4"
+  },
+  "beige|tank_top|solid": {
+   "file": "beige/solid_tank_top.jpg",
+   "source": "images_final/beige/solid_tank_top/1.jpg",
+   "url_key": "f318296d223d55513f85"
+  },
+  "beige|tank_top|striped": {
+   "file": "beige/striped_tank_top.jpg",
+   "source": "images_final/beige/striped_tank_top/1.jpg",
+   "url_key": "f85f884aee383c851fde"
+  },
+  "beige|windbreaker|solid": {
+   "file": "beige/solid_windbreaker.jpg",
+   "source": "images_final/beige/solid_windbreaker/2.jpg",
+   "url_key": "180d189e34b9c0d87f1c"
+  },
+  "black|blazer|checkered": {
+   "file": "black/checkered_blazer.jpg",
+   "source": "images_final/black/checkered_blazer/1.jpg",
+   "url_key": "1cfa22d7e34c305e8f52"
+  },
+  "black|blazer|floral": {
+   "file": "black/floral_blazer.jpg",
+   "source": "images_final/black/floral_blazer/2.jpg",
+   "url_key": "e29b150ad85e45f271f1"
+  },
+  "black|blazer|solid": {
+   "file": "black/solid_blazer.jpg",
+   "source": "images_final/black/solid_blazer/1.jpg",
+   "url_key": "5f27d37eec2de9fa3010"
+  },
+  "black|blazer|striped": {
+   "file": "black/striped_blazer.jpg",
+   "source": "images_final/black/striped_blazer/1.jpg",
+   "url_key": "d5e2b9e80d7c0fb4f77a"
+  },
+  "black|cardigan|checkered": {
+   "file": "black/checkered_cardigan.jpg",
+   "source": "images_final/black/checkered_cardigan/1.jpg",
+   "url_key": "e87a289ccf7f00e7ca20"
+  },
+  "black|cardigan|floral": {
+   "file": "black/floral_cardigan.jpg",
+   "source": "images_final/black/floral_cardigan/1.jpg",
+   "url_key": "3326819df0aca05c151c"
+  },
+  "black|cardigan|leopard": {
+   "file": "black/leopard_cardigan.jpg",
+   "source": "images_final/black/leopard_cardigan/1.jpg",
+   "url_key": "0276a948a04277dc0480"
+  },
+  "black|cardigan|polka_dot": {
+   "file": "black/polka_dot_cardigan.jpg",
+   "source": "images_final/black/polka_dot_cardigan/1.jpg",
+   "url_key": "965fddae63186256a326"
+  },
+  "black|cardigan|solid": {
+   "file": "black/solid_cardigan.jpg",
+   "source": "images_final/black/solid_cardigan/1.jpg",
+   "url_key": "c4a2fd9b327347a8fbcd"
+  },
+  "black|cardigan|striped": {
+   "file": "black/striped_cardigan.jpg",
+   "source": "images_final/black/striped_cardigan/1.jpg",
+   "url_key": "1f7db60d4d2e8a12ed9f"
+  },
+  "black|dress|checkered": {
+   "file": "black/checkered_dress.jpg",
+   "source": "images_final/black/checkered_dress/1.jpg",
+   "url_key": "9043e637bde835c39829"
+  },
+  "black|dress|floral": {
+   "file": "black/floral_dress.jpg",
+   "source": "images_final/black/floral_dress/1.jpg",
+   "url_key": "131e28a86b332d107649"
+  },
+  "black|dress|leopard": {
+   "file": "black/leopard_dress.jpg",
+   "source": "images_final/black/leopard_dress/1.jpg",
+   "url_key": "c98d93b41f1dcadb8882"
+  },
+  "black|dress|polka_dot": {
+   "file": "black/polka_dot_dress.jpg",
+   "source": "images_final/black/polka_dot_dress/1.jpg",
+   "url_key": "9c14facd8201d04989a7"
+  },
+  "black|dress|solid": {
+   "file": "black/solid_dress.jpg",
+   "source": "images_final/black/solid_dress/1.jpg",
+   "url_key": "42b3ef5bb54b02f3307d"
+  },
+  "black|dress|striped": {
+   "file": "black/striped_dress.jpg",
+   "source": "images_final/black/striped_dress/1.jpg",
+   "url_key": "5c3e78cc8af0af1380b8"
+  },
+  "black|fleece_jacket|solid": {
+   "file": "black/solid_fleece_jacket.jpg",
+   "source": "images_final/black/solid_fleece_jacket/1.jpg",
+   "url_key": "6c5594eaf959f0ea660d"
+  },
+  "black|formal_shirt|checkered": {
+   "file": "black/checkered_formal_shirt.jpg",
+   "source": "images_final/black/checkered_formal_shirt/1.jpg",
+   "url_key": "8b656d6ccfabe56b9e6d"
+  },
+  "black|formal_shirt|floral": {
+   "file": "black/floral_formal_shirt.jpg",
+   "source": "images_final/black/floral_formal_shirt/1.jpg",
+   "url_key": "d59af42fcf52547b83fe"
+  },
+  "black|formal_shirt|leopard": {
+   "file": "black/leopard_formal_shirt.jpg",
+   "source": "images_final/black/leopard_formal_shirt/1.jpg",
+   "url_key": "8faad7fadd14e09d0e91"
+  },
+  "black|formal_shirt|polka_dot": {
+   "file": "black/polka_dot_formal_shirt.jpg",
+   "source": "images_final/black/polka_dot_formal_shirt/1.jpg",
+   "url_key": "3f03e6ea16e213b78eef"
+  },
+  "black|formal_shirt|solid": {
+   "file": "black/solid_formal_shirt.jpg",
+   "source": "images_final/black/solid_formal_shirt/2.jpg",
+   "url_key": "6d2394f26361083b37e8"
+  },
+  "black|formal_shirt|striped": {
+   "file": "black/striped_formal_shirt.jpg",
+   "source": "images_final/black/striped_formal_shirt/1.jpg",
+   "url_key": "1a65a14fd2e336e37a9f"
+  },
+  "black|hoodie|checkered": {
+   "file": "black/checkered_hoodie.jpg",
+   "source": "images_final/black/checkered_hoodie/1.jpg",
+   "url_key": "a71cb8f02b7959c2127f"
+  },
+  "black|hoodie|polka_dot": {
+   "file": "black/polka_dot_hoodie.jpg",
+   "source": "images_final/black/polka_dot_hoodie/1.jpg",
+   "url_key": "11d9482ce00ca11418cc"
+  },
+  "black|hoodie|solid": {
+   "file": "black/solid_hoodie.jpg",
+   "source": "images_final/black/solid_hoodie/1.jpg",
+   "url_key": "c55bd05ad32eb9a33c6a"
+  },
+  "black|hoodie|striped": {
+   "file": "black/striped_hoodie.jpg",
+   "source": "images_final/black/striped_hoodie/1.jpg",
+   "url_key": "2eb3c4e1065563a4c630"
+  },
+  "black|jeans|checkered": {
+   "file": "black/checkered_jeans.jpg",
+   "source": "images_final/black/checkered_jeans/1.jpg",
+   "url_key": "fb62f966462c63e1bf9d"
+  },
+  "black|jeans|floral": {
+   "file": "black/floral_jeans.jpg",
+   "source": "images_final/black/floral_jeans/1.jpg",
+   "url_key": "363df45233933f632491"
+  },
+  "black|jeans|solid": {
+   "file": "black/solid_jeans.jpg",
+   "source": "images_final/black/solid_jeans/1.jpg",
+   "url_key": "8f4f1124843276f70f09"
+  },
+  "black|jeans|striped": {
+   "file": "black/striped_jeans.jpg",
+   "source": "images_final/black/striped_jeans/1.jpg",
+   "url_key": "98ad84a3e21eecc899a7"
+  },
+  "black|leggings|floral": {
+   "file": "black/floral_leggings.jpg",
+   "source": "images_final/black/floral_leggings/1.jpg",
+   "url_key": "5ae9c2247fb1fbcb904d"
+  },
+  "black|leggings|leopard": {
+   "file": "black/leopard_leggings.jpg",
+   "source": "images_final/black/leopard_leggings/1.jpg",
+   "url_key": "14d626d6ff5993ce885d"
+  },
+  "black|leggings|polka_dot": {
+   "file": "black/polka_dot_leggings.jpg",
+   "source": "images_final/black/polka_dot_leggings/1.jpg",
+   "url_key": "45f355fda461cb982d72"
+  },
+  "black|leggings|solid": {
+   "file": "black/solid_leggings.jpg",
+   "source": "images_final/black/solid_leggings/2.jpg",
+   "url_key": "c8e39da47fe0c53b201f"
+  },
+  "black|leggings|striped": {
+   "file": "black/striped_leggings.jpg",
+   "source": "images_final/black/striped_leggings/1.jpg",
+   "url_key": "e66abae32828d118244d"
+  },
+  "black|long_coat|checkered": {
+   "file": "black/checkered_long_coat.jpg",
+   "source": "images_final/black/checkered_long_coat/3.jpg",
+   "url_key": "d58aad6e76f94d39b51a"
+  },
+  "black|long_coat|floral": {
+   "file": "black/floral_long_coat.jpg",
+   "source": "images_final/black/floral_long_coat/2.jpg",
+   "url_key": "e74db872dfb546530f0b"
+  },
+  "black|long_coat|polka_dot": {
+   "file": "black/polka_dot_long_coat.jpg",
+   "source": "images_final/black/polka_dot_long_coat/3.jpg",
+   "url_key": "fe2f41cc7babd5df475a"
+  },
+  "black|long_coat|solid": {
+   "file": "black/solid_long_coat.jpg",
+   "source": "images_final/black/solid_long_coat/3.jpg",
+   "url_key": "9e5e6eb2dc96d70947fc"
+  },
+  "black|long_coat|striped": {
+   "file": "black/striped_long_coat.jpg",
+   "source": "images_final/black/striped_long_coat/2.jpg",
+   "url_key": "7b9743502a81068f4eb5"
+  },
+  "black|long_skirt|checkered": {
+   "file": "black/checkered_long_skirt.jpg",
+   "source": "images_final/black/checkered_long_skirt/1.jpg",
+   "url_key": "beaae4aa10afd7246318"
+  },
+  "black|long_skirt|floral": {
+   "file": "black/floral_long_skirt.jpg",
+   "source": "images_final/black/floral_long_skirt/1.jpg",
+   "url_key": "56c088d94881b852cce3"
+  },
+  "black|long_skirt|leopard": {
+   "file": "black/leopard_long_skirt.jpg",
+   "source": "images_final/black/leopard_long_skirt/1.jpg",
+   "url_key": "bd3d6112dd390e7307e8"
+  },
+  "black|long_skirt|polka_dot": {
+   "file": "black/polka_dot_long_skirt.jpg",
+   "source": "images_final/black/polka_dot_long_skirt/2.jpg",
+   "url_key": "7373940ff6c5e03220dc"
+  },
+  "black|long_skirt|solid": {
+   "file": "black/solid_long_skirt.jpg",
+   "source": "images_final/black/solid_long_skirt/1.jpg",
+   "url_key": "42344c30294355871f86"
+  },
+  "black|long_skirt|striped": {
+   "file": "black/striped_long_skirt.jpg",
+   "source": "images_final/black/striped_long_skirt/1.jpg",
+   "url_key": "fe3f47c8bb6253f7f84a"
+  },
+  "black|mini_skirt|checkered": {
+   "file": "black/checkered_mini_skirt.jpg",
+   "source": "images_final/black/checkered_mini_skirt/1.jpg",
+   "url_key": "724eeb2fdd27fef7e3b1"
+  },
+  "black|mini_skirt|floral": {
+   "file": "black/floral_mini_skirt.jpg",
+   "source": "images_final/black/floral_mini_skirt/1.jpg",
+   "url_key": "c4d526c032a56663da09"
+  },
+  "black|mini_skirt|leopard": {
+   "file": "black/leopard_mini_skirt.jpg",
+   "source": "images_final/black/leopard_mini_skirt/1.jpg",
+   "url_key": "e69730679e232499ba45"
+  },
+  "black|mini_skirt|polka_dot": {
+   "file": "black/polka_dot_mini_skirt.jpg",
+   "source": "images_final/black/polka_dot_mini_skirt/1.jpg",
+   "url_key": "cee6578478ad42453e9f"
+  },
+  "black|mini_skirt|solid": {
+   "file": "black/solid_mini_skirt.jpg",
+   "source": "images_final/black/solid_mini_skirt/1.jpg",
+   "url_key": "b2c44b9aa2ec2cd51139"
+  },
+  "black|mini_skirt|striped": {
+   "file": "black/striped_mini_skirt.jpg",
+   "source": "images_final/black/striped_mini_skirt/1.jpg",
+   "url_key": "7a05c086724f487d8c2b"
+  },
+  "black|pea_coat|solid": {
+   "file": "black/solid_pea_coat.jpg",
+   "source": "images_final/black/solid_pea_coat/2.jpg",
+   "url_key": "d208556c6a166addc62e"
+  },
+  "black|polo_shirt|checkered": {
+   "file": "black/checkered_polo_shirt.jpg",
+   "source": "images_final/black/checkered_polo_shirt/1.jpg",
+   "url_key": "a17cdeb2bf74efb682c6"
+  },
+  "black|polo_shirt|floral": {
+   "file": "black/floral_polo_shirt.jpg",
+   "source": "images_final/black/floral_polo_shirt/1.jpg",
+   "url_key": "c883e279fca6503d149e"
+  },
+  "black|polo_shirt|polka_dot": {
+   "file": "black/polka_dot_polo_shirt.jpg",
+   "source": "images_final/black/polka_dot_polo_shirt/1.jpg",
+   "url_key": "b13aad448694d26bb827"
+  },
+  "black|polo_shirt|solid": {
+   "file": "black/solid_polo_shirt.jpg",
+   "source": "images_final/black/solid_polo_shirt/1.jpg",
+   "url_key": "8a9723e679ffc8d2f54e"
+  },
+  "black|polo_shirt|striped": {
+   "file": "black/striped_polo_shirt.jpg",
+   "source": "images_final/black/striped_polo_shirt/1.jpg",
+   "url_key": "50eaa22ca353fa9fe628"
+  },
+  "black|puffer_jacket|checkered": {
+   "file": "black/checkered_puffer_jacket.jpg",
+   "source": "images_final/black/checkered_puffer_jacket/2.jpg",
+   "url_key": "e286b1e901de99789b68"
+  },
+  "black|puffer_jacket|polka_dot": {
+   "file": "black/polka_dot_puffer_jacket.jpg",
+   "source": "images_final/black/polka_dot_puffer_jacket/1.jpg",
+   "url_key": "2bf413c1e4a2cabc6832"
+  },
+  "black|shorts|checkered": {
+   "file": "black/checkered_shorts.jpg",
+   "source": "images_final/black/checkered_shorts/1.jpg",
+   "url_key": "9e55a9c9156676215977"
+  },
+  "black|shorts|floral": {
+   "file": "black/floral_shorts.jpg",
+   "source": "images_final/black/floral_shorts/1.jpg",
+   "url_key": "285438a9cec981e542de"
+  },
+  "black|shorts|leopard": {
+   "file": "black/leopard_shorts.jpg",
+   "source": "images_final/black/leopard_shorts/1.jpg",
+   "url_key": "4cd6acce109e2abd9cfd"
+  },
+  "black|shorts|polka_dot": {
+   "file": "black/polka_dot_shorts.jpg",
+   "source": "images_final/black/polka_dot_shorts/2.jpg",
+   "url_key": "ab6b069e481d73a1dda1"
+  },
+  "black|shorts|solid": {
+   "file": "black/solid_shorts.jpg",
+   "source": "images_final/black/solid_shorts/1.jpg",
+   "url_key": "3c7caf1591c1e7f18de2"
+  },
+  "black|slacks|checkered": {
+   "file": "black/checkered_slacks.jpg",
+   "source": "images_final/black/checkered_slacks/1.jpg",
+   "url_key": "ebc72b2300fe718b9bce"
+  },
+  "black|slacks|floral": {
+   "file": "black/floral_slacks.jpg",
+   "source": "images_final/black/floral_slacks/1.jpg",
+   "url_key": "76643468fd20e0600f99"
+  },
+  "black|slacks|polka_dot": {
+   "file": "black/polka_dot_slacks.jpg",
+   "source": "images_final/black/polka_dot_slacks/1.jpg",
+   "url_key": "a8c7f3499d358eb00256"
+  },
+  "black|slacks|solid": {
+   "file": "black/solid_slacks.jpg",
+   "source": "images_final/black/solid_slacks/1.jpg",
+   "url_key": "fe0edf6a1eadd4a4fc62"
+  },
+  "black|slacks|striped": {
+   "file": "black/striped_slacks.jpg",
+   "source": "images_final/black/striped_slacks/1.jpg",
+   "url_key": "4d52b9fda931942a89df"
+  },
+  "black|suit_vest|checkered": {
+   "file": "black/checkered_suit_vest.jpg",
+   "source": "images_final/black/checkered_suit_vest/1.jpg",
+   "url_key": "eeff34e3f341aad005ce"
+  },
+  "black|suit_vest|floral": {
+   "file": "black/floral_suit_vest.jpg",
+   "source": "images_final/black/floral_suit_vest/1.jpg",
+   "url_key": "8c5afa941cb819eec625"
+  },
+  "black|suit_vest|polka_dot": {
+   "file": "black/polka_dot_suit_vest.jpg",
+   "source": "images_final/black/polka_dot_suit_vest/1.jpg",
+   "url_key": "52a61ecea6fc0b411f43"
+  },
+  "black|suit_vest|solid": {
+   "file": "black/solid_suit_vest.jpg",
+   "source": "images_final/black/solid_suit_vest/1.jpg",
+   "url_key": "f466304b5f976cbcbf59"
+  },
+  "black|suit_vest|striped": {
+   "file": "black/striped_suit_vest.jpg",
+   "source": "images_final/black/striped_suit_vest/1.jpg",
+   "url_key": "5b226245b1191de1b6f3"
+  },
+  "black|sweater|floral": {
+   "file": "black/floral_sweater.jpg",
+   "source": "images_final/black/floral_sweater/1.jpg",
+   "url_key": "78b880df18259c4efc71"
+  },
+  "black|sweater|leopard": {
+   "file": "black/leopard_sweater.jpg",
+   "source": "images_final/black/leopard_sweater/1.jpg",
+   "url_key": "c8184b3212ef2a57868e"
+  },
+  "black|sweater|polka_dot": {
+   "file": "black/polka_dot_sweater.jpg",
+   "source": "images_final/black/polka_dot_sweater/1.jpg",
+   "url_key": "9c3b510ab3c5559a392b"
+  },
+  "black|sweater|solid": {
+   "file": "black/solid_sweater.jpg",
+   "source": "images_final/black/solid_sweater/2.jpg",
+   "url_key": "b469df6bb1fa9e701604"
+  },
+  "black|sweater|striped": {
+   "file": "black/striped_sweater.jpg",
+   "source": "images_final/black/striped_sweater/1.jpg",
+   "url_key": "87692b51f4336a8dd2cc"
+  },
+  "black|sweatshirt|floral": {
+   "file": "black/floral_sweatshirt.jpg",
+   "source": "images_final/black/floral_sweatshirt/1.jpg",
+   "url_key": "32c1c7e9c9141b4dbf78"
+  },
+  "black|sweatshirt|solid": {
+   "file": "black/solid_sweatshirt.jpg",
+   "source": "images_final/black/solid_sweatshirt/1.jpg",
+   "url_key": "27fbbd442d17d92321e0"
+  },
+  "black|sweatshirt|striped": {
+   "file": "black/striped_sweatshirt.jpg",
+   "source": "images_final/black/striped_sweatshirt/1.jpg",
+   "url_key": "70148516307c146b8caf"
+  },
+  "black|t_shirt|checkered": {
+   "file": "black/checkered_t_shirt.jpg",
+   "source": "images_final/black/checkered_t_shirt/1.jpg",
+   "url_key": "231d7989bbf28277155d"
+  },
+  "black|t_shirt|floral": {
+   "file": "black/floral_t_shirt.jpg",
+   "source": "images_final/black/floral_t_shirt/1.jpg",
+   "url_key": "15b02ef8f66aac704896"
+  },
+  "black|t_shirt|polka_dot": {
+   "file": "black/polka_dot_t_shirt.jpg",
+   "source": "images_final/black/polka_dot_t_shirt/1.jpg",
+   "url_key": "f5ad9d770e77502bbcb0"
+  },
+  "black|t_shirt|solid": {
+   "file": "black/solid_t_shirt.jpg",
+   "source": "images_final/black/solid_t_shirt/1.jpg",
+   "url_key": "d88b3ca3e1360e334b45"
+  },
+  "black|t_shirt|striped": {
+   "file": "black/striped_t_shirt.jpg",
+   "source": "images_final/black/striped_t_shirt/1.jpg",
+   "url_key": "66c3bd54a7c5dd43b2a9"
+  },
+  "black|tank_top|checkered": {
+   "file": "black/checkered_tank_top.jpg",
+   "source": "images_final/black/checkered_tank_top/1.jpg",
+   "url_key": "75fecc999f1268e69bc4"
+  },
+  "black|tank_top|floral": {
+   "file": "black/floral_tank_top.jpg",
+   "source": "images_final/black/floral_tank_top/1.jpg",
+   "url_key": "183b9cbd7aabcf12dd31"
+  },
+  "black|tank_top|leopard": {
+   "file": "black/leopard_tank_top.jpg",
+   "source": "images_final/black/leopard_tank_top/2.jpg",
+   "url_key": "376ad3eabcd19ddad895"
+  },
+  "black|tank_top|polka_dot": {
+   "file": "black/polka_dot_tank_top.jpg",
+   "source": "images_final/black/polka_dot_tank_top/1.jpg",
+   "url_key": "0695e6f8170d0a1675a4"
+  },
+  "black|tank_top|solid": {
+   "file": "black/solid_tank_top.jpg",
+   "source": "images_final/black/solid_tank_top/2.jpg",
+   "url_key": "7e0432a4692ee7d87ab6"
+  },
+  "black|tank_top|striped": {
+   "file": "black/striped_tank_top.jpg",
+   "source": "images_final/black/striped_tank_top/1.jpg",
+   "url_key": "a0f39a4393bb9761784e"
+  },
+  "black|windbreaker|checkered": {
+   "file": "black/checkered_windbreaker.jpg",
+   "source": "images_final/black/checkered_windbreaker/1.jpg",
+   "url_key": "655c3c46bd06c5f10669"
+  },
+  "black|windbreaker|polka_dot": {
+   "file": "black/polka_dot_windbreaker.jpg",
+   "source": "images_final/black/polka_dot_windbreaker/1.jpg",
+   "url_key": "88d3616bb36e6069cf71"
+  },
+  "black|windbreaker|solid": {
+   "file": "black/solid_windbreaker.jpg",
+   "source": "images_final/black/solid_windbreaker/1.jpg",
+   "url_key": "c4349c3bbcdcf5409a0c"
+  },
+  "blue|blazer|checkered": {
+   "file": "blue/checkered_blazer.jpg",
+   "source": "images_final/blue/checkered_blazer/1.jpg",
+   "url_key": "912c1d750db369d4d4d5"
+  },
+  "blue|blazer|floral": {
+   "file": "blue/floral_blazer.jpg",
+   "source": "images_final/blue/floral_blazer/1.jpg",
+   "url_key": "3855a907447322d31ba9"
+  },
+  "blue|blazer|solid": {
+   "file": "blue/solid_blazer.jpg",
+   "source": "images_final/blue/solid_blazer/1.jpg",
+   "url_key": "402579568e177b3dbd1c"
+  },
+  "blue|blazer|striped": {
+   "file": "blue/striped_blazer.jpg",
+   "source": "images_final/blue/striped_blazer/1.jpg",
+   "url_key": "91caa4f2c5c3de5b5e66"
+  },
+  "blue|cardigan|floral": {
+   "file": "blue/floral_cardigan.jpg",
+   "source": "images_final/blue/floral_cardigan/1.jpg",
+   "url_key": "fd891954c890dc8a3de1"
+  },
+  "blue|cardigan|leopard": {
+   "file": "blue/leopard_cardigan.jpg",
+   "source": "images_final/blue/leopard_cardigan/1.jpg",
+   "url_key": "3572e3cc3b0d0127c359"
+  },
+  "blue|cardigan|polka_dot": {
+   "file": "blue/polka_dot_cardigan.jpg",
+   "source": "images_final/blue/polka_dot_cardigan/1.jpg",
+   "url_key": "87da3f65325d39ed5169"
+  },
+  "blue|cardigan|solid": {
+   "file": "blue/solid_cardigan.jpg",
+   "source": "images_final/blue/solid_cardigan/2.jpg",
+   "url_key": "12038009dfb7d0e07e56"
+  },
+  "blue|cardigan|striped": {
+   "file": "blue/striped_cardigan.jpg",
+   "source": "images_final/blue/striped_cardigan/1.jpg",
+   "url_key": "028694d689f24e18b263"
+  },
+  "blue|dress|checkered": {
+   "file": "blue/checkered_dress.jpg",
+   "source": "images_final/blue/checkered_dress/1.jpg",
+   "url_key": "4cee34dfcf1e5c1ee66f"
+  },
+  "blue|dress|floral": {
+   "file": "blue/floral_dress.jpg",
+   "source": "images_final/blue/floral_dress/1.jpg",
+   "url_key": "89f0f99e27cfd2762564"
+  },
+  "blue|dress|leopard": {
+   "file": "blue/leopard_dress.jpg",
+   "source": "images_final/blue/leopard_dress/1.jpg",
+   "url_key": "5c06b13f3179a26a52ae"
+  },
+  "blue|dress|polka_dot": {
+   "file": "blue/polka_dot_dress.jpg",
+   "source": "images_final/blue/polka_dot_dress/1.jpg",
+   "url_key": "f747dfd0a7ac8ce93664"
+  },
+  "blue|dress|solid": {
+   "file": "blue/solid_dress.jpg",
+   "source": "images_final/blue/solid_dress/1.jpg",
+   "url_key": "512d0c673b9736f8f7c4"
+  },
+  "blue|dress|striped": {
+   "file": "blue/striped_dress.jpg",
+   "source": "images_final/blue/striped_dress/1.jpg",
+   "url_key": "ffc6a562cc913687d989"
+  },
+  "blue|fleece_jacket|leopard": {
+   "file": "blue/leopard_fleece_jacket.jpg",
+   "source": "images_final/blue/leopard_fleece_jacket/1.jpg",
+   "url_key": "472162d1e36f9a0a72c2"
+  },
+  "blue|fleece_jacket|solid": {
+   "file": "blue/solid_fleece_jacket.jpg",
+   "source": "images_final/blue/solid_fleece_jacket/1.jpg",
+   "url_key": "708e060ccafab93d52b3"
+  },
+  "blue|fleece_jacket|striped": {
+   "file": "blue/striped_fleece_jacket.jpg",
+   "source": "images_final/blue/striped_fleece_jacket/1.jpg",
+   "url_key": "431678dbe2196ffe460a"
+  },
+  "blue|formal_shirt|checkered": {
+   "file": "blue/checkered_formal_shirt.jpg",
+   "source": "images_final/blue/checkered_formal_shirt/1.jpg",
+   "url_key": "0c6679275b4badbc07e6"
+  },
+  "blue|formal_shirt|floral": {
+   "file": "blue/floral_formal_shirt.jpg",
+   "source": "images_final/blue/floral_formal_shirt/1.jpg",
+   "url_key": "00048004c12c35cf6c0b"
+  },
+  "blue|formal_shirt|leopard": {
+   "file": "blue/leopard_formal_shirt.jpg",
+   "source": "images_final/blue/leopard_formal_shirt/1.jpg",
+   "url_key": "7a08574c3c455f864e24"
+  },
+  "blue|formal_shirt|polka_dot": {
+   "file": "blue/polka_dot_formal_shirt.jpg",
+   "source": "images_final/blue/polka_dot_formal_shirt/1.jpg",
+   "url_key": "2fd9a0f550e6b31dbb02"
+  },
+  "blue|formal_shirt|solid": {
+   "file": "blue/solid_formal_shirt.jpg",
+   "source": "images_final/blue/solid_formal_shirt/1.jpg",
+   "url_key": "3e0e6779917ca12feb9e"
+  },
+  "blue|hoodie|checkered": {
+   "file": "blue/checkered_hoodie.jpg",
+   "source": "images_final/blue/checkered_hoodie/1.jpg",
+   "url_key": "6716afc81f56b3a79a81"
+  },
+  "blue|hoodie|floral": {
+   "file": "blue/floral_hoodie.jpg",
+   "source": "images_final/blue/floral_hoodie/1.jpg",
+   "url_key": "f8df35bf497700c83769"
+  },
+  "blue|hoodie|polka_dot": {
+   "file": "blue/polka_dot_hoodie.jpg",
+   "source": "images_final/blue/polka_dot_hoodie/1.jpg",
+   "url_key": "624edcb8f897a7fea555"
+  },
+  "blue|hoodie|solid": {
+   "file": "blue/solid_hoodie.jpg",
+   "source": "images_final/blue/solid_hoodie/1.jpg",
+   "url_key": "57e25693d169d0ed3d84"
+  },
+  "blue|hoodie|striped": {
+   "file": "blue/striped_hoodie.jpg",
+   "source": "images_final/blue/striped_hoodie/1.jpg",
+   "url_key": "3cea7840fe4355e0376f"
+  },
+  "blue|jeans|checkered": {
+   "file": "blue/checkered_jeans.jpg",
+   "source": "images_final/blue/checkered_jeans/1.jpg",
+   "url_key": "ef36355874eef35568f2"
+  },
+  "blue|jeans|floral": {
+   "file": "blue/floral_jeans.jpg",
+   "source": "images_final/blue/floral_jeans/1.jpg",
+   "url_key": "740baf21677f3beb7178"
+  },
+  "blue|jeans|solid": {
+   "file": "blue/solid_jeans.jpg",
+   "source": "images_final/blue/solid_jeans/1.jpg",
+   "url_key": "7a19b586d19a7194339e"
+  },
+  "blue|leather_jacket|solid": {
+   "file": "blue/solid_leather_jacket.jpg",
+   "source": "images_final/blue/solid_leather_jacket/1.jpg",
+   "url_key": "616beb771ca23227b948"
+  },
+  "blue|leggings|checkered": {
+   "file": "blue/checkered_leggings.jpg",
+   "source": "images_final/blue/checkered_leggings/1.jpg",
+   "url_key": "aa4e6cc99f9a8a1b7df3"
+  },
+  "blue|leggings|leopard": {
+   "file": "blue/leopard_leggings.jpg",
+   "source": "images_final/blue/leopard_leggings/1.jpg",
+   "url_key": "6367a5bf15fb8aaf3d3e"
+  },
+  "blue|leggings|polka_dot": {
+   "file": "blue/polka_dot_leggings.jpg",
+   "source": "images_final/blue/polka_dot_leggings/1.jpg",
+   "url_key": "5b570e9b316b16e83621"
+  },
+  "blue|long_coat|checkered": {
+   "file": "blue/checkered_long_coat.jpg",
+   "source": "images_final/blue/checkered_long_coat/2.jpg",
+   "url_key": "b8730daece9520419818"
+  },
+  "blue|long_coat|floral": {
+   "file": "blue/floral_long_coat.jpg",
+   "source": "images_final/blue/floral_long_coat/2.jpg",
+   "url_key": "5859b09f9fe8be6b3c0b"
+  },
+  "blue|long_coat|polka_dot": {
+   "file": "blue/polka_dot_long_coat.jpg",
+   "source": "images_final/blue/polka_dot_long_coat/2.jpg",
+   "url_key": "daa41105252782169a5c"
+  },
+  "blue|long_coat|solid": {
+   "file": "blue/solid_long_coat.jpg",
+   "source": "images_final/blue/solid_long_coat/2.jpg",
+   "url_key": "ce27b49b8f5eb99ccf40"
+  },
+  "blue|long_coat|striped": {
+   "file": "blue/striped_long_coat.jpg",
+   "source": "images_final/blue/striped_long_coat/3.jpg",
+   "url_key": "686f9f614faa7214b779"
+  },
+  "blue|long_skirt|checkered": {
+   "file": "blue/checkered_long_skirt.jpg",
+   "source": "images_final/blue/checkered_long_skirt/1.jpg",
+   "url_key": "3f6cc25cff2552f8880e"
+  },
+  "blue|long_skirt|floral": {
+   "file": "blue/floral_long_skirt.jpg",
+   "source": "images_final/blue/floral_long_skirt/1.jpg",
+   "url_key": "c97d35fe8ce0907492aa"
+  },
+  "blue|long_skirt|leopard": {
+   "file": "blue/leopard_long_skirt.jpg",
+   "source": "images_final/blue/leopard_long_skirt/1.jpg",
+   "url_key": "bfb125986dbe59842e63"
+  },
+  "blue|long_skirt|solid": {
+   "file": "blue/solid_long_skirt.jpg",
+   "source": "images_final/blue/solid_long_skirt/1.jpg",
+   "url_key": "a8b38a454c5635eede50"
+  },
+  "blue|long_skirt|striped": {
+   "file": "blue/striped_long_skirt.jpg",
+   "source": "images_final/blue/striped_long_skirt/1.jpg",
+   "url_key": "7b6f78d6fb1505b1e772"
+  },
+  "blue|mini_skirt|checkered": {
+   "file": "blue/checkered_mini_skirt.jpg",
+   "source": "images_final/blue/checkered_mini_skirt/1.jpg",
+   "url_key": "05d3c1970d2a1a0a5398"
+  },
+  "blue|mini_skirt|floral": {
+   "file": "blue/floral_mini_skirt.jpg",
+   "source": "images_final/blue/floral_mini_skirt/1.jpg",
+   "url_key": "5cfae9924b4ea207bc96"
+  },
+  "blue|mini_skirt|leopard": {
+   "file": "blue/leopard_mini_skirt.jpg",
+   "source": "images_final/blue/leopard_mini_skirt/1.jpg",
+   "url_key": "4fdda4fcf12dcd003e81"
+  },
+  "blue|mini_skirt|polka_dot": {
+   "file": "blue/polka_dot_mini_skirt.jpg",
+   "source": "images_final/blue/polka_dot_mini_skirt/2.jpg",
+   "url_key": "4044d996e9378315ffc7"
+  },
+  "blue|mini_skirt|solid": {
+   "file": "blue/solid_mini_skirt.jpg",
+   "source": "images_final/blue/solid_mini_skirt/1.jpg",
+   "url_key": "2ef2f4ea92ff76f4f2ab"
+  },
+  "blue|mini_skirt|striped": {
+   "file": "blue/striped_mini_skirt.jpg",
+   "source": "images_final/blue/striped_mini_skirt/1.jpg",
+   "url_key": "89347bf316c9e300a39a"
+  },
+  "blue|polo_shirt|checkered": {
+   "file": "blue/checkered_polo_shirt.jpg",
+   "source": "images_final/blue/checkered_polo_shirt/1.jpg",
+   "url_key": "ea5be7d245e21840aa64"
+  },
+  "blue|polo_shirt|floral": {
+   "file": "blue/floral_polo_shirt.jpg",
+   "source": "images_final/blue/floral_polo_shirt/1.jpg",
+   "url_key": "22cfd098d8211a7f5daa"
+  },
+  "blue|polo_shirt|leopard": {
+   "file": "blue/leopard_polo_shirt.jpg",
+   "source": "images_final/blue/leopard_polo_shirt/1.jpg",
+   "url_key": "53980015492c2de38a75"
+  },
+  "blue|polo_shirt|polka_dot": {
+   "file": "blue/polka_dot_polo_shirt.jpg",
+   "source": "images_final/blue/polka_dot_polo_shirt/1.jpg",
+   "url_key": "57a9d849d743e3b1c573"
+  },
+  "blue|polo_shirt|solid": {
+   "file": "blue/solid_polo_shirt.jpg",
+   "source": "images_final/blue/solid_polo_shirt/1.jpg",
+   "url_key": "f4414104111e31db9732"
+  },
+  "blue|polo_shirt|striped": {
+   "file": "blue/striped_polo_shirt.jpg",
+   "source": "images_final/blue/striped_polo_shirt/1.jpg",
+   "url_key": "7dc3bcacbad054954e56"
+  },
+  "blue|shorts|checkered": {
+   "file": "blue/checkered_shorts.jpg",
+   "source": "images_final/blue/checkered_shorts/1.jpg",
+   "url_key": "05c3d98e08407fe4c49b"
+  },
+  "blue|shorts|floral": {
+   "file": "blue/floral_shorts.jpg",
+   "source": "images_final/blue/floral_shorts/1.jpg",
+   "url_key": "318b30c52cdfdd8c1af8"
+  },
+  "blue|shorts|leopard": {
+   "file": "blue/leopard_shorts.jpg",
+   "source": "images_final/blue/leopard_shorts/1.jpg",
+   "url_key": "6d281d122d968e53c6de"
+  },
+  "blue|shorts|polka_dot": {
+   "file": "blue/polka_dot_shorts.jpg",
+   "source": "images_final/blue/polka_dot_shorts/2.jpg",
+   "url_key": "97bdbc774d8c69710684"
+  },
+  "blue|shorts|solid": {
+   "file": "blue/solid_shorts.jpg",
+   "source": "images_final/blue/solid_shorts/1.jpg",
+   "url_key": "975e177ae0bf74ca13e9"
+  },
+  "blue|shorts|striped": {
+   "file": "blue/striped_shorts.jpg",
+   "source": "images_final/blue/striped_shorts/2.jpg",
+   "url_key": "00874b1689bb39021463"
+  },
+  "blue|slacks|checkered": {
+   "file": "blue/checkered_slacks.jpg",
+   "source": "images_final/blue/checkered_slacks/1.jpg",
+   "url_key": "7dbe258521f42c5a0163"
+  },
+  "blue|slacks|floral": {
+   "file": "blue/floral_slacks.jpg",
+   "source": "images_final/blue/floral_slacks/1.jpg",
+   "url_key": "ffd6d7b9ce88431405c5"
+  },
+  "blue|slacks|polka_dot": {
+   "file": "blue/polka_dot_slacks.jpg",
+   "source": "images_final/blue/polka_dot_slacks/1.jpg",
+   "url_key": "d87218e7ee95a571a01c"
+  },
+  "blue|slacks|solid": {
+   "file": "blue/solid_slacks.jpg",
+   "source": "images_final/blue/solid_slacks/1.jpg",
+   "url_key": "63cba202b344a033b80e"
+  },
+  "blue|slacks|striped": {
+   "file": "blue/striped_slacks.jpg",
+   "source": "images_final/blue/striped_slacks/1.jpg",
+   "url_key": "32662965d06efdd776b9"
+  },
+  "blue|suit_vest|checkered": {
+   "file": "blue/checkered_suit_vest.jpg",
+   "source": "images_final/blue/checkered_suit_vest/1.jpg",
+   "url_key": "20e7a36ecd8123ae71bc"
+  },
+  "blue|suit_vest|floral": {
+   "file": "blue/floral_suit_vest.jpg",
+   "source": "images_final/blue/floral_suit_vest/1.jpg",
+   "url_key": "6fde1442a90d5561ce7f"
+  },
+  "blue|suit_vest|polka_dot": {
+   "file": "blue/polka_dot_suit_vest.jpg",
+   "source": "images_final/blue/polka_dot_suit_vest/1.jpg",
+   "url_key": "f527fc85456377ecfec8"
+  },
+  "blue|suit_vest|solid": {
+   "file": "blue/solid_suit_vest.jpg",
+   "source": "images_final/blue/solid_suit_vest/1.jpg",
+   "url_key": "2f4e886a2bc2beb460ae"
+  },
+  "blue|suit_vest|striped": {
+   "file": "blue/striped_suit_vest.jpg",
+   "source": "images_final/blue/striped_suit_vest/1.jpg",
+   "url_key": "0ddf6192d8eea5884f90"
+  },
+  "blue|sweater|checkered": {
+   "file": "blue/checkered_sweater.jpg",
+   "source": "images_final/blue/checkered_sweater/1.jpg",
+   "url_key": "d0c37ce88f5908456bc2"
+  },
+  "blue|sweater|floral": {
+   "file": "blue/floral_sweater.jpg",
+   "source": "images_final/blue/floral_sweater/1.jpg",
+   "url_key": "0d44591a1b683d3bbe9a"
+  },
+  "blue|sweater|leopard": {
+   "file": "blue/leopard_sweater.jpg",
+   "source": "images_final/blue/leopard_sweater/1.jpg",
+   "url_key": "a13824fbcd1f36ae9a67"
+  },
+  "blue|sweater|polka_dot": {
+   "file": "blue/polka_dot_sweater.jpg",
+   "source": "images_final/blue/polka_dot_sweater/1.jpg",
+   "url_key": "24d7116d11a020436223"
+  },
+  "blue|sweater|solid": {
+   "file": "blue/solid_sweater.jpg",
+   "source": "images_final/blue/solid_sweater/1.jpg",
+   "url_key": "f0d647aad2664732580a"
+  },
+  "blue|sweater|striped": {
+   "file": "blue/striped_sweater.jpg",
+   "source": "images_final/blue/striped_sweater/1.jpg",
+   "url_key": "b337a1047e8650b53f98"
+  },
+  "blue|sweatshirt|checkered": {
+   "file": "blue/checkered_sweatshirt.jpg",
+   "source": "images_final/blue/checkered_sweatshirt/1.jpg",
+   "url_key": "310533b9caf38e9c9919"
+  },
+  "blue|sweatshirt|floral": {
+   "file": "blue/floral_sweatshirt.jpg",
+   "source": "images_final/blue/floral_sweatshirt/1.jpg",
+   "url_key": "63c1f0ca88deea5daff9"
+  },
+  "blue|sweatshirt|solid": {
+   "file": "blue/solid_sweatshirt.jpg",
+   "source": "images_final/blue/solid_sweatshirt/1.jpg",
+   "url_key": "8f756ad6e4b245a7a989"
+  },
+  "blue|t_shirt|checkered": {
+   "file": "blue/checkered_t_shirt.jpg",
+   "source": "images_final/blue/checkered_t_shirt/1.jpg",
+   "url_key": "03c913f7141f2b18c915"
+  },
+  "blue|t_shirt|floral": {
+   "file": "blue/floral_t_shirt.jpg",
+   "source": "images_final/blue/floral_t_shirt/1.jpg",
+   "url_key": "e8555d130e85f1ecce2e"
+  },
+  "blue|t_shirt|leopard": {
+   "file": "blue/leopard_t_shirt.jpg",
+   "source": "images_final/blue/leopard_t_shirt/1.jpg",
+   "url_key": "befae80373c71170ac50"
+  },
+  "blue|t_shirt|polka_dot": {
+   "file": "blue/polka_dot_t_shirt.jpg",
+   "source": "images_final/blue/polka_dot_t_shirt/1.jpg",
+   "url_key": "d7f553ab38962044d74a"
+  },
+  "blue|t_shirt|solid": {
+   "file": "blue/solid_t_shirt.jpg",
+   "source": "images_final/blue/solid_t_shirt/1.jpg",
+   "url_key": "dece556d0891ef3303ab"
+  },
+  "blue|t_shirt|striped": {
+   "file": "blue/striped_t_shirt.jpg",
+   "source": "images_final/blue/striped_t_shirt/1.jpg",
+   "url_key": "e3c73cf8b89a2c5271e0"
+  },
+  "blue|tank_top|checkered": {
+   "file": "blue/checkered_tank_top.jpg",
+   "source": "images_final/blue/checkered_tank_top/1.jpg",
+   "url_key": "28318d3617375dc33fca"
+  },
+  "blue|tank_top|floral": {
+   "file": "blue/floral_tank_top.jpg",
+   "source": "images_final/blue/floral_tank_top/1.jpg",
+   "url_key": "1a119aaaa744597f9fe1"
+  },
+  "blue|tank_top|leopard": {
+   "file": "blue/leopard_tank_top.jpg",
+   "source": "images_final/blue/leopard_tank_top/2.jpg",
+   "url_key": "cb96d1feb946a884cc7e"
+  },
+  "blue|tank_top|polka_dot": {
+   "file": "blue/polka_dot_tank_top.jpg",
+   "source": "images_final/blue/polka_dot_tank_top/1.jpg",
+   "url_key": "0182c5d0a41cbc809e6d"
+  },
+  "blue|tank_top|solid": {
+   "file": "blue/solid_tank_top.jpg",
+   "source": "images_final/blue/solid_tank_top/1.jpg",
+   "url_key": "79407c966775d5ec9fae"
+  },
+  "blue|tank_top|striped": {
+   "file": "blue/striped_tank_top.jpg",
+   "source": "images_final/blue/striped_tank_top/1.jpg",
+   "url_key": "73146bff982dbc7a4da4"
+  },
+  "blue|windbreaker|solid": {
+   "file": "blue/solid_windbreaker.jpg",
+   "source": "images_final/blue/solid_windbreaker/2.jpg",
+   "url_key": "1c4a0ae4bc43fb6d3db5"
+  },
+  "brown|blazer|checkered": {
+   "file": "brown/checkered_blazer.jpg",
+   "source": "images_final/brown/checkered_blazer/2.jpg",
+   "url_key": "72cde9336a2bbd59465e"
+  },
+  "brown|blazer|floral": {
+   "file": "brown/floral_blazer.jpg",
+   "source": "images_final/brown/floral_blazer/1.jpg",
+   "url_key": "dbe1b0256784d7bae98c"
+  },
+  "brown|blazer|leopard": {
+   "file": "brown/leopard_blazer.jpg",
+   "source": "images_final/brown/leopard_blazer/1.jpg",
+   "url_key": "ec280bdd1cdeb4ee455a"
+  },
+  "brown|blazer|solid": {
+   "file": "brown/solid_blazer.jpg",
+   "source": "images_final/brown/solid_blazer/2.jpg",
+   "url_key": "703fa57288846bd93730"
+  },
+  "brown|blazer|striped": {
+   "file": "brown/striped_blazer.jpg",
+   "source": "images_final/brown/striped_blazer/1.jpg",
+   "url_key": "e5f8f0e02ba4140fb249"
+  },
+  "brown|cardigan|leopard": {
+   "file": "brown/leopard_cardigan.jpg",
+   "source": "images_final/brown/leopard_cardigan/1.jpg",
+   "url_key": "4e73f14249993ef8dcb7"
+  },
+  "brown|cardigan|polka_dot": {
+   "file": "brown/polka_dot_cardigan.jpg",
+   "source": "images_final/brown/polka_dot_cardigan/1.jpg",
+   "url_key": "e015bcc9ed979a1bd387"
+  },
+  "brown|cardigan|solid": {
+   "file": "brown/solid_cardigan.jpg",
+   "source": "images_final/brown/solid_cardigan/1.jpg",
+   "url_key": "35a0bdb70e8116e67737"
+  },
+  "brown|dress|checkered": {
+   "file": "brown/checkered_dress.jpg",
+   "source": "images_final/brown/checkered_dress/1.jpg",
+   "url_key": "14cef8b41a03fb1420f7"
+  },
+  "brown|dress|floral": {
+   "file": "brown/floral_dress.jpg",
+   "source": "images_final/brown/floral_dress/1.jpg",
+   "url_key": "8edc3c29a12b5778404b"
+  },
+  "brown|dress|leopard": {
+   "file": "brown/leopard_dress.jpg",
+   "source": "images_final/brown/leopard_dress/1.jpg",
+   "url_key": "417a08168c4bcaf1e835"
+  },
+  "brown|dress|polka_dot": {
+   "file": "brown/polka_dot_dress.jpg",
+   "source": "images_final/brown/polka_dot_dress/1.jpg",
+   "url_key": "2740177a04080064b620"
+  },
+  "brown|dress|solid": {
+   "file": "brown/solid_dress.jpg",
+   "source": "images_final/brown/solid_dress/1.jpg",
+   "url_key": "d2a8f925e8ad00103860"
+  },
+  "brown|dress|striped": {
+   "file": "brown/striped_dress.jpg",
+   "source": "images_final/brown/striped_dress/1.jpg",
+   "url_key": "dc1595febecf8223e3f0"
+  },
+  "brown|fleece_jacket|checkered": {
+   "file": "brown/checkered_fleece_jacket.jpg",
+   "source": "images_final/brown/checkered_fleece_jacket/1.jpg",
+   "url_key": "e0078eb51accfc65c9e6"
+  },
+  "brown|fleece_jacket|leopard": {
+   "file": "brown/leopard_fleece_jacket.jpg",
+   "source": "images_final/brown/leopard_fleece_jacket/1.jpg",
+   "url_key": "a2622efb867a6e56e5cb"
+  },
+  "brown|fleece_jacket|solid": {
+   "file": "brown/solid_fleece_jacket.jpg",
+   "source": "images_final/brown/solid_fleece_jacket/1.jpg",
+   "url_key": "29d51543dd08b4cee847"
+  },
+  "brown|formal_shirt|checkered": {
+   "file": "brown/checkered_formal_shirt.jpg",
+   "source": "images_final/brown/checkered_formal_shirt/1.jpg",
+   "url_key": "c355cca011ee2b48a384"
+  },
+  "brown|formal_shirt|floral": {
+   "file": "brown/floral_formal_shirt.jpg",
+   "source": "images_final/brown/floral_formal_shirt/2.jpg",
+   "url_key": "376e4ceecebbf23d7b17"
+  },
+  "brown|formal_shirt|leopard": {
+   "file": "brown/leopard_formal_shirt.jpg",
+   "source": "images_final/brown/leopard_formal_shirt/1.jpg",
+   "url_key": "981cf925dce0a34acb27"
+  },
+  "brown|formal_shirt|polka_dot": {
+   "file": "brown/polka_dot_formal_shirt.jpg",
+   "source": "images_final/brown/polka_dot_formal_shirt/1.jpg",
+   "url_key": "47a6910194b682617b45"
+  },
+  "brown|formal_shirt|solid": {
+   "file": "brown/solid_formal_shirt.jpg",
+   "source": "images_final/brown/solid_formal_shirt/1.jpg",
+   "url_key": "8aad84246ce55a2c984c"
+  },
+  "brown|formal_shirt|striped": {
+   "file": "brown/striped_formal_shirt.jpg",
+   "source": "images_final/brown/striped_formal_shirt/1.jpg",
+   "url_key": "7e7d33a5734c1a9281fe"
+  },
+  "brown|hoodie|checkered": {
+   "file": "brown/checkered_hoodie.jpg",
+   "source": "images_final/brown/checkered_hoodie/1.jpg",
+   "url_key": "d932fd670e1de84ab3f6"
+  },
+  "brown|hoodie|leopard": {
+   "file": "brown/leopard_hoodie.jpg",
+   "source": "images_final/brown/leopard_hoodie/2.jpg",
+   "url_key": "c23f96034731b3291095"
+  },
+  "brown|hoodie|polka_dot": {
+   "file": "brown/polka_dot_hoodie.jpg",
+   "source": "images_final/brown/polka_dot_hoodie/1.jpg",
+   "url_key": "3f2da10068fa5548053f"
+  },
+  "brown|hoodie|solid": {
+   "file": "brown/solid_hoodie.jpg",
+   "source": "images_final/brown/solid_hoodie/1.jpg",
+   "url_key": "9e31eb990d819fa02d9c"
+  },
+  "brown|hoodie|striped": {
+   "file": "brown/striped_hoodie.jpg",
+   "source": "images_final/brown/striped_hoodie/1.jpg",
+   "url_key": "915de628ec9d48496a2d"
+  },
+  "brown|jeans|checkered": {
+   "file": "brown/checkered_jeans.jpg",
+   "source": "images_final/brown/checkered_jeans/1.jpg",
+   "url_key": "6bfe853cc38bda068b5f"
+  },
+  "brown|jeans|solid": {
+   "file": "brown/solid_jeans.jpg",
+   "source": "images_final/brown/solid_jeans/1.jpg",
+   "url_key": "d86f51ad7b592d4283f8"
+  },
+  "brown|jeans|striped": {
+   "file": "brown/striped_jeans.jpg",
+   "source": "images_final/brown/striped_jeans/1.jpg",
+   "url_key": "701fb11822ffff7cec7a"
+  },
+  "brown|leather_jacket|solid": {
+   "file": "brown/solid_leather_jacket.jpg",
+   "source": "images_final/brown/solid_leather_jacket/1.jpg",
+   "url_key": "48266ce2e2a7bf21ac35"
+  },
+  "brown|leggings|checkered": {
+   "file": "brown/checkered_leggings.jpg",
+   "source": "images_final/brown/checkered_leggings/1.jpg",
+   "url_key": "0d0e4f2b2994e69e2aaf"
+  },
+  "brown|leggings|leopard": {
+   "file": "brown/leopard_leggings.jpg",
+   "source": "images_final/brown/leopard_leggings/1.jpg",
+   "url_key": "0c612cd0b12de3f38b10"
+  },
+  "brown|leggings|polka_dot": {
+   "file": "brown/polka_dot_leggings.jpg",
+   "source": "images_final/brown/polka_dot_leggings/1.jpg",
+   "url_key": "ab56ad3a4b0538836877"
+  },
+  "brown|leggings|solid": {
+   "file": "brown/solid_leggings.jpg",
+   "source": "images_final/brown/solid_leggings/1.jpg",
+   "url_key": "3c0e0f90457501822ab3"
+  },
+  "brown|leggings|striped": {
+   "file": "brown/striped_leggings.jpg",
+   "source": "images_final/brown/striped_leggings/1.jpg",
+   "url_key": "0e2def88004a3899e317"
+  },
+  "brown|long_coat|checkered": {
+   "file": "brown/checkered_long_coat.jpg",
+   "source": "images_final/brown/checkered_long_coat/2.jpg",
+   "url_key": "7e28fb78ad4dce1a655d"
+  },
+  "brown|long_coat|leopard": {
+   "file": "brown/leopard_long_coat.jpg",
+   "source": "images_final/brown/leopard_long_coat/2.jpg",
+   "url_key": "462037b0f923ac20d1dc"
+  },
+  "brown|long_coat|solid": {
+   "file": "brown/solid_long_coat.jpg",
+   "source": "images_final/brown/solid_long_coat/2.jpg",
+   "url_key": "502cf35435c032720f0b"
+  },
+  "brown|long_coat|striped": {
+   "file": "brown/striped_long_coat.jpg",
+   "source": "images_final/brown/striped_long_coat/2.jpg",
+   "url_key": "9e1bde765811a6675e6f"
+  },
+  "brown|long_skirt|floral": {
+   "file": "brown/floral_long_skirt.jpg",
+   "source": "images_final/brown/floral_long_skirt/1.jpg",
+   "url_key": "cf21514deca38d2d2613"
+  },
+  "brown|long_skirt|leopard": {
+   "file": "brown/leopard_long_skirt.jpg",
+   "source": "images_final/brown/leopard_long_skirt/1.jpg",
+   "url_key": "8073962e24bc5047d4cc"
+  },
+  "brown|long_skirt|polka_dot": {
+   "file": "brown/polka_dot_long_skirt.jpg",
+   "source": "images_final/brown/polka_dot_long_skirt/1.jpg",
+   "url_key": "f8538b933e3d8ebf98d8"
+  },
+  "brown|mini_skirt|checkered": {
+   "file": "brown/checkered_mini_skirt.jpg",
+   "source": "images_final/brown/checkered_mini_skirt/1.jpg",
+   "url_key": "d326f4e4d57519d86dc1"
+  },
+  "brown|mini_skirt|leopard": {
+   "file": "brown/leopard_mini_skirt.jpg",
+   "source": "images_final/brown/leopard_mini_skirt/1.jpg",
+   "url_key": "57514f0156943d47387b"
+  },
+  "brown|mini_skirt|striped": {
+   "file": "brown/striped_mini_skirt.jpg",
+   "source": "images_final/brown/striped_mini_skirt/1.jpg",
+   "url_key": "9a0a048452a26bc82b7c"
+  },
+  "brown|pea_coat|solid": {
+   "file": "brown/solid_pea_coat.jpg",
+   "source": "images_final/brown/solid_pea_coat/2.jpg",
+   "url_key": "25523aef4be031721a99"
+  },
+  "brown|polo_shirt|checkered": {
+   "file": "brown/checkered_polo_shirt.jpg",
+   "source": "images_final/brown/checkered_polo_shirt/1.jpg",
+   "url_key": "9c12e328efaa2a475b8b"
+  },
+  "brown|polo_shirt|floral": {
+   "file": "brown/floral_polo_shirt.jpg",
+   "source": "images_final/brown/floral_polo_shirt/1.jpg",
+   "url_key": "622164247ea7b5290c63"
+  },
+  "brown|polo_shirt|solid": {
+   "file": "brown/solid_polo_shirt.jpg",
+   "source": "images_final/brown/solid_polo_shirt/1.jpg",
+   "url_key": "1739ff8fdcd3106aa2db"
+  },
+  "brown|polo_shirt|striped": {
+   "file": "brown/striped_polo_shirt.jpg",
+   "source": "images_final/brown/striped_polo_shirt/1.jpg",
+   "url_key": "4cb31a1bcdcedfe2d44f"
+  },
+  "brown|puffer_jacket|checkered": {
+   "file": "brown/checkered_puffer_jacket.jpg",
+   "source": "images_final/brown/checkered_puffer_jacket/2.jpg",
+   "url_key": "69f81cf405433cb9fcc8"
+  },
+  "brown|puffer_jacket|floral": {
+   "file": "brown/floral_puffer_jacket.jpg",
+   "source": "images_final/brown/floral_puffer_jacket/1.jpg",
+   "url_key": "adca003e515388578b0a"
+  },
+  "brown|puffer_jacket|leopard": {
+   "file": "brown/leopard_puffer_jacket.jpg",
+   "source": "images_final/brown/leopard_puffer_jacket/1.jpg",
+   "url_key": "6a132676fd2f6ff0d466"
+  },
+  "brown|puffer_jacket|solid": {
+   "file": "brown/solid_puffer_jacket.jpg",
+   "source": "images_final/brown/solid_puffer_jacket/1.jpg",
+   "url_key": "812e6b90b3d234949ae4"
+  },
+  "brown|shorts|checkered": {
+   "file": "brown/checkered_shorts.jpg",
+   "source": "images_final/brown/checkered_shorts/1.jpg",
+   "url_key": "6e71c8337ff75c104fd5"
+  },
+  "brown|shorts|floral": {
+   "file": "brown/floral_shorts.jpg",
+   "source": "images_final/brown/floral_shorts/1.jpg",
+   "url_key": "cbd65f1125d890dddae3"
+  },
+  "brown|shorts|leopard": {
+   "file": "brown/leopard_shorts.jpg",
+   "source": "images_final/brown/leopard_shorts/1.jpg",
+   "url_key": "126866941bc758f45377"
+  },
+  "brown|shorts|polka_dot": {
+   "file": "brown/polka_dot_shorts.jpg",
+   "source": "images_final/brown/polka_dot_shorts/1.jpg",
+   "url_key": "7e011a86564c5c353989"
+  },
+  "brown|shorts|solid": {
+   "file": "brown/solid_shorts.jpg",
+   "source": "images_final/brown/solid_shorts/1.jpg",
+   "url_key": "9cdcb635f821ed9de94b"
+  },
+  "brown|shorts|striped": {
+   "file": "brown/striped_shorts.jpg",
+   "source": "images_final/brown/striped_shorts/1.jpg",
+   "url_key": "2bb1b27e24e3ce71d6b6"
+  },
+  "brown|suit_vest|checkered": {
+   "file": "brown/checkered_suit_vest.jpg",
+   "source": "images_final/brown/checkered_suit_vest/1.jpg",
+   "url_key": "339cb15793bed9111513"
+  },
+  "brown|suit_vest|polka_dot": {
+   "file": "brown/polka_dot_suit_vest.jpg",
+   "source": "images_final/brown/polka_dot_suit_vest/1.jpg",
+   "url_key": "16f5d0b8467abbb85eeb"
+  },
+  "brown|suit_vest|solid": {
+   "file": "brown/solid_suit_vest.jpg",
+   "source": "images_final/brown/solid_suit_vest/1.jpg",
+   "url_key": "cf2c70d14190f289cd89"
+  },
+  "brown|sweater|leopard": {
+   "file": "brown/leopard_sweater.jpg",
+   "source": "images_final/brown/leopard_sweater/1.jpg",
+   "url_key": "1bc3967d17fba85ee631"
+  },
+  "brown|sweater|polka_dot": {
+   "file": "brown/polka_dot_sweater.jpg",
+   "source": "images_final/brown/polka_dot_sweater/1.jpg",
+   "url_key": "d2b9bdc43ce527cbe7df"
+  },
+  "brown|sweater|solid": {
+   "file": "brown/solid_sweater.jpg",
+   "source": "images_final/brown/solid_sweater/1.jpg",
+   "url_key": "5c423ebda4c520a49db3"
+  },
+  "brown|sweater|striped": {
+   "file": "brown/striped_sweater.jpg",
+   "source": "images_final/brown/striped_sweater/1.jpg",
+   "url_key": "c890ae42ddc0436b7fe9"
+  },
+  "brown|sweatshirt|solid": {
+   "file": "brown/solid_sweatshirt.jpg",
+   "source": "images_final/brown/solid_sweatshirt/1.jpg",
+   "url_key": "f33726d1cb8819ba3c74"
+  },
+  "brown|t_shirt|checkered": {
+   "file": "brown/checkered_t_shirt.jpg",
+   "source": "images_final/brown/checkered_t_shirt/1.jpg",
+   "url_key": "df9f5b893e7cbcd160a8"
+  },
+  "brown|t_shirt|floral": {
+   "file": "brown/floral_t_shirt.jpg",
+   "source": "images_final/brown/floral_t_shirt/1.jpg",
+   "url_key": "b317592dbe75377c3c61"
+  },
+  "brown|t_shirt|leopard": {
+   "file": "brown/leopard_t_shirt.jpg",
+   "source": "images_final/brown/leopard_t_shirt/1.jpg",
+   "url_key": "47de5e5c7b9afe0380b0"
+  },
+  "brown|t_shirt|polka_dot": {
+   "file": "brown/polka_dot_t_shirt.jpg",
+   "source": "images_final/brown/polka_dot_t_shirt/1.jpg",
+   "url_key": "b7642f5110ca954f703f"
+  },
+  "brown|t_shirt|solid": {
+   "file": "brown/solid_t_shirt.jpg",
+   "source": "images_final/brown/solid_t_shirt/1.jpg",
+   "url_key": "4fd6885a3d3971d2ebff"
+  },
+  "brown|t_shirt|striped": {
+   "file": "brown/striped_t_shirt.jpg",
+   "source": "images_final/brown/striped_t_shirt/1.jpg",
+   "url_key": "e0b5cd96689c1ad5e1f5"
+  },
+  "brown|tank_top|checkered": {
+   "file": "brown/checkered_tank_top.jpg",
+   "source": "images_final/brown/checkered_tank_top/1.jpg",
+   "url_key": "13f9357dad3a8014e1e0"
+  },
+  "brown|tank_top|floral": {
+   "file": "brown/floral_tank_top.jpg",
+   "source": "images_final/brown/floral_tank_top/1.jpg",
+   "url_key": "2be64be6e90188bc9b39"
+  },
+  "brown|tank_top|leopard": {
+   "file": "brown/leopard_tank_top.jpg",
+   "source": "images_final/brown/leopard_tank_top/1.jpg",
+   "url_key": "eaf57494444556c6add6"
+  },
+  "brown|tank_top|solid": {
+   "file": "brown/solid_tank_top.jpg",
+   "source": "images_final/brown/solid_tank_top/1.jpg",
+   "url_key": "7b412af713be0b4fd4a9"
+  },
+  "brown|tank_top|striped": {
+   "file": "brown/striped_tank_top.jpg",
+   "source": "images_final/brown/striped_tank_top/1.jpg",
+   "url_key": "aa6c1197e87da77bc236"
+  },
+  "brown|windbreaker|solid": {
+   "file": "brown/solid_windbreaker.jpg",
+   "source": "images_final/brown/solid_windbreaker/1.jpg",
+   "url_key": "1e4898dfb05da7da5d99"
+  },
+  "gray|blazer|checkered": {
+   "file": "gray/checkered_blazer.jpg",
+   "source": "images_final/gray/checkered_blazer/1.jpg",
+   "url_key": "6dacb783db1c56d73619"
+  },
+  "gray|blazer|floral": {
+   "file": "gray/floral_blazer.jpg",
+   "source": "images_final/gray/floral_blazer/1.jpg",
+   "url_key": "b774e41f722384bd2a1b"
+  },
+  "gray|blazer|leopard": {
+   "file": "gray/leopard_blazer.jpg",
+   "source": "images_final/gray/leopard_blazer/1.jpg",
+   "url_key": "d5d986e8f2ef79f7b2fc"
+  },
+  "gray|blazer|solid": {
+   "file": "gray/solid_blazer.jpg",
+   "source": "images_final/gray/solid_blazer/1.jpg",
+   "url_key": "d3c64b958ad10b88723e"
+  },
+  "gray|blazer|striped": {
+   "file": "gray/striped_blazer.jpg",
+   "source": "images_final/gray/striped_blazer/1.jpg",
+   "url_key": "220fd67ecf3f4bbd4843"
+  },
+  "gray|dress|checkered": {
+   "file": "gray/checkered_dress.jpg",
+   "source": "images_final/gray/checkered_dress/1.jpg",
+   "url_key": "972a553ee1603223dcc4"
+  },
+  "gray|dress|floral": {
+   "file": "gray/floral_dress.jpg",
+   "source": "images_final/gray/floral_dress/1.jpg",
+   "url_key": "fba49d83b415c0c4a564"
+  },
+  "gray|dress|leopard": {
+   "file": "gray/leopard_dress.jpg",
+   "source": "images_final/gray/leopard_dress/1.jpg",
+   "url_key": "e00d6d899733ac724672"
+  },
+  "gray|dress|polka_dot": {
+   "file": "gray/polka_dot_dress.jpg",
+   "source": "images_final/gray/polka_dot_dress/1.jpg",
+   "url_key": "ce057cc3293cc769ff8e"
+  },
+  "gray|dress|solid": {
+   "file": "gray/solid_dress.jpg",
+   "source": "images_final/gray/solid_dress/1.jpg",
+   "url_key": "5c1b739059865186a50b"
+  },
+  "gray|dress|striped": {
+   "file": "gray/striped_dress.jpg",
+   "source": "images_final/gray/striped_dress/1.jpg",
+   "url_key": "b94d7f88ab05bfa113a6"
+  },
+  "gray|fleece_jacket|checkered": {
+   "file": "gray/checkered_fleece_jacket.jpg",
+   "source": "images_final/gray/checkered_fleece_jacket/1.jpg",
+   "url_key": "6797bdb53cab624ce867"
+  },
+  "gray|fleece_jacket|leopard": {
+   "file": "gray/leopard_fleece_jacket.jpg",
+   "source": "images_final/gray/leopard_fleece_jacket/1.jpg",
+   "url_key": "f5ffbd46a8a3de259235"
+  },
+  "gray|fleece_jacket|solid": {
+   "file": "gray/solid_fleece_jacket.jpg",
+   "source": "images_final/gray/solid_fleece_jacket/2.jpg",
+   "url_key": "0abd82dd147e3c04ebc9"
+  },
+  "gray|fleece_jacket|striped": {
+   "file": "gray/striped_fleece_jacket.jpg",
+   "source": "images_final/gray/striped_fleece_jacket/1.jpg",
+   "url_key": "47d933c8c75b19266ec8"
+  },
+  "gray|formal_shirt|checkered": {
+   "file": "gray/checkered_formal_shirt.jpg",
+   "source": "images_final/gray/checkered_formal_shirt/1.jpg",
+   "url_key": "2e2cbe665b23f67d515f"
+  },
+  "gray|formal_shirt|floral": {
+   "file": "gray/floral_formal_shirt.jpg",
+   "source": "images_final/gray/floral_formal_shirt/1.jpg",
+   "url_key": "4a33077d6db540f1d997"
+  },
+  "gray|formal_shirt|polka_dot": {
+   "file": "gray/polka_dot_formal_shirt.jpg",
+   "source": "images_final/gray/polka_dot_formal_shirt/1.jpg",
+   "url_key": "71fa6dbfcad19d5bcb32"
+  },
+  "gray|formal_shirt|solid": {
+   "file": "gray/solid_formal_shirt.jpg",
+   "source": "images_final/gray/solid_formal_shirt/1.jpg",
+   "url_key": "e0d36d26ddddd728fd5b"
+  },
+  "gray|formal_shirt|striped": {
+   "file": "gray/striped_formal_shirt.jpg",
+   "source": "images_final/gray/striped_formal_shirt/1.jpg",
+   "url_key": "dd53ec2810fe9597b40d"
+  },
+  "gray|hoodie|checkered": {
+   "file": "gray/checkered_hoodie.jpg",
+   "source": "images_final/gray/checkered_hoodie/1.jpg",
+   "url_key": "20762283b205ae06de24"
+  },
+  "gray|hoodie|floral": {
+   "file": "gray/floral_hoodie.jpg",
+   "source": "images_final/gray/floral_hoodie/2.jpg",
+   "url_key": "ddcb79ed87b07592954a"
+  },
+  "gray|hoodie|solid": {
+   "file": "gray/solid_hoodie.jpg",
+   "source": "images_final/gray/solid_hoodie/1.jpg",
+   "url_key": "82e3e019417c2b84d625"
+  },
+  "gray|hoodie|striped": {
+   "file": "gray/striped_hoodie.jpg",
+   "source": "images_final/gray/striped_hoodie/1.jpg",
+   "url_key": "472659ba4d6db85f9489"
+  },
+  "gray|jeans|checkered": {
+   "file": "gray/checkered_jeans.jpg",
+   "source": "images_final/gray/checkered_jeans/1.jpg",
+   "url_key": "1ea73cf170b174592803"
+  },
+  "gray|jeans|floral": {
+   "file": "gray/floral_jeans.jpg",
+   "source": "images_final/gray/floral_jeans/1.jpg",
+   "url_key": "f2a7b0c4a4905572f2c9"
+  },
+  "gray|jeans|leopard": {
+   "file": "gray/leopard_jeans.jpg",
+   "source": "images_final/gray/leopard_jeans/1.jpg",
+   "url_key": "74ffb4e8421896ff3245"
+  },
+  "gray|jeans|solid": {
+   "file": "gray/solid_jeans.jpg",
+   "source": "images_final/gray/solid_jeans/1.jpg",
+   "url_key": "0cb4f241212b570b3595"
+  },
+  "gray|leather_jacket|solid": {
+   "file": "gray/solid_leather_jacket.jpg",
+   "source": "images_final/gray/solid_leather_jacket/1.jpg",
+   "url_key": "2db4fe2c730d30671dc5"
+  },
+  "gray|leggings|checkered": {
+   "file": "gray/checkered_leggings.jpg",
+   "source": "images_final/gray/checkered_leggings/1.jpg",
+   "url_key": "12ae48d283e2626c0f9e"
+  },
+  "gray|leggings|floral": {
+   "file": "gray/floral_leggings.jpg",
+   "source": "images_final/gray/floral_leggings/1.jpg",
+   "url_key": "2b2a65b5396f1dbd9056"
+  },
+  "gray|leggings|leopard": {
+   "file": "gray/leopard_leggings.jpg",
+   "source": "images_final/gray/leopard_leggings/1.jpg",
+   "url_key": "f2844ce20963b51eb75b"
+  },
+  "gray|leggings|striped": {
+   "file": "gray/striped_leggings.jpg",
+   "source": "images_final/gray/striped_leggings/1.jpg",
+   "url_key": "e46370dabace1ddd0934"
+  },
+  "gray|long_coat|checkered": {
+   "file": "gray/checkered_long_coat.jpg",
+   "source": "images_final/gray/checkered_long_coat/2.jpg",
+   "url_key": "b1efb7c686639a3b8814"
+  },
+  "gray|long_coat|floral": {
+   "file": "gray/floral_long_coat.jpg",
+   "source": "images_final/gray/floral_long_coat/2.jpg",
+   "url_key": "105c8df57be1d2e37100"
+  },
+  "gray|long_coat|leopard": {
+   "file": "gray/leopard_long_coat.jpg",
+   "source": "images_final/gray/leopard_long_coat/2.jpg",
+   "url_key": "4e3dec22f08022e6eede"
+  },
+  "gray|long_coat|solid": {
+   "file": "gray/solid_long_coat.jpg",
+   "source": "images_final/gray/solid_long_coat/3.jpg",
+   "url_key": "c70c695af87bd5c367b6"
+  },
+  "gray|long_coat|striped": {
+   "file": "gray/striped_long_coat.jpg",
+   "source": "images_final/gray/striped_long_coat/2.jpg",
+   "url_key": "15199e424b2602185fc6"
+  },
+  "gray|long_skirt|checkered": {
+   "file": "gray/checkered_long_skirt.jpg",
+   "source": "images_final/gray/checkered_long_skirt/1.jpg",
+   "url_key": "2872ef220f08d6ed2466"
+  },
+  "gray|long_skirt|floral": {
+   "file": "gray/floral_long_skirt.jpg",
+   "source": "images_final/gray/floral_long_skirt/1.jpg",
+   "url_key": "fb60c009b12e151a6386"
+  },
+  "gray|long_skirt|leopard": {
+   "file": "gray/leopard_long_skirt.jpg",
+   "source": "images_final/gray/leopard_long_skirt/1.jpg",
+   "url_key": "b585bd42618b91d00059"
+  },
+  "gray|long_skirt|polka_dot": {
+   "file": "gray/polka_dot_long_skirt.jpg",
+   "source": "images_final/gray/polka_dot_long_skirt/1.jpg",
+   "url_key": "8422c4f6bbb03dcb8864"
+  },
+  "gray|long_skirt|solid": {
+   "file": "gray/solid_long_skirt.jpg",
+   "source": "images_final/gray/solid_long_skirt/1.jpg",
+   "url_key": "1648427f88f5da42739d"
+  },
+  "gray|long_skirt|striped": {
+   "file": "gray/striped_long_skirt.jpg",
+   "source": "images_final/gray/striped_long_skirt/1.jpg",
+   "url_key": "aadcb2c0a7e63a3aeb97"
+  },
+  "gray|mini_skirt|checkered": {
+   "file": "gray/checkered_mini_skirt.jpg",
+   "source": "images_final/gray/checkered_mini_skirt/1.jpg",
+   "url_key": "4e33fd73936bcb3de66d"
+  },
+  "gray|mini_skirt|floral": {
+   "file": "gray/floral_mini_skirt.jpg",
+   "source": "images_final/gray/floral_mini_skirt/1.jpg",
+   "url_key": "aa616b4801733b05b20d"
+  },
+  "gray|mini_skirt|solid": {
+   "file": "gray/solid_mini_skirt.jpg",
+   "source": "images_final/gray/solid_mini_skirt/1.jpg",
+   "url_key": "5d8df53c0579f59f6730"
+  },
+  "gray|mini_skirt|striped": {
+   "file": "gray/striped_mini_skirt.jpg",
+   "source": "images_final/gray/striped_mini_skirt/1.jpg",
+   "url_key": "51e258834d7db2e160d9"
+  },
+  "gray|pea_coat|solid": {
+   "file": "gray/solid_pea_coat.jpg",
+   "source": "images_final/gray/solid_pea_coat/4.jpg",
+   "url_key": "3f08a90fc204adbef945"
+  },
+  "gray|polo_shirt|checkered": {
+   "file": "gray/checkered_polo_shirt.jpg",
+   "source": "images_final/gray/checkered_polo_shirt/1.jpg",
+   "url_key": "6b805113fbbf8d9539e7"
+  },
+  "gray|polo_shirt|polka_dot": {
+   "file": "gray/polka_dot_polo_shirt.jpg",
+   "source": "images_final/gray/polka_dot_polo_shirt/1.jpg",
+   "url_key": "5ed288893383be308bd7"
+  },
+  "gray|polo_shirt|solid": {
+   "file": "gray/solid_polo_shirt.jpg",
+   "source": "images_final/gray/solid_polo_shirt/1.jpg",
+   "url_key": "477dd17912650e3d014e"
+  },
+  "gray|polo_shirt|striped": {
+   "file": "gray/striped_polo_shirt.jpg",
+   "source": "images_final/gray/striped_polo_shirt/1.jpg",
+   "url_key": "3ba0d6295f030f9a4b93"
+  },
+  "gray|puffer_jacket|solid": {
+   "file": "gray/solid_puffer_jacket.jpg",
+   "source": "images_final/gray/solid_puffer_jacket/1.jpg",
+   "url_key": "4c2beb355bcf7fb87f94"
+  },
+  "gray|shorts|checkered": {
+   "file": "gray/checkered_shorts.jpg",
+   "source": "images_final/gray/checkered_shorts/1.jpg",
+   "url_key": "6b2497750907b9cfe0b2"
+  },
+  "gray|shorts|floral": {
+   "file": "gray/floral_shorts.jpg",
+   "source": "images_final/gray/floral_shorts/2.jpg",
+   "url_key": "8a86896dd07a094816a6"
+  },
+  "gray|shorts|leopard": {
+   "file": "gray/leopard_shorts.jpg",
+   "source": "images_final/gray/leopard_shorts/1.jpg",
+   "url_key": "3eda857ca121827806e7"
+  },
+  "gray|shorts|polka_dot": {
+   "file": "gray/polka_dot_shorts.jpg",
+   "source": "images_final/gray/polka_dot_shorts/1.jpg",
+   "url_key": "a35a574a217d604f5db3"
+  },
+  "gray|shorts|solid": {
+   "file": "gray/solid_shorts.jpg",
+   "source": "images_final/gray/solid_shorts/1.jpg",
+   "url_key": "f42deeeb3b0d494f89cc"
+  },
+  "gray|shorts|striped": {
+   "file": "gray/striped_shorts.jpg",
+   "source": "images_final/gray/striped_shorts/1.jpg",
+   "url_key": "070631fbe3fa80839eac"
+  },
+  "gray|slacks|checkered": {
+   "file": "gray/checkered_slacks.jpg",
+   "source": "images_final/gray/checkered_slacks/1.jpg",
+   "url_key": "5347477673655e72b794"
+  },
+  "gray|slacks|floral": {
+   "file": "gray/floral_slacks.jpg",
+   "source": "images_final/gray/floral_slacks/1.jpg",
+   "url_key": "690491a9851407d80333"
+  },
+  "gray|slacks|polka_dot": {
+   "file": "gray/polka_dot_slacks.jpg",
+   "source": "images_final/gray/polka_dot_slacks/2.jpg",
+   "url_key": "ac776386bc988595b7c7"
+  },
+  "gray|slacks|solid": {
+   "file": "gray/solid_slacks.jpg",
+   "source": "images_final/gray/solid_slacks/1.jpg",
+   "url_key": "8c9cff776616f7bb8076"
+  },
+  "gray|slacks|striped": {
+   "file": "gray/striped_slacks.jpg",
+   "source": "images_final/gray/striped_slacks/1.jpg",
+   "url_key": "2d1b590ea9f9e73841f7"
+  },
+  "gray|suit_vest|checkered": {
+   "file": "gray/checkered_suit_vest.jpg",
+   "source": "images_final/gray/checkered_suit_vest/1.jpg",
+   "url_key": "f85f36335ad3092af7d7"
+  },
+  "gray|suit_vest|polka_dot": {
+   "file": "gray/polka_dot_suit_vest.jpg",
+   "source": "images_final/gray/polka_dot_suit_vest/1.jpg",
+   "url_key": "2629f68ab6313ed88cd3"
+  },
+  "gray|suit_vest|solid": {
+   "file": "gray/solid_suit_vest.jpg",
+   "source": "images_final/gray/solid_suit_vest/1.jpg",
+   "url_key": "53e76f1b86018116c1d7"
+  },
+  "gray|sweater|checkered": {
+   "file": "gray/checkered_sweater.jpg",
+   "source": "images_final/gray/checkered_sweater/1.jpg",
+   "url_key": "69fde8be1e6cab4c623b"
+  },
+  "gray|sweater|floral": {
+   "file": "gray/floral_sweater.jpg",
+   "source": "images_final/gray/floral_sweater/1.jpg",
+   "url_key": "0eaf221c46f920809a90"
+  },
+  "gray|sweater|leopard": {
+   "file": "gray/leopard_sweater.jpg",
+   "source": "images_final/gray/leopard_sweater/1.jpg",
+   "url_key": "7c81f1e1e1e837990850"
+  },
+  "gray|sweater|polka_dot": {
+   "file": "gray/polka_dot_sweater.jpg",
+   "source": "images_final/gray/polka_dot_sweater/1.jpg",
+   "url_key": "9880c983df7a29ddc57c"
+  },
+  "gray|sweater|solid": {
+   "file": "gray/solid_sweater.jpg",
+   "source": "images_final/gray/solid_sweater/1.jpg",
+   "url_key": "a389bc646f8ad8ed3f55"
+  },
+  "gray|sweater|striped": {
+   "file": "gray/striped_sweater.jpg",
+   "source": "images_final/gray/striped_sweater/2.jpg",
+   "url_key": "736edc10d7c1234c8460"
+  },
+  "gray|sweatshirt|floral": {
+   "file": "gray/floral_sweatshirt.jpg",
+   "source": "images_final/gray/floral_sweatshirt/1.jpg",
+   "url_key": "a896254ff53f0f221915"
+  },
+  "gray|sweatshirt|solid": {
+   "file": "gray/solid_sweatshirt.jpg",
+   "source": "images_final/gray/solid_sweatshirt/1.jpg",
+   "url_key": "1c02ded91e9919c71f9a"
+  },
+  "gray|sweatshirt|striped": {
+   "file": "gray/striped_sweatshirt.jpg",
+   "source": "images_final/gray/striped_sweatshirt/1.jpg",
+   "url_key": "6477131434ad883f09a4"
+  },
+  "gray|t_shirt|floral": {
+   "file": "gray/floral_t_shirt.jpg",
+   "source": "images_final/gray/floral_t_shirt/1.jpg",
+   "url_key": "c5142728bcba1b43cabf"
+  },
+  "gray|t_shirt|leopard": {
+   "file": "gray/leopard_t_shirt.jpg",
+   "source": "images_final/gray/leopard_t_shirt/1.jpg",
+   "url_key": "fd782e8af2b5d7ea6826"
+  },
+  "gray|t_shirt|polka_dot": {
+   "file": "gray/polka_dot_t_shirt.jpg",
+   "source": "images_final/gray/polka_dot_t_shirt/1.jpg",
+   "url_key": "abb531d38fa1de9a2918"
+  },
+  "gray|t_shirt|solid": {
+   "file": "gray/solid_t_shirt.jpg",
+   "source": "images_final/gray/solid_t_shirt/1.jpg",
+   "url_key": "2d14607d6b49011603b2"
+  },
+  "gray|t_shirt|striped": {
+   "file": "gray/striped_t_shirt.jpg",
+   "source": "images_final/gray/striped_t_shirt/1.jpg",
+   "url_key": "b82042cdd73aee0fa672"
+  },
+  "gray|tank_top|checkered": {
+   "file": "gray/checkered_tank_top.jpg",
+   "source": "images_final/gray/checkered_tank_top/1.jpg",
+   "url_key": "f5a73141279ebba4e2e7"
+  },
+  "gray|tank_top|floral": {
+   "file": "gray/floral_tank_top.jpg",
+   "source": "images_final/gray/floral_tank_top/1.jpg",
+   "url_key": "31ab0986eb94027b139f"
+  },
+  "gray|tank_top|leopard": {
+   "file": "gray/leopard_tank_top.jpg",
+   "source": "images_final/gray/leopard_tank_top/1.jpg",
+   "url_key": "396b77455431d53b32cb"
+  },
+  "gray|tank_top|polka_dot": {
+   "file": "gray/polka_dot_tank_top.jpg",
+   "source": "images_final/gray/polka_dot_tank_top/1.jpg",
+   "url_key": "a35a574a217d604f5db3"
+  },
+  "gray|tank_top|solid": {
+   "file": "gray/solid_tank_top.jpg",
+   "source": "images_final/gray/solid_tank_top/1.jpg",
+   "url_key": "5bc880986ea499ad2969"
+  },
+  "gray|tank_top|striped": {
+   "file": "gray/striped_tank_top.jpg",
+   "source": "images_final/gray/striped_tank_top/1.jpg",
+   "url_key": "2bd41358b0d17e55617d"
+  },
+  "gray|windbreaker|checkered": {
+   "file": "gray/checkered_windbreaker.jpg",
+   "source": "images_final/gray/checkered_windbreaker/1.jpg",
+   "url_key": "1b4c79b8fd375fe7ea54"
+  },
+  "gray|windbreaker|floral": {
+   "file": "gray/floral_windbreaker.jpg",
+   "source": "images_final/gray/floral_windbreaker/1.jpg",
+   "url_key": "a20a11698d535b1e0f30"
+  },
+  "gray|windbreaker|leopard": {
+   "file": "gray/leopard_windbreaker.jpg",
+   "source": "images_final/gray/leopard_windbreaker/1.jpg",
+   "url_key": "e03124802e4f00866688"
+  },
+  "gray|windbreaker|solid": {
+   "file": "gray/solid_windbreaker.jpg",
+   "source": "images_final/gray/solid_windbreaker/2.jpg",
+   "url_key": "6d7e2fcf1da9fe664e7d"
+  },
+  "green|blazer|checkered": {
+   "file": "green/checkered_blazer.jpg",
+   "source": "images_final/green/checkered_blazer/1.jpg",
+   "url_key": "6035a753926347a5f9b4"
+  },
+  "green|blazer|floral": {
+   "file": "green/floral_blazer.jpg",
+   "source": "images_final/green/floral_blazer/2.jpg",
+   "url_key": "627cce1b3e54969c7f18"
+  },
+  "green|blazer|leopard": {
+   "file": "green/leopard_blazer.jpg",
+   "source": "images_final/green/leopard_blazer/1.jpg",
+   "url_key": "bbdac095d38d9616f553"
+  },
+  "green|dress|checkered": {
+   "file": "green/checkered_dress.jpg",
+   "source": "images_final/green/checkered_dress/1.jpg",
+   "url_key": "c2412e083910662e1bac"
+  },
+  "green|dress|floral": {
+   "file": "green/floral_dress.jpg",
+   "source": "images_final/green/floral_dress/1.jpg",
+   "url_key": "19ffe3ed86ff6afa2f08"
+  },
+  "green|dress|leopard": {
+   "file": "green/leopard_dress.jpg",
+   "source": "images_final/green/leopard_dress/1.jpg",
+   "url_key": "769beef14aaad2390122"
+  },
+  "green|dress|polka_dot": {
+   "file": "green/polka_dot_dress.jpg",
+   "source": "images_final/green/polka_dot_dress/1.jpg",
+   "url_key": "892b82d0c3dbd570f9af"
+  },
+  "green|dress|solid": {
+   "file": "green/solid_dress.jpg",
+   "source": "images_final/green/solid_dress/1.jpg",
+   "url_key": "1bb4098698dddcb10ea0"
+  },
+  "green|dress|striped": {
+   "file": "green/striped_dress.jpg",
+   "source": "images_final/green/striped_dress/1.jpg",
+   "url_key": "fbc0c1d378c17ce0f032"
+  },
+  "green|fleece_jacket|solid": {
+   "file": "green/solid_fleece_jacket.jpg",
+   "source": "images_final/green/solid_fleece_jacket/1.jpg",
+   "url_key": "76be8771b997ac071661"
+  },
+  "green|formal_shirt|checkered": {
+   "file": "green/checkered_formal_shirt.jpg",
+   "source": "images_final/green/checkered_formal_shirt/1.jpg",
+   "url_key": "dc541a812adf940aa41d"
+  },
+  "green|formal_shirt|floral": {
+   "file": "green/floral_formal_shirt.jpg",
+   "source": "images_final/green/floral_formal_shirt/1.jpg",
+   "url_key": "50356e21eba0613f0e32"
+  },
+  "green|formal_shirt|leopard": {
+   "file": "green/leopard_formal_shirt.jpg",
+   "source": "images_final/green/leopard_formal_shirt/1.jpg",
+   "url_key": "85db60b968ba718711fd"
+  },
+  "green|formal_shirt|polka_dot": {
+   "file": "green/polka_dot_formal_shirt.jpg",
+   "source": "images_final/green/polka_dot_formal_shirt/1.jpg",
+   "url_key": "128e971f0391fe90b058"
+  },
+  "green|formal_shirt|solid": {
+   "file": "green/solid_formal_shirt.jpg",
+   "source": "images_final/green/solid_formal_shirt/1.jpg",
+   "url_key": "da21f4437461580480c1"
+  },
+  "green|formal_shirt|striped": {
+   "file": "green/striped_formal_shirt.jpg",
+   "source": "images_final/green/striped_formal_shirt/1.jpg",
+   "url_key": "9949642a294a615b8d81"
+  },
+  "green|hoodie|checkered": {
+   "file": "green/checkered_hoodie.jpg",
+   "source": "images_final/green/checkered_hoodie/1.jpg",
+   "url_key": "85997fd5d942b7d0b7c3"
+  },
+  "green|hoodie|solid": {
+   "file": "green/solid_hoodie.jpg",
+   "source": "images_final/green/solid_hoodie/1.jpg",
+   "url_key": "982a8d6a3c19d1d9ef7a"
+  },
+  "green|hoodie|striped": {
+   "file": "green/striped_hoodie.jpg",
+   "source": "images_final/green/striped_hoodie/1.jpg",
+   "url_key": "ea3cc678e2f3f1750cf1"
+  },
+  "green|jeans|solid": {
+   "file": "green/solid_jeans.jpg",
+   "source": "images_final/green/solid_jeans/1.jpg",
+   "url_key": "f5848d72ce413314846c"
+  },
+  "green|leather_jacket|solid": {
+   "file": "green/solid_leather_jacket.jpg",
+   "source": "images_final/green/solid_leather_jacket/1.jpg",
+   "url_key": "4bf8156221db14c03ce4"
+  },
+  "green|leggings|checkered": {
+   "file": "green/checkered_leggings.jpg",
+   "source": "images_final/green/checkered_leggings/1.jpg",
+   "url_key": "a80c6f12d979a972d234"
+  },
+  "green|leggings|solid": {
+   "file": "green/solid_leggings.jpg",
+   "source": "images_final/green/solid_leggings/1.jpg",
+   "url_key": "f06c0a5aad3751a6739f"
+  },
+  "green|leggings|striped": {
+   "file": "green/striped_leggings.jpg",
+   "source": "images_final/green/striped_leggings/1.jpg",
+   "url_key": "b5e94b6bbfee59dd048a"
+  },
+  "green|long_coat|checkered": {
+   "file": "green/checkered_long_coat.jpg",
+   "source": "images_final/green/checkered_long_coat/2.jpg",
+   "url_key": "0463bfc992d33fd8a26c"
+  },
+  "green|long_coat|leopard": {
+   "file": "green/leopard_long_coat.jpg",
+   "source": "images_final/green/leopard_long_coat/2.jpg",
+   "url_key": "a9ccff7986025f35c129"
+  },
+  "green|long_coat|polka_dot": {
+   "file": "green/polka_dot_long_coat.jpg",
+   "source": "images_final/green/polka_dot_long_coat/2.jpg",
+   "url_key": "a83ed59456c5ab5ae4ab"
+  },
+  "green|long_coat|solid": {
+   "file": "green/solid_long_coat.jpg",
+   "source": "images_final/green/solid_long_coat/3.jpg",
+   "url_key": "133c665ea6cab8e73a0d"
+  },
+  "green|long_coat|striped": {
+   "file": "green/striped_long_coat.jpg",
+   "source": "images_final/green/striped_long_coat/2.jpg",
+   "url_key": "0563d512818318d7714d"
+  },
+  "green|long_skirt|checkered": {
+   "file": "green/checkered_long_skirt.jpg",
+   "source": "images_final/green/checkered_long_skirt/1.jpg",
+   "url_key": "a169d5605d255a11e20b"
+  },
+  "green|long_skirt|floral": {
+   "file": "green/floral_long_skirt.jpg",
+   "source": "images_final/green/floral_long_skirt/1.jpg",
+   "url_key": "51972e8609a69a02c91f"
+  },
+  "green|long_skirt|leopard": {
+   "file": "green/leopard_long_skirt.jpg",
+   "source": "images_final/green/leopard_long_skirt/1.jpg",
+   "url_key": "6a62895acb67c7510141"
+  },
+  "green|long_skirt|polka_dot": {
+   "file": "green/polka_dot_long_skirt.jpg",
+   "source": "images_final/green/polka_dot_long_skirt/1.jpg",
+   "url_key": "9d7463e752645fbb653e"
+  },
+  "green|long_skirt|solid": {
+   "file": "green/solid_long_skirt.jpg",
+   "source": "images_final/green/solid_long_skirt/1.jpg",
+   "url_key": "3bdf31cc6aa0828bd150"
+  },
+  "green|long_skirt|striped": {
+   "file": "green/striped_long_skirt.jpg",
+   "source": "images_final/green/striped_long_skirt/1.jpg",
+   "url_key": "f9425573dedac836151e"
+  },
+  "green|mini_skirt|checkered": {
+   "file": "green/checkered_mini_skirt.jpg",
+   "source": "images_final/green/checkered_mini_skirt/1.jpg",
+   "url_key": "9d1889b3ac75ca4e52cd"
+  },
+  "green|mini_skirt|floral": {
+   "file": "green/floral_mini_skirt.jpg",
+   "source": "images_final/green/floral_mini_skirt/1.jpg",
+   "url_key": "822f13f5010e4c455509"
+  },
+  "green|mini_skirt|leopard": {
+   "file": "green/leopard_mini_skirt.jpg",
+   "source": "images_final/green/leopard_mini_skirt/1.jpg",
+   "url_key": "7324d6372289691d375d"
+  },
+  "green|mini_skirt|polka_dot": {
+   "file": "green/polka_dot_mini_skirt.jpg",
+   "source": "images_final/green/polka_dot_mini_skirt/1.jpg",
+   "url_key": "c8ee715947b11e079f90"
+  },
+  "green|mini_skirt|solid": {
+   "file": "green/solid_mini_skirt.jpg",
+   "source": "images_final/green/solid_mini_skirt/1.jpg",
+   "url_key": "8800db1d15572f9a1e29"
+  },
+  "green|mini_skirt|striped": {
+   "file": "green/striped_mini_skirt.jpg",
+   "source": "images_final/green/striped_mini_skirt/1.jpg",
+   "url_key": "9a69908cc2de4597eb19"
+  },
+  "green|pea_coat|solid": {
+   "file": "green/solid_pea_coat.jpg",
+   "source": "images_final/green/solid_pea_coat/2.jpg",
+   "url_key": "77bd6adb02d1f129b38a"
+  },
+  "green|polo_shirt|checkered": {
+   "file": "green/checkered_polo_shirt.jpg",
+   "source": "images_final/green/checkered_polo_shirt/1.jpg",
+   "url_key": "5ac174a79f4b4b3d3bd5"
+  },
+  "green|polo_shirt|solid": {
+   "file": "green/solid_polo_shirt.jpg",
+   "source": "images_final/green/solid_polo_shirt/1.jpg",
+   "url_key": "378b02a5300623e0bfb1"
+  },
+  "green|polo_shirt|striped": {
+   "file": "green/striped_polo_shirt.jpg",
+   "source": "images_final/green/striped_polo_shirt/1.jpg",
+   "url_key": "ef487a8b7a2ed47ae67d"
+  },
+  "green|shorts|checkered": {
+   "file": "green/checkered_shorts.jpg",
+   "source": "images_final/green/checkered_shorts/1.jpg",
+   "url_key": "2101013116fad2357270"
+  },
+  "green|shorts|floral": {
+   "file": "green/floral_shorts.jpg",
+   "source": "images_final/green/floral_shorts/1.jpg",
+   "url_key": "1ca0ea12e9243477dfb3"
+  },
+  "green|shorts|leopard": {
+   "file": "green/leopard_shorts.jpg",
+   "source": "images_final/green/leopard_shorts/1.jpg",
+   "url_key": "0dfd7675a9423dc15729"
+  },
+  "green|shorts|polka_dot": {
+   "file": "green/polka_dot_shorts.jpg",
+   "source": "images_final/green/polka_dot_shorts/1.jpg",
+   "url_key": "1d3894e018e0f61373e6"
+  },
+  "green|shorts|solid": {
+   "file": "green/solid_shorts.jpg",
+   "source": "images_final/green/solid_shorts/1.jpg",
+   "url_key": "4ae60c767a1d6defe3a7"
+  },
+  "green|shorts|striped": {
+   "file": "green/striped_shorts.jpg",
+   "source": "images_final/green/striped_shorts/1.jpg",
+   "url_key": "8d306db5e693c0fd61f1"
+  },
+  "green|suit_vest|solid": {
+   "file": "green/solid_suit_vest.jpg",
+   "source": "images_final/green/solid_suit_vest/1.jpg",
+   "url_key": "b748e4cf24fc47ef73e3"
+  },
+  "green|sweater|checkered": {
+   "file": "green/checkered_sweater.jpg",
+   "source": "images_final/green/checkered_sweater/1.jpg",
+   "url_key": "96d077e306f508bbee5c"
+  },
+  "green|sweater|leopard": {
+   "file": "green/leopard_sweater.jpg",
+   "source": "images_final/green/leopard_sweater/1.jpg",
+   "url_key": "660e0674af53b43adae2"
+  },
+  "green|sweater|solid": {
+   "file": "green/solid_sweater.jpg",
+   "source": "images_final/green/solid_sweater/3.jpg",
+   "url_key": "b3c008e6d85c461b36a8"
+  },
+  "green|sweater|striped": {
+   "file": "green/striped_sweater.jpg",
+   "source": "images_final/green/striped_sweater/1.jpg",
+   "url_key": "4e8886b090ed53b8031f"
+  },
+  "green|sweatshirt|floral": {
+   "file": "green/floral_sweatshirt.jpg",
+   "source": "images_final/green/floral_sweatshirt/1.jpg",
+   "url_key": "d71db757b7157ae50c40"
+  },
+  "green|sweatshirt|solid": {
+   "file": "green/solid_sweatshirt.jpg",
+   "source": "images_final/green/solid_sweatshirt/1.jpg",
+   "url_key": "8edb365cc107ca0a5a28"
+  },
+  "green|sweatshirt|striped": {
+   "file": "green/striped_sweatshirt.jpg",
+   "source": "images_final/green/striped_sweatshirt/1.jpg",
+   "url_key": "ffe13b885efe7b9d4930"
+  },
+  "green|t_shirt|floral": {
+   "file": "green/floral_t_shirt.jpg",
+   "source": "images_final/green/floral_t_shirt/1.jpg",
+   "url_key": "a4c3748c986e6063cd74"
+  },
+  "green|t_shirt|leopard": {
+   "file": "green/leopard_t_shirt.jpg",
+   "source": "images_final/green/leopard_t_shirt/1.jpg",
+   "url_key": "0dfd7675a9423dc15729"
+  },
+  "green|t_shirt|polka_dot": {
+   "file": "green/polka_dot_t_shirt.jpg",
+   "source": "images_final/green/polka_dot_t_shirt/1.jpg",
+   "url_key": "160d48824cf82e7aa22a"
+  },
+  "green|t_shirt|solid": {
+   "file": "green/solid_t_shirt.jpg",
+   "source": "images_final/green/solid_t_shirt/1.jpg",
+   "url_key": "e46b2284b9b9b947cd2d"
+  },
+  "green|t_shirt|striped": {
+   "file": "green/striped_t_shirt.jpg",
+   "source": "images_final/green/striped_t_shirt/1.jpg",
+   "url_key": "16c7cfcc2c347173345c"
+  },
+  "green|tank_top|checkered": {
+   "file": "green/checkered_tank_top.jpg",
+   "source": "images_final/green/checkered_tank_top/1.jpg",
+   "url_key": "3ac32ad357243a82b962"
+  },
+  "green|tank_top|floral": {
+   "file": "green/floral_tank_top.jpg",
+   "source": "images_final/green/floral_tank_top/1.jpg",
+   "url_key": "8e5eaa01bec621ee94b7"
+  },
+  "green|tank_top|leopard": {
+   "file": "green/leopard_tank_top.jpg",
+   "source": "images_final/green/leopard_tank_top/1.jpg",
+   "url_key": "fbc8aeba572559c20ef6"
+  },
+  "green|tank_top|polka_dot": {
+   "file": "green/polka_dot_tank_top.jpg",
+   "source": "images_final/green/polka_dot_tank_top/1.jpg",
+   "url_key": "fc5908fdf33c77e0a4a6"
+  },
+  "green|tank_top|solid": {
+   "file": "green/solid_tank_top.jpg",
+   "source": "images_final/green/solid_tank_top/1.jpg",
+   "url_key": "4f0850d91552a75eee43"
+  },
+  "green|tank_top|striped": {
+   "file": "green/striped_tank_top.jpg",
+   "source": "images_final/green/striped_tank_top/1.jpg",
+   "url_key": "c2eaf0fe56f6527dd818"
+  },
+  "green|windbreaker|checkered": {
+   "file": "green/checkered_windbreaker.jpg",
+   "source": "images_final/green/checkered_windbreaker/1.jpg",
+   "url_key": "a3613a953b1b63415d43"
+  },
+  "green|windbreaker|floral": {
+   "file": "green/floral_windbreaker.jpg",
+   "source": "images_final/green/floral_windbreaker/1.jpg",
+   "url_key": "0d8b10e728907f245029"
+  },
+  "green|windbreaker|polka_dot": {
+   "file": "green/polka_dot_windbreaker.jpg",
+   "source": "images_final/green/polka_dot_windbreaker/1.jpg",
+   "url_key": "19f4a4f0f2d58e9eb26b"
+  },
+  "green|windbreaker|solid": {
+   "file": "green/solid_windbreaker.jpg",
+   "source": "images_final/green/solid_windbreaker/1.jpg",
+   "url_key": "a31c5f2743f798c0de50"
+  },
+  "green|windbreaker|striped": {
+   "file": "green/striped_windbreaker.jpg",
+   "source": "images_final/green/striped_windbreaker/1.jpg",
+   "url_key": "d7a34ea4ee74d382dee8"
+  },
+  "navy|blazer|checkered": {
+   "file": "navy/checkered_blazer.jpg",
+   "source": "images_final/navy/checkered_blazer/1.jpg",
+   "url_key": "dc8b7e520b1f809f87da"
+  },
+  "navy|blazer|floral": {
+   "file": "navy/floral_blazer.jpg",
+   "source": "images_final/navy/floral_blazer/1.jpg",
+   "url_key": "50bf1e1fe145cab330b2"
+  },
+  "navy|blazer|leopard": {
+   "file": "navy/leopard_blazer.jpg",
+   "source": "images_final/navy/leopard_blazer/1.jpg",
+   "url_key": "4c8bbe86e558eea73414"
+  },
+  "navy|blazer|polka_dot": {
+   "file": "navy/polka_dot_blazer.jpg",
+   "source": "images_final/navy/polka_dot_blazer/1.jpg",
+   "url_key": "bea4125e9fe634053fe6"
+  },
+  "navy|blazer|solid": {
+   "file": "navy/solid_blazer.jpg",
+   "source": "images_final/navy/solid_blazer/1.jpg",
+   "url_key": "05b78dd19b6fbc1f2269"
+  },
+  "navy|blazer|striped": {
+   "file": "navy/striped_blazer.jpg",
+   "source": "images_final/navy/striped_blazer/1.jpg",
+   "url_key": "c629709ee7ed58ad8c9a"
+  },
+  "navy|dress|checkered": {
+   "file": "navy/checkered_dress.jpg",
+   "source": "images_final/navy/checkered_dress/1.jpg",
+   "url_key": "cf6cea5df93163a281b1"
+  },
+  "navy|dress|floral": {
+   "file": "navy/floral_dress.jpg",
+   "source": "images_final/navy/floral_dress/1.jpg",
+   "url_key": "d2b6519db407a609b1f2"
+  },
+  "navy|dress|leopard": {
+   "file": "navy/leopard_dress.jpg",
+   "source": "images_final/navy/leopard_dress/1.jpg",
+   "url_key": "93f255153835921f5e67"
+  },
+  "navy|dress|polka_dot": {
+   "file": "navy/polka_dot_dress.jpg",
+   "source": "images_final/navy/polka_dot_dress/1.jpg",
+   "url_key": "74701a85bf68dcaa764e"
+  },
+  "navy|dress|solid": {
+   "file": "navy/solid_dress.jpg",
+   "source": "images_final/navy/solid_dress/3.jpg",
+   "url_key": "41d58a7ce36f3a40c79c"
+  },
+  "navy|dress|striped": {
+   "file": "navy/striped_dress.jpg",
+   "source": "images_final/navy/striped_dress/1.jpg",
+   "url_key": "7f56ca796624d500ee01"
+  },
+  "navy|fleece_jacket|solid": {
+   "file": "navy/solid_fleece_jacket.jpg",
+   "source": "images_final/navy/solid_fleece_jacket/1.jpg",
+   "url_key": "99a92ceab230c7c1e7d8"
+  },
+  "navy|formal_shirt|checkered": {
+   "file": "navy/checkered_formal_shirt.jpg",
+   "source": "images_final/navy/checkered_formal_shirt/1.jpg",
+   "url_key": "69919ad8337ed7cf62a3"
+  },
+  "navy|formal_shirt|floral": {
+   "file": "navy/floral_formal_shirt.jpg",
+   "source": "images_final/navy/floral_formal_shirt/1.jpg",
+   "url_key": "389595df416619ec4c35"
+  },
+  "navy|formal_shirt|leopard": {
+   "file": "navy/leopard_formal_shirt.jpg",
+   "source": "images_final/navy/leopard_formal_shirt/1.jpg",
+   "url_key": "1b3d1e47affdf50c780b"
+  },
+  "navy|formal_shirt|polka_dot": {
+   "file": "navy/polka_dot_formal_shirt.jpg",
+   "source": "images_final/navy/polka_dot_formal_shirt/1.jpg",
+   "url_key": "7adff0b110a2eb2286cf"
+  },
+  "navy|formal_shirt|solid": {
+   "file": "navy/solid_formal_shirt.jpg",
+   "source": "images_final/navy/solid_formal_shirt/1.jpg",
+   "url_key": "f1ac9e062ed7367e2ba1"
+  },
+  "navy|formal_shirt|striped": {
+   "file": "navy/striped_formal_shirt.jpg",
+   "source": "images_final/navy/striped_formal_shirt/1.jpg",
+   "url_key": "ba0f256f5254025ff961"
+  },
+  "navy|hoodie|checkered": {
+   "file": "navy/checkered_hoodie.jpg",
+   "source": "images_final/navy/checkered_hoodie/1.jpg",
+   "url_key": "e23bc095378288ed076d"
+  },
+  "navy|hoodie|floral": {
+   "file": "navy/floral_hoodie.jpg",
+   "source": "images_final/navy/floral_hoodie/1.jpg",
+   "url_key": "1e1a89720f42d69549ab"
+  },
+  "navy|hoodie|solid": {
+   "file": "navy/solid_hoodie.jpg",
+   "source": "images_final/navy/solid_hoodie/1.jpg",
+   "url_key": "a404932a4f66bee300bd"
+  },
+  "navy|hoodie|striped": {
+   "file": "navy/striped_hoodie.jpg",
+   "source": "images_final/navy/striped_hoodie/2.jpg",
+   "url_key": "187fdbf95c88b4df340f"
+  },
+  "navy|jeans|leopard": {
+   "file": "navy/leopard_jeans.jpg",
+   "source": "images_final/navy/leopard_jeans/1.jpg",
+   "url_key": "e331cd8dc9aaa2173ee8"
+  },
+  "navy|jeans|solid": {
+   "file": "navy/solid_jeans.jpg",
+   "source": "images_final/navy/solid_jeans/1.jpg",
+   "url_key": "846cbe90a5237294ccb8"
+  },
+  "navy|jeans|striped": {
+   "file": "navy/striped_jeans.jpg",
+   "source": "images_final/navy/striped_jeans/1.jpg",
+   "url_key": "17eaa78d6045a47add53"
+  },
+  "navy|leather_jacket|solid": {
+   "file": "navy/solid_leather_jacket.jpg",
+   "source": "images_final/navy/solid_leather_jacket/1.jpg",
+   "url_key": "9c76f9bd307be95344cb"
+  },
+  "navy|leggings|checkered": {
+   "file": "navy/checkered_leggings.jpg",
+   "source": "images_final/navy/checkered_leggings/1.jpg",
+   "url_key": "7152a0333634d77dac74"
+  },
+  "navy|leggings|floral": {
+   "file": "navy/floral_leggings.jpg",
+   "source": "images_final/navy/floral_leggings/1.jpg",
+   "url_key": "da05f6c44f48415940b9"
+  },
+  "navy|leggings|leopard": {
+   "file": "navy/leopard_leggings.jpg",
+   "source": "images_final/navy/leopard_leggings/1.jpg",
+   "url_key": "c3a6f0391247fdf4672a"
+  },
+  "navy|leggings|solid": {
+   "file": "navy/solid_leggings.jpg",
+   "source": "images_final/navy/solid_leggings/1.jpg",
+   "url_key": "2f3c1e84c90fde0cd60b"
+  },
+  "navy|leggings|striped": {
+   "file": "navy/striped_leggings.jpg",
+   "source": "images_final/navy/striped_leggings/1.jpg",
+   "url_key": "383a493908e97eccb796"
+  },
+  "navy|long_coat|checkered": {
+   "file": "navy/checkered_long_coat.jpg",
+   "source": "images_final/navy/checkered_long_coat/2.jpg",
+   "url_key": "24886c0b302d0aa0e865"
+  },
+  "navy|long_coat|floral": {
+   "file": "navy/floral_long_coat.jpg",
+   "source": "images_final/navy/floral_long_coat/2.jpg",
+   "url_key": "3f1f701658cad186fb42"
+  },
+  "navy|long_coat|leopard": {
+   "file": "navy/leopard_long_coat.jpg",
+   "source": "images_final/navy/leopard_long_coat/2.jpg",
+   "url_key": "eb10922366b85253b78b"
+  },
+  "navy|long_coat|polka_dot": {
+   "file": "navy/polka_dot_long_coat.jpg",
+   "source": "images_final/navy/polka_dot_long_coat/2.jpg",
+   "url_key": "71cb14f2f11b8e631b0d"
+  },
+  "navy|long_coat|solid": {
+   "file": "navy/solid_long_coat.jpg",
+   "source": "images_final/navy/solid_long_coat/2.jpg",
+   "url_key": "275705e396fba95d1078"
+  },
+  "navy|long_coat|striped": {
+   "file": "navy/striped_long_coat.jpg",
+   "source": "images_final/navy/striped_long_coat/3.jpg",
+   "url_key": "0d62dd9d1a64fac03938"
+  },
+  "navy|long_skirt|checkered": {
+   "file": "navy/checkered_long_skirt.jpg",
+   "source": "images_final/navy/checkered_long_skirt/1.jpg",
+   "url_key": "f4659a4512f216ae16a7"
+  },
+  "navy|long_skirt|floral": {
+   "file": "navy/floral_long_skirt.jpg",
+   "source": "images_final/navy/floral_long_skirt/2.jpg",
+   "url_key": "b59ee55c2ddd4cbc4174"
+  },
+  "navy|long_skirt|leopard": {
+   "file": "navy/leopard_long_skirt.jpg",
+   "source": "images_final/navy/leopard_long_skirt/1.jpg",
+   "url_key": "bcecb905fb632ac071db"
+  },
+  "navy|long_skirt|polka_dot": {
+   "file": "navy/polka_dot_long_skirt.jpg",
+   "source": "images_final/navy/polka_dot_long_skirt/1.jpg",
+   "url_key": "545598f0a746481d6abf"
+  },
+  "navy|long_skirt|solid": {
+   "file": "navy/solid_long_skirt.jpg",
+   "source": "images_final/navy/solid_long_skirt/1.jpg",
+   "url_key": "9582cb8f106d46e50b3f"
+  },
+  "navy|long_skirt|striped": {
+   "file": "navy/striped_long_skirt.jpg",
+   "source": "images_final/navy/striped_long_skirt/1.jpg",
+   "url_key": "b85c0213885dfbaa8522"
+  },
+  "navy|mini_skirt|checkered": {
+   "file": "navy/checkered_mini_skirt.jpg",
+   "source": "images_final/navy/checkered_mini_skirt/1.jpg",
+   "url_key": "b2399a1f0274afad63c7"
+  },
+  "navy|mini_skirt|floral": {
+   "file": "navy/floral_mini_skirt.jpg",
+   "source": "images_final/navy/floral_mini_skirt/1.jpg",
+   "url_key": "33825105045d832832cd"
+  },
+  "navy|mini_skirt|polka_dot": {
+   "file": "navy/polka_dot_mini_skirt.jpg",
+   "source": "images_final/navy/polka_dot_mini_skirt/1.jpg",
+   "url_key": "f9fceff1831a7b869075"
+  },
+  "navy|mini_skirt|solid": {
+   "file": "navy/solid_mini_skirt.jpg",
+   "source": "images_final/navy/solid_mini_skirt/1.jpg",
+   "url_key": "7e0e33a0dbd39f97dd8d"
+  },
+  "navy|pea_coat|solid": {
+   "file": "navy/solid_pea_coat.jpg",
+   "source": "images_final/navy/solid_pea_coat/2.jpg",
+   "url_key": "4309d8e16ad092c2d2e3"
+  },
+  "navy|polo_shirt|checkered": {
+   "file": "navy/checkered_polo_shirt.jpg",
+   "source": "images_final/navy/checkered_polo_shirt/1.jpg",
+   "url_key": "df5874fac9f06ea207cf"
+  },
+  "navy|polo_shirt|polka_dot": {
+   "file": "navy/polka_dot_polo_shirt.jpg",
+   "source": "images_final/navy/polka_dot_polo_shirt/1.jpg",
+   "url_key": "57e0a53ac006f6c3eeb0"
+  },
+  "navy|polo_shirt|solid": {
+   "file": "navy/solid_polo_shirt.jpg",
+   "source": "images_final/navy/solid_polo_shirt/1.jpg",
+   "url_key": "4073670d5c30e2174e63"
+  },
+  "navy|polo_shirt|striped": {
+   "file": "navy/striped_polo_shirt.jpg",
+   "source": "images_final/navy/striped_polo_shirt/1.jpg",
+   "url_key": "9acb9bf5c968c8c92bf4"
+  },
+  "navy|puffer_jacket|checkered": {
+   "file": "navy/checkered_puffer_jacket.jpg",
+   "source": "images_final/navy/checkered_puffer_jacket/1.jpg",
+   "url_key": "c08f6e3a51ebc54027af"
+  },
+  "navy|puffer_jacket|polka_dot": {
+   "file": "navy/polka_dot_puffer_jacket.jpg",
+   "source": "images_final/navy/polka_dot_puffer_jacket/1.jpg",
+   "url_key": "510717879d4cf059bce2"
+  },
+  "navy|puffer_jacket|solid": {
+   "file": "navy/solid_puffer_jacket.jpg",
+   "source": "images_final/navy/solid_puffer_jacket/1.jpg",
+   "url_key": "730cf5d09fa9379cbedb"
+  },
+  "navy|shorts|checkered": {
+   "file": "navy/checkered_shorts.jpg",
+   "source": "images_final/navy/checkered_shorts/1.jpg",
+   "url_key": "3dc7fb579d4ffe0bd3fe"
+  },
+  "navy|shorts|floral": {
+   "file": "navy/floral_shorts.jpg",
+   "source": "images_final/navy/floral_shorts/1.jpg",
+   "url_key": "cd3dc0c138698773c594"
+  },
+  "navy|shorts|leopard": {
+   "file": "navy/leopard_shorts.jpg",
+   "source": "images_final/navy/leopard_shorts/1.jpg",
+   "url_key": "cb23810356eb378d807d"
+  },
+  "navy|shorts|polka_dot": {
+   "file": "navy/polka_dot_shorts.jpg",
+   "source": "images_final/navy/polka_dot_shorts/1.jpg",
+   "url_key": "a3d5b78c53d6891ecf42"
+  },
+  "navy|shorts|solid": {
+   "file": "navy/solid_shorts.jpg",
+   "source": "images_final/navy/solid_shorts/1.jpg",
+   "url_key": "229b1da64ea43c1b1790"
+  },
+  "navy|shorts|striped": {
+   "file": "navy/striped_shorts.jpg",
+   "source": "images_final/navy/striped_shorts/1.jpg",
+   "url_key": "31b4164144038228446f"
+  },
+  "navy|slacks|checkered": {
+   "file": "navy/checkered_slacks.jpg",
+   "source": "images_final/navy/checkered_slacks/2.jpg",
+   "url_key": "fcd442ad6ffa73348b11"
+  },
+  "navy|slacks|floral": {
+   "file": "navy/floral_slacks.jpg",
+   "source": "images_final/navy/floral_slacks/1.jpg",
+   "url_key": "bdf322f0c34a1fc2b62a"
+  },
+  "navy|slacks|polka_dot": {
+   "file": "navy/polka_dot_slacks.jpg",
+   "source": "images_final/navy/polka_dot_slacks/2.jpg",
+   "url_key": "ed951101a5e8739b945d"
+  },
+  "navy|slacks|solid": {
+   "file": "navy/solid_slacks.jpg",
+   "source": "images_final/navy/solid_slacks/1.jpg",
+   "url_key": "7d1628b8514e85d26905"
+  },
+  "navy|slacks|striped": {
+   "file": "navy/striped_slacks.jpg",
+   "source": "images_final/navy/striped_slacks/1.jpg",
+   "url_key": "e47f543299132c2f0ec6"
+  },
+  "navy|suit_vest|checkered": {
+   "file": "navy/checkered_suit_vest.jpg",
+   "source": "images_final/navy/checkered_suit_vest/1.jpg",
+   "url_key": "fb5968765519a3f0108e"
+  },
+  "navy|suit_vest|floral": {
+   "file": "navy/floral_suit_vest.jpg",
+   "source": "images_final/navy/floral_suit_vest/1.jpg",
+   "url_key": "8437d434167cc89f970c"
+  },
+  "navy|suit_vest|solid": {
+   "file": "navy/solid_suit_vest.jpg",
+   "source": "images_final/navy/solid_suit_vest/1.jpg",
+   "url_key": "c40901f832199e8f2acb"
+  },
+  "navy|suit_vest|striped": {
+   "file": "navy/striped_suit_vest.jpg",
+   "source": "images_final/navy/striped_suit_vest/1.jpg",
+   "url_key": "ee7b05665cdf3063e9ca"
+  },
+  "navy|sweater|checkered": {
+   "file": "navy/checkered_sweater.jpg",
+   "source": "images_final/navy/checkered_sweater/1.jpg",
+   "url_key": "fd846027f2e4b6b5ba6d"
+  },
+  "navy|sweater|floral": {
+   "file": "navy/floral_sweater.jpg",
+   "source": "images_final/navy/floral_sweater/1.jpg",
+   "url_key": "d69424510b537a0451c1"
+  },
+  "navy|sweater|leopard": {
+   "file": "navy/leopard_sweater.jpg",
+   "source": "images_final/navy/leopard_sweater/1.jpg",
+   "url_key": "b7cd070cae997ef71d9c"
+  },
+  "navy|sweater|solid": {
+   "file": "navy/solid_sweater.jpg",
+   "source": "images_final/navy/solid_sweater/1.jpg",
+   "url_key": "277d694606e8247dfa6d"
+  },
+  "navy|sweatshirt|solid": {
+   "file": "navy/solid_sweatshirt.jpg",
+   "source": "images_final/navy/solid_sweatshirt/1.jpg",
+   "url_key": "6b51463bf40f5f2f4bf5"
+  },
+  "navy|t_shirt|checkered": {
+   "file": "navy/checkered_t_shirt.jpg",
+   "source": "images_final/navy/checkered_t_shirt/1.jpg",
+   "url_key": "0c47183c7d28652871a7"
+  },
+  "navy|t_shirt|floral": {
+   "file": "navy/floral_t_shirt.jpg",
+   "source": "images_final/navy/floral_t_shirt/1.jpg",
+   "url_key": "51dbd064855870172a0f"
+  },
+  "navy|t_shirt|leopard": {
+   "file": "navy/leopard_t_shirt.jpg",
+   "source": "images_final/navy/leopard_t_shirt/1.jpg",
+   "url_key": "e4895a2a4ceaf3def2de"
+  },
+  "navy|t_shirt|polka_dot": {
+   "file": "navy/polka_dot_t_shirt.jpg",
+   "source": "images_final/navy/polka_dot_t_shirt/1.jpg",
+   "url_key": "6006db26cbb3429bc6f6"
+  },
+  "navy|t_shirt|solid": {
+   "file": "navy/solid_t_shirt.jpg",
+   "source": "images_final/navy/solid_t_shirt/1.jpg",
+   "url_key": "5465ebf4264ceb2de227"
+  },
+  "navy|t_shirt|striped": {
+   "file": "navy/striped_t_shirt.jpg",
+   "source": "images_final/navy/striped_t_shirt/1.jpg",
+   "url_key": "0137e20529985fc49c7f"
+  },
+  "navy|tank_top|checkered": {
+   "file": "navy/checkered_tank_top.jpg",
+   "source": "images_final/navy/checkered_tank_top/1.jpg",
+   "url_key": "003737d5587960164a98"
+  },
+  "navy|tank_top|floral": {
+   "file": "navy/floral_tank_top.jpg",
+   "source": "images_final/navy/floral_tank_top/1.jpg",
+   "url_key": "ff9d9fa0a8b8c1095a2d"
+  },
+  "navy|tank_top|leopard": {
+   "file": "navy/leopard_tank_top.jpg",
+   "source": "images_final/navy/leopard_tank_top/1.jpg",
+   "url_key": "3891df37fbd664f81534"
+  },
+  "navy|tank_top|polka_dot": {
+   "file": "navy/polka_dot_tank_top.jpg",
+   "source": "images_final/navy/polka_dot_tank_top/1.jpg",
+   "url_key": "5208f71afc15e9ad1820"
+  },
+  "navy|tank_top|solid": {
+   "file": "navy/solid_tank_top.jpg",
+   "source": "images_final/navy/solid_tank_top/1.jpg",
+   "url_key": "1b568e19da141fb81504"
+  },
+  "navy|tank_top|striped": {
+   "file": "navy/striped_tank_top.jpg",
+   "source": "images_final/navy/striped_tank_top/1.jpg",
+   "url_key": "5b0e388b45fc92212d5a"
+  },
+  "navy|windbreaker|floral": {
+   "file": "navy/floral_windbreaker.jpg",
+   "source": "images_final/navy/floral_windbreaker/1.jpg",
+   "url_key": "31e809b503599b975961"
+  },
+  "navy|windbreaker|polka_dot": {
+   "file": "navy/polka_dot_windbreaker.jpg",
+   "source": "images_final/navy/polka_dot_windbreaker/1.jpg",
+   "url_key": "70d286ebfc4e83e196a1"
+  },
+  "navy|windbreaker|solid": {
+   "file": "navy/solid_windbreaker.jpg",
+   "source": "images_final/navy/solid_windbreaker/1.jpg",
+   "url_key": "cabe6426f143948cc750"
+  },
+  "navy|windbreaker|striped": {
+   "file": "navy/striped_windbreaker.jpg",
+   "source": "images_final/navy/striped_windbreaker/1.jpg",
+   "url_key": "66a5a7af986c09df9f7e"
+  },
+  "orange|blazer|checkered": {
+   "file": "orange/checkered_blazer.jpg",
+   "source": "images_final/orange/checkered_blazer/1.jpg",
+   "url_key": "463890f6017490f42318"
+  },
+  "orange|blazer|floral": {
+   "file": "orange/floral_blazer.jpg",
+   "source": "images_final/orange/floral_blazer/1.jpg",
+   "url_key": "6ad64006bec9d3f24cb7"
+  },
+  "orange|blazer|solid": {
+   "file": "orange/solid_blazer.jpg",
+   "source": "images_final/orange/solid_blazer/1.jpg",
+   "url_key": "4141670e0d0d4f0a64d4"
+  },
+  "orange|blazer|striped": {
+   "file": "orange/striped_blazer.jpg",
+   "source": "images_final/orange/striped_blazer/1.jpg",
+   "url_key": "e1dcfef5995d15f9e79a"
+  },
+  "orange|cardigan|floral": {
+   "file": "orange/floral_cardigan.jpg",
+   "source": "images_final/orange/floral_cardigan/2.jpg",
+   "url_key": "62a18f262b5df2f24130"
+  },
+  "orange|cardigan|leopard": {
+   "file": "orange/leopard_cardigan.jpg",
+   "source": "images_final/orange/leopard_cardigan/1.jpg",
+   "url_key": "48667379539c74a01b46"
+  },
+  "orange|cardigan|solid": {
+   "file": "orange/solid_cardigan.jpg",
+   "source": "images_final/orange/solid_cardigan/1.jpg",
+   "url_key": "62681d8fed8df77b023c"
+  },
+  "orange|cardigan|striped": {
+   "file": "orange/striped_cardigan.jpg",
+   "source": "images_final/orange/striped_cardigan/1.jpg",
+   "url_key": "118a0cdc00fce8940a35"
+  },
+  "orange|dress|checkered": {
+   "file": "orange/checkered_dress.jpg",
+   "source": "images_final/orange/checkered_dress/2.jpg",
+   "url_key": "2634ecad24e98b0886a6"
+  },
+  "orange|dress|floral": {
+   "file": "orange/floral_dress.jpg",
+   "source": "images_final/orange/floral_dress/1.jpg",
+   "url_key": "0f2719820c448c90a108"
+  },
+  "orange|dress|leopard": {
+   "file": "orange/leopard_dress.jpg",
+   "source": "images_final/orange/leopard_dress/1.jpg",
+   "url_key": "0222d2fdccd6cb80323b"
+  },
+  "orange|dress|polka_dot": {
+   "file": "orange/polka_dot_dress.jpg",
+   "source": "images_final/orange/polka_dot_dress/1.jpg",
+   "url_key": "05f3926040e60e321ce6"
+  },
+  "orange|dress|solid": {
+   "file": "orange/solid_dress.jpg",
+   "source": "images_final/orange/solid_dress/1.jpg",
+   "url_key": "5f2bf4d46a4c6a550302"
+  },
+  "orange|dress|striped": {
+   "file": "orange/striped_dress.jpg",
+   "source": "images_final/orange/striped_dress/1.jpg",
+   "url_key": "987ce772799938487401"
+  },
+  "orange|fleece_jacket|solid": {
+   "file": "orange/solid_fleece_jacket.jpg",
+   "source": "images_final/orange/solid_fleece_jacket/1.jpg",
+   "url_key": "02039a434195136f782e"
+  },
+  "orange|formal_shirt|checkered": {
+   "file": "orange/checkered_formal_shirt.jpg",
+   "source": "images_final/orange/checkered_formal_shirt/1.jpg",
+   "url_key": "e9cf8d5efea1117aac96"
+  },
+  "orange|formal_shirt|floral": {
+   "file": "orange/floral_formal_shirt.jpg",
+   "source": "images_final/orange/floral_formal_shirt/1.jpg",
+   "url_key": "f3c7b59401d9ba8415d5"
+  },
+  "orange|formal_shirt|leopard": {
+   "file": "orange/leopard_formal_shirt.jpg",
+   "source": "images_final/orange/leopard_formal_shirt/1.jpg",
+   "url_key": "dc2f3b703793b1bc3435"
+  },
+  "orange|formal_shirt|polka_dot": {
+   "file": "orange/polka_dot_formal_shirt.jpg",
+   "source": "images_final/orange/polka_dot_formal_shirt/1.jpg",
+   "url_key": "7165728363792356058b"
+  },
+  "orange|formal_shirt|solid": {
+   "file": "orange/solid_formal_shirt.jpg",
+   "source": "images_final/orange/solid_formal_shirt/1.jpg",
+   "url_key": "6fcbe45ebcc7c1831faa"
+  },
+  "orange|formal_shirt|striped": {
+   "file": "orange/striped_formal_shirt.jpg",
+   "source": "images_final/orange/striped_formal_shirt/2.jpg",
+   "url_key": "936971213d160eb68e99"
+  },
+  "orange|hoodie|checkered": {
+   "file": "orange/checkered_hoodie.jpg",
+   "source": "images_final/orange/checkered_hoodie/1.jpg",
+   "url_key": "ac813b7b4e954d507f7b"
+  },
+  "orange|hoodie|floral": {
+   "file": "orange/floral_hoodie.jpg",
+   "source": "images_final/orange/floral_hoodie/1.jpg",
+   "url_key": "8c0b06c023e39846447d"
+  },
+  "orange|hoodie|polka_dot": {
+   "file": "orange/polka_dot_hoodie.jpg",
+   "source": "images_final/orange/polka_dot_hoodie/1.jpg",
+   "url_key": "6ce66410964cf3f7766c"
+  },
+  "orange|hoodie|solid": {
+   "file": "orange/solid_hoodie.jpg",
+   "source": "images_final/orange/solid_hoodie/1.jpg",
+   "url_key": "d123da44b1e01254429b"
+  },
+  "orange|hoodie|striped": {
+   "file": "orange/striped_hoodie.jpg",
+   "source": "images_final/orange/striped_hoodie/1.jpg",
+   "url_key": "b122bceedcbaae4dc512"
+  },
+  "orange|jeans|solid": {
+   "file": "orange/solid_jeans.jpg",
+   "source": "images_final/orange/solid_jeans/1.jpg",
+   "url_key": "bd8253b6caa6f619dc81"
+  },
+  "orange|leggings|floral": {
+   "file": "orange/floral_leggings.jpg",
+   "source": "images_final/orange/floral_leggings/1.jpg",
+   "url_key": "fbf6302020cd57965caf"
+  },
+  "orange|leggings|leopard": {
+   "file": "orange/leopard_leggings.jpg",
+   "source": "images_final/orange/leopard_leggings/1.jpg",
+   "url_key": "39cae300eb80cc839465"
+  },
+  "orange|leggings|solid": {
+   "file": "orange/solid_leggings.jpg",
+   "source": "images_final/orange/solid_leggings/1.jpg",
+   "url_key": "18879961f68f62bda162"
+  },
+  "orange|leggings|striped": {
+   "file": "orange/striped_leggings.jpg",
+   "source": "images_final/orange/striped_leggings/1.jpg",
+   "url_key": "f4436722d63fbcc31609"
+  },
+  "orange|long_coat|checkered": {
+   "file": "orange/checkered_long_coat.jpg",
+   "source": "images_final/orange/checkered_long_coat/2.jpg",
+   "url_key": "161fc193743f4bbd4fde"
+  },
+  "orange|long_coat|floral": {
+   "file": "orange/floral_long_coat.jpg",
+   "source": "images_final/orange/floral_long_coat/2.jpg",
+   "url_key": "d7e952fd919f9a13f97e"
+  },
+  "orange|long_coat|leopard": {
+   "file": "orange/leopard_long_coat.jpg",
+   "source": "images_final/orange/leopard_long_coat/2.jpg",
+   "url_key": "973315bbbcdff452bc35"
+  },
+  "orange|long_coat|solid": {
+   "file": "orange/solid_long_coat.jpg",
+   "source": "images_final/orange/solid_long_coat/2.jpg",
+   "url_key": "58fb8f6f6cee79deaad4"
+  },
+  "orange|long_coat|striped": {
+   "file": "orange/striped_long_coat.jpg",
+   "source": "images_final/orange/striped_long_coat/2.jpg",
+   "url_key": "509a341aa915c3f6c413"
+  },
+  "orange|long_skirt|checkered": {
+   "file": "orange/checkered_long_skirt.jpg",
+   "source": "images_final/orange/checkered_long_skirt/1.jpg",
+   "url_key": "6b8637fc24e74b23d8fc"
+  },
+  "orange|long_skirt|floral": {
+   "file": "orange/floral_long_skirt.jpg",
+   "source": "images_final/orange/floral_long_skirt/1.jpg",
+   "url_key": "a267344c6483b900e9d3"
+  },
+  "orange|long_skirt|polka_dot": {
+   "file": "orange/polka_dot_long_skirt.jpg",
+   "source": "images_final/orange/polka_dot_long_skirt/1.jpg",
+   "url_key": "45ccb187a61362b2f3d1"
+  },
+  "orange|long_skirt|solid": {
+   "file": "orange/solid_long_skirt.jpg",
+   "source": "images_final/orange/solid_long_skirt/1.jpg",
+   "url_key": "e11c2aed4f748a4b26b3"
+  },
+  "orange|long_skirt|striped": {
+   "file": "orange/striped_long_skirt.jpg",
+   "source": "images_final/orange/striped_long_skirt/1.jpg",
+   "url_key": "38fc2f0c5a9b130f6597"
+  },
+  "orange|mini_skirt|checkered": {
+   "file": "orange/checkered_mini_skirt.jpg",
+   "source": "images_final/orange/checkered_mini_skirt/1.jpg",
+   "url_key": "d2f8455455fa74453011"
+  },
+  "orange|mini_skirt|floral": {
+   "file": "orange/floral_mini_skirt.jpg",
+   "source": "images_final/orange/floral_mini_skirt/1.jpg",
+   "url_key": "d1b131f68f4aba3f3d07"
+  },
+  "orange|mini_skirt|polka_dot": {
+   "file": "orange/polka_dot_mini_skirt.jpg",
+   "source": "images_final/orange/polka_dot_mini_skirt/1.jpg",
+   "url_key": "d533122089755763fe18"
+  },
+  "orange|mini_skirt|solid": {
+   "file": "orange/solid_mini_skirt.jpg",
+   "source": "images_final/orange/solid_mini_skirt/1.jpg",
+   "url_key": "276f98173f29c9544f6c"
+  },
+  "orange|mini_skirt|striped": {
+   "file": "orange/striped_mini_skirt.jpg",
+   "source": "images_final/orange/striped_mini_skirt/1.jpg",
+   "url_key": "cfa659f846741fde900c"
+  },
+  "orange|pea_coat|solid": {
+   "file": "orange/solid_pea_coat.jpg",
+   "source": "images_final/orange/solid_pea_coat/2.jpg",
+   "url_key": "126fd0c6c25a165495cf"
+  },
+  "orange|polo_shirt|checkered": {
+   "file": "orange/checkered_polo_shirt.jpg",
+   "source": "images_final/orange/checkered_polo_shirt/1.jpg",
+   "url_key": "446bd9a06ff61bff318d"
+  },
+  "orange|polo_shirt|floral": {
+   "file": "orange/floral_polo_shirt.jpg",
+   "source": "images_final/orange/floral_polo_shirt/1.jpg",
+   "url_key": "cd1c6f45a198a53111a6"
+  },
+  "orange|polo_shirt|leopard": {
+   "file": "orange/leopard_polo_shirt.jpg",
+   "source": "images_final/orange/leopard_polo_shirt/1.jpg",
+   "url_key": "4f91ddbeb66e65ae706d"
+  },
+  "orange|polo_shirt|polka_dot": {
+   "file": "orange/polka_dot_polo_shirt.jpg",
+   "source": "images_final/orange/polka_dot_polo_shirt/1.jpg",
+   "url_key": "cbcfe86e240fc4d43a77"
+  },
+  "orange|polo_shirt|solid": {
+   "file": "orange/solid_polo_shirt.jpg",
+   "source": "images_final/orange/solid_polo_shirt/1.jpg",
+   "url_key": "ea6f64111a0e5137d548"
+  },
+  "orange|polo_shirt|striped": {
+   "file": "orange/striped_polo_shirt.jpg",
+   "source": "images_final/orange/striped_polo_shirt/1.jpg",
+   "url_key": "57135571d3a9a231da52"
+  },
+  "orange|puffer_jacket|solid": {
+   "file": "orange/solid_puffer_jacket.jpg",
+   "source": "images_final/orange/solid_puffer_jacket/1.jpg",
+   "url_key": "f4c4b2deb04dd5a52947"
+  },
+  "orange|shorts|checkered": {
+   "file": "orange/checkered_shorts.jpg",
+   "source": "images_final/orange/checkered_shorts/1.jpg",
+   "url_key": "4c5cb27d01ffb8dd4c0d"
+  },
+  "orange|shorts|floral": {
+   "file": "orange/floral_shorts.jpg",
+   "source": "images_final/orange/floral_shorts/1.jpg",
+   "url_key": "9427bf44aec6a28ca25d"
+  },
+  "orange|shorts|leopard": {
+   "file": "orange/leopard_shorts.jpg",
+   "source": "images_final/orange/leopard_shorts/1.jpg",
+   "url_key": "759e207fc339970b73d3"
+  },
+  "orange|shorts|polka_dot": {
+   "file": "orange/polka_dot_shorts.jpg",
+   "source": "images_final/orange/polka_dot_shorts/1.jpg",
+   "url_key": "1a47a6da621329caad61"
+  },
+  "orange|shorts|solid": {
+   "file": "orange/solid_shorts.jpg",
+   "source": "images_final/orange/solid_shorts/1.jpg",
+   "url_key": "ecbb12b15273309f8f0a"
+  },
+  "orange|shorts|striped": {
+   "file": "orange/striped_shorts.jpg",
+   "source": "images_final/orange/striped_shorts/1.jpg",
+   "url_key": "ca0c1e58e7a014fe1640"
+  },
+  "orange|slacks|checkered": {
+   "file": "orange/checkered_slacks.jpg",
+   "source": "images_final/orange/checkered_slacks/1.jpg",
+   "url_key": "cd365def7f69f4d1238e"
+  },
+  "orange|slacks|floral": {
+   "file": "orange/floral_slacks.jpg",
+   "source": "images_final/orange/floral_slacks/1.jpg",
+   "url_key": "456a5a191ddf8ee79737"
+  },
+  "orange|slacks|polka_dot": {
+   "file": "orange/polka_dot_slacks.jpg",
+   "source": "images_final/orange/polka_dot_slacks/1.jpg",
+   "url_key": "e5ca6caf609911be1ac6"
+  },
+  "orange|slacks|solid": {
+   "file": "orange/solid_slacks.jpg",
+   "source": "images_final/orange/solid_slacks/1.jpg",
+   "url_key": "282974bfa95eb613925e"
+  },
+  "orange|slacks|striped": {
+   "file": "orange/striped_slacks.jpg",
+   "source": "images_final/orange/striped_slacks/1.jpg",
+   "url_key": "0fbcc46fbff2ad6f567f"
+  },
+  "orange|suit_vest|solid": {
+   "file": "orange/solid_suit_vest.jpg",
+   "source": "images_final/orange/solid_suit_vest/1.jpg",
+   "url_key": "b68186147374834104e3"
+  },
+  "orange|sweater|checkered": {
+   "file": "orange/checkered_sweater.jpg",
+   "source": "images_final/orange/checkered_sweater/1.jpg",
+   "url_key": "f228a7cf56c3ee888eca"
+  },
+  "orange|sweater|floral": {
+   "file": "orange/floral_sweater.jpg",
+   "source": "images_final/orange/floral_sweater/1.jpg",
+   "url_key": "fdca548640eb4d59514d"
+  },
+  "orange|sweater|leopard": {
+   "file": "orange/leopard_sweater.jpg",
+   "source": "images_final/orange/leopard_sweater/1.jpg",
+   "url_key": "971a661a00273489da69"
+  },
+  "orange|sweater|solid": {
+   "file": "orange/solid_sweater.jpg",
+   "source": "images_final/orange/solid_sweater/1.jpg",
+   "url_key": "414bf8be5ddb8975cfb9"
+  },
+  "orange|sweater|striped": {
+   "file": "orange/striped_sweater.jpg",
+   "source": "images_final/orange/striped_sweater/1.jpg",
+   "url_key": "bbd24b85af8a41b0ab3b"
+  },
+  "orange|sweatshirt|solid": {
+   "file": "orange/solid_sweatshirt.jpg",
+   "source": "images_final/orange/solid_sweatshirt/1.jpg",
+   "url_key": "c93640c7781da2d7371e"
+  },
+  "orange|t_shirt|floral": {
+   "file": "orange/floral_t_shirt.jpg",
+   "source": "images_final/orange/floral_t_shirt/1.jpg",
+   "url_key": "d0f41dcd550afc5161da"
+  },
+  "orange|t_shirt|leopard": {
+   "file": "orange/leopard_t_shirt.jpg",
+   "source": "images_final/orange/leopard_t_shirt/1.jpg",
+   "url_key": "759e207fc339970b73d3"
+  },
+  "orange|t_shirt|polka_dot": {
+   "file": "orange/polka_dot_t_shirt.jpg",
+   "source": "images_final/orange/polka_dot_t_shirt/1.jpg",
+   "url_key": "52b1dd94e1574998c9a5"
+  },
+  "orange|t_shirt|solid": {
+   "file": "orange/solid_t_shirt.jpg",
+   "source": "images_final/orange/solid_t_shirt/3.jpg",
+   "url_key": "3e9f8bd27aecf59aeeeb"
+  },
+  "orange|t_shirt|striped": {
+   "file": "orange/striped_t_shirt.jpg",
+   "source": "images_final/orange/striped_t_shirt/1.jpg",
+   "url_key": "e6c9c500c3fbe1a1412f"
+  },
+  "orange|tank_top|leopard": {
+   "file": "orange/leopard_tank_top.jpg",
+   "source": "images_final/orange/leopard_tank_top/1.jpg",
+   "url_key": "3c0903d8ddf914bdfe23"
+  },
+  "orange|tank_top|polka_dot": {
+   "file": "orange/polka_dot_tank_top.jpg",
+   "source": "images_final/orange/polka_dot_tank_top/1.jpg",
+   "url_key": "d533122089755763fe18"
+  },
+  "orange|tank_top|solid": {
+   "file": "orange/solid_tank_top.jpg",
+   "source": "images_final/orange/solid_tank_top/1.jpg",
+   "url_key": "58ebcb9a0df425a9679a"
+  },
+  "orange|windbreaker|floral": {
+   "file": "orange/floral_windbreaker.jpg",
+   "source": "images_final/orange/floral_windbreaker/1.jpg",
+   "url_key": "e10aed0571369b8ea272"
+  },
+  "orange|windbreaker|solid": {
+   "file": "orange/solid_windbreaker.jpg",
+   "source": "images_final/orange/solid_windbreaker/1.jpg",
+   "url_key": "f4a41119000c838345dd"
+  },
+  "orange|windbreaker|striped": {
+   "file": "orange/striped_windbreaker.jpg",
+   "source": "images_final/orange/striped_windbreaker/1.jpg",
+   "url_key": "508ae6c6f0844119df87"
+  },
+  "pink|blazer|checkered": {
+   "file": "pink/checkered_blazer.jpg",
+   "source": "images_final/pink/checkered_blazer/1.jpg",
+   "url_key": "c5adf4e584d9102bff0a"
+  },
+  "pink|blazer|floral": {
+   "file": "pink/floral_blazer.jpg",
+   "source": "images_final/pink/floral_blazer/1.jpg",
+   "url_key": "01d258d84412e0ddd709"
+  },
+  "pink|blazer|solid": {
+   "file": "pink/solid_blazer.jpg",
+   "source": "images_final/pink/solid_blazer/1.jpg",
+   "url_key": "c3be1ace03b9b5ae7880"
+  },
+  "pink|cardigan|checkered": {
+   "file": "pink/checkered_cardigan.jpg",
+   "source": "images_final/pink/checkered_cardigan/1.jpg",
+   "url_key": "241b078fd7bbd3142bf9"
+  },
+  "pink|cardigan|floral": {
+   "file": "pink/floral_cardigan.jpg",
+   "source": "images_final/pink/floral_cardigan/1.jpg",
+   "url_key": "f7db89e1881beac95759"
+  },
+  "pink|cardigan|leopard": {
+   "file": "pink/leopard_cardigan.jpg",
+   "source": "images_final/pink/leopard_cardigan/1.jpg",
+   "url_key": "1acc541b8f8681ceb487"
+  },
+  "pink|cardigan|polka_dot": {
+   "file": "pink/polka_dot_cardigan.jpg",
+   "source": "images_final/pink/polka_dot_cardigan/1.jpg",
+   "url_key": "40caac0584bbd8fbae27"
+  },
+  "pink|cardigan|solid": {
+   "file": "pink/solid_cardigan.jpg",
+   "source": "images_final/pink/solid_cardigan/1.jpg",
+   "url_key": "d467859ceb24b92d66ca"
+  },
+  "pink|cardigan|striped": {
+   "file": "pink/striped_cardigan.jpg",
+   "source": "images_final/pink/striped_cardigan/1.jpg",
+   "url_key": "e9bd58c88f55f1bc2eff"
+  },
+  "pink|dress|checkered": {
+   "file": "pink/checkered_dress.jpg",
+   "source": "images_final/pink/checkered_dress/1.jpg",
+   "url_key": "bbaa5b79a4ed50d1b057"
+  },
+  "pink|dress|floral": {
+   "file": "pink/floral_dress.jpg",
+   "source": "images_final/pink/floral_dress/1.jpg",
+   "url_key": "23752f89f9d61feb3b7e"
+  },
+  "pink|dress|leopard": {
+   "file": "pink/leopard_dress.jpg",
+   "source": "images_final/pink/leopard_dress/1.jpg",
+   "url_key": "87277af770ef0ef6229c"
+  },
+  "pink|dress|polka_dot": {
+   "file": "pink/polka_dot_dress.jpg",
+   "source": "images_final/pink/polka_dot_dress/1.jpg",
+   "url_key": "39bab317825276d42bf7"
+  },
+  "pink|dress|solid": {
+   "file": "pink/solid_dress.jpg",
+   "source": "images_final/pink/solid_dress/1.jpg",
+   "url_key": "3b34bec7167b40d5b3ad"
+  },
+  "pink|fleece_jacket|leopard": {
+   "file": "pink/leopard_fleece_jacket.jpg",
+   "source": "images_final/pink/leopard_fleece_jacket/1.jpg",
+   "url_key": "6e36bb21704215f47409"
+  },
+  "pink|fleece_jacket|solid": {
+   "file": "pink/solid_fleece_jacket.jpg",
+   "source": "images_final/pink/solid_fleece_jacket/1.jpg",
+   "url_key": "305cc43a3d3957d8979d"
+  },
+  "pink|fleece_jacket|striped": {
+   "file": "pink/striped_fleece_jacket.jpg",
+   "source": "images_final/pink/striped_fleece_jacket/1.jpg",
+   "url_key": "425b15e5324d8283b7b0"
+  },
+  "pink|formal_shirt|checkered": {
+   "file": "pink/checkered_formal_shirt.jpg",
+   "source": "images_final/pink/checkered_formal_shirt/1.jpg",
+   "url_key": "ed19cb73360e4526cfd0"
+  },
+  "pink|formal_shirt|polka_dot": {
+   "file": "pink/polka_dot_formal_shirt.jpg",
+   "source": "images_final/pink/polka_dot_formal_shirt/1.jpg",
+   "url_key": "0f291c01cc54513f0b9a"
+  },
+  "pink|formal_shirt|solid": {
+   "file": "pink/solid_formal_shirt.jpg",
+   "source": "images_final/pink/solid_formal_shirt/1.jpg",
+   "url_key": "f36ddf0a7926533651fb"
+  },
+  "pink|formal_shirt|striped": {
+   "file": "pink/striped_formal_shirt.jpg",
+   "source": "images_final/pink/striped_formal_shirt/1.jpg",
+   "url_key": "4ab3b956fdd4383c1f83"
+  },
+  "pink|hoodie|checkered": {
+   "file": "pink/checkered_hoodie.jpg",
+   "source": "images_final/pink/checkered_hoodie/1.jpg",
+   "url_key": "c52d2c7faa9be630760c"
+  },
+  "pink|hoodie|floral": {
+   "file": "pink/floral_hoodie.jpg",
+   "source": "images_final/pink/floral_hoodie/1.jpg",
+   "url_key": "d0e4aae914fd95c1b3b2"
+  },
+  "pink|hoodie|leopard": {
+   "file": "pink/leopard_hoodie.jpg",
+   "source": "images_final/pink/leopard_hoodie/1.jpg",
+   "url_key": "ad7f8973f10dbb5dc3c8"
+  },
+  "pink|hoodie|polka_dot": {
+   "file": "pink/polka_dot_hoodie.jpg",
+   "source": "images_final/pink/polka_dot_hoodie/1.jpg",
+   "url_key": "5a293fb45463cab030bd"
+  },
+  "pink|hoodie|solid": {
+   "file": "pink/solid_hoodie.jpg",
+   "source": "images_final/pink/solid_hoodie/2.jpg",
+   "url_key": "bedc0427e322540e6220"
+  },
+  "pink|hoodie|striped": {
+   "file": "pink/striped_hoodie.jpg",
+   "source": "images_final/pink/striped_hoodie/1.jpg",
+   "url_key": "a5d53b5c5859765f9704"
+  },
+  "pink|jeans|solid": {
+   "file": "pink/solid_jeans.jpg",
+   "source": "images_final/pink/solid_jeans/1.jpg",
+   "url_key": "725b1d48a9887ba5ad6e"
+  },
+  "pink|leather_jacket|solid": {
+   "file": "pink/solid_leather_jacket.jpg",
+   "source": "images_final/pink/solid_leather_jacket/1.jpg",
+   "url_key": "78cc00d3444cd92de3b3"
+  },
+  "pink|leggings|leopard": {
+   "file": "pink/leopard_leggings.jpg",
+   "source": "images_final/pink/leopard_leggings/2.jpg",
+   "url_key": "c13a1bf929722655fa6f"
+  },
+  "pink|leggings|polka_dot": {
+   "file": "pink/polka_dot_leggings.jpg",
+   "source": "images_final/pink/polka_dot_leggings/1.jpg",
+   "url_key": "ecb356b379892155397a"
+  },
+  "pink|leggings|solid": {
+   "file": "pink/solid_leggings.jpg",
+   "source": "images_final/pink/solid_leggings/1.jpg",
+   "url_key": "8c11e7150bb0158af3cf"
+  },
+  "pink|leggings|striped": {
+   "file": "pink/striped_leggings.jpg",
+   "source": "images_final/pink/striped_leggings/1.jpg",
+   "url_key": "3034c83165fd0f89d403"
+  },
+  "pink|long_coat|checkered": {
+   "file": "pink/checkered_long_coat.jpg",
+   "source": "images_final/pink/checkered_long_coat/2.jpg",
+   "url_key": "f53d34b3acb31a32583e"
+  },
+  "pink|long_coat|floral": {
+   "file": "pink/floral_long_coat.jpg",
+   "source": "images_final/pink/floral_long_coat/2.jpg",
+   "url_key": "6d6be7f32f3f4b10b308"
+  },
+  "pink|long_coat|leopard": {
+   "file": "pink/leopard_long_coat.jpg",
+   "source": "images_final/pink/leopard_long_coat/2.jpg",
+   "url_key": "e5c28c45c20e126c5085"
+  },
+  "pink|long_coat|polka_dot": {
+   "file": "pink/polka_dot_long_coat.jpg",
+   "source": "images_final/pink/polka_dot_long_coat/2.jpg",
+   "url_key": "07a9acd483ab426d9058"
+  },
+  "pink|long_coat|solid": {
+   "file": "pink/solid_long_coat.jpg",
+   "source": "images_final/pink/solid_long_coat/2.jpg",
+   "url_key": "45a9baeb548490a0d011"
+  },
+  "pink|long_coat|striped": {
+   "file": "pink/striped_long_coat.jpg",
+   "source": "images_final/pink/striped_long_coat/2.jpg",
+   "url_key": "a11760509504299ebf61"
+  },
+  "pink|long_skirt|checkered": {
+   "file": "pink/checkered_long_skirt.jpg",
+   "source": "images_final/pink/checkered_long_skirt/1.jpg",
+   "url_key": "0a053f8b30d944d581ae"
+  },
+  "pink|long_skirt|floral": {
+   "file": "pink/floral_long_skirt.jpg",
+   "source": "images_final/pink/floral_long_skirt/1.jpg",
+   "url_key": "d25a23726216799d10c8"
+  },
+  "pink|long_skirt|leopard": {
+   "file": "pink/leopard_long_skirt.jpg",
+   "source": "images_final/pink/leopard_long_skirt/1.jpg",
+   "url_key": "211dfb19afe9dd2fc986"
+  },
+  "pink|long_skirt|polka_dot": {
+   "file": "pink/polka_dot_long_skirt.jpg",
+   "source": "images_final/pink/polka_dot_long_skirt/1.jpg",
+   "url_key": "4ac5d95ac9ac78235649"
+  },
+  "pink|long_skirt|solid": {
+   "file": "pink/solid_long_skirt.jpg",
+   "source": "images_final/pink/solid_long_skirt/1.jpg",
+   "url_key": "d9e8c6f680c87995904c"
+  },
+  "pink|long_skirt|striped": {
+   "file": "pink/striped_long_skirt.jpg",
+   "source": "images_final/pink/striped_long_skirt/1.jpg",
+   "url_key": "b1622ffae6817586a9fc"
+  },
+  "pink|mini_skirt|checkered": {
+   "file": "pink/checkered_mini_skirt.jpg",
+   "source": "images_final/pink/checkered_mini_skirt/2.jpg",
+   "url_key": "546db78796429cfd920f"
+  },
+  "pink|mini_skirt|floral": {
+   "file": "pink/floral_mini_skirt.jpg",
+   "source": "images_final/pink/floral_mini_skirt/1.jpg",
+   "url_key": "a2810db364dd0d30c30e"
+  },
+  "pink|mini_skirt|leopard": {
+   "file": "pink/leopard_mini_skirt.jpg",
+   "source": "images_final/pink/leopard_mini_skirt/1.jpg",
+   "url_key": "912bb2bfd6cfa0d6f927"
+  },
+  "pink|mini_skirt|polka_dot": {
+   "file": "pink/polka_dot_mini_skirt.jpg",
+   "source": "images_final/pink/polka_dot_mini_skirt/1.jpg",
+   "url_key": "8eaccf025a91eef2329e"
+  },
+  "pink|mini_skirt|solid": {
+   "file": "pink/solid_mini_skirt.jpg",
+   "source": "images_final/pink/solid_mini_skirt/1.jpg",
+   "url_key": "f91d96c1850c5b81bae4"
+  },
+  "pink|mini_skirt|striped": {
+   "file": "pink/striped_mini_skirt.jpg",
+   "source": "images_final/pink/striped_mini_skirt/1.jpg",
+   "url_key": "ccdf75e18fd609ad4582"
+  },
+  "pink|pea_coat|solid": {
+   "file": "pink/solid_pea_coat.jpg",
+   "source": "images_final/pink/solid_pea_coat/4.jpg",
+   "url_key": "a49747dd4d33e61accbc"
+  },
+  "pink|polo_shirt|checkered": {
+   "file": "pink/checkered_polo_shirt.jpg",
+   "source": "images_final/pink/checkered_polo_shirt/1.jpg",
+   "url_key": "14ec603d2535def626d7"
+  },
+  "pink|polo_shirt|floral": {
+   "file": "pink/floral_polo_shirt.jpg",
+   "source": "images_final/pink/floral_polo_shirt/1.jpg",
+   "url_key": "95c6e6c54dd38cb0922d"
+  },
+  "pink|polo_shirt|solid": {
+   "file": "pink/solid_polo_shirt.jpg",
+   "source": "images_final/pink/solid_polo_shirt/1.jpg",
+   "url_key": "b5326f088ca9e5e189a5"
+  },
+  "pink|polo_shirt|striped": {
+   "file": "pink/striped_polo_shirt.jpg",
+   "source": "images_final/pink/striped_polo_shirt/1.jpg",
+   "url_key": "82f97c80acbb2ecbe0f6"
+  },
+  "pink|puffer_jacket|checkered": {
+   "file": "pink/checkered_puffer_jacket.jpg",
+   "source": "images_final/pink/checkered_puffer_jacket/1.jpg",
+   "url_key": "d86a5073d97b4aa89958"
+  },
+  "pink|puffer_jacket|polka_dot": {
+   "file": "pink/polka_dot_puffer_jacket.jpg",
+   "source": "images_final/pink/polka_dot_puffer_jacket/1.jpg",
+   "url_key": "ecc528f29eafabfefbba"
+  },
+  "pink|puffer_jacket|solid": {
+   "file": "pink/solid_puffer_jacket.jpg",
+   "source": "images_final/pink/solid_puffer_jacket/1.jpg",
+   "url_key": "2cf73972dc8119cc0273"
+  },
+  "pink|shorts|checkered": {
+   "file": "pink/checkered_shorts.jpg",
+   "source": "images_final/pink/checkered_shorts/1.jpg",
+   "url_key": "2d52bd9f10767d0062d5"
+  },
+  "pink|shorts|floral": {
+   "file": "pink/floral_shorts.jpg",
+   "source": "images_final/pink/floral_shorts/1.jpg",
+   "url_key": "03b69b4bc764589a75e7"
+  },
+  "pink|shorts|polka_dot": {
+   "file": "pink/polka_dot_shorts.jpg",
+   "source": "images_final/pink/polka_dot_shorts/1.jpg",
+   "url_key": "1809b2fd471809956ea1"
+  },
+  "pink|shorts|solid": {
+   "file": "pink/solid_shorts.jpg",
+   "source": "images_final/pink/solid_shorts/1.jpg",
+   "url_key": "91fb556367297ee0991f"
+  },
+  "pink|shorts|striped": {
+   "file": "pink/striped_shorts.jpg",
+   "source": "images_final/pink/striped_shorts/1.jpg",
+   "url_key": "b37d40303d3dc53700da"
+  },
+  "pink|slacks|floral": {
+   "file": "pink/floral_slacks.jpg",
+   "source": "images_final/pink/floral_slacks/2.jpg",
+   "url_key": "94ff99556757034d15e6"
+  },
+  "pink|slacks|solid": {
+   "file": "pink/solid_slacks.jpg",
+   "source": "images_final/pink/solid_slacks/1.jpg",
+   "url_key": "8be212d2f7b6c59f9121"
+  },
+  "pink|slacks|striped": {
+   "file": "pink/striped_slacks.jpg",
+   "source": "images_final/pink/striped_slacks/2.jpg",
+   "url_key": "a65ce651848742218be8"
+  },
+  "pink|suit_vest|solid": {
+   "file": "pink/solid_suit_vest.jpg",
+   "source": "images_final/pink/solid_suit_vest/1.jpg",
+   "url_key": "097b14337a97e450f3a0"
+  },
+  "pink|sweater|checkered": {
+   "file": "pink/checkered_sweater.jpg",
+   "source": "images_final/pink/checkered_sweater/1.jpg",
+   "url_key": "9e52692d1304fc7b613b"
+  },
+  "pink|sweater|floral": {
+   "file": "pink/floral_sweater.jpg",
+   "source": "images_final/pink/floral_sweater/1.jpg",
+   "url_key": "acc6aa3d303787e833f0"
+  },
+  "pink|sweater|leopard": {
+   "file": "pink/leopard_sweater.jpg",
+   "source": "images_final/pink/leopard_sweater/1.jpg",
+   "url_key": "94868714733c566fae11"
+  },
+  "pink|sweater|polka_dot": {
+   "file": "pink/polka_dot_sweater.jpg",
+   "source": "images_final/pink/polka_dot_sweater/1.jpg",
+   "url_key": "8dc8cc2702d5e099a162"
+  },
+  "pink|sweater|solid": {
+   "file": "pink/solid_sweater.jpg",
+   "source": "images_final/pink/solid_sweater/1.jpg",
+   "url_key": "3a50ef89fb72f1e3c66d"
+  },
+  "pink|sweater|striped": {
+   "file": "pink/striped_sweater.jpg",
+   "source": "images_final/pink/striped_sweater/2.jpg",
+   "url_key": "5fc563d6e74e707be9d0"
+  },
+  "pink|sweatshirt|solid": {
+   "file": "pink/solid_sweatshirt.jpg",
+   "source": "images_final/pink/solid_sweatshirt/1.jpg",
+   "url_key": "31eda0f54eacec650178"
+  },
+  "pink|t_shirt|floral": {
+   "file": "pink/floral_t_shirt.jpg",
+   "source": "images_final/pink/floral_t_shirt/1.jpg",
+   "url_key": "df152a89774e51dc5a82"
+  },
+  "pink|t_shirt|leopard": {
+   "file": "pink/leopard_t_shirt.jpg",
+   "source": "images_final/pink/leopard_t_shirt/1.jpg",
+   "url_key": "df85555eff1407e11932"
+  },
+  "pink|t_shirt|polka_dot": {
+   "file": "pink/polka_dot_t_shirt.jpg",
+   "source": "images_final/pink/polka_dot_t_shirt/1.jpg",
+   "url_key": "5145e7bc4a3d7378075b"
+  },
+  "pink|t_shirt|solid": {
+   "file": "pink/solid_t_shirt.jpg",
+   "source": "images_final/pink/solid_t_shirt/1.jpg",
+   "url_key": "d149f988b3a822a19566"
+  },
+  "pink|t_shirt|striped": {
+   "file": "pink/striped_t_shirt.jpg",
+   "source": "images_final/pink/striped_t_shirt/1.jpg",
+   "url_key": "b377dad77a089d71ea44"
+  },
+  "pink|tank_top|checkered": {
+   "file": "pink/checkered_tank_top.jpg",
+   "source": "images_final/pink/checkered_tank_top/1.jpg",
+   "url_key": "9f140ae614159621b508"
+  },
+  "pink|tank_top|floral": {
+   "file": "pink/floral_tank_top.jpg",
+   "source": "images_final/pink/floral_tank_top/1.jpg",
+   "url_key": "163a8ff9b268a40bf36f"
+  },
+  "pink|tank_top|leopard": {
+   "file": "pink/leopard_tank_top.jpg",
+   "source": "images_final/pink/leopard_tank_top/1.jpg",
+   "url_key": "38a2e47388f044cb4b6e"
+  },
+  "pink|tank_top|polka_dot": {
+   "file": "pink/polka_dot_tank_top.jpg",
+   "source": "images_final/pink/polka_dot_tank_top/1.jpg",
+   "url_key": "9287b90d3bc18ae50705"
+  },
+  "pink|tank_top|solid": {
+   "file": "pink/solid_tank_top.jpg",
+   "source": "images_final/pink/solid_tank_top/1.jpg",
+   "url_key": "ce758ec13757b27cf475"
+  },
+  "pink|tank_top|striped": {
+   "file": "pink/striped_tank_top.jpg",
+   "source": "images_final/pink/striped_tank_top/1.jpg",
+   "url_key": "e05eaece3fcf8bd34b52"
+  },
+  "pink|windbreaker|solid": {
+   "file": "pink/solid_windbreaker.jpg",
+   "source": "images_final/pink/solid_windbreaker/1.jpg",
+   "url_key": "c9d7311b7715da8bafab"
+  },
+  "purple|blazer|checkered": {
+   "file": "purple/checkered_blazer.jpg",
+   "source": "images_final/purple/checkered_blazer/1.jpg",
+   "url_key": "2535c796da9119575f0e"
+  },
+  "purple|blazer|floral": {
+   "file": "purple/floral_blazer.jpg",
+   "source": "images_final/purple/floral_blazer/1.jpg",
+   "url_key": "2f83405740186325fecb"
+  },
+  "purple|blazer|solid": {
+   "file": "purple/solid_blazer.jpg",
+   "source": "images_final/purple/solid_blazer/1.jpg",
+   "url_key": "fab26b414b6222cd81e3"
+  },
+  "purple|cardigan|floral": {
+   "file": "purple/floral_cardigan.jpg",
+   "source": "images_final/purple/floral_cardigan/1.jpg",
+   "url_key": "3ce2e9bca1bb8d3a31e7"
+  },
+  "purple|cardigan|solid": {
+   "file": "purple/solid_cardigan.jpg",
+   "source": "images_final/purple/solid_cardigan/1.jpg",
+   "url_key": "405a2b3681568c547424"
+  },
+  "purple|cardigan|striped": {
+   "file": "purple/striped_cardigan.jpg",
+   "source": "images_final/purple/striped_cardigan/1.jpg",
+   "url_key": "87318f4942eb53140e66"
+  },
+  "purple|dress|checkered": {
+   "file": "purple/checkered_dress.jpg",
+   "source": "images_final/purple/checkered_dress/1.jpg",
+   "url_key": "3f2b13ce05d626f737d3"
+  },
+  "purple|dress|leopard": {
+   "file": "purple/leopard_dress.jpg",
+   "source": "images_final/purple/leopard_dress/1.jpg",
+   "url_key": "d5ec8ef79999ca865e24"
+  },
+  "purple|dress|polka_dot": {
+   "file": "purple/polka_dot_dress.jpg",
+   "source": "images_final/purple/polka_dot_dress/1.jpg",
+   "url_key": "4e7a0471d205c09106fb"
+  },
+  "purple|dress|solid": {
+   "file": "purple/solid_dress.jpg",
+   "source": "images_final/purple/solid_dress/1.jpg",
+   "url_key": "ee7774f916fc048e4ad4"
+  },
+  "purple|dress|striped": {
+   "file": "purple/striped_dress.jpg",
+   "source": "images_final/purple/striped_dress/1.jpg",
+   "url_key": "59853c20d3c01c1153ed"
+  },
+  "purple|formal_shirt|checkered": {
+   "file": "purple/checkered_formal_shirt.jpg",
+   "source": "images_final/purple/checkered_formal_shirt/1.jpg",
+   "url_key": "d8c779e2cc4a302d5f0c"
+  },
+  "purple|formal_shirt|floral": {
+   "file": "purple/floral_formal_shirt.jpg",
+   "source": "images_final/purple/floral_formal_shirt/1.jpg",
+   "url_key": "c28734a4d00c3988ccec"
+  },
+  "purple|formal_shirt|leopard": {
+   "file": "purple/leopard_formal_shirt.jpg",
+   "source": "images_final/purple/leopard_formal_shirt/1.jpg",
+   "url_key": "36aa5f2d4c59b10b2cbe"
+  },
+  "purple|formal_shirt|polka_dot": {
+   "file": "purple/polka_dot_formal_shirt.jpg",
+   "source": "images_final/purple/polka_dot_formal_shirt/1.jpg",
+   "url_key": "0e6ffb497cb1d3617ba3"
+  },
+  "purple|formal_shirt|solid": {
+   "file": "purple/solid_formal_shirt.jpg",
+   "source": "images_final/purple/solid_formal_shirt/1.jpg",
+   "url_key": "ec25a1a32e4cdb687d33"
+  },
+  "purple|formal_shirt|striped": {
+   "file": "purple/striped_formal_shirt.jpg",
+   "source": "images_final/purple/striped_formal_shirt/1.jpg",
+   "url_key": "e0280d141a0d10efcd57"
+  },
+  "purple|hoodie|checkered": {
+   "file": "purple/checkered_hoodie.jpg",
+   "source": "images_final/purple/checkered_hoodie/1.jpg",
+   "url_key": "86b709603f8208d366b2"
+  },
+  "purple|hoodie|solid": {
+   "file": "purple/solid_hoodie.jpg",
+   "source": "images_final/purple/solid_hoodie/1.jpg",
+   "url_key": "d69289d659a5104a3ecf"
+  },
+  "purple|hoodie|striped": {
+   "file": "purple/striped_hoodie.jpg",
+   "source": "images_final/purple/striped_hoodie/1.jpg",
+   "url_key": "9f1a205af240430d4626"
+  },
+  "purple|jeans|solid": {
+   "file": "purple/solid_jeans.jpg",
+   "source": "images_final/purple/solid_jeans/1.jpg",
+   "url_key": "b51c24fe5bea0f55d5a6"
+  },
+  "purple|leather_jacket|solid": {
+   "file": "purple/solid_leather_jacket.jpg",
+   "source": "images_final/purple/solid_leather_jacket/1.jpg",
+   "url_key": "03c20436720a9425a82d"
+  },
+  "purple|leggings|solid": {
+   "file": "purple/solid_leggings.jpg",
+   "source": "images_final/purple/solid_leggings/1.jpg",
+   "url_key": "6dc814dafd60dd6385e7"
+  },
+  "purple|leggings|striped": {
+   "file": "purple/striped_leggings.jpg",
+   "source": "images_final/purple/striped_leggings/1.jpg",
+   "url_key": "4ecabc7045228eedb9f3"
+  },
+  "purple|long_coat|checkered": {
+   "file": "purple/checkered_long_coat.jpg",
+   "source": "images_final/purple/checkered_long_coat/2.jpg",
+   "url_key": "c599ca0d36306dba05c4"
+  },
+  "purple|long_coat|floral": {
+   "file": "purple/floral_long_coat.jpg",
+   "source": "images_final/purple/floral_long_coat/2.jpg",
+   "url_key": "b79794313d13c93daae4"
+  },
+  "purple|long_coat|solid": {
+   "file": "purple/solid_long_coat.jpg",
+   "source": "images_final/purple/solid_long_coat/2.jpg",
+   "url_key": "ca4bbcf0de8bf8fa57bd"
+  },
+  "purple|long_coat|striped": {
+   "file": "purple/striped_long_coat.jpg",
+   "source": "images_final/purple/striped_long_coat/2.jpg",
+   "url_key": "eb315b6a4db721277421"
+  },
+  "purple|long_skirt|polka_dot": {
+   "file": "purple/polka_dot_long_skirt.jpg",
+   "source": "images_final/purple/polka_dot_long_skirt/1.jpg",
+   "url_key": "24bb56f96073143dd760"
+  },
+  "purple|long_skirt|striped": {
+   "file": "purple/striped_long_skirt.jpg",
+   "source": "images_final/purple/striped_long_skirt/1.jpg",
+   "url_key": "192b1f8a42e4303e9886"
+  },
+  "purple|mini_skirt|checkered": {
+   "file": "purple/checkered_mini_skirt.jpg",
+   "source": "images_final/purple/checkered_mini_skirt/1.jpg",
+   "url_key": "f4c73576ea80bdc69513"
+  },
+  "purple|mini_skirt|floral": {
+   "file": "purple/floral_mini_skirt.jpg",
+   "source": "images_final/purple/floral_mini_skirt/1.jpg",
+   "url_key": "487c675133db938355f9"
+  },
+  "purple|mini_skirt|polka_dot": {
+   "file": "purple/polka_dot_mini_skirt.jpg",
+   "source": "images_final/purple/polka_dot_mini_skirt/1.jpg",
+   "url_key": "a8c3e15fa11e0d69ba64"
+  },
+  "purple|mini_skirt|solid": {
+   "file": "purple/solid_mini_skirt.jpg",
+   "source": "images_final/purple/solid_mini_skirt/1.jpg",
+   "url_key": "5ba80f4881406323ffe9"
+  },
+  "purple|mini_skirt|striped": {
+   "file": "purple/striped_mini_skirt.jpg",
+   "source": "images_final/purple/striped_mini_skirt/1.jpg",
+   "url_key": "35d942a075aaa2129501"
+  },
+  "purple|pea_coat|solid": {
+   "file": "purple/solid_pea_coat.jpg",
+   "source": "images_final/purple/solid_pea_coat/2.jpg",
+   "url_key": "52f4da45ae85a95cc803"
+  },
+  "purple|polo_shirt|leopard": {
+   "file": "purple/leopard_polo_shirt.jpg",
+   "source": "images_final/purple/leopard_polo_shirt/1.jpg",
+   "url_key": "28d7eb551286b2904011"
+  },
+  "purple|polo_shirt|polka_dot": {
+   "file": "purple/polka_dot_polo_shirt.jpg",
+   "source": "images_final/purple/polka_dot_polo_shirt/1.jpg",
+   "url_key": "379c2cd0029173fe6be4"
+  },
+  "purple|polo_shirt|solid": {
+   "file": "purple/solid_polo_shirt.jpg",
+   "source": "images_final/purple/solid_polo_shirt/1.jpg",
+   "url_key": "32089a77f7cc69f0d06d"
+  },
+  "purple|polo_shirt|striped": {
+   "file": "purple/striped_polo_shirt.jpg",
+   "source": "images_final/purple/striped_polo_shirt/1.jpg",
+   "url_key": "dce0d7266870a55833e7"
+  },
+  "purple|puffer_jacket|checkered": {
+   "file": "purple/checkered_puffer_jacket.jpg",
+   "source": "images_final/purple/checkered_puffer_jacket/1.jpg",
+   "url_key": "c5762da088b1ecafbbb1"
+  },
+  "purple|puffer_jacket|leopard": {
+   "file": "purple/leopard_puffer_jacket.jpg",
+   "source": "images_final/purple/leopard_puffer_jacket/1.jpg",
+   "url_key": "7793421172f105837b09"
+  },
+  "purple|puffer_jacket|polka_dot": {
+   "file": "purple/polka_dot_puffer_jacket.jpg",
+   "source": "images_final/purple/polka_dot_puffer_jacket/1.jpg",
+   "url_key": "4bf02dbb726e488722c6"
+  },
+  "purple|puffer_jacket|solid": {
+   "file": "purple/solid_puffer_jacket.jpg",
+   "source": "images_final/purple/solid_puffer_jacket/1.jpg",
+   "url_key": "a666b7a6eaf457816420"
+  },
+  "purple|shorts|checkered": {
+   "file": "purple/checkered_shorts.jpg",
+   "source": "images_final/purple/checkered_shorts/1.jpg",
+   "url_key": "beb932a5d523a545da79"
+  },
+  "purple|shorts|floral": {
+   "file": "purple/floral_shorts.jpg",
+   "source": "images_final/purple/floral_shorts/1.jpg",
+   "url_key": "e6acfe1dc9415cbc20e8"
+  },
+  "purple|shorts|polka_dot": {
+   "file": "purple/polka_dot_shorts.jpg",
+   "source": "images_final/purple/polka_dot_shorts/1.jpg",
+   "url_key": "4dd8dd295c0760ce00cd"
+  },
+  "purple|shorts|solid": {
+   "file": "purple/solid_shorts.jpg",
+   "source": "images_final/purple/solid_shorts/2.jpg",
+   "url_key": "94763e4492a4deaaefcb"
+  },
+  "purple|shorts|striped": {
+   "file": "purple/striped_shorts.jpg",
+   "source": "images_final/purple/striped_shorts/1.jpg",
+   "url_key": "fcb2ef638167fe9de999"
+  },
+  "purple|slacks|checkered": {
+   "file": "purple/checkered_slacks.jpg",
+   "source": "images_final/purple/checkered_slacks/1.jpg",
+   "url_key": "c1cc08515dd2a6afb4eb"
+  },
+  "purple|slacks|floral": {
+   "file": "purple/floral_slacks.jpg",
+   "source": "images_final/purple/floral_slacks/1.jpg",
+   "url_key": "7d97ab2bdd69cffcfad5"
+  },
+  "purple|slacks|solid": {
+   "file": "purple/solid_slacks.jpg",
+   "source": "images_final/purple/solid_slacks/1.jpg",
+   "url_key": "ae1cfd87cf6362b0210b"
+  },
+  "purple|suit_vest|checkered": {
+   "file": "purple/checkered_suit_vest.jpg",
+   "source": "images_final/purple/checkered_suit_vest/1.jpg",
+   "url_key": "6150afdcec8e83234943"
+  },
+  "purple|suit_vest|floral": {
+   "file": "purple/floral_suit_vest.jpg",
+   "source": "images_final/purple/floral_suit_vest/1.jpg",
+   "url_key": "296cc10d5d58109a9fda"
+  },
+  "purple|suit_vest|solid": {
+   "file": "purple/solid_suit_vest.jpg",
+   "source": "images_final/purple/solid_suit_vest/1.jpg",
+   "url_key": "69e202cdbbe37624ea8a"
+  },
+  "purple|sweater|checkered": {
+   "file": "purple/checkered_sweater.jpg",
+   "source": "images_final/purple/checkered_sweater/1.jpg",
+   "url_key": "1d10aec2460fef034298"
+  },
+  "purple|sweater|floral": {
+   "file": "purple/floral_sweater.jpg",
+   "source": "images_final/purple/floral_sweater/1.jpg",
+   "url_key": "ca88c023d1fba98f2dc5"
+  },
+  "purple|sweater|leopard": {
+   "file": "purple/leopard_sweater.jpg",
+   "source": "images_final/purple/leopard_sweater/1.jpg",
+   "url_key": "08b5bb8bf15b6c5dc1a5"
+  },
+  "purple|sweater|solid": {
+   "file": "purple/solid_sweater.jpg",
+   "source": "images_final/purple/solid_sweater/1.jpg",
+   "url_key": "9ce8449e89f2752921b7"
+  },
+  "purple|sweater|striped": {
+   "file": "purple/striped_sweater.jpg",
+   "source": "images_final/purple/striped_sweater/1.jpg",
+   "url_key": "18eed89de0e15f4e0870"
+  },
+  "purple|sweatshirt|floral": {
+   "file": "purple/floral_sweatshirt.jpg",
+   "source": "images_final/purple/floral_sweatshirt/1.jpg",
+   "url_key": "3bc4d7b5fe19ff33ed83"
+  },
+  "purple|sweatshirt|solid": {
+   "file": "purple/solid_sweatshirt.jpg",
+   "source": "images_final/purple/solid_sweatshirt/1.jpg",
+   "url_key": "d21b6b0343d77aa36ed5"
+  },
+  "purple|sweatshirt|striped": {
+   "file": "purple/striped_sweatshirt.jpg",
+   "source": "images_final/purple/striped_sweatshirt/1.jpg",
+   "url_key": "cd3a42c44d0a4ae041bc"
+  },
+  "purple|t_shirt|checkered": {
+   "file": "purple/checkered_t_shirt.jpg",
+   "source": "images_final/purple/checkered_t_shirt/1.jpg",
+   "url_key": "fc731f4fd22423cf7459"
+  },
+  "purple|t_shirt|leopard": {
+   "file": "purple/leopard_t_shirt.jpg",
+   "source": "images_final/purple/leopard_t_shirt/1.jpg",
+   "url_key": "3da97a0233e98c57064f"
+  },
+  "purple|t_shirt|polka_dot": {
+   "file": "purple/polka_dot_t_shirt.jpg",
+   "source": "images_final/purple/polka_dot_t_shirt/1.jpg",
+   "url_key": "2386bf89e361b1ff83e7"
+  },
+  "purple|t_shirt|solid": {
+   "file": "purple/solid_t_shirt.jpg",
+   "source": "images_final/purple/solid_t_shirt/1.jpg",
+   "url_key": "4e63e1074b514fef2231"
+  },
+  "purple|t_shirt|striped": {
+   "file": "purple/striped_t_shirt.jpg",
+   "source": "images_final/purple/striped_t_shirt/1.jpg",
+   "url_key": "0e827e9258200ce99d55"
+  },
+  "purple|tank_top|checkered": {
+   "file": "purple/checkered_tank_top.jpg",
+   "source": "images_final/purple/checkered_tank_top/1.jpg",
+   "url_key": "a3efe7c575e141a0fac3"
+  },
+  "purple|tank_top|floral": {
+   "file": "purple/floral_tank_top.jpg",
+   "source": "images_final/purple/floral_tank_top/1.jpg",
+   "url_key": "87fd04df538711f7a51e"
+  },
+  "purple|tank_top|leopard": {
+   "file": "purple/leopard_tank_top.jpg",
+   "source": "images_final/purple/leopard_tank_top/1.jpg",
+   "url_key": "52c34ce45b8ab309e1fd"
+  },
+  "purple|tank_top|polka_dot": {
+   "file": "purple/polka_dot_tank_top.jpg",
+   "source": "images_final/purple/polka_dot_tank_top/1.jpg",
+   "url_key": "a8c3e15fa11e0d69ba64"
+  },
+  "purple|tank_top|solid": {
+   "file": "purple/solid_tank_top.jpg",
+   "source": "images_final/purple/solid_tank_top/1.jpg",
+   "url_key": "36fd5367498d899c6646"
+  },
+  "purple|tank_top|striped": {
+   "file": "purple/striped_tank_top.jpg",
+   "source": "images_final/purple/striped_tank_top/1.jpg",
+   "url_key": "e61402307290171f8df5"
+  },
+  "red|blazer|checkered": {
+   "file": "red/checkered_blazer.jpg",
+   "source": "images_final/red/checkered_blazer/1.jpg",
+   "url_key": "a56e61444f5f07199785"
+  },
+  "red|blazer|floral": {
+   "file": "red/floral_blazer.jpg",
+   "source": "images_final/red/floral_blazer/2.jpg",
+   "url_key": "6615235f8f24c3cc785b"
+  },
+  "red|blazer|solid": {
+   "file": "red/solid_blazer.jpg",
+   "source": "images_final/red/solid_blazer/1.jpg",
+   "url_key": "b84b43da46ae37e13e91"
+  },
+  "red|cardigan|polka_dot": {
+   "file": "red/polka_dot_cardigan.jpg",
+   "source": "images_final/red/polka_dot_cardigan/1.jpg",
+   "url_key": "7f0411defd29799d49ba"
+  },
+  "red|cardigan|solid": {
+   "file": "red/solid_cardigan.jpg",
+   "source": "images_final/red/solid_cardigan/1.jpg",
+   "url_key": "eb8677a6f0355d53edab"
+  },
+  "red|cardigan|striped": {
+   "file": "red/striped_cardigan.jpg",
+   "source": "images_final/red/striped_cardigan/1.jpg",
+   "url_key": "53a0587fde59fa1244ee"
+  },
+  "red|dress|checkered": {
+   "file": "red/checkered_dress.jpg",
+   "source": "images_final/red/checkered_dress/1.jpg",
+   "url_key": "cc47c443af01246442dc"
+  },
+  "red|dress|floral": {
+   "file": "red/floral_dress.jpg",
+   "source": "images_final/red/floral_dress/1.jpg",
+   "url_key": "1cfd2d6b7c8f4b442520"
+  },
+  "red|dress|leopard": {
+   "file": "red/leopard_dress.jpg",
+   "source": "images_final/red/leopard_dress/1.jpg",
+   "url_key": "d4761eda9ac95cddedd2"
+  },
+  "red|dress|polka_dot": {
+   "file": "red/polka_dot_dress.jpg",
+   "source": "images_final/red/polka_dot_dress/1.jpg",
+   "url_key": "4f3fd2784cdb425c4118"
+  },
+  "red|dress|solid": {
+   "file": "red/solid_dress.jpg",
+   "source": "images_final/red/solid_dress/1.jpg",
+   "url_key": "6caafc96ede05341204d"
+  },
+  "red|dress|striped": {
+   "file": "red/striped_dress.jpg",
+   "source": "images_final/red/striped_dress/1.jpg",
+   "url_key": "80f4e635b381daac937c"
+  },
+  "red|fleece_jacket|solid": {
+   "file": "red/solid_fleece_jacket.jpg",
+   "source": "images_final/red/solid_fleece_jacket/1.jpg",
+   "url_key": "520bb705ce6479403154"
+  },
+  "red|formal_shirt|checkered": {
+   "file": "red/checkered_formal_shirt.jpg",
+   "source": "images_final/red/checkered_formal_shirt/1.jpg",
+   "url_key": "a19ba6ad68db86f73c94"
+  },
+  "red|formal_shirt|floral": {
+   "file": "red/floral_formal_shirt.jpg",
+   "source": "images_final/red/floral_formal_shirt/1.jpg",
+   "url_key": "500db46dce47e2bdce8f"
+  },
+  "red|formal_shirt|polka_dot": {
+   "file": "red/polka_dot_formal_shirt.jpg",
+   "source": "images_final/red/polka_dot_formal_shirt/1.jpg",
+   "url_key": "4308b2e5e3a9c0bd78c2"
+  },
+  "red|formal_shirt|solid": {
+   "file": "red/solid_formal_shirt.jpg",
+   "source": "images_final/red/solid_formal_shirt/1.jpg",
+   "url_key": "4a84376961e6acc8e96b"
+  },
+  "red|formal_shirt|striped": {
+   "file": "red/striped_formal_shirt.jpg",
+   "source": "images_final/red/striped_formal_shirt/1.jpg",
+   "url_key": "317c2632913743e7ab3a"
+  },
+  "red|hoodie|checkered": {
+   "file": "red/checkered_hoodie.jpg",
+   "source": "images_final/red/checkered_hoodie/1.jpg",
+   "url_key": "4bd58fad8287cc07eea2"
+  },
+  "red|hoodie|polka_dot": {
+   "file": "red/polka_dot_hoodie.jpg",
+   "source": "images_final/red/polka_dot_hoodie/1.jpg",
+   "url_key": "dd252d2ebd8628548ead"
+  },
+  "red|hoodie|solid": {
+   "file": "red/solid_hoodie.jpg",
+   "source": "images_final/red/solid_hoodie/1.jpg",
+   "url_key": "4cb5c25d11b9ba8881a1"
+  },
+  "red|hoodie|striped": {
+   "file": "red/striped_hoodie.jpg",
+   "source": "images_final/red/striped_hoodie/2.jpg",
+   "url_key": "4942874f9bcb767f4303"
+  },
+  "red|jeans|solid": {
+   "file": "red/solid_jeans.jpg",
+   "source": "images_final/red/solid_jeans/1.jpg",
+   "url_key": "0a02690c76175dc84996"
+  },
+  "red|leggings|leopard": {
+   "file": "red/leopard_leggings.jpg",
+   "source": "images_final/red/leopard_leggings/1.jpg",
+   "url_key": "8aced3b274ed01b764d5"
+  },
+  "red|leggings|polka_dot": {
+   "file": "red/polka_dot_leggings.jpg",
+   "source": "images_final/red/polka_dot_leggings/1.jpg",
+   "url_key": "947a7ec42deecfe76bdb"
+  },
+  "red|leggings|solid": {
+   "file": "red/solid_leggings.jpg",
+   "source": "images_final/red/solid_leggings/1.jpg",
+   "url_key": "7661366509f70c891df5"
+  },
+  "red|long_skirt|checkered": {
+   "file": "red/checkered_long_skirt.jpg",
+   "source": "images_final/red/checkered_long_skirt/1.jpg",
+   "url_key": "7e775ca7084dae15b15f"
+  },
+  "red|long_skirt|floral": {
+   "file": "red/floral_long_skirt.jpg",
+   "source": "images_final/red/floral_long_skirt/1.jpg",
+   "url_key": "65e2fcaae67d9da6e9c6"
+  },
+  "red|long_skirt|leopard": {
+   "file": "red/leopard_long_skirt.jpg",
+   "source": "images_final/red/leopard_long_skirt/1.jpg",
+   "url_key": "50215c4971e8e212fd99"
+  },
+  "red|long_skirt|polka_dot": {
+   "file": "red/polka_dot_long_skirt.jpg",
+   "source": "images_final/red/polka_dot_long_skirt/1.jpg",
+   "url_key": "354c5498b57e8a281035"
+  },
+  "red|long_skirt|solid": {
+   "file": "red/solid_long_skirt.jpg",
+   "source": "images_final/red/solid_long_skirt/1.jpg",
+   "url_key": "7e528d522ccb5a2bcc45"
+  },
+  "red|long_skirt|striped": {
+   "file": "red/striped_long_skirt.jpg",
+   "source": "images_final/red/striped_long_skirt/1.jpg",
+   "url_key": "189f634ca3aa66c27f15"
+  },
+  "red|mini_skirt|checkered": {
+   "file": "red/checkered_mini_skirt.jpg",
+   "source": "images_final/red/checkered_mini_skirt/1.jpg",
+   "url_key": "d41740ca92b1b4681bf6"
+  },
+  "red|mini_skirt|floral": {
+   "file": "red/floral_mini_skirt.jpg",
+   "source": "images_final/red/floral_mini_skirt/1.jpg",
+   "url_key": "5bd0c375cb05084c872f"
+  },
+  "red|mini_skirt|leopard": {
+   "file": "red/leopard_mini_skirt.jpg",
+   "source": "images_final/red/leopard_mini_skirt/1.jpg",
+   "url_key": "912bb2bfd6cfa0d6f927"
+  },
+  "red|mini_skirt|polka_dot": {
+   "file": "red/polka_dot_mini_skirt.jpg",
+   "source": "images_final/red/polka_dot_mini_skirt/1.jpg",
+   "url_key": "b974a696399c52e15611"
+  },
+  "red|mini_skirt|solid": {
+   "file": "red/solid_mini_skirt.jpg",
+   "source": "images_final/red/solid_mini_skirt/1.jpg",
+   "url_key": "9eb5c3e1854553490ac5"
+  },
+  "red|mini_skirt|striped": {
+   "file": "red/striped_mini_skirt.jpg",
+   "source": "images_final/red/striped_mini_skirt/1.jpg",
+   "url_key": "272ddd0becef73cf6cc0"
+  },
+  "red|polo_shirt|checkered": {
+   "file": "red/checkered_polo_shirt.jpg",
+   "source": "images_final/red/checkered_polo_shirt/1.jpg",
+   "url_key": "f9b7709a9897e8a81202"
+  },
+  "red|polo_shirt|floral": {
+   "file": "red/floral_polo_shirt.jpg",
+   "source": "images_final/red/floral_polo_shirt/1.jpg",
+   "url_key": "adc1acec37d9e6f5c3c8"
+  },
+  "red|polo_shirt|leopard": {
+   "file": "red/leopard_polo_shirt.jpg",
+   "source": "images_final/red/leopard_polo_shirt/1.jpg",
+   "url_key": "fc7e76bfb43b1dfb2a3c"
+  },
+  "red|polo_shirt|polka_dot": {
+   "file": "red/polka_dot_polo_shirt.jpg",
+   "source": "images_final/red/polka_dot_polo_shirt/1.jpg",
+   "url_key": "67a58e718f260555f81f"
+  },
+  "red|polo_shirt|solid": {
+   "file": "red/solid_polo_shirt.jpg",
+   "source": "images_final/red/solid_polo_shirt/1.jpg",
+   "url_key": "f70431c407753b0e5f01"
+  },
+  "red|polo_shirt|striped": {
+   "file": "red/striped_polo_shirt.jpg",
+   "source": "images_final/red/striped_polo_shirt/1.jpg",
+   "url_key": "351feba2c03bcbfee3d5"
+  },
+  "red|puffer_jacket|checkered": {
+   "file": "red/checkered_puffer_jacket.jpg",
+   "source": "images_final/red/checkered_puffer_jacket/1.jpg",
+   "url_key": "82d77d8e5808ca8008e1"
+  },
+  "red|puffer_jacket|polka_dot": {
+   "file": "red/polka_dot_puffer_jacket.jpg",
+   "source": "images_final/red/polka_dot_puffer_jacket/1.jpg",
+   "url_key": "7036074600a349b52815"
+  },
+  "red|puffer_jacket|solid": {
+   "file": "red/solid_puffer_jacket.jpg",
+   "source": "images_final/red/solid_puffer_jacket/1.jpg",
+   "url_key": "c67432295d425ff583af"
+  },
+  "red|shorts|checkered": {
+   "file": "red/checkered_shorts.jpg",
+   "source": "images_final/red/checkered_shorts/1.jpg",
+   "url_key": "2f1628b8d1f370138366"
+  },
+  "red|shorts|floral": {
+   "file": "red/floral_shorts.jpg",
+   "source": "images_final/red/floral_shorts/1.jpg",
+   "url_key": "edaf4af4912e42f8fdbf"
+  },
+  "red|shorts|leopard": {
+   "file": "red/leopard_shorts.jpg",
+   "source": "images_final/red/leopard_shorts/1.jpg",
+   "url_key": "4f968731eb9b985bf3f1"
+  },
+  "red|shorts|polka_dot": {
+   "file": "red/polka_dot_shorts.jpg",
+   "source": "images_final/red/polka_dot_shorts/1.jpg",
+   "url_key": "b0536954ac8b844ac839"
+  },
+  "red|shorts|solid": {
+   "file": "red/solid_shorts.jpg",
+   "source": "images_final/red/solid_shorts/1.jpg",
+   "url_key": "6b15138e0c8c301a87b2"
+  },
+  "red|shorts|striped": {
+   "file": "red/striped_shorts.jpg",
+   "source": "images_final/red/striped_shorts/1.jpg",
+   "url_key": "7b56e3a1129594351e80"
+  },
+  "red|slacks|checkered": {
+   "file": "red/checkered_slacks.jpg",
+   "source": "images_final/red/checkered_slacks/1.jpg",
+   "url_key": "5b67e1c1a84a5a0eb2af"
+  },
+  "red|slacks|floral": {
+   "file": "red/floral_slacks.jpg",
+   "source": "images_final/red/floral_slacks/1.jpg",
+   "url_key": "a36e552a5dd322768017"
+  },
+  "red|slacks|polka_dot": {
+   "file": "red/polka_dot_slacks.jpg",
+   "source": "images_final/red/polka_dot_slacks/1.jpg",
+   "url_key": "40c332f04c7ab939ab5e"
+  },
+  "red|slacks|solid": {
+   "file": "red/solid_slacks.jpg",
+   "source": "images_final/red/solid_slacks/3.jpg",
+   "url_key": "3613150b164e2775824a"
+  },
+  "red|slacks|striped": {
+   "file": "red/striped_slacks.jpg",
+   "source": "images_final/red/striped_slacks/2.jpg",
+   "url_key": "25fd985cc87aeeaa0157"
+  },
+  "red|suit_vest|checkered": {
+   "file": "red/checkered_suit_vest.jpg",
+   "source": "images_final/red/checkered_suit_vest/1.jpg",
+   "url_key": "528f4a341e088a1fcf69"
+  },
+  "red|suit_vest|floral": {
+   "file": "red/floral_suit_vest.jpg",
+   "source": "images_final/red/floral_suit_vest/1.jpg",
+   "url_key": "513691ad41f0d061ce37"
+  },
+  "red|suit_vest|polka_dot": {
+   "file": "red/polka_dot_suit_vest.jpg",
+   "source": "images_final/red/polka_dot_suit_vest/1.jpg",
+   "url_key": "63eb845727c0b0531a33"
+  },
+  "red|suit_vest|solid": {
+   "file": "red/solid_suit_vest.jpg",
+   "source": "images_final/red/solid_suit_vest/1.jpg",
+   "url_key": "b3177e536f900f39f6cd"
+  },
+  "red|suit_vest|striped": {
+   "file": "red/striped_suit_vest.jpg",
+   "source": "images_final/red/striped_suit_vest/1.jpg",
+   "url_key": "7c7f238cc62cdb6dd45a"
+  },
+  "red|sweater|checkered": {
+   "file": "red/checkered_sweater.jpg",
+   "source": "images_final/red/checkered_sweater/1.jpg",
+   "url_key": "97091b7cf49c3cea811a"
+  },
+  "red|sweater|floral": {
+   "file": "red/floral_sweater.jpg",
+   "source": "images_final/red/floral_sweater/1.jpg",
+   "url_key": "cc69e89d2f156b08d54b"
+  },
+  "red|sweater|leopard": {
+   "file": "red/leopard_sweater.jpg",
+   "source": "images_final/red/leopard_sweater/1.jpg",
+   "url_key": "bdcb524dd9f772a55701"
+  },
+  "red|sweater|polka_dot": {
+   "file": "red/polka_dot_sweater.jpg",
+   "source": "images_final/red/polka_dot_sweater/1.jpg",
+   "url_key": "1c1fc27ce1db0c8d6346"
+  },
+  "red|sweater|solid": {
+   "file": "red/solid_sweater.jpg",
+   "source": "images_final/red/solid_sweater/1.jpg",
+   "url_key": "b430b50d115ec719eef2"
+  },
+  "red|sweater|striped": {
+   "file": "red/striped_sweater.jpg",
+   "source": "images_final/red/striped_sweater/1.jpg",
+   "url_key": "d333f0fae5ed04037c57"
+  },
+  "red|sweatshirt|solid": {
+   "file": "red/solid_sweatshirt.jpg",
+   "source": "images_final/red/solid_sweatshirt/1.jpg",
+   "url_key": "b6f431bbc06745cb1477"
+  },
+  "red|t_shirt|checkered": {
+   "file": "red/checkered_t_shirt.jpg",
+   "source": "images_final/red/checkered_t_shirt/1.jpg",
+   "url_key": "04d0e438c96922d527e9"
+  },
+  "red|t_shirt|floral": {
+   "file": "red/floral_t_shirt.jpg",
+   "source": "images_final/red/floral_t_shirt/1.jpg",
+   "url_key": "ceb9f2b0b9083aef91e3"
+  },
+  "red|t_shirt|leopard": {
+   "file": "red/leopard_t_shirt.jpg",
+   "source": "images_final/red/leopard_t_shirt/1.jpg",
+   "url_key": "a2b436586e4dd48b45c7"
+  },
+  "red|t_shirt|polka_dot": {
+   "file": "red/polka_dot_t_shirt.jpg",
+   "source": "images_final/red/polka_dot_t_shirt/2.jpg",
+   "url_key": "0fa6c692fc2dcfc166ca"
+  },
+  "red|t_shirt|solid": {
+   "file": "red/solid_t_shirt.jpg",
+   "source": "images_final/red/solid_t_shirt/1.jpg",
+   "url_key": "c5088e7b541a3244036e"
+  },
+  "red|t_shirt|striped": {
+   "file": "red/striped_t_shirt.jpg",
+   "source": "images_final/red/striped_t_shirt/1.jpg",
+   "url_key": "6c0e32df438255023616"
+  },
+  "red|tank_top|checkered": {
+   "file": "red/checkered_tank_top.jpg",
+   "source": "images_final/red/checkered_tank_top/1.jpg",
+   "url_key": "28cd2af8e0af3a58617a"
+  },
+  "red|tank_top|floral": {
+   "file": "red/floral_tank_top.jpg",
+   "source": "images_final/red/floral_tank_top/1.jpg",
+   "url_key": "ff98aa48918be52bc785"
+  },
+  "red|tank_top|leopard": {
+   "file": "red/leopard_tank_top.jpg",
+   "source": "images_final/red/leopard_tank_top/1.jpg",
+   "url_key": "9aaa41c2d95727cad327"
+  },
+  "red|tank_top|polka_dot": {
+   "file": "red/polka_dot_tank_top.jpg",
+   "source": "images_final/red/polka_dot_tank_top/1.jpg",
+   "url_key": "07d793c25897e4c69786"
+  },
+  "red|tank_top|solid": {
+   "file": "red/solid_tank_top.jpg",
+   "source": "images_final/red/solid_tank_top/2.jpg",
+   "url_key": "037589b7dcece9130795"
+  },
+  "red|tank_top|striped": {
+   "file": "red/striped_tank_top.jpg",
+   "source": "images_final/red/striped_tank_top/2.jpg",
+   "url_key": "dae9f4bf9bff40981d94"
+  },
+  "red|windbreaker|solid": {
+   "file": "red/solid_windbreaker.jpg",
+   "source": "images_final/red/solid_windbreaker/2.jpg",
+   "url_key": "e0c4f8183006cde8ee76"
+  },
+  "white|blazer|checkered": {
+   "file": "white/checkered_blazer.jpg",
+   "source": "images_final/white/checkered_blazer/1.jpg",
+   "url_key": "3c0734fa8648075f2504"
+  },
+  "white|blazer|floral": {
+   "file": "white/floral_blazer.jpg",
+   "source": "images_final/white/floral_blazer/1.jpg",
+   "url_key": "3ab0a05dbf6d1f35ebf0"
+  },
+  "white|blazer|leopard": {
+   "file": "white/leopard_blazer.jpg",
+   "source": "images_final/white/leopard_blazer/1.jpg",
+   "url_key": "cb85e4c27641a0b8b053"
+  },
+  "white|blazer|polka_dot": {
+   "file": "white/polka_dot_blazer.jpg",
+   "source": "images_final/white/polka_dot_blazer/1.jpg",
+   "url_key": "172c46d7931cd1d92a52"
+  },
+  "white|blazer|solid": {
+   "file": "white/solid_blazer.jpg",
+   "source": "images_final/white/solid_blazer/1.jpg",
+   "url_key": "5ff814ddf678e82cb8e9"
+  },
+  "white|blazer|striped": {
+   "file": "white/striped_blazer.jpg",
+   "source": "images_final/white/striped_blazer/1.jpg",
+   "url_key": "3a42fbda0021b30f3118"
+  },
+  "white|dress|checkered": {
+   "file": "white/checkered_dress.jpg",
+   "source": "images_final/white/checkered_dress/1.jpg",
+   "url_key": "1df04e4dc3476af2ad94"
+  },
+  "white|dress|floral": {
+   "file": "white/floral_dress.jpg",
+   "source": "images_final/white/floral_dress/1.jpg",
+   "url_key": "7519039c21cb9dd41d65"
+  },
+  "white|dress|leopard": {
+   "file": "white/leopard_dress.jpg",
+   "source": "images_final/white/leopard_dress/1.jpg",
+   "url_key": "709f232db85584d52c08"
+  },
+  "white|dress|polka_dot": {
+   "file": "white/polka_dot_dress.jpg",
+   "source": "images_final/white/polka_dot_dress/1.jpg",
+   "url_key": "5761fd8a0aeb0f882712"
+  },
+  "white|dress|solid": {
+   "file": "white/solid_dress.jpg",
+   "source": "images_final/white/solid_dress/1.jpg",
+   "url_key": "22c596f8240dfe928f8b"
+  },
+  "white|dress|striped": {
+   "file": "white/striped_dress.jpg",
+   "source": "images_final/white/striped_dress/1.jpg",
+   "url_key": "d64fcd27dfb5b8bbcec3"
+  },
+  "white|fleece_jacket|solid": {
+   "file": "white/solid_fleece_jacket.jpg",
+   "source": "images_final/white/solid_fleece_jacket/1.jpg",
+   "url_key": "0aed6939bcfbc7e5cbdc"
+  },
+  "white|formal_shirt|floral": {
+   "file": "white/floral_formal_shirt.jpg",
+   "source": "images_final/white/floral_formal_shirt/1.jpg",
+   "url_key": "ab5a19ce5ab684703107"
+  },
+  "white|formal_shirt|leopard": {
+   "file": "white/leopard_formal_shirt.jpg",
+   "source": "images_final/white/leopard_formal_shirt/1.jpg",
+   "url_key": "a9f091675d9f4b64c185"
+  },
+  "white|formal_shirt|polka_dot": {
+   "file": "white/polka_dot_formal_shirt.jpg",
+   "source": "images_final/white/polka_dot_formal_shirt/1.jpg",
+   "url_key": "be551a2d25a89f381da6"
+  },
+  "white|formal_shirt|solid": {
+   "file": "white/solid_formal_shirt.jpg",
+   "source": "images_final/white/solid_formal_shirt/1.jpg",
+   "url_key": "51d7c46863f825d6bcef"
+  },
+  "white|formal_shirt|striped": {
+   "file": "white/striped_formal_shirt.jpg",
+   "source": "images_final/white/striped_formal_shirt/1.jpg",
+   "url_key": "50e94be1fe29d6273c62"
+  },
+  "white|hoodie|checkered": {
+   "file": "white/checkered_hoodie.jpg",
+   "source": "images_final/white/checkered_hoodie/1.jpg",
+   "url_key": "5c854f666acc23b63807"
+  },
+  "white|hoodie|floral": {
+   "file": "white/floral_hoodie.jpg",
+   "source": "images_final/white/floral_hoodie/1.jpg",
+   "url_key": "feab33683a0a43f6e139"
+  },
+  "white|hoodie|leopard": {
+   "file": "white/leopard_hoodie.jpg",
+   "source": "images_final/white/leopard_hoodie/1.jpg",
+   "url_key": "452ca699b723d37c345e"
+  },
+  "white|hoodie|solid": {
+   "file": "white/solid_hoodie.jpg",
+   "source": "images_final/white/solid_hoodie/2.jpg",
+   "url_key": "e92c52fd56178324efb3"
+  },
+  "white|hoodie|striped": {
+   "file": "white/striped_hoodie.jpg",
+   "source": "images_final/white/striped_hoodie/1.jpg",
+   "url_key": "f72a85e11286af755d45"
+  },
+  "white|jeans|solid": {
+   "file": "white/solid_jeans.jpg",
+   "source": "images_final/white/solid_jeans/3.jpg",
+   "url_key": "4232832b135547be09a8"
+  },
+  "white|leather_jacket|solid": {
+   "file": "white/solid_leather_jacket.jpg",
+   "source": "images_final/white/solid_leather_jacket/1.jpg",
+   "url_key": "307c0420ca8a0c98d93f"
+  },
+  "white|leggings|checkered": {
+   "file": "white/checkered_leggings.jpg",
+   "source": "images_final/white/checkered_leggings/1.jpg",
+   "url_key": "ab7081d24156d30c86bf"
+  },
+  "white|leggings|floral": {
+   "file": "white/floral_leggings.jpg",
+   "source": "images_final/white/floral_leggings/2.jpg",
+   "url_key": "10ab822947359ad7c127"
+  },
+  "white|leggings|leopard": {
+   "file": "white/leopard_leggings.jpg",
+   "source": "images_final/white/leopard_leggings/1.jpg",
+   "url_key": "be59e2a66a2d03fc0bf4"
+  },
+  "white|leggings|polka_dot": {
+   "file": "white/polka_dot_leggings.jpg",
+   "source": "images_final/white/polka_dot_leggings/1.jpg",
+   "url_key": "cb6230cededab5394152"
+  },
+  "white|leggings|solid": {
+   "file": "white/solid_leggings.jpg",
+   "source": "images_final/white/solid_leggings/1.jpg",
+   "url_key": "f08ca15dd8bc93781d32"
+  },
+  "white|leggings|striped": {
+   "file": "white/striped_leggings.jpg",
+   "source": "images_final/white/striped_leggings/1.jpg",
+   "url_key": "cd27b45bdc90ad0b31c9"
+  },
+  "white|long_coat|checkered": {
+   "file": "white/checkered_long_coat.jpg",
+   "source": "images_final/white/checkered_long_coat/2.jpg",
+   "url_key": "379a591009394e5f1e2f"
+  },
+  "white|long_coat|floral": {
+   "file": "white/floral_long_coat.jpg",
+   "source": "images_final/white/floral_long_coat/2.jpg",
+   "url_key": "934ff4b5c121eb85b6c8"
+  },
+  "white|long_coat|leopard": {
+   "file": "white/leopard_long_coat.jpg",
+   "source": "images_final/white/leopard_long_coat/2.jpg",
+   "url_key": "4af328c5d8f7526ff71b"
+  },
+  "white|long_coat|solid": {
+   "file": "white/solid_long_coat.jpg",
+   "source": "images_final/white/solid_long_coat/3.jpg",
+   "url_key": "ccc45573d6ae42a1feb0"
+  },
+  "white|long_coat|striped": {
+   "file": "white/striped_long_coat.jpg",
+   "source": "images_final/white/striped_long_coat/2.jpg",
+   "url_key": "040f4acb18f743c86206"
+  },
+  "white|long_skirt|checkered": {
+   "file": "white/checkered_long_skirt.jpg",
+   "source": "images_final/white/checkered_long_skirt/1.jpg",
+   "url_key": "fbc7a25b55c135f7ad6c"
+  },
+  "white|long_skirt|floral": {
+   "file": "white/floral_long_skirt.jpg",
+   "source": "images_final/white/floral_long_skirt/1.jpg",
+   "url_key": "21b57a1388a0b51f7039"
+  },
+  "white|long_skirt|leopard": {
+   "file": "white/leopard_long_skirt.jpg",
+   "source": "images_final/white/leopard_long_skirt/1.jpg",
+   "url_key": "00ef4e7c187016b32e05"
+  },
+  "white|long_skirt|polka_dot": {
+   "file": "white/polka_dot_long_skirt.jpg",
+   "source": "images_final/white/polka_dot_long_skirt/1.jpg",
+   "url_key": "5444aeb5f620d9ea18eb"
+  },
+  "white|long_skirt|solid": {
+   "file": "white/solid_long_skirt.jpg",
+   "source": "images_final/white/solid_long_skirt/1.jpg",
+   "url_key": "511e5a222cd5f6a51681"
+  },
+  "white|long_skirt|striped": {
+   "file": "white/striped_long_skirt.jpg",
+   "source": "images_final/white/striped_long_skirt/1.jpg",
+   "url_key": "09a51687c04e963aac33"
+  },
+  "white|mini_skirt|floral": {
+   "file": "white/floral_mini_skirt.jpg",
+   "source": "images_final/white/floral_mini_skirt/1.jpg",
+   "url_key": "b7726c69a555ccd09280"
+  },
+  "white|mini_skirt|leopard": {
+   "file": "white/leopard_mini_skirt.jpg",
+   "source": "images_final/white/leopard_mini_skirt/1.jpg",
+   "url_key": "e040cf7284100d289c63"
+  },
+  "white|mini_skirt|polka_dot": {
+   "file": "white/polka_dot_mini_skirt.jpg",
+   "source": "images_final/white/polka_dot_mini_skirt/1.jpg",
+   "url_key": "edea79eb34ddd3397d50"
+  },
+  "white|mini_skirt|solid": {
+   "file": "white/solid_mini_skirt.jpg",
+   "source": "images_final/white/solid_mini_skirt/1.jpg",
+   "url_key": "5b668b7c2ca36006be9c"
+  },
+  "white|pea_coat|solid": {
+   "file": "white/solid_pea_coat.jpg",
+   "source": "images_final/white/solid_pea_coat/2.jpg",
+   "url_key": "57c5a3f349c0954bf2a4"
+  },
+  "white|polo_shirt|checkered": {
+   "file": "white/checkered_polo_shirt.jpg",
+   "source": "images_final/white/checkered_polo_shirt/1.jpg",
+   "url_key": "73b7971e9bf4957fdcad"
+  },
+  "white|polo_shirt|floral": {
+   "file": "white/floral_polo_shirt.jpg",
+   "source": "images_final/white/floral_polo_shirt/1.jpg",
+   "url_key": "77d0943dfb0733146148"
+  },
+  "white|polo_shirt|polka_dot": {
+   "file": "white/polka_dot_polo_shirt.jpg",
+   "source": "images_final/white/polka_dot_polo_shirt/1.jpg",
+   "url_key": "f5cac9ef7faed00fb034"
+  },
+  "white|polo_shirt|solid": {
+   "file": "white/solid_polo_shirt.jpg",
+   "source": "images_final/white/solid_polo_shirt/1.jpg",
+   "url_key": "859c26c2be28d212744e"
+  },
+  "white|polo_shirt|striped": {
+   "file": "white/striped_polo_shirt.jpg",
+   "source": "images_final/white/striped_polo_shirt/1.jpg",
+   "url_key": "dc718dd5296b01a00f50"
+  },
+  "white|puffer_jacket|checkered": {
+   "file": "white/checkered_puffer_jacket.jpg",
+   "source": "images_final/white/checkered_puffer_jacket/1.jpg",
+   "url_key": "fcd515f97c3048f9c0ad"
+  },
+  "white|puffer_jacket|floral": {
+   "file": "white/floral_puffer_jacket.jpg",
+   "source": "images_final/white/floral_puffer_jacket/1.jpg",
+   "url_key": "03f9ef65c45fb3a60f29"
+  },
+  "white|puffer_jacket|leopard": {
+   "file": "white/leopard_puffer_jacket.jpg",
+   "source": "images_final/white/leopard_puffer_jacket/1.jpg",
+   "url_key": "9ec1da1da22479c15719"
+  },
+  "white|puffer_jacket|polka_dot": {
+   "file": "white/polka_dot_puffer_jacket.jpg",
+   "source": "images_final/white/polka_dot_puffer_jacket/1.jpg",
+   "url_key": "9d9dad6a5c6b88c1ab56"
+  },
+  "white|puffer_jacket|solid": {
+   "file": "white/solid_puffer_jacket.jpg",
+   "source": "images_final/white/solid_puffer_jacket/1.jpg",
+   "url_key": "06e5ceb5734a28843ff3"
+  },
+  "white|shorts|checkered": {
+   "file": "white/checkered_shorts.jpg",
+   "source": "images_final/white/checkered_shorts/1.jpg",
+   "url_key": "bdfda2c342080d90cb18"
+  },
+  "white|shorts|floral": {
+   "file": "white/floral_shorts.jpg",
+   "source": "images_final/white/floral_shorts/1.jpg",
+   "url_key": "8b0b9b6bbe9a12ba7ed6"
+  },
+  "white|shorts|leopard": {
+   "file": "white/leopard_shorts.jpg",
+   "source": "images_final/white/leopard_shorts/1.jpg",
+   "url_key": "9a538cbec43971716cf0"
+  },
+  "white|shorts|polka_dot": {
+   "file": "white/polka_dot_shorts.jpg",
+   "source": "images_final/white/polka_dot_shorts/1.jpg",
+   "url_key": "f81e34b416b810dca252"
+  },
+  "white|shorts|solid": {
+   "file": "white/solid_shorts.jpg",
+   "source": "images_final/white/solid_shorts/1.jpg",
+   "url_key": "9317270dfe7bbbcb8baa"
+  },
+  "white|shorts|striped": {
+   "file": "white/striped_shorts.jpg",
+   "source": "images_final/white/striped_shorts/1.jpg",
+   "url_key": "0f5df50fc1a78c1a1ed3"
+  },
+  "white|slacks|checkered": {
+   "file": "white/checkered_slacks.jpg",
+   "source": "images_final/white/checkered_slacks/1.jpg",
+   "url_key": "74a1d49ac5abac199484"
+  },
+  "white|slacks|floral": {
+   "file": "white/floral_slacks.jpg",
+   "source": "images_final/white/floral_slacks/1.jpg",
+   "url_key": "fa3169302907ecba4647"
+  },
+  "white|slacks|leopard": {
+   "file": "white/leopard_slacks.jpg",
+   "source": "images_final/white/leopard_slacks/1.jpg",
+   "url_key": "d1985a84ce7363d73694"
+  },
+  "white|slacks|polka_dot": {
+   "file": "white/polka_dot_slacks.jpg",
+   "source": "images_final/white/polka_dot_slacks/1.jpg",
+   "url_key": "0f05ef74139b22b74eaf"
+  },
+  "white|slacks|solid": {
+   "file": "white/solid_slacks.jpg",
+   "source": "images_final/white/solid_slacks/1.jpg",
+   "url_key": "5ffec18b7d9109cb53e3"
+  },
+  "white|slacks|striped": {
+   "file": "white/striped_slacks.jpg",
+   "source": "images_final/white/striped_slacks/1.jpg",
+   "url_key": "041e07e774170d88d558"
+  },
+  "white|suit_vest|floral": {
+   "file": "white/floral_suit_vest.jpg",
+   "source": "images_final/white/floral_suit_vest/1.jpg",
+   "url_key": "f9d3ae69bc56749212b1"
+  },
+  "white|suit_vest|polka_dot": {
+   "file": "white/polka_dot_suit_vest.jpg",
+   "source": "images_final/white/polka_dot_suit_vest/1.jpg",
+   "url_key": "2629f68ab6313ed88cd3"
+  },
+  "white|suit_vest|solid": {
+   "file": "white/solid_suit_vest.jpg",
+   "source": "images_final/white/solid_suit_vest/1.jpg",
+   "url_key": "d73a2ff73335d78219bb"
+  },
+  "white|suit_vest|striped": {
+   "file": "white/striped_suit_vest.jpg",
+   "source": "images_final/white/striped_suit_vest/1.jpg",
+   "url_key": "48e68484f7c2dfbf27b8"
+  },
+  "white|sweater|floral": {
+   "file": "white/floral_sweater.jpg",
+   "source": "images_final/white/floral_sweater/2.jpg",
+   "url_key": "4792cfc4295fecff3737"
+  },
+  "white|sweater|leopard": {
+   "file": "white/leopard_sweater.jpg",
+   "source": "images_final/white/leopard_sweater/1.jpg",
+   "url_key": "aedb83068ef9621ee2bb"
+  },
+  "white|sweater|polka_dot": {
+   "file": "white/polka_dot_sweater.jpg",
+   "source": "images_final/white/polka_dot_sweater/1.jpg",
+   "url_key": "d84ea56de4b12b6e134d"
+  },
+  "white|sweater|solid": {
+   "file": "white/solid_sweater.jpg",
+   "source": "images_final/white/solid_sweater/1.jpg",
+   "url_key": "7118540c079bec36b247"
+  },
+  "white|sweater|striped": {
+   "file": "white/striped_sweater.jpg",
+   "source": "images_final/white/striped_sweater/1.jpg",
+   "url_key": "20563b0c409863061248"
+  },
+  "white|sweatshirt|floral": {
+   "file": "white/floral_sweatshirt.jpg",
+   "source": "images_final/white/floral_sweatshirt/1.jpg",
+   "url_key": "706bef7ebc824a429a3c"
+  },
+  "white|sweatshirt|solid": {
+   "file": "white/solid_sweatshirt.jpg",
+   "source": "images_final/white/solid_sweatshirt/1.jpg",
+   "url_key": "968855ba3f10338619c1"
+  },
+  "white|sweatshirt|striped": {
+   "file": "white/striped_sweatshirt.jpg",
+   "source": "images_final/white/striped_sweatshirt/2.jpg",
+   "url_key": "fd3e4147d84bff8e1ece"
+  },
+  "white|t_shirt|checkered": {
+   "file": "white/checkered_t_shirt.jpg",
+   "source": "images_final/white/checkered_t_shirt/1.jpg",
+   "url_key": "a88bbe21b24b6b4269f5"
+  },
+  "white|t_shirt|floral": {
+   "file": "white/floral_t_shirt.jpg",
+   "source": "images_final/white/floral_t_shirt/1.jpg",
+   "url_key": "21e654d98f9fd5c6f509"
+  },
+  "white|t_shirt|leopard": {
+   "file": "white/leopard_t_shirt.jpg",
+   "source": "images_final/white/leopard_t_shirt/1.jpg",
+   "url_key": "8d4ed4e55668ea99b1b1"
+  },
+  "white|t_shirt|polka_dot": {
+   "file": "white/polka_dot_t_shirt.jpg",
+   "source": "images_final/white/polka_dot_t_shirt/1.jpg",
+   "url_key": "ae604db7497f87da54cf"
+  },
+  "white|t_shirt|solid": {
+   "file": "white/solid_t_shirt.jpg",
+   "source": "images_final/white/solid_t_shirt/1.jpg",
+   "url_key": "da96f9aafcdeea573522"
+  },
+  "white|t_shirt|striped": {
+   "file": "white/striped_t_shirt.jpg",
+   "source": "images_final/white/striped_t_shirt/1.jpg",
+   "url_key": "ef8c1acf6af16baaa127"
+  },
+  "white|tank_top|checkered": {
+   "file": "white/checkered_tank_top.jpg",
+   "source": "images_final/white/checkered_tank_top/1.jpg",
+   "url_key": "d65f421253e9a016aa15"
+  },
+  "white|tank_top|polka_dot": {
+   "file": "white/polka_dot_tank_top.jpg",
+   "source": "images_final/white/polka_dot_tank_top/1.jpg",
+   "url_key": "d0283131a5d5b79c2500"
+  },
+  "white|tank_top|solid": {
+   "file": "white/solid_tank_top.jpg",
+   "source": "images_final/white/solid_tank_top/1.jpg",
+   "url_key": "f5f3553f23548b8f9141"
+  },
+  "white|windbreaker|floral": {
+   "file": "white/floral_windbreaker.jpg",
+   "source": "images_final/white/floral_windbreaker/1.jpg",
+   "url_key": "92874033fb53efe18754"
+  },
+  "white|windbreaker|polka_dot": {
+   "file": "white/polka_dot_windbreaker.jpg",
+   "source": "images_final/white/polka_dot_windbreaker/1.jpg",
+   "url_key": "c39c338c8eb0688d099d"
+  },
+  "white|windbreaker|solid": {
+   "file": "white/solid_windbreaker.jpg",
+   "source": "images_final/white/solid_windbreaker/1.jpg",
+   "url_key": "4e03b88bf8ed7cb4a514"
+  },
+  "yellow|blazer|checkered": {
+   "file": "yellow/checkered_blazer.jpg",
+   "source": "images_final/yellow/checkered_blazer/1.jpg",
+   "url_key": "280a11fa2d6671ea4886"
+  },
+  "yellow|blazer|floral": {
+   "file": "yellow/floral_blazer.jpg",
+   "source": "images_final/yellow/floral_blazer/1.jpg",
+   "url_key": "6ad64006bec9d3f24cb7"
+  },
+  "yellow|blazer|leopard": {
+   "file": "yellow/leopard_blazer.jpg",
+   "source": "images_final/yellow/leopard_blazer/1.jpg",
+   "url_key": "98247d4b71ea722b2615"
+  },
+  "yellow|blazer|solid": {
+   "file": "yellow/solid_blazer.jpg",
+   "source": "images_final/yellow/solid_blazer/1.jpg",
+   "url_key": "f7b7fd9dd9852d0aae62"
+  },
+  "yellow|cardigan|checkered": {
+   "file": "yellow/checkered_cardigan.jpg",
+   "source": "images_final/yellow/checkered_cardigan/1.jpg",
+   "url_key": "79ca4b7b084b8a904f44"
+  },
+  "yellow|cardigan|floral": {
+   "file": "yellow/floral_cardigan.jpg",
+   "source": "images_final/yellow/floral_cardigan/1.jpg",
+   "url_key": "3b6b08765291a1679a6f"
+  },
+  "yellow|cardigan|striped": {
+   "file": "yellow/striped_cardigan.jpg",
+   "source": "images_final/yellow/striped_cardigan/1.jpg",
+   "url_key": "1c454ee1f40584e04444"
+  },
+  "yellow|dress|checkered": {
+   "file": "yellow/checkered_dress.jpg",
+   "source": "images_final/yellow/checkered_dress/1.jpg",
+   "url_key": "a98ba60068569548372d"
+  },
+  "yellow|dress|floral": {
+   "file": "yellow/floral_dress.jpg",
+   "source": "images_final/yellow/floral_dress/1.jpg",
+   "url_key": "77e7a7e6afa56b451224"
+  },
+  "yellow|dress|leopard": {
+   "file": "yellow/leopard_dress.jpg",
+   "source": "images_final/yellow/leopard_dress/1.jpg",
+   "url_key": "7bfe62b2af59b0de5672"
+  },
+  "yellow|dress|polka_dot": {
+   "file": "yellow/polka_dot_dress.jpg",
+   "source": "images_final/yellow/polka_dot_dress/2.jpg",
+   "url_key": "695c3c9c9101de6eecdb"
+  },
+  "yellow|dress|solid": {
+   "file": "yellow/solid_dress.jpg",
+   "source": "images_final/yellow/solid_dress/1.jpg",
+   "url_key": "0e34bf3e8e6d7071ebca"
+  },
+  "yellow|dress|striped": {
+   "file": "yellow/striped_dress.jpg",
+   "source": "images_final/yellow/striped_dress/1.jpg",
+   "url_key": "2eb7e7a4d01899095675"
+  },
+  "yellow|fleece_jacket|solid": {
+   "file": "yellow/solid_fleece_jacket.jpg",
+   "source": "images_final/yellow/solid_fleece_jacket/1.jpg",
+   "url_key": "7473778ae7142ea426e6"
+  },
+  "yellow|formal_shirt|checkered": {
+   "file": "yellow/checkered_formal_shirt.jpg",
+   "source": "images_final/yellow/checkered_formal_shirt/1.jpg",
+   "url_key": "ef2bd15f19f68bf73404"
+  },
+  "yellow|formal_shirt|floral": {
+   "file": "yellow/floral_formal_shirt.jpg",
+   "source": "images_final/yellow/floral_formal_shirt/1.jpg",
+   "url_key": "4f686b1ab352b7a449c5"
+  },
+  "yellow|formal_shirt|polka_dot": {
+   "file": "yellow/polka_dot_formal_shirt.jpg",
+   "source": "images_final/yellow/polka_dot_formal_shirt/1.jpg",
+   "url_key": "6657d6ce6f6708ccf75e"
+  },
+  "yellow|formal_shirt|solid": {
+   "file": "yellow/solid_formal_shirt.jpg",
+   "source": "images_final/yellow/solid_formal_shirt/1.jpg",
+   "url_key": "f6970f1b2b7f90cb6e29"
+  },
+  "yellow|formal_shirt|striped": {
+   "file": "yellow/striped_formal_shirt.jpg",
+   "source": "images_final/yellow/striped_formal_shirt/1.jpg",
+   "url_key": "b31e8bbe2f7e0d225d81"
+  },
+  "yellow|hoodie|checkered": {
+   "file": "yellow/checkered_hoodie.jpg",
+   "source": "images_final/yellow/checkered_hoodie/1.jpg",
+   "url_key": "6d56ca31eef7c9a51572"
+  },
+  "yellow|hoodie|floral": {
+   "file": "yellow/floral_hoodie.jpg",
+   "source": "images_final/yellow/floral_hoodie/1.jpg",
+   "url_key": "904f4b0d5368b2e9e28b"
+  },
+  "yellow|hoodie|solid": {
+   "file": "yellow/solid_hoodie.jpg",
+   "source": "images_final/yellow/solid_hoodie/1.jpg",
+   "url_key": "e2245aec97aebd93eba3"
+  },
+  "yellow|hoodie|striped": {
+   "file": "yellow/striped_hoodie.jpg",
+   "source": "images_final/yellow/striped_hoodie/1.jpg",
+   "url_key": "e539baa5365d8492db28"
+  },
+  "yellow|jeans|solid": {
+   "file": "yellow/solid_jeans.jpg",
+   "source": "images_final/yellow/solid_jeans/1.jpg",
+   "url_key": "474b14855e6397aa5e4b"
+  },
+  "yellow|leather_jacket|solid": {
+   "file": "yellow/solid_leather_jacket.jpg",
+   "source": "images_final/yellow/solid_leather_jacket/1.jpg",
+   "url_key": "a4d0c83ba1ed22cbf81b"
+  },
+  "yellow|leggings|checkered": {
+   "file": "yellow/checkered_leggings.jpg",
+   "source": "images_final/yellow/checkered_leggings/1.jpg",
+   "url_key": "124ad0b840c77d5c940c"
+  },
+  "yellow|leggings|floral": {
+   "file": "yellow/floral_leggings.jpg",
+   "source": "images_final/yellow/floral_leggings/1.jpg",
+   "url_key": "53b205f78f65e0531090"
+  },
+  "yellow|leggings|leopard": {
+   "file": "yellow/leopard_leggings.jpg",
+   "source": "images_final/yellow/leopard_leggings/1.jpg",
+   "url_key": "933ba3a29b1316beccf5"
+  },
+  "yellow|leggings|solid": {
+   "file": "yellow/solid_leggings.jpg",
+   "source": "images_final/yellow/solid_leggings/2.jpg",
+   "url_key": "7149574daac6f721c600"
+  },
+  "yellow|leggings|striped": {
+   "file": "yellow/striped_leggings.jpg",
+   "source": "images_final/yellow/striped_leggings/1.jpg",
+   "url_key": "75ebb5827efc7a53c88c"
+  },
+  "yellow|long_coat|floral": {
+   "file": "yellow/floral_long_coat.jpg",
+   "source": "images_final/yellow/floral_long_coat/2.jpg",
+   "url_key": "b6ab0d4e87d1dd406e3b"
+  },
+  "yellow|long_coat|leopard": {
+   "file": "yellow/leopard_long_coat.jpg",
+   "source": "images_final/yellow/leopard_long_coat/2.jpg",
+   "url_key": "6e4d1c3816841c4f1c19"
+  },
+  "yellow|long_coat|polka_dot": {
+   "file": "yellow/polka_dot_long_coat.jpg",
+   "source": "images_final/yellow/polka_dot_long_coat/2.jpg",
+   "url_key": "fdf6768107214b58b868"
+  },
+  "yellow|long_coat|solid": {
+   "file": "yellow/solid_long_coat.jpg",
+   "source": "images_final/yellow/solid_long_coat/2.jpg",
+   "url_key": "a42a15a26cd62d22de6e"
+  },
+  "yellow|long_skirt|checkered": {
+   "file": "yellow/checkered_long_skirt.jpg",
+   "source": "images_final/yellow/checkered_long_skirt/1.jpg",
+   "url_key": "43758211b1b8ab0026bc"
+  },
+  "yellow|long_skirt|floral": {
+   "file": "yellow/floral_long_skirt.jpg",
+   "source": "images_final/yellow/floral_long_skirt/1.jpg",
+   "url_key": "8da8b36e902ab73767a7"
+  },
+  "yellow|long_skirt|leopard": {
+   "file": "yellow/leopard_long_skirt.jpg",
+   "source": "images_final/yellow/leopard_long_skirt/1.jpg",
+   "url_key": "f6be1d11b54b9ecf3790"
+  },
+  "yellow|long_skirt|polka_dot": {
+   "file": "yellow/polka_dot_long_skirt.jpg",
+   "source": "images_final/yellow/polka_dot_long_skirt/1.jpg",
+   "url_key": "cd6599257f79aeaa0c0e"
+  },
+  "yellow|long_skirt|solid": {
+   "file": "yellow/solid_long_skirt.jpg",
+   "source": "images_final/yellow/solid_long_skirt/1.jpg",
+   "url_key": "932b7322cd7d38f3fdd8"
+  },
+  "yellow|mini_skirt|checkered": {
+   "file": "yellow/checkered_mini_skirt.jpg",
+   "source": "images_final/yellow/checkered_mini_skirt/1.jpg",
+   "url_key": "1374261d17f30cbdd1c0"
+  },
+  "yellow|mini_skirt|floral": {
+   "file": "yellow/floral_mini_skirt.jpg",
+   "source": "images_final/yellow/floral_mini_skirt/1.jpg",
+   "url_key": "dca097a2186293b87c54"
+  },
+  "yellow|mini_skirt|polka_dot": {
+   "file": "yellow/polka_dot_mini_skirt.jpg",
+   "source": "images_final/yellow/polka_dot_mini_skirt/1.jpg",
+   "url_key": "b046ca5d312732942d83"
+  },
+  "yellow|mini_skirt|solid": {
+   "file": "yellow/solid_mini_skirt.jpg",
+   "source": "images_final/yellow/solid_mini_skirt/1.jpg",
+   "url_key": "a344304e30da9cffdaef"
+  },
+  "yellow|pea_coat|solid": {
+   "file": "yellow/solid_pea_coat.jpg",
+   "source": "images_final/yellow/solid_pea_coat/2.jpg",
+   "url_key": "0f7092d903e5c5863937"
+  },
+  "yellow|polo_shirt|checkered": {
+   "file": "yellow/checkered_polo_shirt.jpg",
+   "source": "images_final/yellow/checkered_polo_shirt/1.jpg",
+   "url_key": "234c3245a8fc7d0f056a"
+  },
+  "yellow|polo_shirt|leopard": {
+   "file": "yellow/leopard_polo_shirt.jpg",
+   "source": "images_final/yellow/leopard_polo_shirt/1.jpg",
+   "url_key": "469e1480f8a5e833b98f"
+  },
+  "yellow|polo_shirt|polka_dot": {
+   "file": "yellow/polka_dot_polo_shirt.jpg",
+   "source": "images_final/yellow/polka_dot_polo_shirt/1.jpg",
+   "url_key": "cbcfe86e240fc4d43a77"
+  },
+  "yellow|polo_shirt|solid": {
+   "file": "yellow/solid_polo_shirt.jpg",
+   "source": "images_final/yellow/solid_polo_shirt/1.jpg",
+   "url_key": "a293553722220615ca11"
+  },
+  "yellow|polo_shirt|striped": {
+   "file": "yellow/striped_polo_shirt.jpg",
+   "source": "images_final/yellow/striped_polo_shirt/2.jpg",
+   "url_key": "253336f4981cec645c25"
+  },
+  "yellow|puffer_jacket|solid": {
+   "file": "yellow/solid_puffer_jacket.jpg",
+   "source": "images_final/yellow/solid_puffer_jacket/1.jpg",
+   "url_key": "a7bfa415aee99f503ccb"
+  },
+  "yellow|shorts|checkered": {
+   "file": "yellow/checkered_shorts.jpg",
+   "source": "images_final/yellow/checkered_shorts/1.jpg",
+   "url_key": "6b4a1b154350821f7d35"
+  },
+  "yellow|shorts|floral": {
+   "file": "yellow/floral_shorts.jpg",
+   "source": "images_final/yellow/floral_shorts/2.jpg",
+   "url_key": "820beeda11824c8ad6cb"
+  },
+  "yellow|shorts|leopard": {
+   "file": "yellow/leopard_shorts.jpg",
+   "source": "images_final/yellow/leopard_shorts/1.jpg",
+   "url_key": "8095ea0a7dd9a9c2614f"
+  },
+  "yellow|shorts|polka_dot": {
+   "file": "yellow/polka_dot_shorts.jpg",
+   "source": "images_final/yellow/polka_dot_shorts/1.jpg",
+   "url_key": "d7ea34e898d3a22c24a9"
+  },
+  "yellow|shorts|solid": {
+   "file": "yellow/solid_shorts.jpg",
+   "source": "images_final/yellow/solid_shorts/1.jpg",
+   "url_key": "26eaf1a5a6512efbdbe3"
+  },
+  "yellow|shorts|striped": {
+   "file": "yellow/striped_shorts.jpg",
+   "source": "images_final/yellow/striped_shorts/1.jpg",
+   "url_key": "0dbe82d3762e1ff3324b"
+  },
+  "yellow|slacks|checkered": {
+   "file": "yellow/checkered_slacks.jpg",
+   "source": "images_final/yellow/checkered_slacks/1.jpg",
+   "url_key": "99a6afc88502086d9488"
+  },
+  "yellow|slacks|floral": {
+   "file": "yellow/floral_slacks.jpg",
+   "source": "images_final/yellow/floral_slacks/1.jpg",
+   "url_key": "3316b525bb9446aee5b2"
+  },
+  "yellow|slacks|polka_dot": {
+   "file": "yellow/polka_dot_slacks.jpg",
+   "source": "images_final/yellow/polka_dot_slacks/1.jpg",
+   "url_key": "2feb559ce5b6760ff148"
+  },
+  "yellow|slacks|solid": {
+   "file": "yellow/solid_slacks.jpg",
+   "source": "images_final/yellow/solid_slacks/1.jpg",
+   "url_key": "870816292af1319776ae"
+  },
+  "yellow|slacks|striped": {
+   "file": "yellow/striped_slacks.jpg",
+   "source": "images_final/yellow/striped_slacks/1.jpg",
+   "url_key": "1d6a3c64715391de2750"
+  },
+  "yellow|suit_vest|solid": {
+   "file": "yellow/solid_suit_vest.jpg",
+   "source": "images_final/yellow/solid_suit_vest/1.jpg",
+   "url_key": "f05511582fbcf18006f0"
+  },
+  "yellow|sweater|leopard": {
+   "file": "yellow/leopard_sweater.jpg",
+   "source": "images_final/yellow/leopard_sweater/1.jpg",
+   "url_key": "d99310129404d45309d9"
+  },
+  "yellow|sweater|solid": {
+   "file": "yellow/solid_sweater.jpg",
+   "source": "images_final/yellow/solid_sweater/1.jpg",
+   "url_key": "3a9cebcddc256fa06820"
+  },
+  "yellow|sweatshirt|floral": {
+   "file": "yellow/floral_sweatshirt.jpg",
+   "source": "images_final/yellow/floral_sweatshirt/1.jpg",
+   "url_key": "dc2674373f74f4fe2631"
+  },
+  "yellow|sweatshirt|solid": {
+   "file": "yellow/solid_sweatshirt.jpg",
+   "source": "images_final/yellow/solid_sweatshirt/2.jpg",
+   "url_key": "fef5d24e5f00b8267f3d"
+  },
+  "yellow|sweatshirt|striped": {
+   "file": "yellow/striped_sweatshirt.jpg",
+   "source": "images_final/yellow/striped_sweatshirt/1.jpg",
+   "url_key": "6c65fdbfa99938a23d9a"
+  },
+  "yellow|t_shirt|floral": {
+   "file": "yellow/floral_t_shirt.jpg",
+   "source": "images_final/yellow/floral_t_shirt/1.jpg",
+   "url_key": "32f97f7d7c3f8279706b"
+  },
+  "yellow|t_shirt|polka_dot": {
+   "file": "yellow/polka_dot_t_shirt.jpg",
+   "source": "images_final/yellow/polka_dot_t_shirt/1.jpg",
+   "url_key": "a024290ce3eead6165d0"
+  },
+  "yellow|t_shirt|solid": {
+   "file": "yellow/solid_t_shirt.jpg",
+   "source": "images_final/yellow/solid_t_shirt/2.jpg",
+   "url_key": "bf5b00caa23a9511f40d"
+  },
+  "yellow|t_shirt|striped": {
+   "file": "yellow/striped_t_shirt.jpg",
+   "source": "images_final/yellow/striped_t_shirt/1.jpg",
+   "url_key": "8523ffd9b2444128f375"
+  },
+  "yellow|tank_top|checkered": {
+   "file": "yellow/checkered_tank_top.jpg",
+   "source": "images_final/yellow/checkered_tank_top/1.jpg",
+   "url_key": "0ad600929c5af3be8e33"
+  },
+  "yellow|tank_top|floral": {
+   "file": "yellow/floral_tank_top.jpg",
+   "source": "images_final/yellow/floral_tank_top/2.jpg",
+   "url_key": "fa0be621bb05a42a3357"
+  },
+  "yellow|tank_top|leopard": {
+   "file": "yellow/leopard_tank_top.jpg",
+   "source": "images_final/yellow/leopard_tank_top/1.jpg",
+   "url_key": "fb587ce9a3b49b5af69c"
+  },
+  "yellow|tank_top|polka_dot": {
+   "file": "yellow/polka_dot_tank_top.jpg",
+   "source": "images_final/yellow/polka_dot_tank_top/3.jpg",
+   "url_key": "870a5def1ac87879883a"
+  },
+  "yellow|tank_top|solid": {
+   "file": "yellow/solid_tank_top.jpg",
+   "source": "images_final/yellow/solid_tank_top/1.jpg",
+   "url_key": "9084fce2541a21b29edb"
+  },
+  "yellow|tank_top|striped": {
+   "file": "yellow/striped_tank_top.jpg",
+   "source": "images_final/yellow/striped_tank_top/1.jpg",
+   "url_key": "afda47ee7c55cab27c89"
+  },
+  "yellow|windbreaker|solid": {
+   "file": "yellow/solid_windbreaker.jpg",
+   "source": "images_final/yellow/solid_windbreaker/1.jpg",
+   "url_key": "e8e67c32d6db3b3f9720"
+  }
+ }
+}
