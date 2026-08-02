@@ -59,6 +59,12 @@
 
 ## 2. Major concern #1 — "Personalization"의 정의가 약하다 (가장 큰 novelty 리스크)
 
+> **[2026-08-02 갱신]** 저자 확인 결과 최종 주제는 `multimodal dialog × ABCD`이며,
+> 명시적 프로필은 실험 조건 축 중 하나(oracle ceiling)다. **이 절은
+> `docs/WACV_REVIEW_2026_DIALOG.md`로 대체된다.** 단, P1/P2(oracle profile) 조건이
+> 논문에 남는 한 아래 지적은 "그 조건에 한해" 여전히 유효하다.
+> 나머지 절(§3–§15)은 방향 전환 후에도 그대로 유효하다.
+
 ### 지적
 
 `data_wacv_scenario_v5/profiles/profiles.jsonl`의 `narrative_profile`은 이렇다:
