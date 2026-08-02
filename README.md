@@ -111,11 +111,11 @@ Stage 7: Evaluation            (multimodal + text-only MCQ, 3 scores, per-axis/a
 
 Stages 1–3 are deterministic (no LLM calls) and fully reproducible from `configs/` + `construction/` with a fixed seed. Since v5, Stage 3 additionally consumes `annotation/attribute_library.json` (the 1,237 available cells from the 1,661-cell human annotation pass). It is a **generation input**, so it is hash-pinned alongside the outputs: changing the library changes the released plans.
 
-**Image collection (Stage 4) is the engineered core.** Retrieval is frozen on **Marqo-FashionSigLIP** (`fsiglip/serve_fsiglip_knn.py`, 651k Amazon-fashion corpus; `fsiglip2/` is the second-generation embedding twin). The current collector is `fsiglip/collector_sam3.py`:
+**Image collection (Stage 4) is the engineered core.** Retrieval is frozen on **Marqo-FashionSigLIP** (`fsiglip/serve_fsiglip_knn.py`, 651k Amazon-fashion corpus). The current collector is `fsiglip/collector_sam3.py`:
 - **Garment axis — VLM judge.** A closed-vocabulary VLM classification of the worn garment (SAM3-mask *scoring* was rejected: as a localizer it cannot discriminate dress ↔ tank top). SAM3 text-prompted masks localize the garment for patch extraction.
 - **Pattern axis — patch-based.** Per-tile pattern classification over the garment mask against a flat closed vocabulary (`PATTERN_VOCAB`). *Planned, not implemented:* a decision-aware pattern-FAMILY hit rule to rescue near-miss family matches — no family grouping exists in the current collector.
 - **Color axis — per-tile color argmax** that catches Navy↔Blue / Beige↔Brown confusions a single pooled embedding passes.
-- Gates are fail-open. *Planned, not implemented in the current collector:* gender consistency and intra-set URL dedup within each 4-option set. Both exist only in the retired `vit/collect_images_vit_coverage_v7.py` path and were not carried over to the FashionSigLIP collector.
+- Gates are fail-open. *Planned, not implemented in the current collector:* gender consistency and intra-set URL dedup within each 4-option set. Both exist only in the retired `_archive/vit/collect_images_vit_coverage_v7.py` path and were not carried over to the FashionSigLIP collector.
 - **Garment labels are the canonical 23 from `configs/config.py`, with no alias, synonym or hypernym layer anywhere.** `wool coat` had been used as a stand-in for `long_coat`; it is a hypernym (a pea coat is also a wool coat), so it competed with both coat classes in the VLM's closed vocabulary and depressed `pea_coat` availability to 34%, the lowest of all 23. All collectors now derive the vocabulary from the config, the `GARMENT_EQUIV_GROUPS` alias table is deleted, and the coats are separated by length and closure rather than fabric. The 139 affected cells are queued for re-collection — their current verdicts are provisional. Full record in `docs/PROCESS.md` §8.
 
 ## Quick Start
@@ -233,10 +233,14 @@ pod_bench/
 ├── fsiglip/                # Stage 4 (frozen FashionSigLIP backend)
 │   ├── extract_fsiglip.py / build_faiss_fsiglip.py / serve_fsiglip_knn.py
 │   └── collector_sam3.py  # current collector
-├── fsiglip2/               # second-generation embedding backend
 ├── scripts/                # eval + validation (multimodal_eval, text_only_eval, validate_options, …)
 ├── docs/                   # SETUP.md, SETUP_FSIGLIP.md, GARMENT_TAXONOMY_REDESIGN.md, …
 ├── src/                    # legacy collectors (not used by the current pipeline)
+├── _archive/               # retired pipelines, kept for provenance — nothing here runs
+│   ├── before_configs/     # pre-revision configs/profiles/scenarios snapshot
+│   ├── vit/                # retired ViT-L/14 collection path
+│   ├── QwenEmb/            # Qwen3-VL-Embedding backend trial (not adopted)
+│   └── fsiglip2/           # zooclaw-FashionSigLIP2 backend trial (not adopted)
 └── data/                   # generated at runtime (POD_VARIANT redirects to data_<tag>/)
     ├── profiles/ queries/ options/ images/ labels/ final/
     └── retrieval/          # collector outputs (e.g. sam3vlmfix_axis_patches/)

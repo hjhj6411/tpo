@@ -508,7 +508,7 @@ Verified after the change: all three collectors expose exactly 23 categories,
 
 `fsiglip/collect_img_sam3.py` is **not** a dead copy and must not be archived:
 `availability_audit/screen_sam3.py` imports its scorers, which makes it the
-implementation behind the shipped library. `vit/` keeps the old contaminated
+implementation behind the shipped library. `_archive/vit/` keeps the old contaminated
 vocabulary and is marked RETIRED in its header; `retrieval/` carries no garment
 vocabulary at all.
 

@@ -172,7 +172,7 @@ whose options differ, so query_id folders would overwrite half the images. Downs
 falls back to a query_id folder when that query has exactly one plan.
 
 The `model_gender`/`model_age`/`set_gender`/`gender_consistent` fields and the
-`--gender-lock` demographic gate belong to the retired `vit/` collector and are NOT
+`--gender-lock` demographic gate belong to the retired `_archive/vit/` collector and are NOT
 produced by the current one. Resumable: re-run to continue; `--force` restarts.
 
 Ablations (compare via the eval in §7):

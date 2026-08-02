@@ -1,5 +1,11 @@
 # SETUP_QWENEMB.md — Qwen3-VL-Embedding image pipeline (extract → index → serve → collect → evaluate)
 
+> **Retired pipeline.** The QwenEmb backend was not adopted; Stage 4 is frozen on
+> Marqo-FashionSigLIP (`fsiglip/`). Every `QwenEmb/...` path below now lives under
+> `_archive/` — read `_archive/QwenEmb/extract_qwenemb.py` for
+> `QwenEmb/extract_qwenemb.py`, and so on. The document is kept as the record of
+> how the comparison was run, not as instructions to follow as-is.
+
 This is the **QwenEmb** retrieval-backend experiment parallel to `SETUP_FSIGLIP.md`.
 It reuses the **already-downloaded** img2dataset image bytes in `data/clip_corpus/`
 (read-only), re-embeds them with a Qwen VL embedding model, serves a self-contained
