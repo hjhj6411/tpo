@@ -5,7 +5,16 @@ vlm_eval/results/
 .env
 data/
 _no_use/
-availability_audit/
+# availability_audit: track the code, ignore the 11G of outputs
+availability_audit/images*/
+availability_audit/cache_sam3/
+availability_audit/logs/
+availability_audit/screen_sam3*.json
+availability_audit/screen_sam3*.jsonl
+availability_audit/screen_sam3*.png
+availability_audit/*.migrated
+availability_audit/screen_sam3_v4_part*/
+availability_audit/screen_sam3_clean_top100/
 *.egg-info/
 dist/
 build/

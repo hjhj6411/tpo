@@ -2,9 +2,9 @@
   "variant": "wacv_scenario_v4",
   "schema": "color|garment|pattern -> images[]",
   "screen_sources": [
-    "/gpfs/home1/hjhj6411/pod_bench/availability_audit/images"
+    "/gpfs/home1/hjhj6411/pod_bench/availability_audit/images_coat_redo"
   ],
-  "screen_partial": false,
+  "screen_partial": true,
   "cells": {
     "black|t_shirt|solid": {
       "status": "available",
@@ -730,9 +730,9 @@
       "status": "available",
       "images": [
         {
-          "path": "images_final/black/solid_pea_coat/1.jpg",
+          "path": "images_final/black/solid_pea_coat/2.jpg",
           "true_rank": 7,
-          "url_key": "69826cdc2633cfc4606b"
+          "url_key": "d208556c6a166addc62e"
         }
       ]
     },
@@ -742,14 +742,9 @@
       "images": []
     },
     "black|pea_coat|checkered": {
-      "status": "available",
-      "images": [
-        {
-          "path": "images_final/black/checkered_pea_coat/2.jpg",
-          "true_rank": 3,
-          "url_key": "3bb9f128558f855c565a"
-        }
-      ]
+      "status": "excluded",
+      "reason": "pattern_absent",
+      "images": []
     },
     "black|pea_coat|floral": {
       "status": "excluded",
@@ -758,21 +753,21 @@
     },
     "black|pea_coat|polka_dot": {
       "status": "excluded",
-      "reason": "pattern_absent",
+      "reason": "no_such_garment",
       "images": []
     },
     "black|pea_coat|leopard": {
       "status": "excluded",
-      "reason": "pattern_absent",
+      "reason": "no_such_garment",
       "images": []
     },
     "black|long_coat|solid": {
       "status": "available",
       "images": [
         {
-          "path": "images_final/black/solid_long_coat/1.jpg",
-          "true_rank": 6,
-          "url_key": "b733f58e8728ac16807c"
+          "path": "images_final/black/solid_long_coat/3.jpg",
+          "true_rank": 1,
+          "url_key": "9e5e6eb2dc96d70947fc"
         }
       ]
     },
@@ -780,9 +775,9 @@
       "status": "available",
       "images": [
         {
-          "path": "images_final/black/striped_long_coat/1.jpg",
+          "path": "images_final/black/striped_long_coat/2.jpg",
           "true_rank": 1,
-          "url_key": "18df06d01b7d63828db2"
+          "url_key": "7b9743502a81068f4eb5"
         }
       ]
     },
@@ -790,7 +785,7 @@
       "status": "available",
       "images": [
         {
-          "path": "images_final/black/checkered_long_coat/1.jpg",
+          "path": "images_final/black/checkered_long_coat/3.jpg",
           "true_rank": 1,
           "url_key": "d58aad6e76f94d39b51a"
         }
@@ -800,8 +795,8 @@
       "status": "available",
       "images": [
         {
-          "path": "images_final/black/floral_long_coat/1.jpg",
-          "true_rank": 9,
+          "path": "images_final/black/floral_long_coat/2.jpg",
+          "true_rank": 7,
           "url_key": "e74db872dfb546530f0b"
         }
       ]
@@ -810,21 +805,16 @@
       "status": "available",
       "images": [
         {
-          "path": "images_final/black/polka_dot_long_coat/1.jpg",
-          "true_rank": 3,
+          "path": "images_final/black/polka_dot_long_coat/3.jpg",
+          "true_rank": 2,
           "url_key": "fe2f41cc7babd5df475a"
         }
       ]
     },
     "black|long_coat|leopard": {
-      "status": "available",
-      "images": [
-        {
-          "path": "images_final/black/leopard_long_coat/1.jpg",
-          "true_rank": 7,
-          "url_key": "539fe90726ab8cc28d40"
-        }
-      ]
+      "status": "excluded",
+      "reason": "pattern_absent",
+      "images": []
     },
     "black|jeans|solid": {
       "status": "available",
@@ -1925,9 +1915,9 @@
       "status": "available",
       "images": [
         {
-          "path": "images_final/white/solid_pea_coat/1.jpg",
-          "true_rank": 4,
-          "url_key": "694a136c92d3bdb73dfb"
+          "path": "images_final/white/solid_pea_coat/2.jpg",
+          "true_rank": 1,
+          "url_key": "57c5a3f349c0954bf2a4"
         }
       ]
     },
@@ -1937,18 +1927,13 @@
       "images": []
     },
     "white|pea_coat|checkered": {
-      "status": "available",
-      "images": [
-        {
-          "path": "images_final/white/checkered_pea_coat/1.jpg",
-          "true_rank": 2,
-          "url_key": "342cd8c7dc24ecbf6ebb"
-        }
-      ]
+      "status": "excluded",
+      "reason": "no_such_garment",
+      "images": []
     },
     "white|pea_coat|floral": {
       "status": "excluded",
-      "reason": "pattern_absent",
+      "reason": "no_such_garment",
       "images": []
     },
     "white|pea_coat|polka_dot": {
@@ -1960,9 +1945,9 @@
       "status": "available",
       "images": [
         {
-          "path": "images_final/white/solid_long_coat/1.jpg",
-          "true_rank": 8,
-          "url_key": "adf104b3cfbcd78fa65c"
+          "path": "images_final/white/solid_long_coat/3.jpg",
+          "true_rank": 2,
+          "url_key": "ccc45573d6ae42a1feb0"
         }
       ]
     },
@@ -1970,9 +1955,9 @@
       "status": "available",
       "images": [
         {
-          "path": "images_final/white/striped_long_coat/1.jpg",
+          "path": "images_final/white/striped_long_coat/2.jpg",
           "true_rank": 1,
-          "url_key": "51ba058d2f3a80c5961b"
+          "url_key": "040f4acb18f743c86206"
         }
       ]
     },
@@ -1980,7 +1965,7 @@
       "status": "available",
       "images": [
         {
-          "path": "images_final/white/checkered_long_coat/1.jpg",
+          "path": "images_final/white/checkered_long_coat/2.jpg",
           "true_rank": 2,
           "url_key": "379a591009394e5f1e2f"
         }
@@ -1990,21 +1975,26 @@
       "status": "available",
       "images": [
         {
-          "path": "images_final/white/floral_long_coat/1.jpg",
-          "true_rank": 3,
-          "url_key": "ab99d161471634090973"
+          "path": "images_final/white/floral_long_coat/2.jpg",
+          "true_rank": 1,
+          "url_key": "934ff4b5c121eb85b6c8"
         }
       ]
     },
     "white|long_coat|polka_dot": {
       "status": "excluded",
-      "reason": "no_such_garment",
+      "reason": "pattern_absent",
       "images": []
     },
     "white|long_coat|leopard": {
-      "status": "excluded",
-      "reason": "no_such_garment",
-      "images": []
+      "status": "available",
+      "images": [
+        {
+          "path": "images_final/white/leopard_long_coat/2.jpg",
+          "true_rank": 2,
+          "url_key": "4af328c5d8f7526ff71b"
+        }
+      ]
     },
     "white|jeans|solid": {
       "status": "available",
@@ -3070,7 +3060,7 @@
       "status": "available",
       "images": [
         {
-          "path": "images_final/gray/solid_pea_coat/1.jpg",
+          "path": "images_final/gray/solid_pea_coat/4.jpg",
           "true_rank": 3,
           "url_key": "3f08a90fc204adbef945"
         }
@@ -3082,14 +3072,9 @@
       "images": []
     },
     "gray|pea_coat|checkered": {
-      "status": "available",
-      "images": [
-        {
-          "path": "images_final/gray/checkered_pea_coat/2.jpg",
-          "true_rank": 2,
-          "url_key": "8841cb8de0dcd973332d"
-        }
-      ]
+      "status": "excluded",
+      "reason": "color_mismatch",
+      "images": []
     },
     "gray|pea_coat|floral": {
       "status": "excluded",
@@ -3102,20 +3087,15 @@
       "images": []
     },
     "gray|pea_coat|leopard": {
-      "status": "available",
-      "images": [
-        {
-          "path": "images_final/gray/leopard_pea_coat/1.jpg",
-          "true_rank": 1,
-          "url_key": "e81a54746d9396672c10"
-        }
-      ]
+      "status": "excluded",
+      "reason": "no_such_garment",
+      "images": []
     },
     "gray|long_coat|solid": {
       "status": "available",
       "images": [
         {
-          "path": "images_final/gray/solid_long_coat/2.jpg",
+          "path": "images_final/gray/solid_long_coat/3.jpg",
           "true_rank": 3,
           "url_key": "c70c695af87bd5c367b6"
         }
@@ -3125,8 +3105,8 @@
       "status": "available",
       "images": [
         {
-          "path": "images_final/gray/striped_long_coat/1.jpg",
-          "true_rank": 3,
+          "path": "images_final/gray/striped_long_coat/2.jpg",
+          "true_rank": 2,
           "url_key": "15199e424b2602185fc6"
         }
       ]
@@ -3135,9 +3115,9 @@
       "status": "available",
       "images": [
         {
-          "path": "images_final/gray/checkered_long_coat/1.jpg",
-          "true_rank": 1,
-          "url_key": "75a37692a25230e5d269"
+          "path": "images_final/gray/checkered_long_coat/2.jpg",
+          "true_rank": 6,
+          "url_key": "b1efb7c686639a3b8814"
         }
       ]
     },
@@ -3145,29 +3125,24 @@
       "status": "available",
       "images": [
         {
-          "path": "images_final/gray/floral_long_coat/1.jpg",
+          "path": "images_final/gray/floral_long_coat/2.jpg",
           "true_rank": 2,
-          "url_key": "87c481c0c3274163f932"
+          "url_key": "105c8df57be1d2e37100"
         }
       ]
     },
     "gray|long_coat|polka_dot": {
-      "status": "available",
-      "images": [
-        {
-          "path": "images_final/gray/polka_dot_long_coat/1.jpg",
-          "true_rank": 4,
-          "url_key": "562e1cc4af5feb14f339"
-        }
-      ]
+      "status": "excluded",
+      "reason": "no_such_garment",
+      "images": []
     },
     "gray|long_coat|leopard": {
       "status": "available",
       "images": [
         {
-          "path": "images_final/gray/leopard_long_coat/1.jpg",
-          "true_rank": 10,
-          "url_key": "38a70d7044a326a236fe"
+          "path": "images_final/gray/leopard_long_coat/2.jpg",
+          "true_rank": 2,
+          "url_key": "4e3dec22f08022e6eede"
         }
       ]
     },
@@ -4235,32 +4210,27 @@
       "status": "available",
       "images": [
         {
-          "path": "images_final/navy/solid_pea_coat/1.jpg",
-          "true_rank": 9,
-          "url_key": "af43392cabf48c18aa5f"
+          "path": "images_final/navy/solid_pea_coat/2.jpg",
+          "true_rank": 2,
+          "url_key": "4309d8e16ad092c2d2e3"
         }
       ]
     },
     "navy|pea_coat|checkered": {
-      "status": "available",
-      "images": [
-        {
-          "path": "images_final/navy/checkered_pea_coat/1.jpg",
-          "true_rank": 1,
-          "url_key": "6eb91191f2f7acbdf625"
-        }
-      ]
+      "status": "excluded",
+      "reason": "pattern_absent",
+      "images": []
     },
     "navy|pea_coat|floral": {
       "status": "excluded",
-      "reason": "pattern_absent",
+      "reason": "no_such_garment",
       "images": []
     },
     "navy|long_coat|solid": {
       "status": "available",
       "images": [
         {
-          "path": "images_final/navy/solid_long_coat/1.jpg",
+          "path": "images_final/navy/solid_long_coat/2.jpg",
           "true_rank": 1,
           "url_key": "275705e396fba95d1078"
         }
@@ -4270,7 +4240,7 @@
       "status": "available",
       "images": [
         {
-          "path": "images_final/navy/striped_long_coat/1.jpg",
+          "path": "images_final/navy/striped_long_coat/3.jpg",
           "true_rank": 1,
           "url_key": "0d62dd9d1a64fac03938"
         }
@@ -4280,9 +4250,9 @@
       "status": "available",
       "images": [
         {
-          "path": "images_final/navy/checkered_long_coat/1.jpg",
-          "true_rank": 8,
-          "url_key": "bb79264a971f175369d6"
+          "path": "images_final/navy/checkered_long_coat/2.jpg",
+          "true_rank": 10,
+          "url_key": "24886c0b302d0aa0e865"
         }
       ]
     },
@@ -4290,9 +4260,9 @@
       "status": "available",
       "images": [
         {
-          "path": "images_final/navy/floral_long_coat/1.jpg",
-          "true_rank": 5,
-          "url_key": "dac0bf384539720f32f8"
+          "path": "images_final/navy/floral_long_coat/2.jpg",
+          "true_rank": 7,
+          "url_key": "3f1f701658cad186fb42"
         }
       ]
     },
@@ -4300,9 +4270,9 @@
       "status": "available",
       "images": [
         {
-          "path": "images_final/navy/polka_dot_long_coat/1.jpg",
-          "true_rank": 4,
-          "url_key": "70b70edbede2e042bd1b"
+          "path": "images_final/navy/polka_dot_long_coat/2.jpg",
+          "true_rank": 3,
+          "url_key": "71cb14f2f11b8e631b0d"
         }
       ]
     },
@@ -4310,7 +4280,7 @@
       "status": "available",
       "images": [
         {
-          "path": "images_final/navy/leopard_long_coat/1.jpg",
+          "path": "images_final/navy/leopard_long_coat/2.jpg",
           "true_rank": 2,
           "url_key": "eb10922366b85253b78b"
         }
@@ -5387,18 +5357,13 @@
       ]
     },
     "blue|pea_coat|solid": {
-      "status": "available",
-      "images": [
-        {
-          "path": "images_final/blue/solid_pea_coat/1.jpg",
-          "true_rank": 3,
-          "url_key": "2674659601fcd108f8fd"
-        }
-      ]
+      "status": "excluded",
+      "reason": "no_such_garment",
+      "images": []
     },
     "blue|pea_coat|striped": {
       "status": "excluded",
-      "reason": "pattern_absent",
+      "reason": "no_such_garment",
       "images": []
     },
     "blue|pea_coat|checkered": {
@@ -5408,7 +5373,7 @@
     },
     "blue|pea_coat|floral": {
       "status": "excluded",
-      "reason": "pattern_absent",
+      "reason": "no_such_garment",
       "images": []
     },
     "blue|pea_coat|polka_dot": {
@@ -5420,7 +5385,7 @@
       "status": "available",
       "images": [
         {
-          "path": "images_final/blue/solid_long_coat/1.jpg",
+          "path": "images_final/blue/solid_long_coat/2.jpg",
           "true_rank": 4,
           "url_key": "ce27b49b8f5eb99ccf40"
         }
@@ -5430,9 +5395,9 @@
       "status": "available",
       "images": [
         {
-          "path": "images_final/blue/striped_long_coat/1.jpg",
-          "true_rank": 3,
-          "url_key": "7ac24bac2c16a304d738"
+          "path": "images_final/blue/striped_long_coat/3.jpg",
+          "true_rank": 1,
+          "url_key": "686f9f614faa7214b779"
         }
       ]
     },
@@ -5440,7 +5405,7 @@
       "status": "available",
       "images": [
         {
-          "path": "images_final/blue/checkered_long_coat/1.jpg",
+          "path": "images_final/blue/checkered_long_coat/2.jpg",
           "true_rank": 10,
           "url_key": "b8730daece9520419818"
         }
@@ -5450,9 +5415,9 @@
       "status": "available",
       "images": [
         {
-          "path": "images_final/blue/floral_long_coat/1.jpg",
-          "true_rank": 9,
-          "url_key": "2f738a9c2f8e47242234"
+          "path": "images_final/blue/floral_long_coat/2.jpg",
+          "true_rank": 4,
+          "url_key": "5859b09f9fe8be6b3c0b"
         }
       ]
     },
@@ -5460,15 +5425,15 @@
       "status": "available",
       "images": [
         {
-          "path": "images_final/blue/polka_dot_long_coat/1.jpg",
-          "true_rank": 1,
-          "url_key": "400ab6510901f02b8b51"
+          "path": "images_final/blue/polka_dot_long_coat/2.jpg",
+          "true_rank": 3,
+          "url_key": "daa41105252782169a5c"
         }
       ]
     },
     "blue|long_coat|leopard": {
       "status": "excluded",
-      "reason": "no_such_garment",
+      "reason": "pattern_absent",
       "images": []
     },
     "blue|jeans|solid": {
@@ -6492,14 +6457,9 @@
       "images": []
     },
     "red|pea_coat|checkered": {
-      "status": "available",
-      "images": [
-        {
-          "path": "images_final/red/checkered_pea_coat/1.jpg",
-          "true_rank": 1,
-          "url_key": "bd14612125e6c83c2614"
-        }
-      ]
+      "status": "excluded",
+      "reason": "no_such_garment",
+      "images": []
     },
     "red|pea_coat|floral": {
       "status": "excluded",
@@ -6508,14 +6468,14 @@
     },
     "red|pea_coat|leopard": {
       "status": "excluded",
-      "reason": "pattern_absent",
+      "reason": "no_such_garment",
       "images": []
     },
     "red|long_coat|checkered": {
       "status": "available",
       "images": [
         {
-          "path": "images_final/red/checkered_long_coat/1.jpg",
+          "path": "images_final/red/checkered_long_coat/2.jpg",
           "true_rank": 2,
           "url_key": "46603950de816126e4a7"
         }
@@ -6525,9 +6485,9 @@
       "status": "available",
       "images": [
         {
-          "path": "images_final/red/floral_long_coat/1.jpg",
-          "true_rank": 2,
-          "url_key": "1fb8c985ac94e42f739c"
+          "path": "images_final/red/floral_long_coat/2.jpg",
+          "true_rank": 1,
+          "url_key": "dec6d93d48e757a2d52f"
         }
       ]
     },
@@ -6535,7 +6495,7 @@
       "status": "available",
       "images": [
         {
-          "path": "images_final/red/polka_dot_long_coat/1.jpg",
+          "path": "images_final/red/polka_dot_long_coat/2.jpg",
           "true_rank": 2,
           "url_key": "0139a82d97ec128839e0"
         }
@@ -7615,9 +7575,9 @@
       "status": "available",
       "images": [
         {
-          "path": "images_final/pink/solid_pea_coat/3.jpg",
+          "path": "images_final/pink/solid_pea_coat/4.jpg",
           "true_rank": 2,
-          "url_key": "b5d458a85f8cba55081a"
+          "url_key": "a49747dd4d33e61accbc"
         }
       ]
     },
@@ -7628,18 +7588,13 @@
     },
     "pink|pea_coat|checkered": {
       "status": "excluded",
-      "reason": "pattern_absent",
+      "reason": "no_such_garment",
       "images": []
     },
     "pink|pea_coat|floral": {
-      "status": "available",
-      "images": [
-        {
-          "path": "images_final/pink/floral_pea_coat/1.jpg",
-          "true_rank": 1,
-          "url_key": "2de61c40cde0eff2d1f3"
-        }
-      ]
+      "status": "excluded",
+      "reason": "no_such_garment",
+      "images": []
     },
     "pink|pea_coat|leopard": {
       "status": "excluded",
@@ -7650,9 +7605,9 @@
       "status": "available",
       "images": [
         {
-          "path": "images_final/pink/solid_long_coat/1.jpg",
-          "true_rank": 1,
-          "url_key": "1362be5723ef732ebe88"
+          "path": "images_final/pink/solid_long_coat/2.jpg",
+          "true_rank": 9,
+          "url_key": "45a9baeb548490a0d011"
         }
       ]
     },
@@ -7660,9 +7615,9 @@
       "status": "available",
       "images": [
         {
-          "path": "images_final/pink/striped_long_coat/1.jpg",
-          "true_rank": 1,
-          "url_key": "65e4f31394f84c3f9af1"
+          "path": "images_final/pink/striped_long_coat/2.jpg",
+          "true_rank": 4,
+          "url_key": "a11760509504299ebf61"
         }
       ]
     },
@@ -7670,8 +7625,8 @@
       "status": "available",
       "images": [
         {
-          "path": "images_final/pink/checkered_long_coat/1.jpg",
-          "true_rank": 10,
+          "path": "images_final/pink/checkered_long_coat/2.jpg",
+          "true_rank": 8,
           "url_key": "f53d34b3acb31a32583e"
         }
       ]
@@ -7680,8 +7635,8 @@
       "status": "available",
       "images": [
         {
-          "path": "images_final/pink/floral_long_coat/1.jpg",
-          "true_rank": 2,
+          "path": "images_final/pink/floral_long_coat/2.jpg",
+          "true_rank": 1,
           "url_key": "6d6be7f32f3f4b10b308"
         }
       ]
@@ -7690,7 +7645,7 @@
       "status": "available",
       "images": [
         {
-          "path": "images_final/pink/polka_dot_long_coat/1.jpg",
+          "path": "images_final/pink/polka_dot_long_coat/2.jpg",
           "true_rank": 1,
           "url_key": "07a9acd483ab426d9058"
         }
@@ -7700,9 +7655,9 @@
       "status": "available",
       "images": [
         {
-          "path": "images_final/pink/leopard_long_coat/1.jpg",
-          "true_rank": 5,
-          "url_key": "500edd76b021bc84cc67"
+          "path": "images_final/pink/leopard_long_coat/2.jpg",
+          "true_rank": 2,
+          "url_key": "e5c28c45c20e126c5085"
         }
       ]
     },
@@ -8710,9 +8665,9 @@
       "status": "available",
       "images": [
         {
-          "path": "images_final/orange/solid_pea_coat/1.jpg",
+          "path": "images_final/orange/solid_pea_coat/2.jpg",
           "true_rank": 1,
-          "url_key": "e44c24640b5cb4a795f9"
+          "url_key": "126fd0c6c25a165495cf"
         }
       ]
     },
@@ -8745,8 +8700,8 @@
       "status": "available",
       "images": [
         {
-          "path": "images_final/orange/solid_long_coat/1.jpg",
-          "true_rank": 4,
+          "path": "images_final/orange/solid_long_coat/2.jpg",
+          "true_rank": 3,
           "url_key": "58fb8f6f6cee79deaad4"
         }
       ]
@@ -8755,9 +8710,9 @@
       "status": "available",
       "images": [
         {
-          "path": "images_final/orange/striped_long_coat/1.jpg",
+          "path": "images_final/orange/striped_long_coat/2.jpg",
           "true_rank": 1,
-          "url_key": "84f822e9d59fd03b2c59"
+          "url_key": "509a341aa915c3f6c413"
         }
       ]
     },
@@ -8765,8 +8720,8 @@
       "status": "available",
       "images": [
         {
-          "path": "images_final/orange/checkered_long_coat/1.jpg",
-          "true_rank": 4,
+          "path": "images_final/orange/checkered_long_coat/2.jpg",
+          "true_rank": 3,
           "url_key": "161fc193743f4bbd4fde"
         }
       ]
@@ -8775,9 +8730,9 @@
       "status": "available",
       "images": [
         {
-          "path": "images_final/orange/floral_long_coat/1.jpg",
-          "true_rank": 3,
-          "url_key": "2997b4828eaba23a9c76"
+          "path": "images_final/orange/floral_long_coat/2.jpg",
+          "true_rank": 5,
+          "url_key": "d7e952fd919f9a13f97e"
         }
       ]
     },
@@ -8790,9 +8745,9 @@
       "status": "available",
       "images": [
         {
-          "path": "images_final/orange/leopard_long_coat/1.jpg",
-          "true_rank": 9,
-          "url_key": "ccabdacc9199dcbd75f1"
+          "path": "images_final/orange/leopard_long_coat/2.jpg",
+          "true_rank": 6,
+          "url_key": "973315bbbcdff452bc35"
         }
       ]
     },
@@ -9805,7 +9760,7 @@
       "status": "available",
       "images": [
         {
-          "path": "images_final/yellow/solid_pea_coat/1.jpg",
+          "path": "images_final/yellow/solid_pea_coat/2.jpg",
           "true_rank": 1,
           "url_key": "0f7092d903e5c5863937"
         }
@@ -9832,22 +9787,17 @@
       "images": []
     },
     "yellow|pea_coat|leopard": {
-      "status": "available",
-      "images": [
-        {
-          "path": "images_final/yellow/leopard_pea_coat/1.jpg",
-          "true_rank": 1,
-          "url_key": "6e4d1c3816841c4f1c19"
-        }
-      ]
+      "status": "excluded",
+      "reason": "no_such_garment",
+      "images": []
     },
     "yellow|long_coat|solid": {
       "status": "available",
       "images": [
         {
-          "path": "images_final/yellow/solid_long_coat/1.jpg",
-          "true_rank": 8,
-          "url_key": "e4ba2cb987af88021795"
+          "path": "images_final/yellow/solid_long_coat/2.jpg",
+          "true_rank": 4,
+          "url_key": "a42a15a26cd62d22de6e"
         }
       ]
     },
@@ -9858,16 +9808,16 @@
     },
     "yellow|long_coat|checkered": {
       "status": "excluded",
-      "reason": "no_such_garment",
+      "reason": "pattern_absent",
       "images": []
     },
     "yellow|long_coat|floral": {
       "status": "available",
       "images": [
         {
-          "path": "images_final/yellow/floral_long_coat/1.jpg",
-          "true_rank": 1,
-          "url_key": "a84a438fc0f263a2a633"
+          "path": "images_final/yellow/floral_long_coat/2.jpg",
+          "true_rank": 2,
+          "url_key": "b6ab0d4e87d1dd406e3b"
         }
       ]
     },
@@ -9875,7 +9825,7 @@
       "status": "available",
       "images": [
         {
-          "path": "images_final/yellow/polka_dot_long_coat/1.jpg",
+          "path": "images_final/yellow/polka_dot_long_coat/2.jpg",
           "true_rank": 1,
           "url_key": "fdf6768107214b58b868"
         }
@@ -9885,7 +9835,7 @@
       "status": "available",
       "images": [
         {
-          "path": "images_final/yellow/leopard_long_coat/1.jpg",
+          "path": "images_final/yellow/leopard_long_coat/2.jpg",
           "true_rank": 1,
           "url_key": "6e4d1c3816841c4f1c19"
         }
@@ -10920,9 +10870,9 @@
       "status": "available",
       "images": [
         {
-          "path": "images_final/green/solid_pea_coat/1.jpg",
-          "true_rank": 1,
-          "url_key": "34550b39af06f8bf3b73"
+          "path": "images_final/green/solid_pea_coat/2.jpg",
+          "true_rank": 4,
+          "url_key": "77bd6adb02d1f129b38a"
         }
       ]
     },
@@ -10933,7 +10883,7 @@
     },
     "green|pea_coat|checkered": {
       "status": "excluded",
-      "reason": "pattern_absent",
+      "reason": "no_such_garment",
       "images": []
     },
     "green|pea_coat|polka_dot": {
@@ -10945,9 +10895,9 @@
       "status": "available",
       "images": [
         {
-          "path": "images_final/green/solid_long_coat/1.jpg",
-          "true_rank": 9,
-          "url_key": "5d221c66ad8e705a6397"
+          "path": "images_final/green/solid_long_coat/3.jpg",
+          "true_rank": 1,
+          "url_key": "133c665ea6cab8e73a0d"
         }
       ]
     },
@@ -10955,9 +10905,9 @@
       "status": "available",
       "images": [
         {
-          "path": "images_final/green/striped_long_coat/1.jpg",
-          "true_rank": 3,
-          "url_key": "ad14ff5d8df8113181df"
+          "path": "images_final/green/striped_long_coat/2.jpg",
+          "true_rank": 4,
+          "url_key": "0563d512818318d7714d"
         }
       ]
     },
@@ -10965,9 +10915,9 @@
       "status": "available",
       "images": [
         {
-          "path": "images_final/green/checkered_long_coat/1.jpg",
-          "true_rank": 7,
-          "url_key": "6408c1fcf5ab4e4b3f5d"
+          "path": "images_final/green/checkered_long_coat/2.jpg",
+          "true_rank": 6,
+          "url_key": "0463bfc992d33fd8a26c"
         }
       ]
     },
@@ -10975,7 +10925,7 @@
       "status": "available",
       "images": [
         {
-          "path": "images_final/green/polka_dot_long_coat/1.jpg",
+          "path": "images_final/green/polka_dot_long_coat/2.jpg",
           "true_rank": 1,
           "url_key": "a83ed59456c5ab5ae4ab"
         }
@@ -10985,7 +10935,7 @@
       "status": "available",
       "images": [
         {
-          "path": "images_final/green/leopard_long_coat/1.jpg",
+          "path": "images_final/green/leopard_long_coat/2.jpg",
           "true_rank": 1,
           "url_key": "a9ccff7986025f35c129"
         }
@@ -12015,9 +11965,9 @@
       "status": "available",
       "images": [
         {
-          "path": "images_final/brown/solid_pea_coat/1.jpg",
+          "path": "images_final/brown/solid_pea_coat/2.jpg",
           "true_rank": 3,
-          "url_key": "bca7f88927fb40e3a5b6"
+          "url_key": "25523aef4be031721a99"
         }
       ]
     },
@@ -12028,7 +11978,7 @@
     },
     "brown|pea_coat|checkered": {
       "status": "excluded",
-      "reason": "color_mismatch",
+      "reason": "no_such_garment",
       "images": []
     },
     "brown|pea_coat|floral": {
@@ -12042,22 +11992,17 @@
       "images": []
     },
     "brown|pea_coat|leopard": {
-      "status": "available",
-      "images": [
-        {
-          "path": "images_final/brown/leopard_pea_coat/1.jpg",
-          "true_rank": 5,
-          "url_key": "6497106fba2f03504bee"
-        }
-      ]
+      "status": "excluded",
+      "reason": "pattern_absent",
+      "images": []
     },
     "brown|long_coat|solid": {
       "status": "available",
       "images": [
         {
-          "path": "images_final/brown/solid_long_coat/1.jpg",
-          "true_rank": 5,
-          "url_key": "6eb156a46f6e649483e2"
+          "path": "images_final/brown/solid_long_coat/2.jpg",
+          "true_rank": 1,
+          "url_key": "502cf35435c032720f0b"
         }
       ]
     },
@@ -12065,7 +12010,7 @@
       "status": "available",
       "images": [
         {
-          "path": "images_final/brown/striped_long_coat/1.jpg",
+          "path": "images_final/brown/striped_long_coat/2.jpg",
           "true_rank": 1,
           "url_key": "9e1bde765811a6675e6f"
         }
@@ -12075,21 +12020,16 @@
       "status": "available",
       "images": [
         {
-          "path": "images_final/brown/checkered_long_coat/1.jpg",
-          "true_rank": 10,
-          "url_key": "eb56af7bfc7e0891db94"
+          "path": "images_final/brown/checkered_long_coat/2.jpg",
+          "true_rank": 1,
+          "url_key": "7e28fb78ad4dce1a655d"
         }
       ]
     },
     "brown|long_coat|floral": {
-      "status": "available",
-      "images": [
-        {
-          "path": "images_final/brown/floral_long_coat/1.jpg",
-          "true_rank": 9,
-          "url_key": "b0dcfa71de06da1f2b3f"
-        }
-      ]
+      "status": "excluded",
+      "reason": "pattern_absent",
+      "images": []
     },
     "brown|long_coat|polka_dot": {
       "status": "excluded",
@@ -12100,9 +12040,9 @@
       "status": "available",
       "images": [
         {
-          "path": "images_final/brown/leopard_long_coat/1.jpg",
-          "true_rank": 7,
-          "url_key": "a94c7f4cce17bf3e4fe4"
+          "path": "images_final/brown/leopard_long_coat/2.jpg",
+          "true_rank": 3,
+          "url_key": "462037b0f923ac20d1dc"
         }
       ]
     },
@@ -13027,14 +12967,9 @@
       "images": []
     },
     "beige|pea_coat|checkered": {
-      "status": "available",
-      "images": [
-        {
-          "path": "images_final/beige/checkered_pea_coat/1.jpg",
-          "true_rank": 1,
-          "url_key": "bed98e968b61d4e07dd4"
-        }
-      ]
+      "status": "excluded",
+      "reason": "pattern_absent",
+      "images": []
     },
     "beige|pea_coat|polka_dot": {
       "status": "excluded",
@@ -13042,37 +12977,37 @@
       "images": []
     },
     "beige|pea_coat|leopard": {
-      "status": "available",
-      "images": [
-        {
-          "path": "images_final/beige/leopard_pea_coat/1.jpg",
-          "true_rank": 2,
-          "url_key": "c5d9d8c60dbe9fd6fdbb"
-        }
-      ]
+      "status": "excluded",
+      "reason": "no_such_garment",
+      "images": []
     },
     "beige|long_coat|solid": {
       "status": "available",
       "images": [
         {
-          "path": "images_final/beige/solid_long_coat/2.jpg",
-          "true_rank": 1,
-          "url_key": "a9820f866561f421563e"
+          "path": "images_final/beige/solid_long_coat/3.jpg",
+          "true_rank": 8,
+          "url_key": "fa68f319afa2116b58e3"
         }
       ]
     },
     "beige|long_coat|striped": {
-      "status": "excluded",
-      "reason": "pattern_absent",
-      "images": []
+      "status": "available",
+      "images": [
+        {
+          "path": "images_final/beige/striped_long_coat/1.jpg",
+          "true_rank": 2,
+          "url_key": "6da6488985cc13450389"
+        }
+      ]
     },
     "beige|long_coat|checkered": {
       "status": "available",
       "images": [
         {
-          "path": "images_final/beige/checkered_long_coat/1.jpg",
-          "true_rank": 8,
-          "url_key": "14b0a3986cbef81ab6ef"
+          "path": "images_final/beige/checkered_long_coat/2.jpg",
+          "true_rank": 4,
+          "url_key": "67c6914a61b03f097a46"
         }
       ]
     },
@@ -13080,8 +13015,8 @@
       "status": "available",
       "images": [
         {
-          "path": "images_final/beige/floral_long_coat/1.jpg",
-          "true_rank": 5,
+          "path": "images_final/beige/floral_long_coat/2.jpg",
+          "true_rank": 4,
           "url_key": "234a262fe3c049915e14"
         }
       ]
@@ -13095,7 +13030,7 @@
       "status": "available",
       "images": [
         {
-          "path": "images_final/beige/leopard_long_coat/1.jpg",
+          "path": "images_final/beige/leopard_long_coat/2.jpg",
           "true_rank": 4,
           "url_key": "19f00e5097f1ce6ce350"
         }
@@ -14105,8 +14040,8 @@
       "status": "available",
       "images": [
         {
-          "path": "images_final/purple/solid_pea_coat/1.jpg",
-          "true_rank": 6,
+          "path": "images_final/purple/solid_pea_coat/2.jpg",
+          "true_rank": 2,
           "url_key": "52f4da45ae85a95cc803"
         }
       ]
@@ -14128,14 +14063,14 @@
     },
     "purple|pea_coat|leopard": {
       "status": "excluded",
-      "reason": "pattern_absent",
+      "reason": "no_such_garment",
       "images": []
     },
     "purple|long_coat|solid": {
       "status": "available",
       "images": [
         {
-          "path": "images_final/purple/solid_long_coat/1.jpg",
+          "path": "images_final/purple/solid_long_coat/2.jpg",
           "true_rank": 1,
           "url_key": "ca4bbcf0de8bf8fa57bd"
         }
@@ -14145,7 +14080,7 @@
       "status": "available",
       "images": [
         {
-          "path": "images_final/purple/striped_long_coat/1.jpg",
+          "path": "images_final/purple/striped_long_coat/2.jpg",
           "true_rank": 1,
           "url_key": "eb315b6a4db721277421"
         }
@@ -14155,9 +14090,9 @@
       "status": "available",
       "images": [
         {
-          "path": "images_final/purple/checkered_long_coat/1.jpg",
+          "path": "images_final/purple/checkered_long_coat/2.jpg",
           "true_rank": 4,
-          "url_key": "35f0a70be593fa7c6079"
+          "url_key": "c599ca0d36306dba05c4"
         }
       ]
     },
@@ -14165,21 +14100,16 @@
       "status": "available",
       "images": [
         {
-          "path": "images_final/purple/floral_long_coat/1.jpg",
-          "true_rank": 3,
-          "url_key": "89ac6c82e1180dd7fc06"
+          "path": "images_final/purple/floral_long_coat/2.jpg",
+          "true_rank": 2,
+          "url_key": "b79794313d13c93daae4"
         }
       ]
     },
     "purple|long_coat|polka_dot": {
-      "status": "available",
-      "images": [
-        {
-          "path": "images_final/purple/polka_dot_long_coat/1.jpg",
-          "true_rank": 1,
-          "url_key": "9841a1582abea8e721ec"
-        }
-      ]
+      "status": "excluded",
+      "reason": "no_such_garment",
+      "images": []
     },
     "purple|long_coat|leopard": {
       "status": "excluded",
@@ -14499,8 +14429,8 @@
   },
   "summary": {
     "total": 1661,
-    "available": 1237,
-    "excluded": 424,
+    "available": 1223,
+    "excluded": 438,
     "pending": 0
   }
 }
