@@ -194,3 +194,125 @@ Stage 0b  surface realization (LLM, 비결정적 → 산출물 동결 + 해시)
 | C-main − C-text | > 0 | 이미지가 불필요 → 렌더링에 속성 단어 잔존 의심, 금지어 스캔 |
 
 세 개가 모두 통과하면 유저 확장(24→100+)과 셀 재주석으로 넘어간다.
+
+---
+
+## 11. 2026 트렌드 관점의 상향 — 대화를 "읽는" 대신 "물어보게" 하라
+
+### 11-1. 트렌드 진단
+
+2026년 평가 연구의 무게중심은 **정적 데이터셋 → 상호작용 환경**으로 이동했다.
+
+- **에이전트 메모리**가 1급 연구 대상이 됐다 (ICLR 2026 MemAgents 워크숍,
+  MemoryArena, WorldMemArena, MemLens, LongMemEval-V2).
+- **능동적 선호 유도(proactive elicitation)** 가 새 병목으로 지목됐다.
+  `Ask Now, Use Later` (ATRBench)는 **각 유저의 선호를 은닉 ground truth로
+  고정해, 성공하려면 "기억"이 아니라 "질문"을 해야 하도록** 만들었고,
+  8개 프런티어 에이전트가 oracle 대비 **최소 62점** 낮았으며 병목이
+  *획득(acquisition)* 임을 진단했다. 서베이가 인용하는 PrefDisco 역시
+  능동 유도 시도의 **29%가 오히려 정렬을 악화**시킨다고 보고한다.
+
+즉 "주어진 대화를 읽고 선호를 추론하라"는 과제는 2026 기준으로 **한 세대 전
+프레이밍**이다. 리뷰어가 "또 하나의 MCQ 데이터셋"으로 읽을 위험이 실재한다.
+
+### 11-2. 핵심 관찰 — §2의 컨셉은 이미 절반이 에이전트 환경이다
+
+§2의 선택형 대화에서 **누가 선택지를 고르는가**만 바꾸면 환경이 된다.
+
+| | 선택지를 정하는 주체 | 성격 |
+|---|---|---|
+| §2 (scripted) | 우리가 미리 정함 | 데이터셋 |
+| **확장 (active)** | **모델이 정함** | **환경** |
+
+**즉 §2는 확장판의 "고정 정책(fixed policy)" ablation이다.** 둘 중 하나를 고르는
+문제가 아니라, 확장판을 만들면 §2가 공짜로 딸려 나온다.
+
+### 11-3. 권고 컨셉 (상향판)
+
+```
+[1] 상황 질의 제시   "이번 주말 장례식에 가요. 뭘 입을까요?"
+[2] 유도 예산 k턴    모델이 "어떤 축을 물어볼지" 선택
+                     → 환경이 그 축의 최소대립 이미지 집합을 렌더
+                     → 규칙 기반 oracle 유저가 프로필대로 하나를 고름
+[3] 4지선다 제시     A/B/C/D 이때 처음 공개
+[4] 채점             ABCD 정확도 + 유도 효율
+```
+
+**결정적 이점: 유저 시뮬레이터가 LLM이 아니라 규칙이다.**
+상호작용 벤치마크의 최대 약점은 LLM 유저 시뮬레이터의 편향·비재현성·비용인데,
+이 프로젝트는 프로필이 **폐쇄 어휘 위의 결정적 ground truth**이므로 oracle 유저를
+`profiles.jsonl` 조회로 구현할 수 있다. 이 벤치마크가 남들이 못 하는 일을 하는
+지점이 정확히 여기다. `verify_release.sh`식 비트 동일 재현성이 상호작용 환경에서도
+유지된다 — 상호작용 벤치마크로서는 대단히 드문 성질이다.
+
+### 11-4. 새로 생기는 지표 — 여기가 진짜 contribution
+
+ABCD 정확도는 세 조건이 공유하므로 비교 가능하고, **아래는 active 조건에만 존재**한다.
+
+| 지표 | 정의 | 왜 계산 가능한가 |
+|---|---|---|
+| **Information gain / turn** | 질문 전후 프로필 사후분포의 엔트로피 감소 | 선호 공간이 유한·열거 가능 (13색 3+3 등) |
+| **Budget curve** | k = 0,1,2,3에서의 ABCD 정확도 | — |
+| **Axis-targeting precision** | 물어본 축 == 그 문항의 active 축인 비율 | 문항이 active 축을 알고 있음 |
+| **Over/under-asking** | 이미 확정된 값을 다시 묻는 비율 / 예산 미사용 | 결정적 oracle이라 판정 가능 |
+
+### 11-5. 그리고 이게 물리/드레스코드 2트랙 설계와 맞물린다
+
+모델은 **선택지를 보기 전에** 무엇을 물을지 정해야 한다. 즉 **상황만 보고 어느
+속성이 결정적일지 예측**해야 한다.
+
+- 물리 트랙: 의류는 TPO가 강제 → 취향이 살아남는 곳은 **색·패턴**
+- 드레스코드 트랙: 색·패턴이 규범에 묶임 → 취향이 살아남는 곳은 **의류**
+
+**"상황을 이해해야 무엇을 물어볼지 안다"** — 이 문장이 논문의 한 줄 기여가 된다.
+Physical/Dress-code 분리가 여기서 처음으로 *결과를 만드는 설계*가 된다.
+지금까지 그 분리는 "섞으면 안 된다"는 방어적 이유뿐이었다.
+
+### 11-6. 유도 채널은 시각으로 고정한다
+
+모델이 텍스트로 `"흰색 좋아하세요?"`라고 물을 수 있으면 멀티모달이 아니게 된다.
+**본 조건에서 질문은 "축 선택"이고, 환경이 이미지 집합으로 렌더한다.**
+텍스트 질의 허용은 ablation 하나로만 둔다(그리고 그 차이가 이 논문의 두 번째
+결과가 된다).
+
+구현 난이도 관리: 모델이 후보 이미지 집합 자체를 라이브러리에서 고르게 하는 것은
+**future work**로 미룬다. 축 선택(3지선다)만으로도 위 지표가 전부 계산된다.
+
+### 11-7. 최종 조건표 (§6 대체)
+
+| 조건 | 선호 정보 획득 방식 | 역할 |
+|---|---|---|
+| **A-oracle** | 프로필을 그대로 제공 | 상한 (기구축분) |
+| **A-scripted** | 우리가 만든 선택형 대화를 읽음 | §2 — 고정 정책 ablation |
+| **A-active** | **모델이 k턴 유도** | **본 벤치마크** |
+| **A-swap** | 다른 유저의 대화 | 형식 프라이밍 통제 |
+| **A-text** | 유도 채널을 텍스트로 | 시각 필수성 |
+
+**헤드라인 수치: `A-oracle − A-active` (획득 격차).** ATRBench가 텍스트에서
+62점을 보고했다. 시각 채널에서 이 격차가 얼마인지는 아직 아무도 모른다.
+
+### 11-8. 위험과 판단
+
+- **비용**: 새 데이터가 아니라 **하네스 코드**다. oracle 유저는 규칙, 선택 집합은
+  기존 planner, 아이템은 기구축분. 상호작용 루프와 채점기가 추가 작업의 대부분이다.
+- **`A-scripted`가 사라지지 않는다**는 점이 중요하다. §1–§10의 설계는 전부
+  유효하고, active 조건의 ablation으로 논문에 남는다. **되돌릴 수 없는 결정
+  (유저 확장, 셀당 2장 재주석)도 동일**하므로 지금 순서를 바꿀 필요가 없다.
+- **은닉 GT 프로필로 유도를 강제하는 방법론은 ATRBench가 이미 확립**했다.
+  이건 좋은 소식이다 — 방법론 자체는 리뷰어에게 검증된 것으로 읽히고,
+  **미점유 공간은 (a) 시각 유도 채널, (b) 상황–취향 충돌**이다. 그 둘이 이 연구의
+  자산과 정확히 일치한다.
+- **판단**: §2 컨셉으로 데이터를 만들되, **하네스를 처음부터 "환경"으로 설계하라.**
+  대화를 파일로 굽는 대신 `(선택 집합 → oracle 응답)` 함수로 구현하면,
+  scripted는 그 함수를 고정 순서로 호출한 결과일 뿐이다. 나중에 active를 붙이는
+  비용이 사실상 0이 된다. **이 한 가지 구현 결정이 상향 여지를 공짜로 남긴다.**
+
+### 11-9. 추가 참고 문헌
+
+- Ask Now, Use Later: Benchmarking the Proactivity Gap in Long-Lived LLM Agents (ATRBench) — https://arxiv.org/abs/2605.28108
+- Toward Personalized LLM-Powered Agents: Foundations, Evaluation, and Future Directions — https://arxiv.org/html/2602.22680v2
+- Asking Clarifying Questions for Preference Elicitation With Large Language Models — https://arxiv.org/abs/2510.12015
+- MemoryArena: Benchmarking Agent Memory in Interdependent Multi-Session Agentic Tasks — https://arxiv.org/pdf/2602.16313
+- WorldMemArena: Evaluating Multimodal Agent Memory Through Action-World Interaction — https://arxiv.org/pdf/2605.29341
+- MemLens: Benchmarking Multimodal Long-Term Memory in LVLMs — https://arxiv.org/pdf/2605.14906
+- ICLR 2026 MemAgents Workshop Proposal — https://openreview.net/pdf?id=U51WxL382H
