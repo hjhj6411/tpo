@@ -234,6 +234,9 @@ pod_bench/
 │   ├── extract_fsiglip.py / build_faiss_fsiglip.py / serve_fsiglip_knn.py
 │   └── collector_sam3.py  # current collector
 ├── scripts/                # eval + validation (multimodal_eval, text_only_eval, validate_options, …)
+├── exp/                    # evaluation harnesses
+│   ├── llm_eval/           # text-only eval (was text_exp/)
+│   └── vlm_eval/           # vision-language eval (results/ is gitignored)
 ├── docs/                   # SETUP.md, SETUP_FSIGLIP.md, GARMENT_TAXONOMY_REDESIGN.md, …
 ├── _archive/               # retired pipelines, kept for provenance — nothing here runs
 │   ├── src/                # legacy collectors (utils.py promoted to scripts/)

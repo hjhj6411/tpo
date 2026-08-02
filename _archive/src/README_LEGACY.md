@@ -33,7 +33,7 @@ downstream tooling.
 
 `utils.py` (`call_llm`, `call_vlm`, `load_jsonl`, `save_jsonl`, `log_step`,
 `parse_json_response`) was imported by `scripts/label_verifier.py`,
-`scripts/text_only_eval.py` and all of `text_exp/` — live code on a legacy
+`scripts/text_only_eval.py` and all of `text_exp/` (now `exp/llm_eval/`) — live code on a legacy
 path, which is what blocked archiving this directory. It depends only on
 `configs.config`, so promoting it was a straight move. All consumers now say
 `from scripts.utils import ...`.

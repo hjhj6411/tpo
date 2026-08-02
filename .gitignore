@@ -1,5 +1,5 @@
 __pycache__/
-vlm_eval/results/
+exp/vlm_eval/results/
 # author's personal terminal notes / local scratch
 _local/
 *.pyc

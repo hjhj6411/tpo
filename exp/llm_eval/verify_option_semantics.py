@@ -23,7 +23,7 @@ import sys
 from collections import Counter
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from configs.config import OPTIONS_DIR, PROFILES_DIR, QUERIES_DIR
 from scripts.utils import load_jsonl

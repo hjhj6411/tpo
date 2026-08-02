@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Text choice-bias experiments built on text_exp/text_eval.py.
+Text choice-bias experiments built on exp/llm_eval/text_eval.py.
 
 Experiments:
   1) position_bias
@@ -23,10 +23,10 @@ Experiments:
      scenario/TPO or user preference.
 
 Examples:
-  python -m text_exp.text_bias_experiments --experiment all --model vllm --concurrency 32
-  python -m text_exp.text_bias_experiments --experiment fixed_correct --input-format all+query --model vllm
-  python -m text_exp.text_bias_experiments --experiment all --model Qwen/Qwen3-VL-4B-Instruct  --concurrency 32
-  python -m text_exp.text_bias_experiments --experiment bc_tradeoff --see --limit 1
+  python -m exp.llm_eval.text_bias_experiments --experiment all --model vllm --concurrency 32
+  python -m exp.llm_eval.text_bias_experiments --experiment fixed_correct --input-format all+query --model vllm
+  python -m exp.llm_eval.text_bias_experiments --experiment all --model Qwen/Qwen3-VL-4B-Instruct  --concurrency 32
+  python -m exp.llm_eval.text_bias_experiments --experiment bc_tradeoff --see --limit 1
 """
 
 from __future__ import annotations
@@ -38,11 +38,11 @@ import sys
 from collections import Counter
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from configs.config import OPTIONS_DIR, QUERIES_DIR, PROFILES_DIR
 from scripts.utils import call_llm, load_jsonl, log_step, save_jsonl
-from text_exp.text_eval import (
+from exp.llm_eval.text_eval import (
     INPUT_FORMATS,
     TPO_SCORE,
     PROFILE_SCORE,

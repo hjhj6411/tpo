@@ -72,7 +72,7 @@ prompt mapping without writing results or calling a model:
 ```bash
 conda activate pod
 
-python -m vlm_eval.eval_query_abcd \
+python -m exp.vlm_eval.eval_query_abcd \
   --model Qwen/Qwen3-VL-30B-A3B-Instruct \
   --profile-format narrative \
   --limit 2 \
@@ -101,7 +101,7 @@ Then run the evaluator from a separate shell:
 ```bash
 conda activate pod
 
-python -m vlm_eval.eval_query_abcd \
+python -m exp.vlm_eval.eval_query_abcd \
   --model Qwen/Qwen3-VL-30B-A3B-Instruct \
   --base-urls http://127.0.0.1:8002/v1 \
   --concurrency 8
@@ -112,21 +112,21 @@ default). Run the two profile conditions separately against the same server:
 
 ```bash
 # Query + narrative profile + four (image, text) options
-python -m vlm_eval.eval_query_abcd \
+python -m exp.vlm_eval.eval_query_abcd \
   --model Qwen/Qwen3-VL-30B-A3B-Instruct \
   --base-urls http://127.0.0.1:8002/v1 \
   --profile-format narrative \
   --concurrency 8
 
 # Query + key-value profile + four (image, text) options
-python -m vlm_eval.eval_query_abcd \
+python -m exp.vlm_eval.eval_query_abcd \
   --model Qwen/Qwen3-VL-30B-A3B-Instruct \
   --base-urls http://127.0.0.1:8002/v1 \
   --profile-format key-value \
   --concurrency 8
 ```
 
-The key-value representation follows `text_exp` exactly:
+The key-value representation follows `exp/llm_eval` exactly:
 
 ```text
 likes.garment: ...
@@ -142,7 +142,7 @@ all situation-specific instructions:
 
 ```bash
 # Narrative profile only
-python -m vlm_eval.eval_query_abcd \
+python -m exp.vlm_eval.eval_query_abcd \
   --model Qwen/Qwen3-VL-30B-A3B-Instruct \
   --base-urls http://127.0.0.1:8002/v1 \
   --profile-format narrative \
@@ -150,7 +150,7 @@ python -m vlm_eval.eval_query_abcd \
   --concurrency 8
 
 # Key-value profile only
-python -m vlm_eval.eval_query_abcd \
+python -m exp.vlm_eval.eval_query_abcd \
   --model Qwen/Qwen3-VL-30B-A3B-Instruct \
   --base-urls http://127.0.0.1:8002/v1 \
   --profile-format key-value \
@@ -172,11 +172,11 @@ with the cluster's normal `srun` or `sbatch` workflow first.
 Default condition names are derived from the profile format and seed:
 
 ```text
-vlm_eval/results/query_abcd_image_text_seed42/<model>/
-vlm_eval/results/query_profile_narrative_abcd_image_text_seed42/<model>/
-vlm_eval/results/query_profile_key_value_abcd_image_text_seed42/<model>/
-vlm_eval/results/profile_narrative_abcd_image_text_seed42/<model>/
-vlm_eval/results/profile_key_value_abcd_image_text_seed42/<model>/
+exp/vlm_eval/results/query_abcd_image_text_seed42/<model>/
+exp/vlm_eval/results/query_profile_narrative_abcd_image_text_seed42/<model>/
+exp/vlm_eval/results/query_profile_key_value_abcd_image_text_seed42/<model>/
+exp/vlm_eval/results/profile_narrative_abcd_image_text_seed42/<model>/
+exp/vlm_eval/results/profile_key_value_abcd_image_text_seed42/<model>/
 ```
 
 Each condition has the same output structure:
@@ -203,10 +203,10 @@ Useful partial checks:
 
 ```bash
 # One track only
-python -m vlm_eval.eval_query_abcd --model MODEL --track physical
+python -m exp.vlm_eval.eval_query_abcd --model MODEL --track physical
 
 # Small real smoke run; use a distinct name so it cannot mix with the full run
-python -m vlm_eval.eval_query_abcd \
+python -m exp.vlm_eval.eval_query_abcd \
   --model MODEL \
   --limit 4 \
   --experiment-name query_abcd_image_text_smoke_seed42

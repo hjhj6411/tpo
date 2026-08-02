@@ -13,9 +13,9 @@ Default report grouping:
   all / all+query / query /// narrative / narrative+query / query
 
 Examples:
-  python -m text_exp.text_eval --model vllm --concurrency 32
-  python -m text_exp.text_eval --model gpt5_mini --input-format all+query --limit 50
-  python -m text_exp.text_eval --see --limit 1
+  python -m exp.llm_eval.text_eval --model vllm --concurrency 32
+  python -m exp.llm_eval.text_eval --model gpt5_mini --input-format all+query --limit 50
+  python -m exp.llm_eval.text_eval --see --limit 1
 """
 
 from __future__ import annotations
@@ -29,7 +29,7 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from scripts.utils import call_llm, load_jsonl, log_step, save_jsonl
 from configs.config import OPTIONS_DIR, QUERIES_DIR, PROFILES_DIR, PROVIDERS, PROVIDER_ENDPOINTS

@@ -9,27 +9,27 @@ The three reported experiment accuracies are:
 Run examples (the VLM server must already be running):
 
     # Query only
-    python -m vlm_eval.eval_query_abcd \
+    python -m exp.vlm_eval.eval_query_abcd \
       --model Qwen/Qwen3-VL-4B-Instruct \
       --base-urls http://127.0.0.1:8002/v1 \
       --concurrency 8
 
     # Query + narrative profile
-    python -m vlm_eval.eval_query_abcd \
+    python -m exp.vlm_eval.eval_query_abcd \
       --model Qwen/Qwen3-VL-4B-Instruct \
       --base-urls http://127.0.0.1:8002/v1 \
       --profile-format narrative \
       --concurrency 8
 
     # Query + key-value profile
-    python -m vlm_eval.eval_query_abcd \
+    python -m exp.vlm_eval.eval_query_abcd \
       --model Qwen/Qwen3-VL-4B-Instruct \
       --base-urls http://127.0.0.1:8002/v1 \
       --profile-format key-value \
       --concurrency 8
 
     # Narrative profile only
-    python -m vlm_eval.eval_query_abcd \
+    python -m exp.vlm_eval.eval_query_abcd \
       --model Qwen/Qwen3-VL-4B-Instruct \
       --base-urls http://127.0.0.1:8002/v1 \
       --profile-format narrative \
@@ -37,7 +37,7 @@ Run examples (the VLM server must already be running):
       --concurrency 8
 
     # Key-value profile only
-    python -m vlm_eval.eval_query_abcd \
+    python -m exp.vlm_eval.eval_query_abcd \
       --model Qwen/Qwen3-VL-4B-Instruct \
       --base-urls http://127.0.0.1:8002/v1 \
       --profile-format key-value \
@@ -66,7 +66,7 @@ from pathlib import Path
 from typing import Any
 
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
+REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT))
 
 from configs.scenarios import (  # noqa: E402
@@ -76,7 +76,7 @@ from configs.scenarios import (  # noqa: E402
     PROMPT_VERSION,
 )
 from scripts.plan_index import PlanIndex, select_by_manifest  # noqa: E402
-from text_exp.text_eval import (  # noqa: E402
+from exp.llm_eval.text_eval import (  # noqa: E402
     option_to_text,
     parse_answer,
     profile_to_all_kv_text,
@@ -94,7 +94,7 @@ DEFAULT_PROFILES = (
     REPO_ROOT / "data_wacv_scenario_v4" / "profiles" / "profiles.jsonl"
 )
 DEFAULT_LIBRARY = REPO_ROOT / "annotation" / "attribute_library.json"
-DEFAULT_OUTPUT_DIR = REPO_ROOT / "vlm_eval" / "results"
+DEFAULT_OUTPUT_DIR = REPO_ROOT / "exp" / "vlm_eval" / "results"
 DISPLAY_LABELS = ("A", "B", "C", "D")
 TPO_CORRECT_ORIGINALS = {"A", "B"}
 PROFILE_CORRECT_ORIGINALS = {"A", "C"}
