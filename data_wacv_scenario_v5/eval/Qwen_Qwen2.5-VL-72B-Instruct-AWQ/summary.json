@@ -1,0 +1,107 @@
+{
+ "model": "Qwen/Qwen2.5-VL-72B-Instruct-AWQ",
+ "variant": "wacv_scenario_v5",
+ "prompt_version": 2,
+ "formats": [
+  "query",
+  "narrative",
+  "narrative+query",
+  "all",
+  "all+query"
+ ],
+ "n": 55,
+ "by_track_format": {
+  "physical|narrative+query": {
+   "strict": 12,
+   "tpo": 12,
+   "pref": 13,
+   "n": 13
+  },
+  "physical|query": {
+   "strict": 6,
+   "tpo": 9,
+   "pref": 7,
+   "n": 10
+  },
+  "physical|all+query": {
+   "strict": 10,
+   "tpo": 10,
+   "pref": 11,
+   "n": 11
+  },
+  "physical|all": {
+   "strict": 8,
+   "tpo": 8,
+   "pref": 10,
+   "n": 10
+  },
+  "physical|narrative": {
+   "strict": 8,
+   "tpo": 8,
+   "pref": 11,
+   "n": 11
+  }
+ },
+ "by_axis_format": {
+  "color|narrative+query": {
+   "strict": 9,
+   "tpo": 9,
+   "pref": 9,
+   "n": 9
+  },
+  "color|query": {
+   "strict": 4,
+   "tpo": 6,
+   "pref": 4,
+   "n": 6
+  },
+  "color|all+query": {
+   "strict": 8,
+   "tpo": 8,
+   "pref": 8,
+   "n": 8
+  },
+  "color|all": {
+   "strict": 6,
+   "tpo": 6,
+   "pref": 7,
+   "n": 7
+  },
+  "color|narrative": {
+   "strict": 6,
+   "tpo": 6,
+   "pref": 7,
+   "n": 7
+  },
+  "pattern|all": {
+   "strict": 2,
+   "tpo": 2,
+   "pref": 3,
+   "n": 3
+  },
+  "pattern|narrative": {
+   "strict": 2,
+   "tpo": 2,
+   "pref": 4,
+   "n": 4
+  },
+  "pattern|query": {
+   "strict": 2,
+   "tpo": 3,
+   "pref": 3,
+   "n": 4
+  },
+  "pattern|narrative+query": {
+   "strict": 3,
+   "tpo": 3,
+   "pref": 4,
+   "n": 4
+  },
+  "pattern|all+query": {
+   "strict": 2,
+   "tpo": 2,
+   "pref": 3,
+   "n": 3
+  }
+ }
+}

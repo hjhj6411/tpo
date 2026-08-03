@@ -733,15 +733,32 @@ def make_patch_files(
     return rows
 
 
-def draw_patch_overlay(crop: Image.Image, crop_mask: np.ndarray, patches: list[dict[str, Any]], out_path: Path, alpha: int = 95) -> None:
-    crop = crop.convert("RGB")
-    w, h = crop.size
+def mask_contour(crop_mask: np.ndarray) -> np.ndarray:
+    """The 1px inner boundary of the mask.
 
-    base = crop.convert("RGBA")
-    rgba = np.zeros((h, w, 4), dtype=np.uint8)
-    rgba[crop_mask] = np.array([255, 0, 0, alpha], dtype=np.uint8)
-    layer = Image.fromarray(rgba, mode="RGBA")
-    out = Image.alpha_composite(base, layer)
+    Lets the overlay show where the mask ends without tinting the pixels, which
+    would falsify the very colours the tiles were scored on.
+    """
+    m = crop_mask.astype(bool)
+    edge = np.zeros_like(m)
+    vert = m[:-1, :] != m[1:, :]
+    horz = m[:, :-1] != m[:, 1:]
+    edge[:-1, :] |= vert
+    edge[1:, :] |= vert
+    edge[:, :-1] |= horz
+    edge[:, 1:] |= horz
+    return edge & m
+
+
+def draw_patch_overlay(crop: Image.Image, crop_mask: np.ndarray, patches: list[dict[str, Any]], out_path: Path, fill_mode: str) -> None:
+    # Drawn on the SAME masked crop the tiles are cut from, not on the raw crop.
+    # The old version tinted the mask red over the raw crop, so the overlay
+    # showed colours no scorer ever saw -- a blue tank top read as purple, which
+    # makes the colour-axis overlay actively misleading.
+    out = masked_crop_preview(crop, crop_mask, fill_mode).convert("RGBA")
+    arr = np.array(out)
+    arr[mask_contour(crop_mask)] = np.array([255, 0, 0, 255], dtype=np.uint8)
+    out = Image.fromarray(arr, mode="RGBA")
 
     draw = ImageDraw.Draw(out)
     f = font(12)
@@ -1260,8 +1277,8 @@ def process_one_record(
         short_side_tiles=args.color_short_side_tiles,
         axis="color",
     )
-    draw_patch_overlay(crop, crop_mask, pattern_patches, pattern_patch_overlay_path)
-    draw_patch_overlay(crop, crop_mask, color_patches, color_patch_overlay_path)
+    draw_patch_overlay(crop, crop_mask, pattern_patches, pattern_patch_overlay_path, args.patch_mask_fill)
+    draw_patch_overlay(crop, crop_mask, color_patches, color_patch_overlay_path, args.patch_mask_fill)
 
     pattern_info = score_pattern_patches(session, args, task.target_pattern, pattern_patches)
     pattern_score = float(pattern_info.get("score") or 0.0)

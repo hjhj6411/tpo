@@ -40,10 +40,11 @@ python -c "import open_clip, faiss, flask, transformers; print('fsiglip env OK')
 `pod` env already exists (profile/query/option/eval). The collectors and eval scripts only
 need `requests` + `Pillow`, both present in `pod`.
 
-Scripts referenced (place in repo `src/` unless noted):
-- `extract_fsiglip.py`, `build_faiss_fsiglip.py`, `serve_fsiglip_knn.py`  (fsiglip env)
-- `collect_images_siglip_dpv.py`  (pod env — the current collector)
-- `eval_extract.py`, `eval_score.py`, `eval_gold.py`, `eval_canon.py`, `CODEBOOK.md`  (pod env)
+Scripts referenced. The `src/` prefix this section used to carry was stale even
+before `src/` was archived — the live backend scripts have always been in `fsiglip/`:
+- `fsiglip/extract_fsiglip.py`, `fsiglip/build_faiss_fsiglip.py`, `fsiglip/serve_fsiglip_knn.py`  (fsiglip env)
+- `fsiglip/collector_sam3.py`  (pod env — the current collector; supersedes the removed `collect_images_siglip_dpv.py`)
+- `eval_extract.py`, `eval_score.py`, `eval_gold.py`, `eval_canon.py`, `CODEBOOK.md`  (pod env — **removed**; these are not in the tree and the commands below are kept only as a record of the protocol)
 
 ---
 
@@ -68,7 +69,7 @@ Multi-GPU by shard split — one process per GPU:
 ```bash
 conda activate fsiglip
 for G in 0 1 2 3; do
-  CUDA_VISIBLE_DEVICES=$G python src/extract_fsiglip.py \
+  CUDA_VISIBLE_DEVICES=$G python fsiglip/extract_fsiglip.py \
       --gpu $G --num-gpus 4 --batch 256 --workers 8 \
       --clip-corpus "$CLIP_CORPUS" --out "$FS_CORPUS" &
 done
@@ -87,7 +88,7 @@ vectors) and joins shard `key` → `url`/`caption` from the img2dataset metadata
 Paths are hardcoded to `$CLIP_CORPUS` / `$FS_CORPUS`; DIM=768.
 ```bash
 conda activate fsiglip
-python src/build_faiss_fsiglip.py
+python fsiglip/build_faiss_fsiglip.py
 # -> $FS_CORPUS/index.faiss, ids.parquet (key,url,caption), meta.json
 # expect: "DONE  vectors=651489  with_url=651489"
 ```
@@ -172,7 +173,7 @@ whose options differ, so query_id folders would overwrite half the images. Downs
 falls back to a query_id folder when that query has exactly one plan.
 
 The `model_gender`/`model_age`/`set_gender`/`gender_consistent` fields and the
-`--gender-lock` demographic gate belong to the retired `vit/` collector and are NOT
+`--gender-lock` demographic gate belong to the retired `_archive/vit/` collector and are NOT
 produced by the current one. Resumable: re-run to continue; `--force` restarts.
 
 Ablations (compare via the eval in §7):

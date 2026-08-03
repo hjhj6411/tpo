@@ -1,11 +1,22 @@
 __pycache__/
-vlm_eval/results/
+exp/vlm_eval/results/
+# author's personal terminal notes / local scratch
+_local/
 *.pyc
 *.pyo
 .env
 data/
 _no_use/
-availability_audit/
+# availability_audit: track the code, ignore the 11G of outputs
+availability_audit/images*/
+availability_audit/cache_sam3/
+availability_audit/logs/
+availability_audit/screen_sam3*.json
+availability_audit/screen_sam3*.jsonl
+availability_audit/screen_sam3*.png
+availability_audit/*.migrated
+availability_audit/screen_sam3_v4_part*/
+availability_audit/screen_sam3_clean_top100/
 *.egg-info/
 dist/
 build/
@@ -26,3 +37,6 @@ data/images/
 
 # scratch dir written by scripts/verify_release.sh
 data_*_verify/
+
+# assembled benchmark images (rebuild from attribute_library.json)
+data_wacv_scenario_v5/images/

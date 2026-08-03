@@ -117,7 +117,7 @@ TPO_SCORE     = {"A": 1, "B": 1, "C": 0, "D": 0}
 PROFILE_SCORE = {"A": 1, "B": 0, "C": 1, "D": 0}
 
 
-# ── io (standalone, no src.utils) ─────────────────────────────────────────
+# ── io (standalone, deliberately not scripts.utils) ───────────────────────
 def load_jsonl(path):
     out = []
     with open(path) as f:

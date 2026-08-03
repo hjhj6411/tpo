@@ -19,7 +19,7 @@ from pathlib import Path
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from src.utils import (
+from scripts.utils import (
     call_llm, parse_json_response, save_jsonl, load_jsonl, save_json, log_step,
 )
 from scripts.plan_index import PlanIndex
