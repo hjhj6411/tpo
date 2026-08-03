@@ -37,20 +37,20 @@ Any OpenAI-compatible chat endpoint. A local vLLM needs nothing but a port:
 # 터미널 1
 Qwen2.5-VL-7B-Instruct
 
-CUDA_VISIBLE_DEVICES=0 vllm serve Qwen2.5-VL-7B-Instruct --port 800 \
+CUDA_VISIBLE_DEVICES=0 vllm serve OpenGVLab/InternVL3_5-8B-Instruct --port 8001 \
   --gpu-memory-utilization 0.90 --max-model-len 16384 \
   --limit-mm-per-prompt '{"image":4}'
 
 
     python -m exp.vlm_eval.eval_multimodal --port 8001 \
-        --model Qwen/Qwen3-VL-4B-Instruct
+        --model OpenGVLab/InternVL3_5-8B-Instruct --concurrency 32
 
 and a hosted model needs a base URL and a key:
 
 
     python -m exp.vlm_eval.eval_multimodal \
-        --base-url https://api.openai.com/v1 --model gpt-4o \
-        --api-key-env OPENAI_API_KEY
+        --base-url https://api.openai.com/v1 --model gpt5-mini \
+        --api-key-env OPENAI_API_KEY --limit 100
 
 Nothing is read from configs/config.py's provider tables; the endpoint is
 whatever the flags say.
@@ -266,8 +266,14 @@ def parse_answer(text):
 def call_model(session, url, model, messages, max_tokens, temperature,
                timeout, retries, api_key=None):
     headers = {"Authorization": f"Bearer {api_key}"} if api_key else {}
-    payload = {"model": model, "messages": messages,
-               "max_tokens": max_tokens, "temperature": temperature}
+    reasoning = model.split("/")[-1].startswith(("gpt-5", "o1", "o3", "o4"))
+    payload = {"model": model, "messages": messages}
+    if reasoning:
+        payload["max_completion_tokens"] = max(max_tokens, 2048)
+        payload["reasoning_effort"] = "minimal"
+    else:
+        payload["max_tokens"] = max_tokens
+        payload["temperature"] = temperature
     last = None
     for attempt in range(retries):
         try:
@@ -276,6 +282,9 @@ def call_model(session, url, model, messages, max_tokens, temperature,
             return r.json()["choices"][0]["message"]["content"]
         except Exception as e:
             last = e
+            if hasattr(e, "response") and e.response is not None:
+                last = RuntimeError(f"{e} :: {e.response.text[:300]}")
+                break
             time.sleep(min(2 ** attempt, 8))
     raise RuntimeError(f"{type(last).__name__}: {str(last)[:200]}")
 

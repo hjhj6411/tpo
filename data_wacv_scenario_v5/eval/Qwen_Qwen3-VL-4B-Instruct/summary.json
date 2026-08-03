@@ -9,159 +9,159 @@
   "all",
   "all+query"
  ],
- "n": 905,
+ "n": 12750,
  "by_track_format": {
   "physical|query": {
-   "strict": 27,
-   "tpo": 66,
-   "pref": 30,
-   "n": 75
+   "strict": 432,
+   "tpo": 861,
+   "pref": 479,
+   "n": 967
   },
   "physical|narrative": {
-   "strict": 45,
-   "tpo": 45,
-   "pref": 75,
-   "n": 75
+   "strict": 444,
+   "tpo": 463,
+   "pref": 932,
+   "n": 967
   },
   "physical|narrative+query": {
-   "strict": 59,
-   "tpo": 60,
-   "pref": 74,
-   "n": 75
+   "strict": 646,
+   "tpo": 688,
+   "pref": 912,
+   "n": 967
   },
   "physical|all": {
-   "strict": 46,
-   "tpo": 46,
-   "pref": 75,
-   "n": 75
+   "strict": 423,
+   "tpo": 436,
+   "pref": 944,
+   "n": 967
   },
   "physical|all+query": {
-   "strict": 56,
-   "tpo": 57,
-   "pref": 74,
-   "n": 75
+   "strict": 605,
+   "tpo": 631,
+   "pref": 934,
+   "n": 967
   },
   "dress_code|query": {
-   "strict": 37,
-   "tpo": 88,
-   "pref": 42,
-   "n": 106
+   "strict": 654,
+   "tpo": 1304,
+   "pref": 799,
+   "n": 1583
   },
   "dress_code|narrative": {
-   "strict": 46,
-   "tpo": 48,
-   "pref": 101,
-   "n": 106
+   "strict": 844,
+   "tpo": 888,
+   "pref": 1484,
+   "n": 1583
   },
   "dress_code|narrative+query": {
-   "strict": 57,
-   "tpo": 61,
-   "pref": 98,
-   "n": 106
+   "strict": 987,
+   "tpo": 1096,
+   "pref": 1423,
+   "n": 1583
   },
   "dress_code|all": {
-   "strict": 48,
-   "tpo": 49,
-   "pref": 103,
-   "n": 106
+   "strict": 875,
+   "tpo": 901,
+   "pref": 1529,
+   "n": 1583
   },
   "dress_code|all+query": {
-   "strict": 56,
-   "tpo": 58,
-   "pref": 101,
-   "n": 106
+   "strict": 988,
+   "tpo": 1052,
+   "pref": 1479,
+   "n": 1583
   }
  },
  "by_axis_format": {
   "color|query": {
-   "strict": 27,
-   "tpo": 70,
-   "pref": 29,
-   "n": 78
+   "strict": 530,
+   "tpo": 1049,
+   "pref": 602,
+   "n": 1183
   },
   "color|narrative": {
-   "strict": 44,
-   "tpo": 44,
-   "pref": 77,
-   "n": 78
+   "strict": 635,
+   "tpo": 658,
+   "pref": 1135,
+   "n": 1183
   },
   "color|narrative+query": {
-   "strict": 57,
-   "tpo": 57,
-   "pref": 77,
-   "n": 78
+   "strict": 847,
+   "tpo": 885,
+   "pref": 1135,
+   "n": 1183
   },
   "color|all": {
-   "strict": 47,
-   "tpo": 47,
-   "pref": 78,
-   "n": 78
+   "strict": 644,
+   "tpo": 655,
+   "pref": 1162,
+   "n": 1183
   },
   "color|all+query": {
-   "strict": 53,
-   "tpo": 53,
-   "pref": 78,
-   "n": 78
+   "strict": 808,
+   "tpo": 827,
+   "pref": 1159,
+   "n": 1183
   },
   "pattern|query": {
-   "strict": 20,
-   "tpo": 57,
-   "pref": 25,
-   "n": 73
+   "strict": 411,
+   "tpo": 831,
+   "pref": 513,
+   "n": 1046
   },
   "pattern|narrative": {
-   "strict": 31,
-   "tpo": 31,
-   "pref": 72,
-   "n": 73
+   "strict": 487,
+   "tpo": 515,
+   "pref": 990,
+   "n": 1046
   },
   "pattern|narrative+query": {
-   "strict": 38,
-   "tpo": 40,
-   "pref": 68,
-   "n": 73
+   "strict": 587,
+   "tpo": 658,
+   "pref": 936,
+   "n": 1046
   },
   "pattern|all": {
-   "strict": 31,
-   "tpo": 31,
-   "pref": 72,
-   "n": 73
+   "strict": 491,
+   "tpo": 509,
+   "pref": 1012,
+   "n": 1046
   },
   "pattern|all+query": {
-   "strict": 38,
-   "tpo": 39,
-   "pref": 69,
-   "n": 73
+   "strict": 592,
+   "tpo": 639,
+   "pref": 973,
+   "n": 1046
   },
   "garment_category|query": {
-   "strict": 17,
-   "tpo": 27,
-   "pref": 18,
-   "n": 30
+   "strict": 145,
+   "tpo": 285,
+   "pref": 163,
+   "n": 321
   },
   "garment_category|narrative": {
-   "strict": 16,
-   "tpo": 18,
-   "pref": 27,
-   "n": 30
+   "strict": 166,
+   "tpo": 178,
+   "pref": 291,
+   "n": 321
   },
   "garment_category|narrative+query": {
-   "strict": 21,
-   "tpo": 24,
-   "pref": 27,
-   "n": 30
+   "strict": 199,
+   "tpo": 241,
+   "pref": 264,
+   "n": 321
   },
   "garment_category|all": {
-   "strict": 16,
-   "tpo": 17,
-   "pref": 28,
-   "n": 30
+   "strict": 163,
+   "tpo": 173,
+   "pref": 299,
+   "n": 321
   },
   "garment_category|all+query": {
-   "strict": 21,
-   "tpo": 23,
-   "pref": 28,
-   "n": 30
+   "strict": 193,
+   "tpo": 217,
+   "pref": 281,
+   "n": 321
   }
  }
 }
