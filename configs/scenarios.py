@@ -909,7 +909,7 @@ CANONICAL_SCENARIOS = [{'scenario_id': 'cold_blizzard_outdoor',
   'name': 'Formal Job Interview',
   'tpo': {'time': {'time_of_day': 'daytime'},
           'place': {'venue': 'office', 'indoor_outdoor': 'indoor'},
-          'occasion': {'activity': 'work_meeting', 'formality_required': 'business_casual'}},
+          'occasion': {'activity': 'work_meeting', 'formality_required': 'formal'}},
   'garment_category': {'compatible': ['blazer', 'suit_vest', 'long_coat', 'formal_shirt', 'slacks', 'dress', 'long_skirt'],
                        'incompatible': ['hoodie', 'shorts', 'tank_top', 't_shirt', 'polo_shirt']},
   'justification': 'Hoodie/shorts and loud prints to a formal interview signal disrespect for the '

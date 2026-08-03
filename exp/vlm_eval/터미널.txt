@@ -10,15 +10,67 @@ CUDA_VISIBLE_DEVICES=1 vllm serve Qwen2.5-VL-7B-Instruct --port 8002 \
   --gpu-memory-utilization 0.90 --max-model-len 16384 \
   --limit-mm-per-prompt '{"image":4}'
 
-vllm serve Qwen/Qwen3-VL-30B-A3B-Instruct --port 8001 --tensor-parallel-size 4 \
-  --gpu-memory-utilization 0.90 --max-model-len 16384 \
+vllm serve Qwen/Qwen2.5-VL-72B-Instruct-AWQ --port 8001 --tensor-parallel-size 4 \
+  --gpu-memory-utilization 0.90 --max-model-len 32768 \
   --limit-mm-per-prompt '{"image":4}' 
 
+vllm serve OpenGVLab/InternVL3_5-8B-Instruct --port 8001 --tensor-parallel-size 4 \
+  --gpu-memory-utilization 0.90 --max-model-len 32768 --trust-remote-code \
+  --limit-mm-per-prompt '{"image":4}' 
 
-vllm serve   google/gemma-3-12b-it --port 8004 \
+OpenGVLab--InternVL3-78B-Instruct
+openbmb/MiniCPM-V-4.6
+
+
+CUDA_VISIBLE_DEVICES=2 vllm serve openbmb/MiniCPM-V-4.6 --port 8004 \
+  --gpu-memory-utilization 0.90 --max-model-len 16384 \
+  --limit-mm-per-prompt '{"image":4}'
+
+vllm serve google/gemma-3-27b-it --port 8003 --tensor-parallel-size 4 \
   --gpu-memory-utilization 0.90 --max-model-len 32768 \
   --limit-mm-per-prompt '{"image":4}'
 
 
-python -m exp.vlm_eval.eval_multimodal --port 8002 \
-  --model Qwen2.5-VL-7B-Instruct  --concurrency 16
+python -m exp.vlm_eval.eval_multimodal --port 8003 \
+  --model google/gemma-3-27b-it   --concurrency 16
+
+google/gemma-3-27b-it
+openbmb/MiniCPM-V-4.6
+
+
+  cd ~/pod_bench && python - <<'EOF'
+import json, glob, time
+from collections import Counter, defaultdict
+F=["query","narrative","narrative+query","all","all+query"]
+for p in sorted(glob.glob('data_wacv_scenario_v5/eval/*/results.jsonl')):
+    rows={}
+    for l in open(p):
+        try: r=json.loads(l); rows[(r['plan_id'],r['input_format'])]=r
+        except: pass
+    rows=list(rows.values())
+    plans={r['plan_id'] for r in rows}
+    full={x for x in plans if all((x,f) in {(r['plan_id'],r['input_format']) for r in rows} for f in F)}
+    print("="*60); print(p.split('/')[-2])
+    print(f"{len(rows)}/12750 ({len(rows)/12750:.1%})  plan {len(plans)} 착수 / {len(full)} 완결  "
+          f"마지막 {time.time()-__import__('os').stat(p).st_mtime:.0f}초 전")
+    print("에러",sum(1 for r in rows if r.get('error')),
+          " 파싱실패",sum(1 for r in rows if not r.get('error') and not r['predicted_display']))
+    for k,v in Counter(r['error'][:60] for r in rows if r.get('error')).most_common(2): print("  ",v,k)
+    pos=Counter(r['predicted_display'] for r in rows if r['predicted_display'])
+    cor=Counter(r['correct_display'] for r in rows)
+    print("예측",dict(sorted(pos.items())),"/ 정답",dict(sorted(cor.items())))
+    acc=defaultdict(lambda:[0,0])
+    for r in rows: a=acc[r['correct_display']]; a[0]+=r['strict']; a[1]+=1
+    print("정답위치별 strict:", {L:f"{acc[L][0]/acc[L][1]:.1%}" for L in "ABCD" if acc[L][1]})
+    agg=defaultdict(lambda:[0,0,0,0])
+    for r in rows:
+        if r['plan_id'] in full:
+            a=agg[r['input_format']]; a[0]+=r['strict']; a[1]+=r['tpo']; a[2]+=r['preference']; a[3]+=1
+    print(f"\n{'조건':16s} {'n':>5} {'strict':>8} {'tpo':>8} {'pref':>8}   (완결 plan만)")
+    for f in F:
+        if f in agg:
+            s,t,pr,n=agg[f]; print(f"{f:16s} {n:5d} {s/n:8.1%} {t/n:8.1%} {pr/n:8.1%}")
+    if 'query' in agg and 'narrative+query' in agg:
+        q,nq=agg['query'],agg['narrative+query']
+        print(f"→ tpo {q[1]/q[3]:.1%} → {nq[1]/nq[3]:.1%} ({(nq[1]/nq[3]-q[1]/q[3])*100:+.1f}%p)")
+EOF
