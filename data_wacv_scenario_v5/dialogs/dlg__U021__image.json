@@ -88,17 +88,17 @@
    "image_attributes": [
     {
      "color": "beige",
-     "garment_category": "windbreaker",
-     "pattern": "solid"
-    },
-    {
-     "color": "beige",
-     "garment_category": "sweater",
+     "garment_category": "t_shirt",
      "pattern": "solid"
     },
     {
      "color": "beige",
      "garment_category": "formal_shirt",
+     "pattern": "solid"
+    },
+    {
+     "color": "beige",
+     "garment_category": "polo_shirt",
      "pattern": "striped"
     }
    ]
@@ -116,18 +116,18 @@
    "image_attributes": [
     {
      "color": "black",
-     "garment_category": "jeans",
-     "pattern": "striped"
+     "garment_category": "t_shirt",
+     "pattern": "solid"
+    },
+    {
+     "color": "black",
+     "garment_category": "sweatshirt",
+     "pattern": "solid"
     },
     {
      "color": "black",
      "garment_category": "formal_shirt",
-     "pattern": "solid"
-    },
-    {
-     "color": "black",
-     "garment_category": "jeans",
-     "pattern": "solid"
+     "pattern": "striped"
     }
    ]
   },
@@ -143,8 +143,8 @@
    "modality": "image",
    "image_attributes": [
     {
-     "color": "red",
-     "garment_category": "leggings",
+     "color": "brown",
+     "garment_category": "hoodie",
      "pattern": "leopard"
     }
    ]
@@ -230,7 +230,7 @@
      "pattern": "solid"
     },
     {
-     "color": "yellow",
+     "color": "blue",
      "garment_category": "mini_skirt",
      "pattern": "striped"
     }
@@ -248,8 +248,8 @@
    "modality": "image",
    "image_attributes": [
     {
-     "color": "brown",
-     "garment_category": "puffer_jacket",
+     "color": "yellow",
+     "garment_category": "tank_top",
      "pattern": "checkered"
     }
    ]
@@ -266,12 +266,12 @@
    "modality": "image",
    "image_attributes": [
     {
-     "color": "brown",
-     "garment_category": "leggings",
+     "color": "navy",
+     "garment_category": "puffer_jacket",
      "pattern": "solid"
     },
     {
-     "color": "brown",
+     "color": "navy",
      "garment_category": "blazer",
      "pattern": "solid"
     }
@@ -290,13 +290,13 @@
    "image_attributes": [
     {
      "color": "pink",
-     "garment_category": "t_shirt",
-     "pattern": "striped"
+     "garment_category": "hoodie",
+     "pattern": "solid"
     },
     {
      "color": "pink",
-     "garment_category": "jeans",
-     "pattern": "solid"
+     "garment_category": "tank_top",
+     "pattern": "striped"
     }
    ]
   },
@@ -492,9 +492,9 @@
    "time": "2026-07-08 19:20",
    "text": "Odd group — they share exactly one thing, and that shared color is precisely what I avoid.",
    "images": [
-    "beige/solid_windbreaker.jpg",
-    "beige/solid_sweater.jpg",
-    "beige/striped_formal_shirt.jpg"
+    "beige/solid_t_shirt.jpg",
+    "beige/solid_formal_shirt.jpg",
+    "beige/striped_polo_shirt.jpg"
    ]
   },
   {
@@ -510,9 +510,9 @@
    "time": "2026-07-08 19:22",
    "text": "Odd group — they share exactly one thing, and that shared color is precisely what I avoid.",
    "images": [
-    "black/striped_jeans.jpg",
-    "black/solid_formal_shirt.jpg",
-    "black/solid_jeans.jpg"
+    "black/solid_t_shirt.jpg",
+    "black/solid_sweatshirt.jpg",
+    "black/striped_formal_shirt.jpg"
    ]
   },
   {
@@ -528,7 +528,7 @@
    "time": "2026-07-08 19:24",
    "text": "This is exactly my favorite print. Grabbed it without thinking twice.",
    "images": [
-    "red/leopard_leggings.jpg"
+    "brown/leopard_hoodie.jpg"
    ]
   },
   {
@@ -623,7 +623,7 @@
    "text": "These two look nothing alike, but they share exactly one thing — and that shared cut is my favorite.",
    "images": [
     "red/solid_mini_skirt.jpg",
-    "yellow/striped_mini_skirt.jpg"
+    "blue/striped_mini_skirt.jpg"
    ]
   },
   {
@@ -639,7 +639,7 @@
    "time": "2026-07-12 19:38",
    "text": "This is exactly my favorite print. Grabbed it without thinking twice.",
    "images": [
-    "brown/checkered_puffer_jacket.jpg"
+    "yellow/checkered_tank_top.jpg"
    ]
   },
   {
@@ -655,8 +655,8 @@
    "time": "2026-07-12 19:40",
    "text": "Same item twice, one thing different. The second one's cut is the cut I never touch.",
    "images": [
-    "brown/solid_leggings.jpg",
-    "brown/solid_blazer.jpg"
+    "navy/solid_puffer_jacket.jpg",
+    "navy/solid_blazer.jpg"
    ]
   },
   {
@@ -686,8 +686,8 @@
    "time": "2026-07-14 19:44",
    "text": "Odd group — they share exactly one thing, and that shared color is precisely what I avoid.",
    "images": [
-    "pink/striped_t_shirt.jpg",
-    "pink/solid_jeans.jpg"
+    "pink/solid_hoodie.jpg",
+    "pink/striped_tank_top.jpg"
    ]
   },
   {

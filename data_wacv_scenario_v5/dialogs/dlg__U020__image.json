@@ -77,11 +77,6 @@
    "modality": "image",
    "image_attributes": [
     {
-     "color": "red",
-     "garment_category": "slacks",
-     "pattern": "floral"
-    },
-    {
      "color": "white",
      "garment_category": "slacks",
      "pattern": "solid"
@@ -90,6 +85,11 @@
      "color": "beige",
      "garment_category": "slacks",
      "pattern": "floral"
+    },
+    {
+     "color": "black",
+     "garment_category": "slacks",
+     "pattern": "solid"
     }
    ]
   },
@@ -107,12 +107,12 @@
     {
      "color": "pink",
      "garment_category": "polo_shirt",
-     "pattern": "floral"
+     "pattern": "solid"
     },
     {
      "color": "pink",
-     "garment_category": "leggings",
-     "pattern": "solid"
+     "garment_category": "long_coat",
+     "pattern": "floral"
     }
    ]
   },
@@ -129,12 +129,12 @@
    "image_attributes": [
     {
      "color": "white",
-     "garment_category": "t_shirt",
+     "garment_category": "long_coat",
      "pattern": "checkered"
     },
     {
      "color": "green",
-     "garment_category": "suit_vest",
+     "garment_category": "tank_top",
      "pattern": "checkered"
     }
    ]
@@ -151,12 +151,12 @@
    "modality": "image",
    "image_attributes": [
     {
-     "color": "black",
+     "color": "red",
      "garment_category": "mini_skirt",
      "pattern": "solid"
     },
     {
-     "color": "black",
+     "color": "red",
      "garment_category": "fleece_jacket",
      "pattern": "solid"
     }
@@ -175,12 +175,12 @@
    "image_attributes": [
     {
      "color": "yellow",
-     "garment_category": "blazer",
+     "garment_category": "mini_skirt",
      "pattern": "floral"
     },
     {
      "color": "yellow",
-     "garment_category": "long_coat",
+     "garment_category": "leggings",
      "pattern": "solid"
     }
    ]
@@ -198,12 +198,12 @@
    "image_attributes": [
     {
      "color": "orange",
-     "garment_category": "long_coat",
+     "garment_category": "mini_skirt",
      "pattern": "solid"
     },
     {
-     "color": "white",
-     "garment_category": "long_coat",
+     "color": "black",
+     "garment_category": "mini_skirt",
      "pattern": "solid"
     }
    ]
@@ -220,17 +220,17 @@
    "modality": "image",
    "image_attributes": [
     {
-     "color": "purple",
+     "color": "white",
      "garment_category": "windbreaker",
      "pattern": "floral"
     },
     {
-     "color": "black",
+     "color": "green",
      "garment_category": "windbreaker",
-     "pattern": "solid"
+     "pattern": "floral"
     },
     {
-     "color": "brown",
+     "color": "white",
      "garment_category": "windbreaker",
      "pattern": "solid"
     }
@@ -248,18 +248,18 @@
    "modality": "image",
    "image_attributes": [
     {
+     "color": "brown",
+     "garment_category": "tank_top",
+     "pattern": "leopard"
+    },
+    {
      "color": "white",
-     "garment_category": "t_shirt",
+     "garment_category": "hoodie",
      "pattern": "leopard"
     },
     {
      "color": "brown",
-     "garment_category": "puffer_jacket",
-     "pattern": "leopard"
-    },
-    {
-     "color": "green",
-     "garment_category": "long_coat",
+     "garment_category": "t_shirt",
      "pattern": "leopard"
     }
    ]
@@ -277,7 +277,7 @@
    "image_attributes": [
     {
      "color": "navy",
-     "garment_category": "hoodie",
+     "garment_category": "suit_vest",
      "pattern": "solid"
     }
    ]
@@ -294,8 +294,8 @@
    "modality": "image",
    "image_attributes": [
     {
-     "color": "brown",
-     "garment_category": "suit_vest",
+     "color": "black",
+     "garment_category": "puffer_jacket",
      "pattern": "polka_dot"
     }
    ]
@@ -312,7 +312,7 @@
    "modality": "image",
    "image_attributes": [
     {
-     "color": "red",
+     "color": "beige",
      "garment_category": "sweater",
      "pattern": "solid"
     }
@@ -330,12 +330,12 @@
    "modality": "image",
    "image_attributes": [
     {
-     "color": "green",
-     "garment_category": "suit_vest",
+     "color": "red",
+     "garment_category": "puffer_jacket",
      "pattern": "solid"
     },
     {
-     "color": "green",
+     "color": "red",
      "garment_category": "long_skirt",
      "pattern": "solid"
     }
@@ -354,12 +354,12 @@
    "image_attributes": [
     {
      "color": "blue",
-     "garment_category": "shorts",
+     "garment_category": "mini_skirt",
      "pattern": "solid"
     },
     {
-     "color": "beige",
-     "garment_category": "shorts",
+     "color": "green",
+     "garment_category": "mini_skirt",
      "pattern": "solid"
     }
    ]
@@ -376,7 +376,7 @@
    "modality": "image",
    "image_attributes": [
     {
-     "color": "green",
+     "color": "purple",
      "garment_category": "dress",
      "pattern": "solid"
     }
@@ -394,12 +394,12 @@
    "modality": "image",
    "image_attributes": [
     {
-     "color": "red",
-     "garment_category": "sweatshirt",
+     "color": "black",
+     "garment_category": "blazer",
      "pattern": "solid"
     },
     {
-     "color": "red",
+     "color": "black",
      "garment_category": "cardigan",
      "pattern": "solid"
     }
@@ -490,9 +490,9 @@
    "time": "2026-07-08 19:20",
    "text": "These three look nothing alike, but they share exactly one thing — and that shared cut is my favorite.",
    "images": [
-    "red/floral_slacks.jpg",
     "white/solid_slacks.jpg",
-    "beige/floral_slacks.jpg"
+    "beige/floral_slacks.jpg",
+    "black/solid_slacks.jpg"
    ]
   },
   {
@@ -508,8 +508,8 @@
    "time": "2026-07-08 19:22",
    "text": "These two look nothing alike, but they share exactly one thing — and that shared color is my favorite.",
    "images": [
-    "pink/floral_polo_shirt.jpg",
-    "pink/solid_leggings.jpg"
+    "pink/solid_polo_shirt.jpg",
+    "pink/floral_long_coat.jpg"
    ]
   },
   {
@@ -525,8 +525,8 @@
    "time": "2026-07-08 19:24",
    "text": "These two look nothing alike, but they share exactly one thing — and that shared print is my favorite.",
    "images": [
-    "white/checkered_t_shirt.jpg",
-    "green/checkered_suit_vest.jpg"
+    "white/checkered_long_coat.jpg",
+    "green/checkered_tank_top.jpg"
    ]
   },
   {
@@ -556,8 +556,8 @@
    "time": "2026-07-10 19:28",
    "text": "These two are the same thing except for one difference, and the second one's cut is completely me.",
    "images": [
-    "black/solid_mini_skirt.jpg",
-    "black/solid_fleece_jacket.jpg"
+    "red/solid_mini_skirt.jpg",
+    "red/solid_fleece_jacket.jpg"
    ]
   },
   {
@@ -573,8 +573,8 @@
    "time": "2026-07-10 19:30",
    "text": "These two look nothing alike, but they share exactly one thing — and that shared color is my favorite.",
    "images": [
-    "yellow/floral_blazer.jpg",
-    "yellow/solid_long_coat.jpg"
+    "yellow/floral_mini_skirt.jpg",
+    "yellow/solid_leggings.jpg"
    ]
   },
   {
@@ -590,8 +590,8 @@
    "time": "2026-07-10 19:32",
    "text": "These two are the same thing except for one difference, and the first one's color is completely me.",
    "images": [
-    "orange/solid_long_coat.jpg",
-    "white/solid_long_coat.jpg"
+    "orange/solid_mini_skirt.jpg",
+    "black/solid_mini_skirt.jpg"
    ]
   },
   {
@@ -621,9 +621,9 @@
    "time": "2026-07-12 19:36",
    "text": "Odd group — they share exactly one thing, and that shared cut is precisely what I avoid.",
    "images": [
-    "purple/floral_windbreaker.jpg",
-    "black/solid_windbreaker.jpg",
-    "brown/solid_windbreaker.jpg"
+    "white/floral_windbreaker.jpg",
+    "green/floral_windbreaker.jpg",
+    "white/solid_windbreaker.jpg"
    ]
   },
   {
@@ -639,9 +639,9 @@
    "time": "2026-07-12 19:38",
    "text": "Odd group — they share exactly one thing, and that shared print is precisely what I avoid.",
    "images": [
-    "white/leopard_t_shirt.jpg",
-    "brown/leopard_puffer_jacket.jpg",
-    "green/leopard_long_coat.jpg"
+    "brown/leopard_tank_top.jpg",
+    "white/leopard_hoodie.jpg",
+    "brown/leopard_t_shirt.jpg"
    ]
   },
   {
@@ -657,7 +657,7 @@
    "time": "2026-07-12 19:40",
    "text": "This one though: that color is the one color I always put back down.",
    "images": [
-    "navy/solid_hoodie.jpg"
+    "navy/solid_suit_vest.jpg"
    ]
   },
   {
@@ -687,7 +687,7 @@
    "time": "2026-07-14 19:44",
    "text": "This is exactly my favorite print. Grabbed it without thinking twice.",
    "images": [
-    "brown/polka_dot_suit_vest.jpg"
+    "black/polka_dot_puffer_jacket.jpg"
    ]
   },
   {
@@ -703,7 +703,7 @@
    "time": "2026-07-14 19:46",
    "text": "This one though: that cut is the one cut I always put back down.",
    "images": [
-    "red/solid_sweater.jpg"
+    "beige/solid_sweater.jpg"
    ]
   },
   {
@@ -719,8 +719,8 @@
    "time": "2026-07-14 19:48",
    "text": "Same item twice, one thing different. The second one's cut is the cut I never touch.",
    "images": [
-    "green/solid_suit_vest.jpg",
-    "green/solid_long_skirt.jpg"
+    "red/solid_puffer_jacket.jpg",
+    "red/solid_long_skirt.jpg"
    ]
   },
   {
@@ -750,8 +750,8 @@
    "time": "2026-07-16 19:52",
    "text": "Same item twice, one thing different. The first one's color is the color I never touch.",
    "images": [
-    "blue/solid_shorts.jpg",
-    "beige/solid_shorts.jpg"
+    "blue/solid_mini_skirt.jpg",
+    "green/solid_mini_skirt.jpg"
    ]
   },
   {
@@ -767,7 +767,7 @@
    "time": "2026-07-16 19:54",
    "text": "This one though: that cut is the one cut I always put back down.",
    "images": [
-    "green/solid_dress.jpg"
+    "purple/solid_dress.jpg"
    ]
   },
   {
@@ -783,8 +783,8 @@
    "time": "2026-07-16 19:11",
    "text": "These two are the same thing except for one difference, and the second one's cut is completely me.",
    "images": [
-    "red/solid_sweatshirt.jpg",
-    "red/solid_cardigan.jpg"
+    "black/solid_blazer.jpg",
+    "black/solid_cardigan.jpg"
    ]
   },
   {

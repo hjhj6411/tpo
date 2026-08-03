@@ -194,11 +194,13 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--dialogs", type=Path, default=DATA_DIR / "dialogs")
     ap.add_argument("--library", type=Path, default=LIBRARY)
+    ap.add_argument("--manifest", type=Path,
+                    default=DATA_DIR / "images_manifest.json")
     ap.add_argument("--self-test", action="store_true",
                     help="돌연변이 주입 후 검증기가 잡는지 확인")
     args = ap.parse_args()
 
-    cells = load_available_cells(args.library)
+    cells = load_available_cells(args.library, args.manifest)
     profiles = {}
     with open(DATA_DIR / "profiles" / "profiles.jsonl") as fh:
         for line in fh:

@@ -103,18 +103,18 @@
    "image_attributes": [
     {
      "color": "pink",
-     "garment_category": "t_shirt",
+     "garment_category": "fleece_jacket",
+     "pattern": "solid"
+    },
+    {
+     "color": "pink",
+     "garment_category": "mini_skirt",
      "pattern": "leopard"
     },
     {
      "color": "pink",
-     "garment_category": "puffer_jacket",
-     "pattern": "solid"
-    },
-    {
-     "color": "pink",
      "garment_category": "t_shirt",
-     "pattern": "solid"
+     "pattern": "leopard"
     }
    ]
   },
@@ -130,12 +130,12 @@
    "modality": "image",
    "image_attributes": [
     {
-     "color": "blue",
+     "color": "gray",
      "garment_category": "long_coat",
      "pattern": "solid"
     },
     {
-     "color": "blue",
+     "color": "gray",
      "garment_category": "t_shirt",
      "pattern": "solid"
     }
@@ -153,13 +153,13 @@
    "modality": "image",
    "image_attributes": [
     {
-     "color": "blue",
-     "garment_category": "shorts",
+     "color": "purple",
+     "garment_category": "formal_shirt",
      "pattern": "leopard"
     },
     {
-     "color": "blue",
-     "garment_category": "shorts",
+     "color": "purple",
+     "garment_category": "formal_shirt",
      "pattern": "striped"
     }
    ]
@@ -391,14 +391,14 @@
    "modality": "image",
    "image_attributes": [
     {
-     "color": "orange",
-     "garment_category": "cardigan",
-     "pattern": "solid"
-    },
-    {
      "color": "black",
      "garment_category": "cardigan",
      "pattern": "leopard"
+    },
+    {
+     "color": "blue",
+     "garment_category": "cardigan",
+     "pattern": "solid"
     }
    ]
   }
@@ -504,9 +504,9 @@
    "time": "2026-07-08 19:22",
    "text": "These three look nothing alike, but they share exactly one thing — and that shared color is my favorite.",
    "images": [
-    "pink/leopard_t_shirt.jpg",
-    "pink/solid_puffer_jacket.jpg",
-    "pink/solid_t_shirt.jpg"
+    "pink/solid_fleece_jacket.jpg",
+    "pink/leopard_mini_skirt.jpg",
+    "pink/leopard_t_shirt.jpg"
    ]
   },
   {
@@ -522,8 +522,8 @@
    "time": "2026-07-08 19:24",
    "text": "Same item twice, one thing different. The first one's cut is the cut I never touch.",
    "images": [
-    "blue/solid_long_coat.jpg",
-    "blue/solid_t_shirt.jpg"
+    "gray/solid_long_coat.jpg",
+    "gray/solid_t_shirt.jpg"
    ]
   },
   {
@@ -553,8 +553,8 @@
    "time": "2026-07-10 19:28",
    "text": "Same item twice, one thing different. The second one's print is the print I never touch.",
    "images": [
-    "blue/leopard_shorts.jpg",
-    "blue/striped_shorts.jpg"
+    "purple/leopard_formal_shirt.jpg",
+    "purple/striped_formal_shirt.jpg"
    ]
   },
   {
@@ -779,8 +779,8 @@
    "time": "2026-07-16 19:11",
    "text": "These two look nothing alike, but they share exactly one thing — and that shared cut is my favorite.",
    "images": [
-    "orange/solid_cardigan.jpg",
-    "black/leopard_cardigan.jpg"
+    "black/leopard_cardigan.jpg",
+    "blue/solid_cardigan.jpg"
    ]
   },
   {

@@ -18,18 +18,18 @@
    "modality": "image",
    "image_attributes": [
     {
-     "color": "red",
-     "garment_category": "hoodie",
-     "pattern": "checkered"
-    },
-    {
      "color": "white",
-     "garment_category": "t_shirt",
+     "garment_category": "hoodie",
      "pattern": "checkered"
     },
     {
      "color": "blue",
      "garment_category": "dress",
+     "pattern": "checkered"
+    },
+    {
+     "color": "purple",
+     "garment_category": "puffer_jacket",
      "pattern": "checkered"
     }
    ]
@@ -46,13 +46,13 @@
    "modality": "image",
    "image_attributes": [
     {
-     "color": "purple",
+     "color": "pink",
      "garment_category": "slacks",
      "pattern": "solid"
     },
     {
-     "color": "purple",
-     "garment_category": "leather_jacket",
+     "color": "pink",
+     "garment_category": "jeans",
      "pattern": "solid"
     }
    ]
@@ -331,7 +331,7 @@
    "image_attributes": [
     {
      "color": "yellow",
-     "garment_category": "fleece_jacket",
+     "garment_category": "shorts",
      "pattern": "floral"
     }
    ]
@@ -427,9 +427,9 @@
    "time": "2026-07-06 19:12",
    "text": "Odd group — they share exactly one thing, and that shared print is precisely what I avoid.",
    "images": [
-    "red/checkered_hoodie.jpg",
-    "white/checkered_t_shirt.jpg",
-    "blue/checkered_dress.jpg"
+    "white/checkered_hoodie.jpg",
+    "blue/checkered_dress.jpg",
+    "purple/checkered_puffer_jacket.jpg"
    ]
   },
   {
@@ -445,8 +445,8 @@
    "time": "2026-07-06 19:14",
    "text": "These two are the same thing except for one difference, and the first one's cut is completely me.",
    "images": [
-    "purple/solid_slacks.jpg",
-    "purple/solid_leather_jacket.jpg"
+    "pink/solid_slacks.jpg",
+    "pink/solid_jeans.jpg"
    ]
   },
   {
@@ -719,7 +719,7 @@
    "time": "2026-07-14 19:48",
    "text": "This is exactly my favorite print. Grabbed it without thinking twice.",
    "images": [
-    "yellow/floral_fleece_jacket.jpg"
+    "yellow/floral_shorts.jpg"
    ]
   },
   {

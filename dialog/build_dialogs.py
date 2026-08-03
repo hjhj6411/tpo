@@ -38,9 +38,12 @@ def main() -> int:
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--out", type=Path, default=DATA_DIR / "dialogs")
     ap.add_argument("--library", type=Path, default=LIBRARY)
+    ap.add_argument("--manifest", type=Path,
+                    default=DATA_DIR / "images_manifest.json",
+                    help="실제 materialize 된 셀 목록. 라이브러리와 교집합을 쓴다")
     args = ap.parse_args()
 
-    cells = load_available_cells(args.library)
+    cells = load_available_cells(args.library, args.manifest)
     lib_hash = hashlib.sha256(args.library.read_bytes()).hexdigest()[:16]
 
     profiles = []

@@ -21,9 +21,22 @@ from configs.config import FASHION_ATTRIBUTE_AXES
 from dialog.expression import AXES
 
 
-def load_available_cells(library_path: Path) -> set[str]:
+def load_available_cells(library_path: Path,
+                         manifest_path: Path | None = None) -> set[str]:
+    """후보 셀 = 검수 통과 ∩ 실제로 materialize 된 이미지.
+
+    두 집합은 다르다. attribute_library 의 available 은 '사람이 이 크롭을
+    승인했다'는 뜻이고, images_manifest 는 '그 이미지가 images/ 에 실제로
+    복사되었다'는 뜻이다. v5 기준 각각 1,223 / 1,108 로 115개가 어긋난다.
+    전자만 제약으로 쓰면 파일 없는 대화가 생성된다 — 승인과 존재를 같은
+    것으로 취급한 데서 나오는 오류다.
+    """
     lib = json.loads(Path(library_path).read_text())
-    return {k for k, v in lib["cells"].items() if v.get("status") == "available"}
+    cells = {k for k, v in lib["cells"].items() if v.get("status") == "available"}
+    if manifest_path is not None and Path(manifest_path).is_file():
+        materialized = set(json.loads(Path(manifest_path).read_text())["cells"])
+        cells &= materialized
+    return cells
 
 
 class ImagePicker:

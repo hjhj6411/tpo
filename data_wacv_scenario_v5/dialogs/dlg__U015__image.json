@@ -105,17 +105,17 @@
    "modality": "image",
    "image_attributes": [
     {
-     "color": "pink",
-     "garment_category": "dress",
+     "color": "gray",
+     "garment_category": "windbreaker",
      "pattern": "leopard"
     },
     {
-     "color": "yellow",
-     "garment_category": "dress",
+     "color": "navy",
+     "garment_category": "long_coat",
      "pattern": "leopard"
     },
     {
-     "color": "brown",
+     "color": "gray",
      "garment_category": "t_shirt",
      "pattern": "leopard"
     }
@@ -151,8 +151,8 @@
    "modality": "image",
    "image_attributes": [
     {
-     "color": "pink",
-     "garment_category": "long_skirt",
+     "color": "brown",
+     "garment_category": "hoodie",
      "pattern": "polka_dot"
     },
     {
@@ -202,7 +202,7 @@
      "pattern": "solid"
     },
     {
-     "color": "brown",
+     "color": "gray",
      "garment_category": "formal_shirt",
      "pattern": "floral"
     }
@@ -349,17 +349,17 @@
    "image_attributes": [
     {
      "color": "orange",
-     "garment_category": "tank_top",
-     "pattern": "floral"
-    },
-    {
-     "color": "orange",
-     "garment_category": "t_shirt",
+     "garment_category": "long_coat",
      "pattern": "floral"
     },
     {
      "color": "orange",
      "garment_category": "long_coat",
+     "pattern": "solid"
+    },
+    {
+     "color": "orange",
+     "garment_category": "dress",
      "pattern": "solid"
     }
    ]
@@ -376,7 +376,7 @@
    "modality": "image",
    "image_attributes": [
     {
-     "color": "gray",
+     "color": "brown",
      "garment_category": "hoodie",
      "pattern": "striped"
     }
@@ -395,13 +395,13 @@
    "image_attributes": [
     {
      "color": "blue",
-     "garment_category": "puffer_jacket",
-     "pattern": "floral"
+     "garment_category": "sweatshirt",
+     "pattern": "solid"
     },
     {
      "color": "blue",
-     "garment_category": "jeans",
-     "pattern": "solid"
+     "garment_category": "hoodie",
+     "pattern": "floral"
     }
    ]
   }
@@ -508,9 +508,9 @@
    "time": "2026-07-08 19:22",
    "text": "These three look nothing alike, but they share exactly one thing — and that shared print is my favorite.",
    "images": [
-    "pink/leopard_dress.jpg",
-    "yellow/leopard_dress.jpg",
-    "brown/leopard_t_shirt.jpg"
+    "gray/leopard_windbreaker.jpg",
+    "navy/leopard_long_coat.jpg",
+    "gray/leopard_t_shirt.jpg"
    ]
   },
   {
@@ -556,7 +556,7 @@
    "time": "2026-07-10 19:28",
    "text": "Odd group — they share exactly one thing, and that shared print is precisely what I avoid.",
    "images": [
-    "pink/polka_dot_long_skirt.jpg",
+    "brown/polka_dot_hoodie.jpg",
     "navy/polka_dot_long_coat.jpg"
    ]
   },
@@ -591,7 +591,7 @@
    "text": "These two look nothing alike, but they share exactly one thing — and that shared cut is my favorite.",
    "images": [
     "black/solid_formal_shirt.jpg",
-    "brown/floral_formal_shirt.jpg"
+    "gray/floral_formal_shirt.jpg"
    ]
   },
   {
@@ -749,9 +749,9 @@
    "time": "2026-07-16 19:52",
    "text": "Odd group — they share exactly one thing, and that shared color is precisely what I avoid.",
    "images": [
-    "orange/floral_tank_top.jpg",
-    "orange/floral_t_shirt.jpg",
-    "orange/solid_long_coat.jpg"
+    "orange/floral_long_coat.jpg",
+    "orange/solid_long_coat.jpg",
+    "orange/solid_dress.jpg"
    ]
   },
   {
@@ -767,7 +767,7 @@
    "time": "2026-07-16 19:54",
    "text": "This is exactly my favorite print. Grabbed it without thinking twice.",
    "images": [
-    "gray/striped_hoodie.jpg"
+    "brown/striped_hoodie.jpg"
    ]
   },
   {
@@ -783,8 +783,8 @@
    "time": "2026-07-16 19:11",
    "text": "These two look nothing alike, but they share exactly one thing — and that shared color is my favorite.",
    "images": [
-    "blue/floral_puffer_jacket.jpg",
-    "blue/solid_jeans.jpg"
+    "blue/solid_sweatshirt.jpg",
+    "blue/floral_hoodie.jpg"
    ]
   },
   {

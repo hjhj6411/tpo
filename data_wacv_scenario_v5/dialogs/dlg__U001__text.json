@@ -68,18 +68,18 @@
    "image_attributes": [
     {
      "color": "orange",
-     "garment_category": "mini_skirt",
-     "pattern": "solid"
-    },
-    {
-     "color": "orange",
-     "garment_category": "puffer_jacket",
-     "pattern": "solid"
-    },
-    {
-     "color": "orange",
-     "garment_category": "windbreaker",
+     "garment_category": "polo_shirt",
      "pattern": "striped"
+    },
+    {
+     "color": "orange",
+     "garment_category": "hoodie",
+     "pattern": "solid"
+    },
+    {
+     "color": "orange",
+     "garment_category": "dress",
+     "pattern": "solid"
     }
    ]
   },
@@ -225,7 +225,7 @@
     {
      "color": "green",
      "garment_category": "mini_skirt",
-     "pattern": "striped"
+     "pattern": "solid"
     },
     {
      "color": "green",
@@ -251,13 +251,13 @@
    "modality": "text",
    "image_attributes": [
     {
-     "color": "navy",
+     "color": "gray",
      "garment_category": "tank_top",
      "pattern": "polka_dot"
     },
     {
-     "color": "yellow",
-     "garment_category": "polo_shirt",
+     "color": "white",
+     "garment_category": "t_shirt",
      "pattern": "polka_dot"
     }
    ]
@@ -451,7 +451,7 @@
    "turn_id": 6,
    "speaker": "user",
    "time": "2026-07-06 19:16",
-   "text": "Odd group — they share exactly one thing, and that shared color is precisely what I avoid.  {orange solid mini skirt}  {orange solid puffer jacket}  {orange striped windbreaker}",
+   "text": "Odd group — they share exactly one thing, and that shared color is precisely what I avoid.  {orange striped polo shirt}  {orange solid hoodie}  {orange solid dress}",
    "images": []
   },
   {
@@ -591,7 +591,7 @@
    "turn_id": 26,
    "speaker": "user",
    "time": "2026-07-12 19:36",
-   "text": "Odd group — they share exactly one thing, and that shared color is precisely what I avoid.  {green striped mini skirt}  {green solid t-shirt}  {green striped polo shirt}",
+   "text": "Odd group — they share exactly one thing, and that shared color is precisely what I avoid.  {green solid mini skirt}  {green solid t-shirt}  {green striped polo shirt}",
    "images": []
   },
   {
@@ -605,7 +605,7 @@
    "turn_id": 28,
    "speaker": "user",
    "time": "2026-07-12 19:38",
-   "text": "Odd group — they share exactly one thing, and that shared print is precisely what I avoid.  {navy polka dot tank top}  {yellow polka dot polo shirt}",
+   "text": "Odd group — they share exactly one thing, and that shared print is precisely what I avoid.  {gray polka dot tank top}  {white polka dot t-shirt}",
    "images": []
   },
   {

@@ -18,18 +18,18 @@
    "modality": "text",
    "image_attributes": [
     {
-     "color": "red",
-     "garment_category": "hoodie",
-     "pattern": "checkered"
-    },
-    {
      "color": "white",
-     "garment_category": "t_shirt",
+     "garment_category": "hoodie",
      "pattern": "checkered"
     },
     {
      "color": "blue",
      "garment_category": "dress",
+     "pattern": "checkered"
+    },
+    {
+     "color": "purple",
+     "garment_category": "puffer_jacket",
      "pattern": "checkered"
     }
    ]
@@ -46,13 +46,13 @@
    "modality": "text",
    "image_attributes": [
     {
-     "color": "purple",
+     "color": "pink",
      "garment_category": "slacks",
      "pattern": "solid"
     },
     {
-     "color": "purple",
-     "garment_category": "leather_jacket",
+     "color": "pink",
+     "garment_category": "jeans",
      "pattern": "solid"
     }
    ]
@@ -331,7 +331,7 @@
    "image_attributes": [
     {
      "color": "yellow",
-     "garment_category": "fleece_jacket",
+     "garment_category": "shorts",
      "pattern": "floral"
     }
    ]
@@ -425,7 +425,7 @@
    "turn_id": 2,
    "speaker": "user",
    "time": "2026-07-06 19:12",
-   "text": "Odd group — they share exactly one thing, and that shared print is precisely what I avoid.  {red checkered hoodie}  {white checkered t-shirt}  {blue checkered dress}",
+   "text": "Odd group — they share exactly one thing, and that shared print is precisely what I avoid.  {white checkered hoodie}  {blue checkered dress}  {purple checkered puffer jacket}",
    "images": []
   },
   {
@@ -439,7 +439,7 @@
    "turn_id": 4,
    "speaker": "user",
    "time": "2026-07-06 19:14",
-   "text": "These two are the same thing except for one difference, and the first one's cut is completely me.  {purple solid slacks}  {purple solid leather jacket}",
+   "text": "These two are the same thing except for one difference, and the first one's cut is completely me.  {pink solid slacks}  {pink solid jeans}",
    "images": []
   },
   {
@@ -677,7 +677,7 @@
    "turn_id": 38,
    "speaker": "user",
    "time": "2026-07-14 19:48",
-   "text": "This is exactly my favorite print. Grabbed it without thinking twice.  {yellow floral fleece jacket}",
+   "text": "This is exactly my favorite print. Grabbed it without thinking twice.  {yellow floral shorts}",
    "images": []
   },
   {

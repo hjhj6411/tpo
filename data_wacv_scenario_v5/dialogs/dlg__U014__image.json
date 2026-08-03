@@ -60,8 +60,8 @@
    "image_attributes": [
     {
      "color": "purple",
-     "garment_category": "puffer_jacket",
-     "pattern": "checkered"
+     "garment_category": "jeans",
+     "pattern": "solid"
     },
     {
      "color": "purple",
@@ -70,8 +70,8 @@
     },
     {
      "color": "purple",
-     "garment_category": "sweatshirt",
-     "pattern": "solid"
+     "garment_category": "mini_skirt",
+     "pattern": "checkered"
     }
    ]
   },
@@ -146,12 +146,12 @@
    "modality": "image",
    "image_attributes": [
     {
-     "color": "white",
+     "color": "pink",
      "garment_category": "windbreaker",
      "pattern": "solid"
     },
     {
-     "color": "red",
+     "color": "green",
      "garment_category": "windbreaker",
      "pattern": "checkered"
     }
@@ -216,13 +216,13 @@
    "image_attributes": [
     {
      "color": "gray",
-     "garment_category": "hoodie",
-     "pattern": "solid"
+     "garment_category": "blazer",
+     "pattern": "checkered"
     },
     {
      "color": "gray",
-     "garment_category": "shorts",
-     "pattern": "checkered"
+     "garment_category": "jeans",
+     "pattern": "solid"
     }
    ]
   },
@@ -261,13 +261,13 @@
    "modality": "image",
    "image_attributes": [
     {
-     "color": "orange",
-     "garment_category": "polo_shirt",
+     "color": "navy",
+     "garment_category": "t_shirt",
      "pattern": "polka_dot"
     },
     {
-     "color": "navy",
-     "garment_category": "long_skirt",
+     "color": "white",
+     "garment_category": "puffer_jacket",
      "pattern": "polka_dot"
     }
    ]
@@ -367,18 +367,18 @@
    "image_attributes": [
     {
      "color": "blue",
-     "garment_category": "fleece_jacket",
-     "pattern": "solid"
-    },
-    {
-     "color": "blue",
      "garment_category": "t_shirt",
      "pattern": "solid"
     },
     {
      "color": "blue",
-     "garment_category": "leggings",
+     "garment_category": "t_shirt",
      "pattern": "checkered"
+    },
+    {
+     "color": "blue",
+     "garment_category": "hoodie",
+     "pattern": "solid"
     }
    ]
   },
@@ -460,9 +460,9 @@
    "time": "2026-07-06 19:16",
    "text": "Odd group — they share exactly one thing, and that shared color is precisely what I avoid.",
    "images": [
-    "purple/checkered_puffer_jacket.jpg",
+    "purple/solid_jeans.jpg",
     "purple/solid_shorts.jpg",
-    "purple/solid_sweatshirt.jpg"
+    "purple/checkered_mini_skirt.jpg"
    ]
   },
   {
@@ -555,8 +555,8 @@
    "time": "2026-07-10 19:28",
    "text": "These two look nothing alike, but they share exactly one thing — and that shared cut is my favorite.",
    "images": [
-    "white/solid_windbreaker.jpg",
-    "red/checkered_windbreaker.jpg"
+    "pink/solid_windbreaker.jpg",
+    "green/checkered_windbreaker.jpg"
    ]
   },
   {
@@ -620,8 +620,8 @@
    "time": "2026-07-12 19:36",
    "text": "These two look nothing alike, but they share exactly one thing — and that shared color is my favorite.",
    "images": [
-    "gray/solid_hoodie.jpg",
-    "gray/checkered_shorts.jpg"
+    "gray/checkered_blazer.jpg",
+    "gray/solid_jeans.jpg"
    ]
   },
   {
@@ -654,8 +654,8 @@
    "time": "2026-07-12 19:40",
    "text": "These two look nothing alike, but they share exactly one thing — and that shared print is my favorite.",
    "images": [
-    "orange/polka_dot_polo_shirt.jpg",
-    "navy/polka_dot_long_skirt.jpg"
+    "navy/polka_dot_t_shirt.jpg",
+    "white/polka_dot_puffer_jacket.jpg"
    ]
   },
   {
@@ -765,9 +765,9 @@
    "time": "2026-07-16 19:54",
    "text": "Odd group — they share exactly one thing, and that shared color is precisely what I avoid.",
    "images": [
-    "blue/solid_fleece_jacket.jpg",
     "blue/solid_t_shirt.jpg",
-    "blue/checkered_leggings.jpg"
+    "blue/checkered_t_shirt.jpg",
+    "blue/solid_hoodie.jpg"
    ]
   },
   {

@@ -68,18 +68,18 @@
    "image_attributes": [
     {
      "color": "orange",
-     "garment_category": "mini_skirt",
-     "pattern": "solid"
-    },
-    {
-     "color": "orange",
-     "garment_category": "puffer_jacket",
-     "pattern": "solid"
-    },
-    {
-     "color": "orange",
-     "garment_category": "windbreaker",
+     "garment_category": "polo_shirt",
      "pattern": "striped"
+    },
+    {
+     "color": "orange",
+     "garment_category": "hoodie",
+     "pattern": "solid"
+    },
+    {
+     "color": "orange",
+     "garment_category": "dress",
+     "pattern": "solid"
     }
    ]
   },
@@ -225,7 +225,7 @@
     {
      "color": "green",
      "garment_category": "mini_skirt",
-     "pattern": "striped"
+     "pattern": "solid"
     },
     {
      "color": "green",
@@ -251,13 +251,13 @@
    "modality": "image",
    "image_attributes": [
     {
-     "color": "navy",
+     "color": "gray",
      "garment_category": "tank_top",
      "pattern": "polka_dot"
     },
     {
-     "color": "yellow",
-     "garment_category": "polo_shirt",
+     "color": "white",
+     "garment_category": "t_shirt",
      "pattern": "polka_dot"
     }
    ]
@@ -459,9 +459,9 @@
    "time": "2026-07-06 19:16",
    "text": "Odd group — they share exactly one thing, and that shared color is precisely what I avoid.",
    "images": [
-    "orange/solid_mini_skirt.jpg",
-    "orange/solid_puffer_jacket.jpg",
-    "orange/striped_windbreaker.jpg"
+    "orange/striped_polo_shirt.jpg",
+    "orange/solid_hoodie.jpg",
+    "orange/solid_dress.jpg"
    ]
   },
   {
@@ -619,7 +619,7 @@
    "time": "2026-07-12 19:36",
    "text": "Odd group — they share exactly one thing, and that shared color is precisely what I avoid.",
    "images": [
-    "green/striped_mini_skirt.jpg",
+    "green/solid_mini_skirt.jpg",
     "green/solid_t_shirt.jpg",
     "green/striped_polo_shirt.jpg"
    ]
@@ -637,8 +637,8 @@
    "time": "2026-07-12 19:38",
    "text": "Odd group — they share exactly one thing, and that shared print is precisely what I avoid.",
    "images": [
-    "navy/polka_dot_tank_top.jpg",
-    "yellow/polka_dot_polo_shirt.jpg"
+    "gray/polka_dot_tank_top.jpg",
+    "white/polka_dot_t_shirt.jpg"
    ]
   },
   {

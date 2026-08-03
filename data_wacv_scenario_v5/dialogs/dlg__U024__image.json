@@ -285,17 +285,17 @@
    "image_attributes": [
     {
      "color": "black",
-     "garment_category": "leggings",
+     "garment_category": "cardigan",
+     "pattern": "solid"
+    },
+    {
+     "color": "black",
+     "garment_category": "tank_top",
      "pattern": "checkered"
     },
     {
      "color": "black",
      "garment_category": "mini_skirt",
-     "pattern": "checkered"
-    },
-    {
-     "color": "black",
-     "garment_category": "tank_top",
      "pattern": "solid"
     }
    ]
@@ -312,13 +312,13 @@
    "modality": "image",
    "image_attributes": [
     {
-     "color": "white",
+     "color": "orange",
      "garment_category": "long_skirt",
      "pattern": "solid"
     },
     {
-     "color": "white",
-     "garment_category": "fleece_jacket",
+     "color": "orange",
+     "garment_category": "slacks",
      "pattern": "solid"
     }
    ]
@@ -335,13 +335,13 @@
    "modality": "image",
    "image_attributes": [
     {
-     "color": "pink",
-     "garment_category": "mini_skirt",
+     "color": "beige",
+     "garment_category": "leather_jacket",
      "pattern": "solid"
     },
     {
      "color": "navy",
-     "garment_category": "mini_skirt",
+     "garment_category": "leather_jacket",
      "pattern": "solid"
     }
    ]
@@ -394,13 +394,13 @@
    "modality": "image",
    "image_attributes": [
     {
-     "color": "orange",
-     "garment_category": "polo_shirt",
+     "color": "red",
+     "garment_category": "formal_shirt",
      "pattern": "polka_dot"
     },
     {
-     "color": "yellow",
-     "garment_category": "windbreaker",
+     "color": "brown",
+     "garment_category": "leggings",
      "pattern": "polka_dot"
     }
    ]
@@ -685,9 +685,9 @@
    "time": "2026-07-14 19:44",
    "text": "These three look nothing alike, but they share exactly one thing — and that shared color is my favorite.",
    "images": [
-    "black/checkered_leggings.jpg",
-    "black/checkered_mini_skirt.jpg",
-    "black/solid_tank_top.jpg"
+    "black/solid_cardigan.jpg",
+    "black/checkered_tank_top.jpg",
+    "black/solid_mini_skirt.jpg"
    ]
   },
   {
@@ -703,8 +703,8 @@
    "time": "2026-07-14 19:46",
    "text": "Same item twice, one thing different. The first one's cut is the cut I never touch.",
    "images": [
-    "white/solid_long_skirt.jpg",
-    "white/solid_fleece_jacket.jpg"
+    "orange/solid_long_skirt.jpg",
+    "orange/solid_slacks.jpg"
    ]
   },
   {
@@ -720,8 +720,8 @@
    "time": "2026-07-14 19:48",
    "text": "These two are the same thing except for one difference, and the second one's color is completely me.",
    "images": [
-    "pink/solid_mini_skirt.jpg",
-    "navy/solid_mini_skirt.jpg"
+    "beige/solid_leather_jacket.jpg",
+    "navy/solid_leather_jacket.jpg"
    ]
   },
   {
@@ -783,8 +783,8 @@
    "time": "2026-07-16 19:11",
    "text": "These two look nothing alike, but they share exactly one thing — and that shared print is my favorite.",
    "images": [
-    "orange/polka_dot_polo_shirt.jpg",
-    "yellow/polka_dot_windbreaker.jpg"
+    "red/polka_dot_formal_shirt.jpg",
+    "brown/polka_dot_leggings.jpg"
    ]
   },
   {

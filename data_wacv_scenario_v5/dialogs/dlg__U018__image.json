@@ -85,12 +85,12 @@
    "image_attributes": [
     {
      "color": "yellow",
-     "garment_category": "polo_shirt",
+     "garment_category": "tank_top",
      "pattern": "polka_dot"
     },
     {
      "color": "yellow",
-     "garment_category": "formal_shirt",
+     "garment_category": "leather_jacket",
      "pattern": "solid"
     }
    ]
@@ -107,8 +107,8 @@
    "modality": "image",
    "image_attributes": [
     {
-     "color": "red",
-     "garment_category": "tank_top",
+     "color": "green",
+     "garment_category": "mini_skirt",
      "pattern": "striped"
     }
    ]
@@ -214,12 +214,12 @@
     {
      "color": "red",
      "garment_category": "puffer_jacket",
-     "pattern": "polka_dot"
+     "pattern": "solid"
     },
     {
-     "color": "gray",
+     "color": "navy",
      "garment_category": "puffer_jacket",
-     "pattern": "solid"
+     "pattern": "polka_dot"
     }
    ]
   },
@@ -488,8 +488,8 @@
    "time": "2026-07-08 19:20",
    "text": "Odd group — they share exactly one thing, and that shared color is precisely what I avoid.",
    "images": [
-    "yellow/polka_dot_polo_shirt.jpg",
-    "yellow/solid_formal_shirt.jpg"
+    "yellow/polka_dot_tank_top.jpg",
+    "yellow/solid_leather_jacket.jpg"
    ]
   },
   {
@@ -505,7 +505,7 @@
    "time": "2026-07-08 19:22",
    "text": "This one though: that print is the one print I always put back down.",
    "images": [
-    "red/striped_tank_top.jpg"
+    "green/striped_mini_skirt.jpg"
    ]
   },
   {
@@ -616,8 +616,8 @@
    "time": "2026-07-12 19:36",
    "text": "These two look nothing alike, but they share exactly one thing — and that shared cut is my favorite.",
    "images": [
-    "red/polka_dot_puffer_jacket.jpg",
-    "gray/solid_puffer_jacket.jpg"
+    "red/solid_puffer_jacket.jpg",
+    "navy/polka_dot_puffer_jacket.jpg"
    ]
   },
   {

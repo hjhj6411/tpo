@@ -161,19 +161,19 @@
    "modality": "text",
    "image_attributes": [
     {
-     "color": "navy",
-     "garment_category": "slacks",
-     "pattern": "checkered"
-    },
-    {
      "color": "white",
      "garment_category": "slacks",
      "pattern": "checkered"
     },
     {
-     "color": "yellow",
+     "color": "gray",
      "garment_category": "slacks",
      "pattern": "solid"
+    },
+    {
+     "color": "navy",
+     "garment_category": "slacks",
+     "pattern": "checkered"
     }
    ]
   },
@@ -190,7 +190,7 @@
    "image_attributes": [
     {
      "color": "purple",
-     "garment_category": "jeans",
+     "garment_category": "tank_top",
      "pattern": "solid"
     }
    ]
@@ -207,13 +207,13 @@
    "modality": "text",
    "image_attributes": [
     {
-     "color": "green",
-     "garment_category": "windbreaker",
+     "color": "red",
+     "garment_category": "mini_skirt",
      "pattern": "polka_dot"
     },
     {
-     "color": "green",
-     "garment_category": "windbreaker",
+     "color": "red",
+     "garment_category": "mini_skirt",
      "pattern": "checkered"
     }
    ]
@@ -230,8 +230,8 @@
    "modality": "text",
    "image_attributes": [
     {
-     "color": "navy",
-     "garment_category": "long_coat",
+     "color": "red",
+     "garment_category": "shorts",
      "pattern": "leopard"
     }
    ]
@@ -249,17 +249,17 @@
    "image_attributes": [
     {
      "color": "brown",
-     "garment_category": "jeans",
-     "pattern": "checkered"
-    },
-    {
-     "color": "brown",
-     "garment_category": "cardigan",
-     "pattern": "checkered"
+     "garment_category": "shorts",
+     "pattern": "solid"
     },
     {
      "color": "brown",
      "garment_category": "long_coat",
+     "pattern": "checkered"
+    },
+    {
+     "color": "brown",
+     "garment_category": "dress",
      "pattern": "solid"
     }
    ]
@@ -276,8 +276,8 @@
    "modality": "text",
    "image_attributes": [
     {
-     "color": "blue",
-     "garment_category": "dress",
+     "color": "navy",
+     "garment_category": "long_coat",
      "pattern": "striped"
     }
    ]
@@ -295,7 +295,7 @@
    "image_attributes": [
     {
      "color": "orange",
-     "garment_category": "long_coat",
+     "garment_category": "dress",
      "pattern": "solid"
     }
    ]
@@ -312,7 +312,7 @@
    "modality": "text",
    "image_attributes": [
     {
-     "color": "blue",
+     "color": "navy",
      "garment_category": "blazer",
      "pattern": "solid"
     }
@@ -330,14 +330,14 @@
    "modality": "text",
    "image_attributes": [
     {
-     "color": "yellow",
-     "garment_category": "polo_shirt",
-     "pattern": "solid"
-    },
-    {
      "color": "white",
      "garment_category": "polo_shirt",
      "pattern": "checkered"
+    },
+    {
+     "color": "gray",
+     "garment_category": "polo_shirt",
+     "pattern": "solid"
     }
    ]
   },
@@ -353,12 +353,12 @@
    "modality": "text",
    "image_attributes": [
     {
-     "color": "green",
-     "garment_category": "fleece_jacket",
+     "color": "red",
+     "garment_category": "windbreaker",
      "pattern": "solid"
     },
     {
-     "color": "green",
+     "color": "red",
      "garment_category": "formal_shirt",
      "pattern": "solid"
     }
@@ -376,14 +376,14 @@
    "modality": "text",
    "image_attributes": [
     {
-     "color": "navy",
-     "garment_category": "sweater",
-     "pattern": "solid"
-    },
-    {
      "color": "gray",
      "garment_category": "sweater",
      "pattern": "checkered"
+    },
+    {
+     "color": "red",
+     "garment_category": "sweater",
+     "pattern": "solid"
     }
    ]
   },
@@ -399,7 +399,7 @@
    "modality": "text",
    "image_attributes": [
     {
-     "color": "red",
+     "color": "white",
      "garment_category": "suit_vest",
      "pattern": "solid"
     }
@@ -537,7 +537,7 @@
    "turn_id": 18,
    "speaker": "user",
    "time": "2026-07-10 19:28",
-   "text": "Odd group — they share exactly one thing, and that shared cut is precisely what I avoid.  {navy checkered slacks}  {white checkered slacks}  {yellow solid slacks}",
+   "text": "Odd group — they share exactly one thing, and that shared cut is precisely what I avoid.  {white checkered slacks}  {gray solid slacks}  {navy checkered slacks}",
    "images": []
   },
   {
@@ -551,7 +551,7 @@
    "turn_id": 20,
    "speaker": "user",
    "time": "2026-07-10 19:30",
-   "text": "This is exactly my favorite color. Grabbed it without thinking twice.  {purple solid jeans}",
+   "text": "This is exactly my favorite color. Grabbed it without thinking twice.  {purple solid tank top}",
    "images": []
   },
   {
@@ -565,7 +565,7 @@
    "turn_id": 22,
    "speaker": "user",
    "time": "2026-07-10 19:32",
-   "text": "Same item twice, one thing different. The first one's print is the print I never touch.  {green polka dot windbreaker}  {green checkered windbreaker}",
+   "text": "Same item twice, one thing different. The first one's print is the print I never touch.  {red polka dot mini skirt}  {red checkered mini skirt}",
    "images": []
   },
   {
@@ -593,7 +593,7 @@
    "turn_id": 26,
    "speaker": "user",
    "time": "2026-07-12 19:36",
-   "text": "This is exactly my favorite print. Grabbed it without thinking twice.  {navy leopard long coat}",
+   "text": "This is exactly my favorite print. Grabbed it without thinking twice.  {red leopard shorts}",
    "images": []
   },
   {
@@ -607,7 +607,7 @@
    "turn_id": 28,
    "speaker": "user",
    "time": "2026-07-12 19:38",
-   "text": "These three look nothing alike, but they share exactly one thing — and that shared color is my favorite.  {brown checkered jeans}  {brown checkered cardigan}  {brown solid long coat}",
+   "text": "These three look nothing alike, but they share exactly one thing — and that shared color is my favorite.  {brown solid shorts}  {brown checkered long coat}  {brown solid dress}",
    "images": []
   },
   {
@@ -621,7 +621,7 @@
    "turn_id": 30,
    "speaker": "user",
    "time": "2026-07-12 19:40",
-   "text": "This is exactly my favorite print. Grabbed it without thinking twice.  {blue striped dress}",
+   "text": "This is exactly my favorite print. Grabbed it without thinking twice.  {navy striped long coat}",
    "images": []
   },
   {
@@ -649,7 +649,7 @@
    "turn_id": 34,
    "speaker": "user",
    "time": "2026-07-14 19:44",
-   "text": "This is exactly my favorite color. Grabbed it without thinking twice.  {orange solid long coat}",
+   "text": "This is exactly my favorite color. Grabbed it without thinking twice.  {orange solid dress}",
    "images": []
   },
   {
@@ -663,7 +663,7 @@
    "turn_id": 36,
    "speaker": "user",
    "time": "2026-07-14 19:46",
-   "text": "This is exactly my favorite cut. Grabbed it without thinking twice.  {blue solid blazer}",
+   "text": "This is exactly my favorite cut. Grabbed it without thinking twice.  {navy solid blazer}",
    "images": []
   },
   {
@@ -677,7 +677,7 @@
    "turn_id": 38,
    "speaker": "user",
    "time": "2026-07-14 19:48",
-   "text": "Odd group — they share exactly one thing, and that shared cut is precisely what I avoid.  {yellow solid polo shirt}  {white checkered polo shirt}",
+   "text": "Odd group — they share exactly one thing, and that shared cut is precisely what I avoid.  {white checkered polo shirt}  {gray solid polo shirt}",
    "images": []
   },
   {
@@ -705,7 +705,7 @@
    "turn_id": 42,
    "speaker": "user",
    "time": "2026-07-16 19:52",
-   "text": "Same item twice, one thing different. The second one's cut is the cut I never touch.  {green solid fleece jacket}  {green solid formal shirt}",
+   "text": "Same item twice, one thing different. The second one's cut is the cut I never touch.  {red solid windbreaker}  {red solid formal shirt}",
    "images": []
   },
   {
@@ -719,7 +719,7 @@
    "turn_id": 44,
    "speaker": "user",
    "time": "2026-07-16 19:54",
-   "text": "These two look nothing alike, but they share exactly one thing — and that shared cut is my favorite.  {navy solid sweater}  {gray checkered sweater}",
+   "text": "These two look nothing alike, but they share exactly one thing — and that shared cut is my favorite.  {gray checkered sweater}  {red solid sweater}",
    "images": []
   },
   {
@@ -733,7 +733,7 @@
    "turn_id": 46,
    "speaker": "user",
    "time": "2026-07-16 19:11",
-   "text": "This is exactly my favorite cut. Grabbed it without thinking twice.  {red solid suit vest}",
+   "text": "This is exactly my favorite cut. Grabbed it without thinking twice.  {white solid suit vest}",
    "images": []
   },
   {

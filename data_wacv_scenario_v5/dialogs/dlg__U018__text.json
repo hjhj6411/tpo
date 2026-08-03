@@ -85,12 +85,12 @@
    "image_attributes": [
     {
      "color": "yellow",
-     "garment_category": "polo_shirt",
+     "garment_category": "tank_top",
      "pattern": "polka_dot"
     },
     {
      "color": "yellow",
-     "garment_category": "formal_shirt",
+     "garment_category": "leather_jacket",
      "pattern": "solid"
     }
    ]
@@ -107,8 +107,8 @@
    "modality": "text",
    "image_attributes": [
     {
-     "color": "red",
-     "garment_category": "tank_top",
+     "color": "green",
+     "garment_category": "mini_skirt",
      "pattern": "striped"
     }
    ]
@@ -214,12 +214,12 @@
     {
      "color": "red",
      "garment_category": "puffer_jacket",
-     "pattern": "polka_dot"
+     "pattern": "solid"
     },
     {
-     "color": "gray",
+     "color": "navy",
      "garment_category": "puffer_jacket",
-     "pattern": "solid"
+     "pattern": "polka_dot"
     }
    ]
   },
@@ -478,7 +478,7 @@
    "turn_id": 10,
    "speaker": "user",
    "time": "2026-07-08 19:20",
-   "text": "Odd group — they share exactly one thing, and that shared color is precisely what I avoid.  {yellow polka dot polo shirt}  {yellow solid formal shirt}",
+   "text": "Odd group — they share exactly one thing, and that shared color is precisely what I avoid.  {yellow polka dot tank top}  {yellow solid leather jacket}",
    "images": []
   },
   {
@@ -492,7 +492,7 @@
    "turn_id": 12,
    "speaker": "user",
    "time": "2026-07-08 19:22",
-   "text": "This one though: that print is the one print I always put back down.  {red striped tank top}",
+   "text": "This one though: that print is the one print I always put back down.  {green striped mini skirt}",
    "images": []
   },
   {
@@ -590,7 +590,7 @@
    "turn_id": 26,
    "speaker": "user",
    "time": "2026-07-12 19:36",
-   "text": "These two look nothing alike, but they share exactly one thing — and that shared cut is my favorite.  {red polka dot puffer jacket}  {gray solid puffer jacket}",
+   "text": "These two look nothing alike, but they share exactly one thing — and that shared cut is my favorite.  {red solid puffer jacket}  {navy polka dot puffer jacket}",
    "images": []
   },
   {

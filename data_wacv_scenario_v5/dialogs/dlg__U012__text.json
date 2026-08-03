@@ -103,18 +103,18 @@
    "image_attributes": [
     {
      "color": "pink",
-     "garment_category": "t_shirt",
+     "garment_category": "fleece_jacket",
+     "pattern": "solid"
+    },
+    {
+     "color": "pink",
+     "garment_category": "mini_skirt",
      "pattern": "leopard"
     },
     {
      "color": "pink",
-     "garment_category": "puffer_jacket",
-     "pattern": "solid"
-    },
-    {
-     "color": "pink",
      "garment_category": "t_shirt",
-     "pattern": "solid"
+     "pattern": "leopard"
     }
    ]
   },
@@ -130,12 +130,12 @@
    "modality": "text",
    "image_attributes": [
     {
-     "color": "blue",
+     "color": "gray",
      "garment_category": "long_coat",
      "pattern": "solid"
     },
     {
-     "color": "blue",
+     "color": "gray",
      "garment_category": "t_shirt",
      "pattern": "solid"
     }
@@ -153,13 +153,13 @@
    "modality": "text",
    "image_attributes": [
     {
-     "color": "blue",
-     "garment_category": "shorts",
+     "color": "purple",
+     "garment_category": "formal_shirt",
      "pattern": "leopard"
     },
     {
-     "color": "blue",
-     "garment_category": "shorts",
+     "color": "purple",
+     "garment_category": "formal_shirt",
      "pattern": "striped"
     }
    ]
@@ -391,14 +391,14 @@
    "modality": "text",
    "image_attributes": [
     {
-     "color": "orange",
-     "garment_category": "cardigan",
-     "pattern": "solid"
-    },
-    {
      "color": "black",
      "garment_category": "cardigan",
      "pattern": "leopard"
+    },
+    {
+     "color": "blue",
+     "garment_category": "cardigan",
+     "pattern": "solid"
     }
    ]
   }
@@ -492,7 +492,7 @@
    "turn_id": 12,
    "speaker": "user",
    "time": "2026-07-08 19:22",
-   "text": "These three look nothing alike, but they share exactly one thing — and that shared color is my favorite.  {pink leopard t-shirt}  {pink solid puffer jacket}  {pink solid t-shirt}",
+   "text": "These three look nothing alike, but they share exactly one thing — and that shared color is my favorite.  {pink solid fleece jacket}  {pink leopard mini skirt}  {pink leopard t-shirt}",
    "images": []
   },
   {
@@ -506,7 +506,7 @@
    "turn_id": 14,
    "speaker": "user",
    "time": "2026-07-08 19:24",
-   "text": "Same item twice, one thing different. The first one's cut is the cut I never touch.  {blue solid long coat}  {blue solid t-shirt}",
+   "text": "Same item twice, one thing different. The first one's cut is the cut I never touch.  {gray solid long coat}  {gray solid t-shirt}",
    "images": []
   },
   {
@@ -534,7 +534,7 @@
    "turn_id": 18,
    "speaker": "user",
    "time": "2026-07-10 19:28",
-   "text": "Same item twice, one thing different. The second one's print is the print I never touch.  {blue leopard shorts}  {blue striped shorts}",
+   "text": "Same item twice, one thing different. The second one's print is the print I never touch.  {purple leopard formal shirt}  {purple striped formal shirt}",
    "images": []
   },
   {
@@ -730,7 +730,7 @@
    "turn_id": 46,
    "speaker": "user",
    "time": "2026-07-16 19:11",
-   "text": "These two look nothing alike, but they share exactly one thing — and that shared cut is my favorite.  {orange solid cardigan}  {black leopard cardigan}",
+   "text": "These two look nothing alike, but they share exactly one thing — and that shared cut is my favorite.  {black leopard cardigan}  {blue solid cardigan}",
    "images": []
   },
   {

@@ -206,12 +206,12 @@
     {
      "color": "green",
      "garment_category": "mini_skirt",
-     "pattern": "solid"
+     "pattern": "leopard"
     },
     {
      "color": "green",
-     "garment_category": "shorts",
-     "pattern": "leopard"
+     "garment_category": "sweatshirt",
+     "pattern": "solid"
     }
    ]
   },
@@ -250,13 +250,13 @@
    "modality": "image",
    "image_attributes": [
     {
-     "color": "red",
-     "garment_category": "cardigan",
+     "color": "yellow",
+     "garment_category": "shorts",
      "pattern": "striped"
     },
     {
-     "color": "yellow",
-     "garment_category": "slacks",
+     "color": "gray",
+     "garment_category": "t_shirt",
      "pattern": "striped"
     }
    ]
@@ -273,7 +273,7 @@
    "modality": "image",
    "image_attributes": [
     {
-     "color": "red",
+     "color": "gray",
      "garment_category": "suit_vest",
      "pattern": "solid"
     }
@@ -292,7 +292,7 @@
    "image_attributes": [
     {
      "color": "white",
-     "garment_category": "leather_jacket",
+     "garment_category": "shorts",
      "pattern": "solid"
     }
    ]
@@ -309,12 +309,12 @@
    "modality": "image",
    "image_attributes": [
     {
-     "color": "beige",
+     "color": "black",
      "garment_category": "tank_top",
      "pattern": "leopard"
     },
     {
-     "color": "beige",
+     "color": "black",
      "garment_category": "tank_top",
      "pattern": "polka_dot"
     }
@@ -337,7 +337,7 @@
      "pattern": "leopard"
     },
     {
-     "color": "beige",
+     "color": "blue",
      "garment_category": "long_skirt",
      "pattern": "leopard"
     },
@@ -593,8 +593,8 @@
    "time": "2026-07-10 19:32",
    "text": "These two look nothing alike, but they share exactly one thing — and that shared color is my favorite.",
    "images": [
-    "green/solid_mini_skirt.jpg",
-    "green/leopard_shorts.jpg"
+    "green/leopard_mini_skirt.jpg",
+    "green/solid_sweatshirt.jpg"
    ]
   },
   {
@@ -641,8 +641,8 @@
    "time": "2026-07-12 19:38",
    "text": "These two look nothing alike, but they share exactly one thing — and that shared print is my favorite.",
    "images": [
-    "red/striped_cardigan.jpg",
-    "yellow/striped_slacks.jpg"
+    "yellow/striped_shorts.jpg",
+    "gray/striped_t_shirt.jpg"
    ]
   },
   {
@@ -658,7 +658,7 @@
    "time": "2026-07-12 19:40",
    "text": "This one though: that cut is the one cut I always put back down.",
    "images": [
-    "red/solid_suit_vest.jpg"
+    "gray/solid_suit_vest.jpg"
    ]
   },
   {
@@ -688,7 +688,7 @@
    "time": "2026-07-14 19:44",
    "text": "This is exactly my favorite color. Grabbed it without thinking twice.",
    "images": [
-    "white/solid_leather_jacket.jpg"
+    "white/solid_shorts.jpg"
    ]
   },
   {
@@ -704,8 +704,8 @@
    "time": "2026-07-14 19:46",
    "text": "Same item twice, one thing different. The second one's print is the print I never touch.",
    "images": [
-    "beige/leopard_tank_top.jpg",
-    "beige/polka_dot_tank_top.jpg"
+    "black/leopard_tank_top.jpg",
+    "black/polka_dot_tank_top.jpg"
    ]
   },
   {
@@ -722,7 +722,7 @@
    "text": "Odd group — they share exactly one thing, and that shared cut is precisely what I avoid.",
    "images": [
     "black/leopard_long_skirt.jpg",
-    "beige/leopard_long_skirt.jpg",
+    "blue/leopard_long_skirt.jpg",
     "black/solid_long_skirt.jpg"
    ]
   },

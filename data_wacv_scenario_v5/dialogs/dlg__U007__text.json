@@ -206,12 +206,12 @@
     {
      "color": "green",
      "garment_category": "mini_skirt",
-     "pattern": "solid"
+     "pattern": "leopard"
     },
     {
      "color": "green",
-     "garment_category": "shorts",
-     "pattern": "leopard"
+     "garment_category": "sweatshirt",
+     "pattern": "solid"
     }
    ]
   },
@@ -250,13 +250,13 @@
    "modality": "text",
    "image_attributes": [
     {
-     "color": "red",
-     "garment_category": "cardigan",
+     "color": "yellow",
+     "garment_category": "shorts",
      "pattern": "striped"
     },
     {
-     "color": "yellow",
-     "garment_category": "slacks",
+     "color": "gray",
+     "garment_category": "t_shirt",
      "pattern": "striped"
     }
    ]
@@ -273,7 +273,7 @@
    "modality": "text",
    "image_attributes": [
     {
-     "color": "red",
+     "color": "gray",
      "garment_category": "suit_vest",
      "pattern": "solid"
     }
@@ -292,7 +292,7 @@
    "image_attributes": [
     {
      "color": "white",
-     "garment_category": "leather_jacket",
+     "garment_category": "shorts",
      "pattern": "solid"
     }
    ]
@@ -309,12 +309,12 @@
    "modality": "text",
    "image_attributes": [
     {
-     "color": "beige",
+     "color": "black",
      "garment_category": "tank_top",
      "pattern": "leopard"
     },
     {
-     "color": "beige",
+     "color": "black",
      "garment_category": "tank_top",
      "pattern": "polka_dot"
     }
@@ -337,7 +337,7 @@
      "pattern": "leopard"
     },
     {
-     "color": "beige",
+     "color": "blue",
      "garment_category": "long_skirt",
      "pattern": "leopard"
     },
@@ -567,7 +567,7 @@
    "turn_id": 22,
    "speaker": "user",
    "time": "2026-07-10 19:32",
-   "text": "These two look nothing alike, but they share exactly one thing — and that shared color is my favorite.  {green solid mini skirt}  {green leopard shorts}",
+   "text": "These two look nothing alike, but they share exactly one thing — and that shared color is my favorite.  {green leopard mini skirt}  {green solid sweatshirt}",
    "images": []
   },
   {
@@ -609,7 +609,7 @@
    "turn_id": 28,
    "speaker": "user",
    "time": "2026-07-12 19:38",
-   "text": "These two look nothing alike, but they share exactly one thing — and that shared print is my favorite.  {red striped cardigan}  {yellow striped slacks}",
+   "text": "These two look nothing alike, but they share exactly one thing — and that shared print is my favorite.  {yellow striped shorts}  {gray striped t-shirt}",
    "images": []
   },
   {
@@ -623,7 +623,7 @@
    "turn_id": 30,
    "speaker": "user",
    "time": "2026-07-12 19:40",
-   "text": "This one though: that cut is the one cut I always put back down.  {red solid suit vest}",
+   "text": "This one though: that cut is the one cut I always put back down.  {gray solid suit vest}",
    "images": []
   },
   {
@@ -651,7 +651,7 @@
    "turn_id": 34,
    "speaker": "user",
    "time": "2026-07-14 19:44",
-   "text": "This is exactly my favorite color. Grabbed it without thinking twice.  {white solid leather jacket}",
+   "text": "This is exactly my favorite color. Grabbed it without thinking twice.  {white solid shorts}",
    "images": []
   },
   {
@@ -665,7 +665,7 @@
    "turn_id": 36,
    "speaker": "user",
    "time": "2026-07-14 19:46",
-   "text": "Same item twice, one thing different. The second one's print is the print I never touch.  {beige leopard tank top}  {beige polka dot tank top}",
+   "text": "Same item twice, one thing different. The second one's print is the print I never touch.  {black leopard tank top}  {black polka dot tank top}",
    "images": []
   },
   {
@@ -679,7 +679,7 @@
    "turn_id": 38,
    "speaker": "user",
    "time": "2026-07-14 19:48",
-   "text": "Odd group — they share exactly one thing, and that shared cut is precisely what I avoid.  {black leopard long skirt}  {beige leopard long skirt}  {black solid long skirt}",
+   "text": "Odd group — they share exactly one thing, and that shared cut is precisely what I avoid.  {black leopard long skirt}  {blue leopard long skirt}  {black solid long skirt}",
    "images": []
   },
   {

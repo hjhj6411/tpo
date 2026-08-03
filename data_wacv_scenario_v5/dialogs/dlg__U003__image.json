@@ -192,13 +192,13 @@
    "modality": "image",
    "image_attributes": [
     {
-     "color": "blue",
-     "garment_category": "hoodie",
+     "color": "orange",
+     "garment_category": "windbreaker",
      "pattern": "floral"
     },
     {
-     "color": "navy",
-     "garment_category": "leather_jacket",
+     "color": "yellow",
+     "garment_category": "hoodie",
      "pattern": "floral"
     }
    ]
@@ -216,12 +216,12 @@
    "image_attributes": [
     {
      "color": "black",
-     "garment_category": "windbreaker",
+     "garment_category": "jeans",
      "pattern": "solid"
     },
     {
      "color": "gray",
-     "garment_category": "windbreaker",
+     "garment_category": "jeans",
      "pattern": "solid"
     }
    ]
@@ -238,7 +238,7 @@
    "modality": "image",
    "image_attributes": [
     {
-     "color": "red",
+     "color": "blue",
      "garment_category": "fleece_jacket",
      "pattern": "solid"
     }
@@ -256,7 +256,7 @@
    "modality": "image",
    "image_attributes": [
     {
-     "color": "navy",
+     "color": "black",
      "garment_category": "long_skirt",
      "pattern": "solid"
     }
@@ -274,18 +274,18 @@
    "modality": "image",
    "image_attributes": [
     {
-     "color": "blue",
+     "color": "purple",
+     "garment_category": "puffer_jacket",
+     "pattern": "leopard"
+    },
+    {
+     "color": "navy",
      "garment_category": "leggings",
      "pattern": "leopard"
     },
     {
-     "color": "purple",
-     "garment_category": "polo_shirt",
-     "pattern": "leopard"
-    },
-    {
-     "color": "black",
-     "garment_category": "shorts",
+     "color": "navy",
+     "garment_category": "blazer",
      "pattern": "leopard"
     }
    ]
@@ -303,12 +303,12 @@
    "image_attributes": [
     {
      "color": "yellow",
-     "garment_category": "t_shirt",
+     "garment_category": "slacks",
      "pattern": "striped"
     },
     {
      "color": "yellow",
-     "garment_category": "t_shirt",
+     "garment_category": "slacks",
      "pattern": "polka_dot"
     }
    ]
@@ -325,19 +325,19 @@
    "modality": "image",
    "image_attributes": [
     {
+     "color": "yellow",
+     "garment_category": "suit_vest",
+     "pattern": "solid"
+    },
+    {
+     "color": "blue",
+     "garment_category": "suit_vest",
+     "pattern": "polka_dot"
+    },
+    {
      "color": "red",
      "garment_category": "suit_vest",
      "pattern": "polka_dot"
-    },
-    {
-     "color": "black",
-     "garment_category": "suit_vest",
-     "pattern": "polka_dot"
-    },
-    {
-     "color": "orange",
-     "garment_category": "suit_vest",
-     "pattern": "solid"
     }
    ]
   },
@@ -354,7 +354,7 @@
    "image_attributes": [
     {
      "color": "green",
-     "garment_category": "leggings",
+     "garment_category": "hoodie",
      "pattern": "solid"
     }
    ]
@@ -372,7 +372,7 @@
    "image_attributes": [
     {
      "color": "navy",
-     "garment_category": "shorts",
+     "garment_category": "pea_coat",
      "pattern": "solid"
     },
     {
@@ -394,12 +394,12 @@
    "modality": "image",
    "image_attributes": [
     {
-     "color": "yellow",
-     "garment_category": "hoodie",
+     "color": "black",
+     "garment_category": "jeans",
      "pattern": "checkered"
     },
     {
-     "color": "black",
+     "color": "red",
      "garment_category": "t_shirt",
      "pattern": "checkered"
     }
@@ -589,8 +589,8 @@
    "time": "2026-07-10 19:32",
    "text": "Odd group — they share exactly one thing, and that shared print is precisely what I avoid.",
    "images": [
-    "blue/floral_hoodie.jpg",
-    "navy/floral_leather_jacket.jpg"
+    "orange/floral_windbreaker.jpg",
+    "yellow/floral_hoodie.jpg"
    ]
   },
   {
@@ -620,8 +620,8 @@
    "time": "2026-07-12 19:36",
    "text": "These two are the same thing except for one difference, and the second one's color is completely me.",
    "images": [
-    "black/solid_windbreaker.jpg",
-    "gray/solid_windbreaker.jpg"
+    "black/solid_jeans.jpg",
+    "gray/solid_jeans.jpg"
    ]
   },
   {
@@ -637,7 +637,7 @@
    "time": "2026-07-12 19:38",
    "text": "This is exactly my favorite cut. Grabbed it without thinking twice.",
    "images": [
-    "red/solid_fleece_jacket.jpg"
+    "blue/solid_fleece_jacket.jpg"
    ]
   },
   {
@@ -653,7 +653,7 @@
    "time": "2026-07-12 19:40",
    "text": "This is exactly my favorite cut. Grabbed it without thinking twice.",
    "images": [
-    "navy/solid_long_skirt.jpg"
+    "black/solid_long_skirt.jpg"
    ]
   },
   {
@@ -683,9 +683,9 @@
    "time": "2026-07-14 19:44",
    "text": "Odd group — they share exactly one thing, and that shared print is precisely what I avoid.",
    "images": [
-    "blue/leopard_leggings.jpg",
-    "purple/leopard_polo_shirt.jpg",
-    "black/leopard_shorts.jpg"
+    "purple/leopard_puffer_jacket.jpg",
+    "navy/leopard_leggings.jpg",
+    "navy/leopard_blazer.jpg"
    ]
   },
   {
@@ -701,8 +701,8 @@
    "time": "2026-07-14 19:46",
    "text": "These two are the same thing except for one difference, and the first one's print is completely me.",
    "images": [
-    "yellow/striped_t_shirt.jpg",
-    "yellow/polka_dot_t_shirt.jpg"
+    "yellow/striped_slacks.jpg",
+    "yellow/polka_dot_slacks.jpg"
    ]
   },
   {
@@ -718,9 +718,9 @@
    "time": "2026-07-14 19:48",
    "text": "These three look nothing alike, but they share exactly one thing — and that shared cut is my favorite.",
    "images": [
-    "red/polka_dot_suit_vest.jpg",
-    "black/polka_dot_suit_vest.jpg",
-    "orange/solid_suit_vest.jpg"
+    "yellow/solid_suit_vest.jpg",
+    "blue/polka_dot_suit_vest.jpg",
+    "red/polka_dot_suit_vest.jpg"
    ]
   },
   {
@@ -750,7 +750,7 @@
    "time": "2026-07-16 19:52",
    "text": "This is exactly my favorite color. Grabbed it without thinking twice.",
    "images": [
-    "green/solid_leggings.jpg"
+    "green/solid_hoodie.jpg"
    ]
   },
   {
@@ -766,7 +766,7 @@
    "time": "2026-07-16 19:54",
    "text": "Same item twice, one thing different. The second one's cut is the cut I never touch.",
    "images": [
-    "navy/solid_shorts.jpg",
+    "navy/solid_pea_coat.jpg",
     "navy/solid_formal_shirt.jpg"
    ]
   },
@@ -783,8 +783,8 @@
    "time": "2026-07-16 19:11",
    "text": "These two look nothing alike, but they share exactly one thing — and that shared print is my favorite.",
    "images": [
-    "yellow/checkered_hoodie.jpg",
-    "black/checkered_t_shirt.jpg"
+    "black/checkered_jeans.jpg",
+    "red/checkered_t_shirt.jpg"
    ]
   },
   {
