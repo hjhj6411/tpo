@@ -3,7 +3,7 @@
  "user_id": "U017",
  "variant": "image",
  "seed": 42,
- "template_version": "dlg-2026-08-03",
+ "template_version": "dlg-2026-08-03c",
  "downgrades": [],
  "evidence": [
   {
@@ -425,7 +425,7 @@
    "turn_id": 2,
    "speaker": "user",
    "time": "2026-07-06 19:12",
-   "text": "Odd group — they share exactly one thing, and that shared print is precisely what I avoid.",
+   "text": "Only one thing repeats across these three, and that repeat is the print I won't wear.",
    "images": [
     "white/polka_dot_puffer_jacket.jpg",
     "yellow/polka_dot_t_shirt.jpg",
@@ -436,14 +436,14 @@
    "turn_id": 3,
    "speaker": "assistant",
    "time": "2026-07-06 19:13",
-   "text": "Understood. The one print those three share goes on the no list.",
+   "text": "Found the overlap — that print is out.",
    "images": []
   },
   {
    "turn_id": 4,
    "speaker": "user",
    "time": "2026-07-06 19:14",
-   "text": "This one though: that print is the one print I always put back down.",
+   "text": "Same trip: Whatever else this has going for it, that print rules it out.",
    "images": [
     "beige/floral_mini_skirt.jpg"
    ]
@@ -452,14 +452,14 @@
    "turn_id": 5,
    "speaker": "assistant",
    "time": "2026-07-06 19:15",
-   "text": "Understood — that print stays on the rack.",
+   "text": "Noted — that print is disqualifying on its own.",
    "images": []
   },
   {
    "turn_id": 6,
    "speaker": "user",
    "time": "2026-07-06 19:16",
-   "text": "This one though: that cut is the one cut I always put back down.",
+   "text": "Also in the bag: No matter how it's made, this cut is not for me.",
    "images": [
     "orange/solid_formal_shirt.jpg"
    ]
@@ -468,7 +468,7 @@
    "turn_id": 7,
    "speaker": "assistant",
    "time": "2026-07-06 19:17",
-   "text": "Understood — that cut stays on the rack.",
+   "text": "Noted — the cut itself is the problem, not the execution.",
    "images": []
   },
   {
@@ -489,7 +489,7 @@
    "turn_id": 10,
    "speaker": "user",
    "time": "2026-07-08 19:20",
-   "text": "Same item twice, one thing different. The first one's color is the color I never touch.",
+   "text": "Two colors of the same piece. The first one is the version I avoid.",
    "images": [
     "navy/solid_puffer_jacket.jpg",
     "yellow/solid_puffer_jacket.jpg"
@@ -499,14 +499,14 @@
    "turn_id": 11,
    "speaker": "assistant",
    "time": "2026-07-08 19:21",
-   "text": "Got it — the first one's color goes on the no list.",
+   "text": "Understood — the first one's color goes on the no list.",
    "images": []
   },
   {
    "turn_id": 12,
    "speaker": "user",
    "time": "2026-07-08 19:22",
-   "text": "This is exactly my favorite cut. Grabbed it without thinking twice.",
+   "text": "Next out of the pile: If my closet has a signature, it's this cut.",
    "images": [
     "purple/solid_cardigan.jpg"
    ]
@@ -515,14 +515,14 @@
    "turn_id": 13,
    "speaker": "assistant",
    "time": "2026-07-08 19:23",
-   "text": "Noted — that cut is officially yours.",
+   "text": "Understood — that cut is the through-line.",
    "images": []
   },
   {
    "turn_id": 14,
    "speaker": "user",
    "time": "2026-07-08 19:24",
-   "text": "Odd group — they share exactly one thing, and that shared cut is precisely what I avoid.",
+   "text": "Same sort: All two are the same cut and nothing else matches. That cut is the one I stay away from.",
    "images": [
     "beige/leopard_sweater.jpg",
     "white/solid_sweater.jpg"
@@ -532,7 +532,7 @@
    "turn_id": 15,
    "speaker": "assistant",
    "time": "2026-07-08 19:25",
-   "text": "Understood. The one cut those two share goes on the no list.",
+   "text": "One shared cut, and it's the disqualifying one. Logged.",
    "images": []
   },
   {
@@ -569,7 +569,7 @@
    "turn_id": 20,
    "speaker": "user",
    "time": "2026-07-10 19:30",
-   "text": "These two look nothing alike, but they share exactly one thing — and that shared cut is my favorite.",
+   "text": "She also sent this: I own these two in wildly different versions, but always this cut.",
    "images": [
     "black/solid_shorts.jpg",
     "yellow/leopard_shorts.jpg"
@@ -579,14 +579,14 @@
    "turn_id": 21,
    "speaker": "assistant",
    "time": "2026-07-10 19:31",
-   "text": "Spotted it. Whatever cut those two have in common belongs to you.",
+   "text": "Same cut, many versions — that's your shape.",
    "images": []
   },
   {
    "turn_id": 22,
    "speaker": "user",
    "time": "2026-07-10 19:32",
-   "text": "This is exactly my favorite print. Grabbed it without thinking twice.",
+   "text": "Next out of the box: I bought this for the print alone. Nothing else about it mattered.",
    "images": [
     "beige/checkered_t_shirt.jpg"
    ]
@@ -595,7 +595,7 @@
    "turn_id": 23,
    "speaker": "assistant",
    "time": "2026-07-10 19:33",
-   "text": "Noted — that print is officially yours.",
+   "text": "So the print carried the whole purchase. Noted.",
    "images": []
   },
   {
@@ -616,7 +616,7 @@
    "turn_id": 26,
    "speaker": "user",
    "time": "2026-07-12 19:36",
-   "text": "These three look nothing alike, but they share exactly one thing — and that shared color is my favorite.",
+   "text": "Put these three side by side and only one thing repeats. That repeat is my favorite color.",
    "images": [
     "brown/leopard_fleece_jacket.jpg",
     "brown/solid_hoodie.jpg",
@@ -627,14 +627,14 @@
    "turn_id": 27,
    "speaker": "assistant",
    "time": "2026-07-12 19:37",
-   "text": "Spotted it. Whatever color those three have in common belongs to you.",
+   "text": "Found the overlap — that color is yours.",
    "images": []
   },
   {
    "turn_id": 28,
    "speaker": "user",
    "time": "2026-07-12 19:38",
-   "text": "Odd group — they share exactly one thing, and that shared cut is precisely what I avoid.",
+   "text": "Next into the bag: Whatever else changes about these two, the cut stays — and that's the problem.",
    "images": [
     "orange/leopard_leggings.jpg",
     "white/solid_leggings.jpg"
@@ -644,14 +644,14 @@
    "turn_id": 29,
    "speaker": "assistant",
    "time": "2026-07-12 19:39",
-   "text": "Understood. The one cut those two share goes on the no list.",
+   "text": "The constant is the cut. Noted as a no.",
    "images": []
   },
   {
    "turn_id": 30,
    "speaker": "user",
    "time": "2026-07-12 19:40",
-   "text": "These two are the same thing except for one difference, and the second one's color is completely me.",
+   "text": "Also going: Here's the same thing twice, split only by the color — and the second one wins easily.",
    "images": [
     "white/solid_pea_coat.jpg",
     "pink/solid_pea_coat.jpg"
@@ -661,7 +661,7 @@
    "turn_id": 31,
    "speaker": "assistant",
    "time": "2026-07-12 19:41",
-   "text": "One difference, clear verdict — the second one's color it is.",
+   "text": "Clean comparison. Logging the second one's color.",
    "images": []
   },
   {
@@ -682,7 +682,7 @@
    "turn_id": 34,
    "speaker": "user",
    "time": "2026-07-14 19:44",
-   "text": "Odd group — they share exactly one thing, and that shared cut is precisely what I avoid.",
+   "text": "These three have nothing in common except one thing: every one of them is the same cut, and that cut is precisely what I avoid.",
    "images": [
     "white/solid_long_skirt.jpg",
     "orange/solid_long_skirt.jpg",
@@ -693,14 +693,14 @@
    "turn_id": 35,
    "speaker": "assistant",
    "time": "2026-07-14 19:45",
-   "text": "Understood. The one cut those three share goes on the no list.",
+   "text": "Understood. The cut those three share goes on the no list.",
    "images": []
   },
   {
    "turn_id": 36,
    "speaker": "user",
    "time": "2026-07-14 19:46",
-   "text": "Same item twice, one thing different. The first one's color is the color I never touch.",
+   "text": "Next in the cart: Same thing twice, split by the color. I'd never take the first one.",
    "images": [
     "green/solid_fleece_jacket.jpg",
     "blue/solid_fleece_jacket.jpg"
@@ -710,14 +710,14 @@
    "turn_id": 37,
    "speaker": "assistant",
    "time": "2026-07-14 19:47",
-   "text": "Got it — the first one's color goes on the no list.",
+   "text": "Clean comparison. The first one's color is banned.",
    "images": []
   },
   {
    "turn_id": 38,
    "speaker": "user",
    "time": "2026-07-14 19:48",
-   "text": "These two are the same thing except for one difference, and the second one's color is completely me.",
+   "text": "Also saved: Two of the same piece, and the only difference between them is the color. The second one's color is completely me.",
    "images": [
     "yellow/solid_sweatshirt.jpg",
     "red/solid_sweatshirt.jpg"
@@ -727,7 +727,7 @@
    "turn_id": 39,
    "speaker": "assistant",
    "time": "2026-07-14 19:49",
-   "text": "One difference, clear verdict — the second one's color it is.",
+   "text": "Same piece, one variable — the second one's color it is.",
    "images": []
   },
   {
@@ -748,7 +748,7 @@
    "turn_id": 42,
    "speaker": "user",
    "time": "2026-07-16 19:52",
-   "text": "These two are the same thing except for one difference, and the first one's cut is completely me.",
+   "text": "Different shapes, everything else the same. I'd wear the first one.",
    "images": [
     "black/solid_suit_vest.jpg",
     "black/solid_mini_skirt.jpg"
@@ -758,14 +758,14 @@
    "turn_id": 43,
    "speaker": "assistant",
    "time": "2026-07-16 19:53",
-   "text": "One difference, clear verdict — the first one's cut it is.",
+   "text": "With the rest controlled, the first one's cut is yours.",
    "images": []
   },
   {
    "turn_id": 44,
    "speaker": "user",
    "time": "2026-07-16 19:54",
-   "text": "This is exactly my favorite cut. Grabbed it without thinking twice.",
+   "text": "Next off the pile: I keep replacing this cut rather than trying anything else.",
    "images": [
     "yellow/solid_long_coat.jpg"
    ]
@@ -774,14 +774,14 @@
    "turn_id": 45,
    "speaker": "assistant",
    "time": "2026-07-16 19:10",
-   "text": "Noted — that cut is officially yours.",
+   "text": "Replacing rather than switching says it all. That cut is yours.",
    "images": []
   },
   {
    "turn_id": 46,
    "speaker": "user",
    "time": "2026-07-16 19:11",
-   "text": "Same item twice, one thing different. The second one's color is the color I never touch.",
+   "text": "Also here: Identical except for the color, and the second one is the one I'd leave.",
    "images": [
     "blue/solid_slacks.jpg",
     "gray/solid_slacks.jpg"
@@ -791,7 +791,7 @@
    "turn_id": 47,
    "speaker": "assistant",
    "time": "2026-07-16 19:12",
-   "text": "Got it — the second one's color goes on the no list.",
+   "text": "One variable, one verdict. The second one's color is out.",
    "images": []
   }
  ]

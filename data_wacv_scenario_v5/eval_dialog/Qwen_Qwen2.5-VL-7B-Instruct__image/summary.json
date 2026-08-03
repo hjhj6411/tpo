@@ -1,0 +1,76 @@
+{
+ "model": "Qwen/Qwen2.5-VL-7B-Instruct",
+ "variant": "wacv_scenario_v5",
+ "profile_source": "dialog",
+ "dialog_variant": "image",
+ "prompt_version": 2,
+ "formats": [
+  "dialog",
+  "dialog+query"
+ ],
+ "n": 324,
+ "by_track_format": {
+  "physical|dialog": {
+   "strict": 16,
+   "tpo": 45,
+   "pref": 25,
+   "n": 75
+  },
+  "physical|dialog+query": {
+   "strict": 24,
+   "tpo": 63,
+   "pref": 28,
+   "n": 75
+  },
+  "dress_code|dialog": {
+   "strict": 19,
+   "tpo": 49,
+   "pref": 35,
+   "n": 87
+  },
+  "dress_code|dialog+query": {
+   "strict": 31,
+   "tpo": 71,
+   "pref": 37,
+   "n": 87
+  }
+ },
+ "by_expression_format": {
+  "single|dialog": {
+   "strict": 18,
+   "tpo": 40,
+   "pref": 25,
+   "n": 60
+  },
+  "single|dialog+query": {
+   "strict": 23,
+   "tpo": 55,
+   "pref": 25,
+   "n": 60
+  },
+  "differ|dialog+query": {
+   "strict": 26,
+   "tpo": 68,
+   "pref": 33,
+   "n": 88
+  },
+  "differ|dialog": {
+   "strict": 13,
+   "tpo": 44,
+   "pref": 30,
+   "n": 88
+  },
+  "share2|dialog": {
+   "strict": 4,
+   "tpo": 10,
+   "pref": 5,
+   "n": 14
+  },
+  "share2|dialog+query": {
+   "strict": 6,
+   "tpo": 11,
+   "pref": 7,
+   "n": 14
+  }
+ }
+}

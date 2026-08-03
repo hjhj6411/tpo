@@ -21,6 +21,8 @@ vllm serve OpenGVLab/InternVL3_5-8B-Instruct --port 8001 --tensor-parallel-size 
 OpenGVLab--InternVL3-78B-Instruct
 openbmb/MiniCPM-V-4.6
 
+vllm serve Qwen/Qwen3-VL-30B-A3B-Instruct --port 8001 --max-model-len 65536 --tensor-parallel-size 4 \
+        --limit-mm-per-prompt '{"image":40}'
 
 CUDA_VISIBLE_DEVICES=2 vllm serve openbmb/MiniCPM-V-4.6 --port 8004 \
   --gpu-memory-utilization 0.90 --max-model-len 16384 \
