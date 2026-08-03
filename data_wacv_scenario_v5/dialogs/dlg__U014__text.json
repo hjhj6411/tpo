@@ -466,280 +466,280 @@
   {
    "turn_id": 8,
    "speaker": "user",
-   "time": "2026-07-08 19:18",
+   "time": "2026-07-08 19:10",
    "text": "Big closet purge tonight. The keep pile and the donate pile are both growing.",
    "images": []
   },
   {
    "turn_id": 9,
    "speaker": "assistant",
-   "time": "2026-07-08 19:19",
+   "time": "2026-07-08 19:11",
    "text": "Brutal honesty hour. What's surviving?",
    "images": []
   },
   {
    "turn_id": 10,
    "speaker": "user",
-   "time": "2026-07-08 19:20",
+   "time": "2026-07-08 19:12",
    "text": "Same thing twice, split by the color. I'd never take the second one.  {green solid hoodie}  {brown solid hoodie}",
    "images": []
   },
   {
    "turn_id": 11,
    "speaker": "assistant",
-   "time": "2026-07-08 19:21",
+   "time": "2026-07-08 19:13",
    "text": "Clean comparison. The second one's color is banned.",
    "images": []
   },
   {
    "turn_id": 12,
    "speaker": "user",
-   "time": "2026-07-08 19:22",
+   "time": "2026-07-08 19:14",
    "text": "Next out of the pile: This is exactly my favorite cut. I own it in every version I can find.  {navy solid suit vest}",
    "images": []
   },
   {
    "turn_id": 13,
    "speaker": "assistant",
-   "time": "2026-07-08 19:23",
+   "time": "2026-07-08 19:15",
    "text": "Noted — that cut is officially yours.",
    "images": []
   },
   {
    "turn_id": 14,
    "speaker": "user",
-   "time": "2026-07-08 19:24",
+   "time": "2026-07-08 19:16",
    "text": "Same sort: The cut here is the one I reach for constantly.  {pink solid sweater}",
    "images": []
   },
   {
    "turn_id": 15,
    "speaker": "assistant",
-   "time": "2026-07-08 19:25",
+   "time": "2026-07-08 19:17",
    "text": "So that cut is your default shape. Logged.",
    "images": []
   },
   {
    "turn_id": 16,
    "speaker": "user",
-   "time": "2026-07-10 19:26",
+   "time": "2026-07-10 19:10",
    "text": "My aunt's birthday box arrived. Mixed results, as usual.",
    "images": []
   },
   {
    "turn_id": 17,
    "speaker": "assistant",
-   "time": "2026-07-10 19:27",
+   "time": "2026-07-10 19:11",
    "text": "Aunt boxes are pure gambling. How did the wheel land?",
    "images": []
   },
   {
    "turn_id": 18,
    "speaker": "user",
-   "time": "2026-07-10 19:28",
+   "time": "2026-07-10 19:12",
    "text": "All two of these are the same cut, and that's the only thing they share. That cut is my favorite.  {pink solid windbreaker}  {green checkered windbreaker}",
    "images": []
   },
   {
    "turn_id": 19,
    "speaker": "assistant",
-   "time": "2026-07-10 19:29",
+   "time": "2026-07-10 19:13",
    "text": "One shared cut, everything else different. Logged.",
    "images": []
   },
   {
    "turn_id": 20,
    "speaker": "user",
-   "time": "2026-07-10 19:30",
+   "time": "2026-07-10 19:14",
    "text": "She also sent this: The color on this one is my favorite color, full stop.  {black solid t-shirt}",
    "images": []
   },
   {
    "turn_id": 21,
    "speaker": "assistant",
-   "time": "2026-07-10 19:31",
+   "time": "2026-07-10 19:15",
    "text": "Logged. That color sits at the top of your list.",
    "images": []
   },
   {
    "turn_id": 22,
    "speaker": "user",
-   "time": "2026-07-10 19:32",
+   "time": "2026-07-10 19:16",
    "text": "Next out of the box: All three are the same cut and nothing else matches. That cut is the one I stay away from.  {pink checkered formal shirt}  {navy checkered formal shirt}  {red solid formal shirt}",
    "images": []
   },
   {
    "turn_id": 23,
    "speaker": "assistant",
-   "time": "2026-07-10 19:33",
+   "time": "2026-07-10 19:17",
    "text": "One shared cut, and it's the disqualifying one. Logged.",
    "images": []
   },
   {
    "turn_id": 24,
    "speaker": "user",
-   "time": "2026-07-12 19:34",
+   "time": "2026-07-12 19:10",
    "text": "Packing for a week away and trying to keep it to one carry-on.",
    "images": []
   },
   {
    "turn_id": 25,
    "speaker": "assistant",
-   "time": "2026-07-12 19:35",
+   "time": "2026-07-12 19:11",
    "text": "One bag for a week is ambitious. What's going in?",
    "images": []
   },
   {
    "turn_id": 26,
    "speaker": "user",
-   "time": "2026-07-12 19:36",
+   "time": "2026-07-12 19:12",
    "text": "Put these two side by side and only one thing repeats. That repeat is my favorite color.  {gray checkered blazer}  {gray solid jeans}",
    "images": []
   },
   {
    "turn_id": 27,
    "speaker": "assistant",
-   "time": "2026-07-12 19:37",
+   "time": "2026-07-12 19:13",
    "text": "Found the overlap — that color is yours.",
    "images": []
   },
   {
    "turn_id": 28,
    "speaker": "user",
-   "time": "2026-07-12 19:38",
+   "time": "2026-07-12 19:14",
    "text": "Next into the bag: Two different pieces, identical apart from their shape. The first one's cut is the cut I never touch.  {beige solid tank top}  {beige solid shorts}",
    "images": []
   },
   {
    "turn_id": 29,
    "speaker": "assistant",
-   "time": "2026-07-12 19:39",
+   "time": "2026-07-12 19:15",
    "text": "Everything else held equal — the first one's cut goes on the no list.",
    "images": []
   },
   {
    "turn_id": 30,
    "speaker": "user",
-   "time": "2026-07-12 19:40",
+   "time": "2026-07-12 19:16",
    "text": "Also going: Nothing about these two matches except one print, and that's the print I love.  {navy polka dot t-shirt}  {white polka dot puffer jacket}",
    "images": []
   },
   {
    "turn_id": 31,
    "speaker": "assistant",
-   "time": "2026-07-12 19:41",
+   "time": "2026-07-12 19:17",
    "text": "One point of overlap, and it's the one that counts. Logged.",
    "images": []
   },
   {
    "turn_id": 32,
    "speaker": "user",
-   "time": "2026-07-14 19:42",
+   "time": "2026-07-14 19:10",
    "text": "My saved cart has gotten out of hand. Helping me triage it?",
    "images": []
   },
   {
    "turn_id": 33,
    "speaker": "assistant",
-   "time": "2026-07-14 19:43",
+   "time": "2026-07-14 19:11",
    "text": "Cart triage is my favorite sport. Show me.",
    "images": []
   },
   {
    "turn_id": 34,
    "speaker": "user",
-   "time": "2026-07-14 19:44",
+   "time": "2026-07-14 19:12",
    "text": "I keep replacing this cut rather than trying anything else.  {orange solid long coat}",
    "images": []
   },
   {
    "turn_id": 35,
    "speaker": "assistant",
-   "time": "2026-07-14 19:45",
+   "time": "2026-07-14 19:13",
    "text": "Replacing rather than switching says it all. That cut is yours.",
    "images": []
   },
   {
    "turn_id": 36,
    "speaker": "user",
-   "time": "2026-07-14 19:46",
+   "time": "2026-07-14 19:14",
    "text": "Next in the cart: Identical except for the print, and the second one is the one I'd leave.  {navy checkered t-shirt}  {navy striped t-shirt}",
    "images": []
   },
   {
    "turn_id": 37,
    "speaker": "assistant",
-   "time": "2026-07-14 19:47",
+   "time": "2026-07-14 19:15",
    "text": "One variable, one verdict. The second one's print is out.",
    "images": []
   },
   {
    "turn_id": 38,
    "speaker": "user",
-   "time": "2026-07-14 19:48",
+   "time": "2026-07-14 19:16",
    "text": "Also saved: They differ only in cut, and the first one is the one I'd never buy.  {red solid slacks}  {red solid jeans}",
    "images": []
   },
   {
    "turn_id": 39,
    "speaker": "assistant",
-   "time": "2026-07-14 19:49",
+   "time": "2026-07-14 19:17",
    "text": "Noted — the first one's cut is banned.",
    "images": []
   },
   {
    "turn_id": 40,
    "speaker": "user",
-   "time": "2026-07-16 19:50",
+   "time": "2026-07-16 19:10",
    "text": "Laundry day, which means I'm staring at everything I actually wear.",
    "images": []
   },
   {
    "turn_id": 41,
    "speaker": "assistant",
-   "time": "2026-07-16 19:51",
+   "time": "2026-07-16 19:11",
    "text": "The honest inventory. What's in the pile?",
    "images": []
   },
   {
    "turn_id": 42,
    "speaker": "user",
-   "time": "2026-07-16 19:52",
+   "time": "2026-07-16 19:12",
    "text": "I bought this for the color alone. Nothing else about it mattered.  {yellow solid mini skirt}",
    "images": []
   },
   {
    "turn_id": 43,
    "speaker": "assistant",
-   "time": "2026-07-16 19:53",
+   "time": "2026-07-16 19:13",
    "text": "So the color carried the whole purchase. Noted.",
    "images": []
   },
   {
    "turn_id": 44,
    "speaker": "user",
-   "time": "2026-07-16 19:54",
+   "time": "2026-07-16 19:14",
    "text": "Next off the pile: Different pieces, one shared color. That color is the reason none of them worked.  {blue solid t-shirt}  {blue checkered t-shirt}  {blue solid hoodie}",
    "images": []
   },
   {
    "turn_id": 45,
    "speaker": "assistant",
-   "time": "2026-07-16 19:10",
+   "time": "2026-07-16 19:15",
    "text": "The common thread is the problem. Noted.",
    "images": []
   },
   {
    "turn_id": 46,
    "speaker": "user",
-   "time": "2026-07-16 19:11",
+   "time": "2026-07-16 19:16",
    "text": "Also here: The same piece twice, differing only in the print. The second one's print is the print I never touch.  {orange checkered polo shirt}  {orange leopard polo shirt}",
    "images": []
   },
   {
    "turn_id": 47,
    "speaker": "assistant",
-   "time": "2026-07-16 19:12",
+   "time": "2026-07-16 19:17",
    "text": "Same piece, one variable — the second one's print goes on the no list.",
    "images": []
   }

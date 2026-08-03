@@ -83,15 +83,23 @@ def render(plan: DialogPlan) -> dict:
     """image 변형 대화를 만든다."""
     turns, evidence = [], []
     tid = day = 0
+    ep_turn = 0
     picker = VariantPicker(plan.seed, plan.user_id)
     conn_rng = random.Random(f"{plan.user_id}|connectors|{plan.seed}")
 
     def add(speaker, text, images=None):
-        nonlocal tid
+        """시간은 에피소드 안에서만 증가시킨다.
+
+        전역 turn_id 로 분을 만들면 48턴에서 60분을 넘겨 되감긴다(랩어라운드).
+        시간이 역행하면 대화 이력의 순서가 무너지므로, 에피소드별로 분을
+        0부터 다시 세되 날짜가 이틀씩 앞으로 가서 전체 단조성이 유지된다.
+        """
+        nonlocal tid, ep_turn
         turns.append({"turn_id": tid, "speaker": speaker,
-                      "time": f"2026-07-{6 + day:02d} 19:{10 + tid % 45:02d}",
+                      "time": f"2026-07-{6 + day:02d} 19:{10 + ep_turn:02d}",
                       "text": text, "images": images or []})
         tid += 1
+        ep_turn += 1
 
     by_episode = {}
     for ev in plan.evidence:
@@ -102,6 +110,7 @@ def render(plan: DialogPlan) -> dict:
         if not evs:
             continue
         opener, ack = OPENERS[ep_id]
+        ep_turn = 0                      # 에피소드마다 분을 다시 센다
         add("user", opener)
         add("assistant", ack)
         for i, ev in enumerate(evs):
