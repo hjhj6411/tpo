@@ -2,7 +2,8 @@
 """Figures for the POD-Bench internship presentation.
 
 All numbers are computed from the repo, not hard-coded guesses:
-  - eval  : data_wacv_scenario_v5/eval/Qwen_Qwen3-VL-4B-Instruct/results.jsonl
+  - eval  : data_wacv_scenario_v5/eval/*/results.jsonl  (7 models, 12,750 rows each)
+  - text  : data_wacv_scenario_v5/eval_text/Qwen_Qwen3-VL-30B-A3B-Instruct/
   - plans : data_wacv_scenario_v5/options/option_plans.jsonl
   - cells : annotation/attribute_library.json
 
@@ -58,9 +59,27 @@ def num(ax, x, y, s, size=12, color=INK, **kw):
                    color=color, **kw)
 
 
+def _jsonl(p):
+    dec = json.JSONDecoder()
+    rows = []
+    for line in open(p):
+        line = line.strip()
+        if not line:
+            continue
+        i = 0
+        while i < len(line):
+            try:
+                o, j = dec.raw_decode(line, i)
+                rows.append(o); i = j
+                while i < len(line) and line[i] in " \t":
+                    i += 1
+            except Exception:
+                break
+    return rows
+
 def load_eval():
-    p = f"{REPO}/data_wacv_scenario_v5/eval/Qwen_Qwen3-VL-4B-Instruct/results.jsonl"
-    return [r for r in (json.loads(l) for l in open(p)) if not r.get("error")]
+    p = f"{REPO}/data_wacv_scenario_v5/eval/Qwen_Qwen3-VL-30B-A3B-Instruct/results.jsonl"
+    return [r for r in _jsonl(p) if not r.get("error")]
 
 
 def agg(rows, keyf):
@@ -314,12 +333,245 @@ def fig_abcd():
     print("fig_abcd ok  (labels are drawn in build_deck.py)")
 
 
+
+# ═════════════════════════════════════════════════════════════════════════════
+# FIG 5 — the trade-off across every model that finished a run
+# ═════════════════════════════════════════════════════════════════════════════
+SHORT = {
+    "gpt-5-mini": "GPT-5-mini",
+    "Qwen_Qwen2.5-VL-72B-Instruct-AWQ": "Qwen2.5-VL 72B*",
+    "Qwen_Qwen3-VL-30B-A3B-Instruct": "Qwen3-VL 30B",
+    "google_gemma-3-27b-it": "Gemma-3 27B",
+    "Qwen_Qwen2.5-VL-7B-Instruct": "Qwen2.5-VL 7B",
+    "Qwen_Qwen3-VL-4B-Instruct": "Qwen3-VL 4B",
+    "OpenGVLab_InternVL3_5-8B-Instruct": "InternVL3.5 8B",
+}
+
+
+def all_models(min_rows=10000):
+    import glob
+    out = {}
+    for d in sorted(glob.glob(f"{REPO}/data_wacv_scenario_v5/eval/*/")):
+        p = d + "results.jsonl"
+        if not os.path.exists(p):
+            continue
+        rows = [r for r in _jsonl(p) if not r.get("error")]
+        if len(rows) < min_rows:
+            continue
+        out[os.path.basename(d.rstrip("/"))] = rows
+    return out
+
+
+
+
+def fig_models():
+    M = all_models()
+    fig, axes = plt.subplots(1, 2, figsize=(10.8, 4.0),
+                             gridspec_kw={"width_ratios": [1.32, 1]})
+
+    # (a) every model loses situation accuracy the moment taste is supplied
+    ax = axes[0]
+    rows = []
+    for m, rs in M.items():
+        by = collections.defaultdict(list)
+        for r in rs:
+            by[r["input_format"]].append(r)
+        t0 = 100*sum(r["tpo"] for r in by["query"])/len(by["query"])
+        t1 = 100*sum(r["tpo"] for r in by["narrative+query"])/len(by["narrative+query"])
+        rows.append((SHORT.get(m, m), t0, t1))
+    rows.sort(key=lambda r: -r[1])
+
+    # de-collide the right-hand labels: keep at least MIN_GAP between them
+    MIN_GAP = 2.6
+    placed = []
+    for name, t0, t1 in sorted(rows, key=lambda r: -r[2]):
+        y = t1
+        while any(abs(y - p) < MIN_GAP for p in placed):
+            y -= 0.4
+        placed.append(y)
+    label_y = {n: y for (n, _, _), y in zip(sorted(rows, key=lambda r: -r[2]), placed)}
+
+    for i, (name, t0, t1) in enumerate(rows):
+        col = NAVY if i == 0 else MID
+        ax.plot([0, 1], [t0, t1], "-o", color=col, lw=2.0, ms=6,
+                markerfacecolor="white", markeredgewidth=2.0, zorder=3)
+        ly = label_y[name]
+        if abs(ly - t1) > 0.35:                       # leader line to the moved label
+            ax.plot([1.04, 1.13], [t1, ly], color="#C8D6E8", lw=0.9, zorder=2)
+        num(ax, 1.16, ly, f"{t1:.0f}", size=11.5, ha="left", va="center", color=RED)
+        ax.text(1.34, ly, name, fontsize=10.5, va="center", color=INK)
+    ax.set_xlim(-0.46, 2.32); ax.set_ylim(60, 96)
+    ax.set_xticks([0, 1]); ax.set_xticklabels(["상황만\n알려줌", "취향까지\n알려줌"], fontsize=12)
+    ax.set_ylabel("상황 점수 (%)", fontsize=11.5)
+    for t in ax.get_yticklabels():
+        t.set_fontname(NUM)
+    ax.grid(axis="y", color="#F0F0F0", zorder=0); ax.set_axisbelow(True)
+    ax.set_title("6개 모델 전부 상황 점수가 떨어진다", fontsize=12.5, color=NAVY, loc="left")
+    ax.spines["bottom"].set_visible(False)
+
+    # (b) nobody clears 75% when both must be satisfied
+    ax = axes[1]
+    st = []
+    for m, rs in M.items():
+        sub = [r for r in rs if r["input_format"] == "narrative+query"]
+        st.append((SHORT.get(m, m), 100*sum(r["strict"] for r in sub)/len(sub)))
+    st.sort(key=lambda r: r[1])
+    ypos = range(len(st))
+    cols = [NAVY if i == len(st)-1 else MID for i in ypos]
+    ax.barh(list(ypos), [v for _, v in st], 0.62, color=cols, edgecolor="white", zorder=3)
+    for i, (name, v) in enumerate(st):
+        num(ax, v + 1.2, i, f"{v:.1f}", size=11.5, va="center", color=INK)
+    ax.set_yticks(list(ypos)); ax.set_yticklabels([n for n, _ in st], fontsize=10.5)
+    ax.set_xlim(0, 100); ax.set_xticks([0, 25, 50, 75, 100])
+    for t in ax.get_xticklabels():
+        t.set_fontname(NUM)
+    ax.axvline(25, color=GREY, ls=(0, (4, 4)), lw=1)
+    ax.text(26, -0.9, "찍기 수준", fontsize=9.5, color=GREY)
+    ax.set_xlabel("둘 다 맞춘 비율 (%)", fontsize=11)
+    ax.set_title("가장 좋은 모델도 73%", fontsize=12.5, color=NAVY, loc="left")
+    ax.grid(axis="x", color="#F0F0F0", zorder=0); ax.set_axisbelow(True)
+    ax.spines["left"].set_visible(False)
+
+    fig.tight_layout(w_pad=2.4)
+    fig.savefig(f"{OUT}/fig_models.png", bbox_inches="tight", facecolor="white",
+                pad_inches=0.12)
+    plt.close(fig)
+    print("fig_models  ", [(n, round(a), round(b)) for n, a, b in rows])
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+# FIG 6 — same model, same items: pictures vs. plain text
+# ═════════════════════════════════════════════════════════════════════════════
+def fig_modality():
+    im = [r for r in _jsonl(f"{REPO}/data_wacv_scenario_v5/eval/Qwen_Qwen3-VL-30B-A3B-Instruct/results.jsonl") if not r.get("error")]
+    tx = [r for r in _jsonl(f"{REPO}/data_wacv_scenario_v5/eval_text/Qwen_Qwen3-VL-30B-A3B-Instruct/results.jsonl") if not r.get("error")]
+    def s(rows, f):
+        sub = [r for r in rows if r["input_format"] == f]
+        return 100*sum(r["strict"] for r in sub)/len(sub)
+    a, b = s(im, "narrative+query"), s(tx, "narrative+query")
+
+    fig, ax = plt.subplots(figsize=(10.0, 2.1))
+    bars = [("사진으로 보여줄 때", a, MID), ("글자로 알려줄 때", b, NAVY)]
+    for i, (lab, v, col) in enumerate(bars):
+        ax.barh(1 - i, v, 0.46, color=col, edgecolor="white", zorder=3)
+        ax.text(1.5, 1 - i + 0.36, lab, fontsize=12, color=INK, va="bottom")
+        num(ax, v - 1.5, 1 - i, f"{v:.1f}", size=15, color="white",
+            ha="right", va="center", zorder=4)
+    ax.barh(1, 100, 0.46, color="#F4F4F4", zorder=1)
+    ax.barh(0, 100, 0.46, color="#F4F4F4", zorder=1)
+
+    ax.set_xlim(0, 104); ax.set_ylim(-0.45, 1.62); ax.set_yticks([])
+    ax.set_xticks([0, 25, 50, 75, 100])
+    for t in ax.get_xticklabels():
+        t.set_fontname(NUM)
+    ax.set_xlabel("둘 다 맞춘 비율 (%)   ·   Qwen3-VL 30B, 같은 문항 2,550개", fontsize=11)
+    ax.spines["left"].set_visible(False)
+    ax.grid(axis="x", color="#F0F0F0", zorder=0); ax.set_axisbelow(True)
+    fig.tight_layout()
+    fig.savefig(f"{OUT}/fig_modality.png", bbox_inches="tight", facecolor="white",
+                pad_inches=0.12)
+    plt.close(fig)
+    print(f"fig_modality  image {a:.1f} -> text {b:.1f}  (+{b-a:.1f})")
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+# FIG 7 — where it is weakest (best complete model, both inputs)
+# ═════════════════════════════════════════════════════════════════════════════
+def fig_weakspots():
+    rows = [r for r in _jsonl(f"{REPO}/data_wacv_scenario_v5/eval/Qwen_Qwen3-VL-30B-A3B-Instruct/results.jsonl") if not r.get("error")]
+    sub = [r for r in rows if r["input_format"] == "narrative+query"]
+
+    def by(key, order, labels):
+        g = collections.defaultdict(list)
+        for r in sub:
+            g[r[key]].append(r)
+        return [(labels[k], 100*sum(x["strict"] for x in g[k])/len(g[k]), len(g[k]))
+                for k in order]
+
+    panels = [
+        ("취향이 어느 축일 때", by("active_axis",
+            ["color", "garment_category", "pattern"],
+            {"color": "색", "garment_category": "옷 종류", "pattern": "무늬"})),
+        ("상황의 종류", by("track", ["physical", "dress_code"],
+            {"physical": "춥다·덥다", "dress_code": "격식·예의"})),
+        ("상황을 말해주는 방식", by("query_type", ["explicit", "implicit"],
+            {"explicit": "직접 말함", "implicit": "돌려 말함"})),
+    ]
+    fig, axes = plt.subplots(1, 3, figsize=(10.6, 3.2),
+                             gridspec_kw={"width_ratios": [1.2, 1, 1]})
+    for ax, (title_, data) in zip(axes, panels):
+        vals = [v for _, v, _ in data]
+        worst = vals.index(min(vals))
+        cols = [RED if i == worst else MID for i in range(len(vals))]
+        ax.bar(range(len(vals)), vals, 0.55, color=cols, edgecolor="white", zorder=3)
+        for i, (lab, v, n) in enumerate(data):
+            num(ax, i, v + 1.2, f"{v:.1f}", size=12, ha="center", va="bottom", zorder=4)
+        ax.set_xticks(range(len(vals)))
+        ax.set_xticklabels([l for l, _, _ in data], fontsize=11.5)
+        ax.set_ylim(0, 96); ax.set_yticks([0, 25, 50, 75])
+        for t in ax.get_yticklabels():
+            t.set_fontname(NUM)
+        ax.axhline(25, color=GREY, ls=(0, (4, 4)), lw=1)
+        ax.set_title(title_, fontsize=12, color=NAVY, loc="left")
+        ax.grid(axis="y", color="#EFEFEF", zorder=0); ax.set_axisbelow(True)
+    axes[0].set_ylabel("둘 다 맞춘 비율 (%)", fontsize=10.5)
+    fig.tight_layout(w_pad=2.0)
+    fig.savefig(f"{OUT}/fig_weakspots.png", bbox_inches="tight", facecolor="white",
+                pad_inches=0.12)
+    plt.close(fig)
+    print("fig_weakspots ok")
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+# FIG 8 — the four garments the worked dialog example refers to
+# ═════════════════════════════════════════════════════════════════════════════
+def fig_dlg_example():
+    from matplotlib.patches import Polygon as Poly
+    NAVY_G, RED_G, BROWN_G = "#2A3A5C", "#C0392B", "#8A5A3B"
+
+    def coat(ax, col, long_=True):
+        bot = .06 if long_ else .22
+        ax.add_patch(Poly([[.30, bot], [.70, bot], [.70, .76], [.30, .76]],
+                          closed=True, fc=col, ec="white", lw=1.6))
+        ax.add_patch(Poly([[.12, .44], [.30, .76], [.30, .44]], closed=True,
+                          fc=col, ec="white", lw=1.6))
+        ax.add_patch(Poly([[.88, .44], [.70, .76], [.70, .44]], closed=True,
+                          fc=col, ec="white", lw=1.6))
+        ax.add_patch(Poly([[.42, .76], [.58, .76], [.50, .86]], closed=True,
+                          fc="white", ec=col, lw=1.4))
+
+    def sweat(ax, col):
+        ax.add_patch(Poly([[.28, .20], [.72, .20], [.72, .74], [.28, .74]],
+                          closed=True, fc=col, ec="white", lw=1.6))
+        ax.add_patch(Poly([[.10, .46], [.28, .74], [.28, .46]], closed=True,
+                          fc=col, ec="white", lw=1.6))
+        ax.add_patch(Poly([[.90, .46], [.72, .74], [.72, .46]], closed=True,
+                          fc=col, ec="white", lw=1.6))
+        ax.add_patch(Poly([[.40, .74], [.60, .74], [.60, .80], [.40, .80]],
+                          closed=True, fc=col, ec="white", lw=1.4))
+
+    items = [(coat, NAVY_G, True), (coat, NAVY_G, False)]
+    fig, axs = plt.subplots(1, 2, figsize=(4.4, 2.1))
+    for ax, (draw, col, extra) in zip(axs, items):
+        draw(ax, col, extra) if extra is not None else draw(ax, col)
+        ax.set_xlim(0, 1); ax.set_ylim(0, 1); ax.axis("off")
+    fig.tight_layout(w_pad=0.5)
+    fig.savefig(f"{OUT}/fig_dlg_example.png", bbox_inches="tight",
+                facecolor="white", pad_inches=0.05)
+    plt.close(fig)
+    print("fig_dlg_example ok")
+
+
 if __name__ == "__main__":
     fig_tradeoff()
-    fig_breakdown()
     fig_patch()
     fig_abcd()
-    for stale in ("fig_funnel.png", "fig_availability.png", "fig_dataset.png"):
+    fig_models()
+    fig_modality()
+    fig_weakspots()
+    fig_dlg_example()
+    for stale in ("fig_funnel.png", "fig_availability.png", "fig_dataset.png",
+                  "fig_breakdown.png"):
         p = os.path.join(OUT, stale)
         if os.path.exists(p):
             os.remove(p)
