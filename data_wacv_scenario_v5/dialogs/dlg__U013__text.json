@@ -495,7 +495,7 @@
    "turn_id": 12,
    "speaker": "user",
    "time": "2026-07-08 19:14",
-   "text": "Next out of the pile: Odd group: they have exactly one thing in common, and that shared print is precisely what I avoid.  {brown leopard dress}  {beige leopard shorts}",
+   "text": "Next out of the pile: Odd group of two: they have exactly one thing in common, and that shared print is precisely what I avoid.  {brown leopard dress}  {beige leopard shorts}",
    "images": []
   },
   {
@@ -740,7 +740,7 @@
    "turn_id": 47,
    "speaker": "assistant",
    "time": "2026-07-16 19:17",
-   "text": "One point of overlap, and it's the one that counts. Logged.",
+   "text": "One point of overlap — that shared print is the one that counts.",
    "images": []
   }
  ]

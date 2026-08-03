@@ -422,7 +422,7 @@
    "turn_id": 2,
    "speaker": "user",
    "time": "2026-07-06 19:12",
-   "text": "Different shapes, everything else matched. I'd leave the first one.",
+   "text": "Different cuts, everything else matched. I'd leave the first one.",
    "images": [
     "pink/solid_long_coat.jpg",
     "pink/solid_leggings.jpg"
@@ -486,7 +486,7 @@
    "turn_id": 10,
    "speaker": "user",
    "time": "2026-07-08 19:12",
-   "text": "Different pieces, one shared color. That color is the reason none of them worked.",
+   "text": "All two are different pieces with one shared color. That color is the reason none of them worked.",
    "images": [
     "yellow/polka_dot_tank_top.jpg",
     "yellow/solid_leather_jacket.jpg"
@@ -496,7 +496,7 @@
    "turn_id": 11,
    "speaker": "assistant",
    "time": "2026-07-08 19:13",
-   "text": "The common thread is the problem. Noted.",
+   "text": "The common thread is that color. Noted as a no.",
    "images": []
   },
   {

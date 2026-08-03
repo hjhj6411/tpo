@@ -442,7 +442,7 @@
    "turn_id": 4,
    "speaker": "user",
    "time": "2026-07-06 19:14",
-   "text": "Same trip: Different pieces, one shared print. That print is the reason none of them worked.",
+   "text": "Same trip: All three are different pieces with one shared print. That print is the reason none of them worked.",
    "images": [
     "red/checkered_shorts.jpg",
     "purple/checkered_sweater.jpg",
@@ -453,7 +453,7 @@
    "turn_id": 5,
    "speaker": "assistant",
    "time": "2026-07-06 19:15",
-   "text": "The common thread is the problem. Noted.",
+   "text": "The common thread is that print. Noted as a no.",
    "images": []
   },
   {
@@ -502,7 +502,7 @@
    "turn_id": 11,
    "speaker": "assistant",
    "time": "2026-07-08 19:13",
-   "text": "One point of overlap, and it's the one that counts. Logged.",
+   "text": "One point of overlap — that shared print is the one that counts.",
    "images": []
   },
   {
@@ -685,7 +685,7 @@
    "turn_id": 34,
    "speaker": "user",
    "time": "2026-07-14 19:12",
-   "text": "Different shapes, everything else the same. I'd wear the second one.",
+   "text": "Different cuts, everything else the same. I'd wear the second one.",
    "images": [
     "gray/solid_formal_shirt.jpg",
     "gray/solid_slacks.jpg"

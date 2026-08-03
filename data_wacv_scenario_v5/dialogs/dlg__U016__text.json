@@ -488,7 +488,7 @@
    "turn_id": 11,
    "speaker": "assistant",
    "time": "2026-07-08 19:13",
-   "text": "One point of overlap, and it's the disqualifying one. Logged.",
+   "text": "One point of overlap — that shared color is the disqualifying one.",
    "images": []
   },
   {
@@ -733,14 +733,14 @@
    "turn_id": 46,
    "speaker": "user",
    "time": "2026-07-16 19:16",
-   "text": "Also here: Different pieces, one shared print. That print is the reason none of them worked.  {beige checkered formal shirt}  {black checkered windbreaker}  {orange checkered hoodie}",
+   "text": "Also here: All three are different pieces with one shared print. That print is the reason none of them worked.  {beige checkered formal shirt}  {black checkered windbreaker}  {orange checkered hoodie}",
    "images": []
   },
   {
    "turn_id": 47,
    "speaker": "assistant",
    "time": "2026-07-16 19:17",
-   "text": "The common thread is the problem. Noted.",
+   "text": "The common thread is that print. Noted as a no.",
    "images": []
   }
  ]

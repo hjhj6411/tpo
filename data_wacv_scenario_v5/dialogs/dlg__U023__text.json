@@ -492,7 +492,7 @@
    "turn_id": 12,
    "speaker": "user",
    "time": "2026-07-08 19:14",
-   "text": "Next out of the pile: Different shapes, everything else matched. I'd leave the first one.  {gray solid pea coat}  {gray solid tank top}",
+   "text": "Next out of the pile: Different cuts, everything else matched. I'd leave the first one.  {gray solid pea coat}  {gray solid tank top}",
    "images": []
   },
   {
@@ -541,7 +541,7 @@
    "turn_id": 19,
    "speaker": "assistant",
    "time": "2026-07-10 19:13",
-   "text": "One point of overlap, and it's the disqualifying one. Logged.",
+   "text": "One point of overlap — that shared color is the disqualifying one.",
    "images": []
   },
   {
@@ -723,7 +723,7 @@
    "turn_id": 45,
    "speaker": "assistant",
    "time": "2026-07-16 19:15",
-   "text": "One point of overlap, and it's the one that counts. Logged.",
+   "text": "One point of overlap — that shared print is the one that counts.",
    "images": []
   },
   {

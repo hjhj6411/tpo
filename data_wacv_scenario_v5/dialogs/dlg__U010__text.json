@@ -439,7 +439,7 @@
    "turn_id": 4,
    "speaker": "user",
    "time": "2026-07-06 19:14",
-   "text": "Same trip: Odd group: they have exactly one thing in common, and that shared color is precisely what I avoid.  {black solid slacks}  {black floral leggings}",
+   "text": "Same trip: Odd group of two: they have exactly one thing in common, and that shared color is precisely what I avoid.  {black solid slacks}  {black floral leggings}",
    "images": []
   },
   {
@@ -565,7 +565,7 @@
    "turn_id": 22,
    "speaker": "user",
    "time": "2026-07-10 19:16",
-   "text": "Next out of the box: Different shapes, everything else the same. I'd wear the first one.  {pink solid puffer jacket}  {pink solid t-shirt}",
+   "text": "Next out of the box: Different cuts, everything else the same. I'd wear the first one.  {pink solid puffer jacket}  {pink solid t-shirt}",
    "images": []
   },
   {
@@ -621,7 +621,7 @@
    "turn_id": 30,
    "speaker": "user",
    "time": "2026-07-12 19:16",
-   "text": "Also going: Completely different pieces, one shared color. That color is why I own all of them.  {white solid formal shirt}  {white solid fleece jacket}  {white floral leggings}",
+   "text": "Also going: Completely different pieces, all three sharing one color. That color is why I own every one of them.  {white solid formal shirt}  {white solid fleece jacket}  {white floral leggings}",
    "images": []
   },
   {
@@ -712,7 +712,7 @@
    "turn_id": 43,
    "speaker": "assistant",
    "time": "2026-07-16 19:13",
-   "text": "One point of overlap, and it's the one that counts. Logged.",
+   "text": "One point of overlap — that shared color is the one that counts.",
    "images": []
   },
   {

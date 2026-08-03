@@ -425,7 +425,7 @@
    "turn_id": 2,
    "speaker": "user",
    "time": "2026-07-06 19:12",
-   "text": "Odd group: they have exactly one thing in common, and that shared color is precisely what I avoid.  {purple checkered shorts}  {purple solid puffer jacket}  {purple solid cardigan}",
+   "text": "Odd group of three: they have exactly one thing in common, and that shared color is precisely what I avoid.  {purple checkered shorts}  {purple solid puffer jacket}  {purple solid cardigan}",
    "images": []
   },
   {
@@ -495,7 +495,7 @@
    "turn_id": 12,
    "speaker": "user",
    "time": "2026-07-08 19:14",
-   "text": "Next out of the pile: Different shapes, everything else the same. I'd wear the second one.  {yellow solid leather jacket}  {yellow solid pea coat}",
+   "text": "Next out of the pile: Different cuts, everything else the same. I'd wear the second one.  {yellow solid leather jacket}  {yellow solid pea coat}",
    "images": []
   },
   {
@@ -565,7 +565,7 @@
    "turn_id": 22,
    "speaker": "user",
    "time": "2026-07-10 19:16",
-   "text": "Next out of the box: Different shapes, everything else matched. I'd leave the second one.  {orange solid puffer jacket}  {orange solid blazer}",
+   "text": "Next out of the box: Different cuts, everything else matched. I'd leave the second one.  {orange solid puffer jacket}  {orange solid blazer}",
    "images": []
   },
   {

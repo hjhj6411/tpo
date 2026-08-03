@@ -509,14 +509,14 @@
    "turn_id": 14,
    "speaker": "user",
    "time": "2026-07-08 19:16",
-   "text": "Same sort: Different pieces, one shared color. That color is the reason none of them worked.  {brown checkered shorts}  {brown solid leather jacket}  {brown checkered puffer jacket}",
+   "text": "Same sort: All three are different pieces with one shared color. That color is the reason none of them worked.  {brown checkered shorts}  {brown solid leather jacket}  {brown checkered puffer jacket}",
    "images": []
   },
   {
    "turn_id": 15,
    "speaker": "assistant",
    "time": "2026-07-08 19:17",
-   "text": "The common thread is the problem. Noted.",
+   "text": "The common thread is that color. Noted as a no.",
    "images": []
   },
   {
@@ -607,7 +607,7 @@
    "turn_id": 28,
    "speaker": "user",
    "time": "2026-07-12 19:14",
-   "text": "Next into the bag: Different shapes, everything else matched. I'd leave the first one.  {black solid cardigan}  {black solid pea coat}",
+   "text": "Next into the bag: Different cuts, everything else matched. I'd leave the first one.  {black solid cardigan}  {black solid pea coat}",
    "images": []
   },
   {
@@ -705,7 +705,7 @@
    "turn_id": 42,
    "speaker": "user",
    "time": "2026-07-16 19:12",
-   "text": "Odd group: they have exactly one thing in common, and that shared color is precisely what I avoid.  {purple checkered suit vest}  {purple solid leather jacket}  {purple solid polo shirt}",
+   "text": "Odd group of three: they have exactly one thing in common, and that shared color is precisely what I avoid.  {purple checkered suit vest}  {purple solid leather jacket}  {purple solid polo shirt}",
    "images": []
   },
   {

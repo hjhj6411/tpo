@@ -497,7 +497,7 @@
    "turn_id": 12,
    "speaker": "user",
    "time": "2026-07-08 19:14",
-   "text": "Next out of the pile: Odd group: they have exactly one thing in common, and that shared color is precisely what I avoid.  {orange leopard tank top}  {orange solid sweatshirt}  {orange leopard cardigan}",
+   "text": "Next out of the pile: Odd group of three: they have exactly one thing in common, and that shared color is precisely what I avoid.  {orange leopard tank top}  {orange solid sweatshirt}  {orange leopard cardigan}",
    "images": []
   },
   {
@@ -511,7 +511,7 @@
    "turn_id": 14,
    "speaker": "user",
    "time": "2026-07-08 19:16",
-   "text": "Same sort: Different shapes, everything else the same. I'd wear the first one.  {purple solid long coat}  {purple solid mini skirt}",
+   "text": "Same sort: Different cuts, everything else the same. I'd wear the first one.  {purple solid long coat}  {purple solid mini skirt}",
    "images": []
   },
   {
@@ -539,14 +539,14 @@
    "turn_id": 18,
    "speaker": "user",
    "time": "2026-07-10 19:12",
-   "text": "Different pieces, one shared color. That color is the reason none of them worked.  {navy solid sweatshirt}  {navy leopard jeans}  {navy solid hoodie}",
+   "text": "All three are different pieces with one shared color. That color is the reason none of them worked.  {navy solid sweatshirt}  {navy leopard jeans}  {navy solid hoodie}",
    "images": []
   },
   {
    "turn_id": 19,
    "speaker": "assistant",
    "time": "2026-07-10 19:13",
-   "text": "The common thread is the problem. Noted.",
+   "text": "The common thread is that color. Noted as a no.",
    "images": []
   },
   {
@@ -574,7 +574,7 @@
    "turn_id": 23,
    "speaker": "assistant",
    "time": "2026-07-10 19:17",
-   "text": "One point of overlap, and it's the one that counts. Logged.",
+   "text": "One point of overlap — that shared color is the one that counts.",
    "images": []
   },
   {
@@ -609,7 +609,7 @@
    "turn_id": 28,
    "speaker": "user",
    "time": "2026-07-12 19:14",
-   "text": "Next into the bag: Completely different pieces, one shared print. That print is why I own all of them.  {yellow striped shorts}  {gray striped t-shirt}",
+   "text": "Next into the bag: Completely different pieces, all two sharing one print. That print is why I own every one of them.  {yellow striped shorts}  {gray striped t-shirt}",
    "images": []
   },
   {

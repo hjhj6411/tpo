@@ -506,7 +506,7 @@
    "turn_id": 14,
    "speaker": "user",
    "time": "2026-07-08 19:16",
-   "text": "Same sort: Different shapes, everything else matched. I'd leave the first one.  {gray solid long coat}  {gray solid t-shirt}",
+   "text": "Same sort: Different cuts, everything else matched. I'd leave the first one.  {gray solid long coat}  {gray solid t-shirt}",
    "images": []
   },
   {
@@ -562,7 +562,7 @@
    "turn_id": 22,
    "speaker": "user",
    "time": "2026-07-10 19:16",
-   "text": "Next out of the box: Odd group: they have exactly one thing in common, and that shared color is precisely what I avoid.  {red solid windbreaker}  {red leopard leggings}",
+   "text": "Next out of the box: Odd group of two: they have exactly one thing in common, and that shared color is precisely what I avoid.  {red solid windbreaker}  {red leopard leggings}",
    "images": []
   },
   {

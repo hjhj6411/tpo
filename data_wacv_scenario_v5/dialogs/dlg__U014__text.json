@@ -628,7 +628,7 @@
    "turn_id": 31,
    "speaker": "assistant",
    "time": "2026-07-12 19:17",
-   "text": "One point of overlap, and it's the one that counts. Logged.",
+   "text": "One point of overlap — that shared print is the one that counts.",
    "images": []
   },
   {
@@ -719,14 +719,14 @@
    "turn_id": 44,
    "speaker": "user",
    "time": "2026-07-16 19:14",
-   "text": "Next off the pile: Different pieces, one shared color. That color is the reason none of them worked.  {blue solid t-shirt}  {blue checkered t-shirt}  {blue solid hoodie}",
+   "text": "Next off the pile: All three are different pieces with one shared color. That color is the reason none of them worked.  {blue solid t-shirt}  {blue checkered t-shirt}  {blue solid hoodie}",
    "images": []
   },
   {
    "turn_id": 45,
    "speaker": "assistant",
    "time": "2026-07-16 19:15",
-   "text": "The common thread is the problem. Noted.",
+   "text": "The common thread is that color. Noted as a no.",
    "images": []
   },
   {

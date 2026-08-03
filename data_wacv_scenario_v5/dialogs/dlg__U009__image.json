@@ -522,7 +522,7 @@
    "turn_id": 14,
    "speaker": "user",
    "time": "2026-07-08 19:16",
-   "text": "Same sort: Different pieces, one shared color. That color is the reason none of them worked.",
+   "text": "Same sort: All three are different pieces with one shared color. That color is the reason none of them worked.",
    "images": [
     "brown/checkered_shorts.jpg",
     "brown/solid_leather_jacket.jpg",
@@ -533,7 +533,7 @@
    "turn_id": 15,
    "speaker": "assistant",
    "time": "2026-07-08 19:17",
-   "text": "The common thread is the problem. Noted.",
+   "text": "The common thread is that color. Noted as a no.",
    "images": []
   },
   {
@@ -634,7 +634,7 @@
    "turn_id": 28,
    "speaker": "user",
    "time": "2026-07-12 19:14",
-   "text": "Next into the bag: Different shapes, everything else matched. I'd leave the first one.",
+   "text": "Next into the bag: Different cuts, everything else matched. I'd leave the first one.",
    "images": [
     "black/solid_cardigan.jpg",
     "black/solid_pea_coat.jpg"
@@ -745,7 +745,7 @@
    "turn_id": 42,
    "speaker": "user",
    "time": "2026-07-16 19:12",
-   "text": "Odd group: they have exactly one thing in common, and that shared color is precisely what I avoid.",
+   "text": "Odd group of three: they have exactly one thing in common, and that shared color is precisely what I avoid.",
    "images": [
     "purple/checkered_suit_vest.jpg",
     "purple/solid_leather_jacket.jpg",

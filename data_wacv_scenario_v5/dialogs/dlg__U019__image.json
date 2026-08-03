@@ -524,7 +524,7 @@
    "turn_id": 14,
    "speaker": "user",
    "time": "2026-07-08 19:16",
-   "text": "Same sort: Different pieces, one shared color. That color is the reason none of them worked.",
+   "text": "Same sort: All three are different pieces with one shared color. That color is the reason none of them worked.",
    "images": [
     "pink/solid_long_skirt.jpg",
     "pink/checkered_cardigan.jpg",
@@ -535,7 +535,7 @@
    "turn_id": 15,
    "speaker": "assistant",
    "time": "2026-07-08 19:17",
-   "text": "The common thread is the problem. Noted.",
+   "text": "The common thread is that color. Noted as a no.",
    "images": []
   },
   {
@@ -637,7 +637,7 @@
    "turn_id": 28,
    "speaker": "user",
    "time": "2026-07-12 19:14",
-   "text": "Next into the bag: Completely different pieces, one shared color. That color is why I own all of them.",
+   "text": "Next into the bag: Completely different pieces, all three sharing one color. That color is why I own every one of them.",
    "images": [
     "brown/solid_shorts.jpg",
     "brown/checkered_long_coat.jpg",
@@ -748,7 +748,7 @@
    "turn_id": 42,
    "speaker": "user",
    "time": "2026-07-16 19:12",
-   "text": "Different shapes, everything else matched. I'd leave the second one.",
+   "text": "Different cuts, everything else matched. I'd leave the second one.",
    "images": [
     "red/solid_windbreaker.jpg",
     "red/solid_formal_shirt.jpg"

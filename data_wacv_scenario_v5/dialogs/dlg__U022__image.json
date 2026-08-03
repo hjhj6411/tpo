@@ -442,7 +442,7 @@
    "turn_id": 4,
    "speaker": "user",
    "time": "2026-07-06 19:14",
-   "text": "Same trip: Different shapes, everything else matched. I'd leave the second one.",
+   "text": "Same trip: Different cuts, everything else matched. I'd leave the second one.",
    "images": [
     "pink/solid_polo_shirt.jpg",
     "pink/solid_formal_shirt.jpg"
@@ -517,14 +517,14 @@
    "turn_id": 13,
    "speaker": "assistant",
    "time": "2026-07-08 19:15",
-   "text": "One point of overlap, and it's the one that counts. Logged.",
+   "text": "One point of overlap — that shared color is the one that counts.",
    "images": []
   },
   {
    "turn_id": 14,
    "speaker": "user",
    "time": "2026-07-08 19:16",
-   "text": "Same sort: Odd group: they have exactly one thing in common, and that shared color is precisely what I avoid.",
+   "text": "Same sort: Odd group of three: they have exactly one thing in common, and that shared color is precisely what I avoid.",
    "images": [
     "navy/leopard_t_shirt.jpg",
     "navy/solid_t_shirt.jpg",
@@ -619,7 +619,7 @@
    "turn_id": 26,
    "speaker": "user",
    "time": "2026-07-12 19:12",
-   "text": "Different pieces, one shared print. That print is the reason none of them worked.",
+   "text": "All two are different pieces with one shared print. That print is the reason none of them worked.",
    "images": [
     "pink/striped_mini_skirt.jpg",
     "yellow/striped_polo_shirt.jpg"
@@ -629,7 +629,7 @@
    "turn_id": 27,
    "speaker": "assistant",
    "time": "2026-07-12 19:13",
-   "text": "The common thread is the problem. Noted.",
+   "text": "The common thread is that print. Noted as a no.",
    "images": []
   },
   {
@@ -781,7 +781,7 @@
    "turn_id": 46,
    "speaker": "user",
    "time": "2026-07-16 19:16",
-   "text": "Also here: Completely different pieces, one shared print. That print is why I own all of them.",
+   "text": "Also here: Completely different pieces, all two sharing one print. That print is why I own every one of them.",
    "images": [
     "brown/floral_puffer_jacket.jpg",
     "white/floral_mini_skirt.jpg"

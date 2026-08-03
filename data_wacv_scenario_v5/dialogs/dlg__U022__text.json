@@ -439,7 +439,7 @@
    "turn_id": 4,
    "speaker": "user",
    "time": "2026-07-06 19:14",
-   "text": "Same trip: Different shapes, everything else matched. I'd leave the second one.  {pink solid polo shirt}  {pink solid formal shirt}",
+   "text": "Same trip: Different cuts, everything else matched. I'd leave the second one.  {pink solid polo shirt}  {pink solid formal shirt}",
    "images": []
   },
   {
@@ -502,14 +502,14 @@
    "turn_id": 13,
    "speaker": "assistant",
    "time": "2026-07-08 19:15",
-   "text": "One point of overlap, and it's the one that counts. Logged.",
+   "text": "One point of overlap — that shared color is the one that counts.",
    "images": []
   },
   {
    "turn_id": 14,
    "speaker": "user",
    "time": "2026-07-08 19:16",
-   "text": "Same sort: Odd group: they have exactly one thing in common, and that shared color is precisely what I avoid.  {navy leopard t-shirt}  {navy solid t-shirt}  {navy leopard jeans}",
+   "text": "Same sort: Odd group of three: they have exactly one thing in common, and that shared color is precisely what I avoid.  {navy leopard t-shirt}  {navy solid t-shirt}  {navy leopard jeans}",
    "images": []
   },
   {
@@ -593,14 +593,14 @@
    "turn_id": 26,
    "speaker": "user",
    "time": "2026-07-12 19:12",
-   "text": "Different pieces, one shared print. That print is the reason none of them worked.  {pink striped mini skirt}  {yellow striped polo shirt}",
+   "text": "All two are different pieces with one shared print. That print is the reason none of them worked.  {pink striped mini skirt}  {yellow striped polo shirt}",
    "images": []
   },
   {
    "turn_id": 27,
    "speaker": "assistant",
    "time": "2026-07-12 19:13",
-   "text": "The common thread is the problem. Noted.",
+   "text": "The common thread is that print. Noted as a no.",
    "images": []
   },
   {
@@ -733,7 +733,7 @@
    "turn_id": 46,
    "speaker": "user",
    "time": "2026-07-16 19:16",
-   "text": "Also here: Completely different pieces, one shared print. That print is why I own all of them.  {brown floral puffer jacket}  {white floral mini skirt}",
+   "text": "Also here: Completely different pieces, all two sharing one print. That print is why I own every one of them.  {brown floral puffer jacket}  {white floral mini skirt}",
    "images": []
   },
   {

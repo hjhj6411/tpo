@@ -147,7 +147,7 @@ UTTERANCES = {
     ("Two different pieces here, matched in every other way. The {P} one's "
      "{A} is completely me.",
      "Everything else held equal — the {P} one's {A} it is."),
-    ("Different shapes, everything else the same. I'd wear the {P} one.",
+    ("Different {A}s, everything else the same. I'd wear the {P} one.",
      "With the rest controlled, the {P} one's {A} is yours."),
     ("These two differ only in {A}, and the {P} one is the one I'd keep.",
      "Noted — the {P} one's {A} goes on your list."),
@@ -158,7 +158,7 @@ UTTERANCES = {
     ("Two different pieces, identical apart from their shape. The {P} one's "
      "{A} is the {A} I never touch.",
      "Everything else held equal — the {P} one's {A} goes on the no list."),
-    ("Different shapes, everything else matched. I'd leave the {P} one.",
+    ("Different {A}s, everything else matched. I'd leave the {P} one.",
      "With the rest controlled, the {P} one's {A} is out."),
     ("They differ only in {A}, and the {P} one is the one I'd never buy.",
      "Noted — the {P} one's {A} is banned."),
@@ -174,27 +174,27 @@ UTTERANCES = {
      "Spotted it. Whatever {A} those {N} have in common belongs to you."),
     ("Nothing about these {N} matches except one {A}, and that's the {A} I "
      "love.",
-     "One point of overlap, and it's the one that counts. Logged."),
+     "One point of overlap — that shared {A} is the one that counts."),
     ("Put these {N} side by side and only one thing repeats. That repeat is "
      "my favorite {A}.",
      "Found the overlap — that {A} is yours."),
-    ("Completely different pieces, one shared {A}. That {A} is why I own all "
-     "of them.",
+    ("Completely different pieces, all {N} sharing one {A}. That {A} is why "
+     "I own every one of them.",
      "The common thread is the {A}. Understood."),
 ],
 ("share", "attribute", "dislike"): [
-    ("Odd group: they have exactly one thing in common, and that shared {A} "
-     "is precisely what I avoid.",
+    ("Odd group of {N}: they have exactly one thing in common, and that "
+     "shared {A} is precisely what I avoid.",
      "Understood. The one {A} those {N} share goes on the no list."),
     ("These {N} are unalike in every way but one {A} — the {A} I keep away "
      "from.",
-     "One point of overlap, and it's the disqualifying one. Logged."),
+     "One point of overlap — that shared {A} is the disqualifying one."),
     ("Only one thing repeats across these {N}, and that repeat is the {A} I "
      "won't wear.",
      "Found the overlap — that {A} is out."),
-    ("Different pieces, one shared {A}. That {A} is the reason none of them "
-     "worked.",
-     "The common thread is the problem. Noted."),
+    ("All {N} are different pieces with one shared {A}. That {A} is the "
+     "reason none of them worked.",
+     "The common thread is that {A}. Noted as a no."),
 ],
 # garment: 같은 종류의 옷들 → 서로 닮아 보이므로 문구를 바꾼다
 ("share", "garment", "like"): [
@@ -224,6 +224,17 @@ UTTERANCES = {
 ],
 }
 
-# 무결성: 모든 키가 정확히 4개 변형을 갖는다 (대화 내 최대 중복 = 4)
+# ── 무결성 검사 (임포트 시점) ────────────────────────────────────────────
+# 앵커가 빠진 변형은 설계 불변식을 깬다. 축 단어가 없으면 모델은 어느 축을
+# 판단해야 하는지 알 수 없고, 서수/개수가 없으면 어느 이미지를 가리키는지
+# 특정할 수 없다. 문장을 추가·수정할 때 여기서 즉시 걸린다.
 for _k, _v in UTTERANCES.items():
+    _fam, _kind, _pol = _k
     assert len(_v) == 4, f"{_k}: expected 4 variants, got {len(_v)}"
+    for _i, (_u, _a) in enumerate(_v):
+        assert "{A}" in _u, f"{_k}#{_i}: user turn has no axis word"
+        assert "{A}" in _a, f"{_k}#{_i}: ack has no axis word"
+        if _fam == "differ":
+            assert "{P}" in _u, f"{_k}#{_i}: differ user turn has no ordinal"
+        if _fam == "share":
+            assert "{N}" in _u, f"{_k}#{_i}: share user turn has no count"

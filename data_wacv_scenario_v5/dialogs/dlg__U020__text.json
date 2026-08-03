@@ -509,7 +509,7 @@
    "turn_id": 14,
    "speaker": "user",
    "time": "2026-07-08 19:16",
-   "text": "Same sort: Completely different pieces, one shared print. That print is why I own all of them.  {white checkered long coat}  {green checkered tank top}",
+   "text": "Same sort: Completely different pieces, all two sharing one print. That print is why I own every one of them.  {white checkered long coat}  {green checkered tank top}",
    "images": []
   },
   {
@@ -558,7 +558,7 @@
    "turn_id": 21,
    "speaker": "assistant",
    "time": "2026-07-10 19:15",
-   "text": "One point of overlap, and it's the one that counts. Logged.",
+   "text": "One point of overlap — that shared color is the one that counts.",
    "images": []
   },
   {
@@ -607,7 +607,7 @@
    "turn_id": 28,
    "speaker": "user",
    "time": "2026-07-12 19:14",
-   "text": "Next into the bag: Odd group: they have exactly one thing in common, and that shared print is precisely what I avoid.  {brown leopard tank top}  {white leopard hoodie}  {brown leopard t-shirt}",
+   "text": "Next into the bag: Odd group of three: they have exactly one thing in common, and that shared print is precisely what I avoid.  {brown leopard tank top}  {white leopard hoodie}  {brown leopard t-shirt}",
    "images": []
   },
   {

@@ -554,7 +554,7 @@
    "turn_id": 18,
    "speaker": "user",
    "time": "2026-07-10 19:12",
-   "text": "Different pieces, one shared print. That print is the reason none of them worked.",
+   "text": "All two are different pieces with one shared print. That print is the reason none of them worked.",
    "images": [
     "brown/polka_dot_hoodie.jpg",
     "navy/polka_dot_long_coat.jpg"
@@ -564,7 +564,7 @@
    "turn_id": 19,
    "speaker": "assistant",
    "time": "2026-07-10 19:13",
-   "text": "The common thread is the problem. Noted.",
+   "text": "The common thread is that print. Noted as a no.",
    "images": []
   },
   {
@@ -635,7 +635,7 @@
    "turn_id": 28,
    "speaker": "user",
    "time": "2026-07-12 19:14",
-   "text": "Next into the bag: Different shapes, everything else the same. I'd wear the first one.",
+   "text": "Next into the bag: Different cuts, everything else the same. I'd wear the first one.",
    "images": [
     "black/solid_polo_shirt.jpg",
     "black/solid_cardigan.jpg"
@@ -758,7 +758,7 @@
    "turn_id": 43,
    "speaker": "assistant",
    "time": "2026-07-16 19:13",
-   "text": "One point of overlap, and it's the disqualifying one. Logged.",
+   "text": "One point of overlap — that shared color is the disqualifying one.",
    "images": []
   },
   {
@@ -791,7 +791,7 @@
    "turn_id": 47,
    "speaker": "assistant",
    "time": "2026-07-16 19:17",
-   "text": "One point of overlap, and it's the one that counts. Logged.",
+   "text": "One point of overlap — that shared color is the one that counts.",
    "images": []
   }
  ]

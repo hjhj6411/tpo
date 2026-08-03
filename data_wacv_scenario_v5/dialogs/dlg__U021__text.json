@@ -481,21 +481,21 @@
    "turn_id": 10,
    "speaker": "user",
    "time": "2026-07-08 19:12",
-   "text": "Different pieces, one shared color. That color is the reason none of them worked.  {beige solid t-shirt}  {beige solid formal shirt}  {beige striped polo shirt}",
+   "text": "All three are different pieces with one shared color. That color is the reason none of them worked.  {beige solid t-shirt}  {beige solid formal shirt}  {beige striped polo shirt}",
    "images": []
   },
   {
    "turn_id": 11,
    "speaker": "assistant",
    "time": "2026-07-08 19:13",
-   "text": "The common thread is the problem. Noted.",
+   "text": "The common thread is that color. Noted as a no.",
    "images": []
   },
   {
    "turn_id": 12,
    "speaker": "user",
    "time": "2026-07-08 19:14",
-   "text": "Next out of the pile: Odd group: they have exactly one thing in common, and that shared color is precisely what I avoid.  {black solid t-shirt}  {black solid sweatshirt}  {black striped formal shirt}",
+   "text": "Next out of the pile: Odd group of three: they have exactly one thing in common, and that shared color is precisely what I avoid.  {black solid t-shirt}  {black solid sweatshirt}  {black striped formal shirt}",
    "images": []
   },
   {
@@ -621,7 +621,7 @@
    "turn_id": 30,
    "speaker": "user",
    "time": "2026-07-12 19:16",
-   "text": "Also going: Different shapes, everything else matched. I'd leave the second one.  {navy solid puffer jacket}  {navy solid blazer}",
+   "text": "Also going: Different cuts, everything else matched. I'd leave the second one.  {navy solid puffer jacket}  {navy solid blazer}",
    "images": []
   },
   {
@@ -656,7 +656,7 @@
    "turn_id": 35,
    "speaker": "assistant",
    "time": "2026-07-14 19:13",
-   "text": "One point of overlap, and it's the disqualifying one. Logged.",
+   "text": "One point of overlap — that shared color is the disqualifying one.",
    "images": []
   },
   {

@@ -432,7 +432,7 @@
    "turn_id": 3,
    "speaker": "assistant",
    "time": "2026-07-06 19:13",
-   "text": "One point of overlap, and it's the disqualifying one. Logged.",
+   "text": "One point of overlap — that shared print is the disqualifying one.",
    "images": []
   },
   {
@@ -551,7 +551,7 @@
    "turn_id": 20,
    "speaker": "user",
    "time": "2026-07-10 19:14",
-   "text": "She also sent this: Odd group: they have exactly one thing in common, and that shared color is precisely what I avoid.  {beige solid dress}  {beige solid leather jacket}  {beige polka dot cardigan}",
+   "text": "She also sent this: Odd group of three: they have exactly one thing in common, and that shared color is precisely what I avoid.  {beige solid dress}  {beige solid leather jacket}  {beige polka dot cardigan}",
    "images": []
   },
   {

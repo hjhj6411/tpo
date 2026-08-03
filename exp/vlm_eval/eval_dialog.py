@@ -33,16 +33,16 @@ IMAGE BUDGET
 ------------
 대화 이미지(~33) + 선택지 4 = 문항당 ~37장. 서빙을 다시 띄워야 한다:
 
-    vllm serve Qwen/Qwen2.5-VL-7B-Instruct --port 8001 --max-model-len 65536 --tensor_parallel_size 4\
+    vllm serve <model> --port 8001 --max-model-len 65536 \
         --limit-mm-per-prompt '{"image":40}'
 
 USAGE
 -----
     python -m exp.vlm_eval.eval_dialog --port 8001 \
-        --model Qwen/Qwen2.5-VL-7B-Instruct  --concurrency 16
+        --model Qwen/Qwen3-VL-4B-Instruct --concurrency 8
     python -m exp.vlm_eval.eval_dialog --dialog-variant text \
         --base-url https://api.openai.com/v1 --model gpt-5-mini \
-        --api-key-env OPENAI_API_KEY -- limit 100
+        --api-key-env OPENAI_API_KEY
 """
 from __future__ import annotations
 
@@ -281,6 +281,26 @@ def call_model(session, url, model, messages, max_tokens, temperature,
 
 
 # ══ evidence linkage ══════════════════════════════════════════════════════
+def dialog_cells(dialog):
+    """대화에 등장한 셀 집합. 선택지와의 재등장을 표시하기 위한 것."""
+    return {f'{a["color"]}|{a["garment_category"]}|{a["pattern"]}'
+            for e in dialog["evidence"] for a in e["image_attributes"]}
+
+
+def recurrence(plan, cells):
+    """대화에서 본 그 이미지가 선택지로 다시 나오는가.
+
+    전체 슬롯의 7%, 문항의 25%에서 발생하며 A/B/C/D 에 고르게 퍼져 있어
+    정답 쪽으로 치우치지 않는다. 다만 취향 축은 추론 대신 회상으로 풀릴 수
+    있으므로, 숨은 교란요인으로 두지 말고 플래그로 남겨 분해 집계한다.
+    """
+    labs = [lab for lab, o in plan["options"].items()
+            if f'{o["attributes"].get("color")}|'
+               f'{o["attributes"].get("garment_category")}|'
+               f'{o["attributes"].get("pattern")}' in cells]
+    return {"recurs": bool(labs), "recur_labels": "".join(sorted(labs))}
+
+
 def evidence_index(dialog):
     """(axis, value) -> evidence. 문항의 활성축 값이 대화에서 어떤 방식으로
     노출됐는지 붙이기 위한 것. 방식별 정확도 분해의 열쇠다."""
@@ -329,6 +349,7 @@ def make_jobs(plans, queries, dialogs, fmts, images_root, seed, done):
         d2o = {d: k for d, (k, _) in zip(LABELS, items)}
         correct = next(d for d, k in d2o.items() if k == "A")
         ev = item_evidence(plan, evidence_index(dialog))
+        ev.update(recurrence(plan, dialog_cells(dialog)))
         for fmt in fmts:
             if (pid, fmt) in done:
                 continue
@@ -548,6 +569,9 @@ def main() -> int:
                 fmts)
     print_block(bucket(lambda r: f"vio:{r.get('violation_axis')}"),
                 "by VIOLATION axis", fmts)
+    print_block(bucket(lambda r: f"recur:{bool(r.get('evidence_recurs'))}"),
+                "by IMAGE RECURRENCE (a dialogue image reappears as an option)",
+                fmts)
 
     errs = sum(1 for r in rows if r.get("error"))
     unp = sum(1 for r in rows if not r.get("error") and r["predicted_display"] is None)

@@ -548,7 +548,7 @@
    "turn_id": 20,
    "speaker": "user",
    "time": "2026-07-10 19:14",
-   "text": "She also sent this: Odd group: they have exactly one thing in common, and that shared color is precisely what I avoid.  {pink solid fleece jacket}  {pink striped sweater}",
+   "text": "She also sent this: Odd group of two: they have exactly one thing in common, and that shared color is precisely what I avoid.  {pink solid fleece jacket}  {pink striped sweater}",
    "images": []
   },
   {
@@ -674,7 +674,7 @@
    "turn_id": 38,
    "speaker": "user",
    "time": "2026-07-14 19:16",
-   "text": "Also saved: Different shapes, everything else the same. I'd wear the second one.  {yellow solid formal shirt}  {yellow solid long skirt}",
+   "text": "Also saved: Different cuts, everything else the same. I'd wear the second one.  {yellow solid formal shirt}  {yellow solid long skirt}",
    "images": []
   },
   {
