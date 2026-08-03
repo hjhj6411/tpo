@@ -7,7 +7,8 @@
 presentation/
 ├── POD-Bench_성과발표.pptx   ← 제출본
 ├── make_figs.py              그림 6종 생성 (matplotlib)
-├── build_deck.py             슬라이드 조립 (python-pptx)
+├── build_deck.py             슬라이드 조립 (python-pptx) + 저장 시 패키지 무결성 검사
+├── sanitize_template.py      템플릿에서 원본 파일의 잔재 제거 (아래 참고)
 ├── assets/
 │   ├── template.pptx         기존 발표자료에서 슬라이드만 비운 껍데기
 │   │                         (A4 10.83×7.5in · 맑은 고딕 테마 · 마스터)
@@ -68,6 +69,23 @@ python build_deck.py    # POD-Bench_성과발표.pptx 재생성
 | Strict/TPO/Pref × 5 input format | `data_wacv_scenario_v5/eval/Qwen_Qwen3-VL-4B-Instruct/results.jsonl` (4,189행, 오류 0) |
 
 `make_figs.py` 상단 주석에 파일별 대응이 정리되어 있습니다.
+
+## 템플릿 정리 (PowerPoint 멈춤 수정)
+
+첫 빌드에서 PowerPoint가 파일을 열다 멈췄습니다. 원인은 템플릿이 원본 발표자료의
+패키지를 통째로 물려받은 것이었고, `sanitize_template.py`로 세 가지를 제거했습니다.
+
+| 잔재 | 문제 |
+|---|---|
+| `<p:embeddedFontLst>` + `ppt/fonts/*.fntdata` (2.9 MB) | 원본 76장이 쓰던 글자만 담긴 **맑은 고딕 서브셋**. 새 슬라이드의 한글은 그 서브셋 밖이라 PowerPoint가 커버되지 않는 임베드 폰트를 처리하려다 멈춤. 맑은 고딕은 Windows 기본 폰트라 임베드가 애초에 불필요 |
+| `docProps/app.xml` | `<Slides>76</Slides>`, `TitlesOfParts` 79개 — 실제 14장과 불일치. python-pptx는 이 파트를 그대로 복사만 함 |
+| `docProps/thumbnail.jpeg`, `core.xml` | 이전 파일의 미리보기 이미지와 작성자 정보(revision 122) |
+
+결과: **3.53 MB → 0.66 MB**, 렌더링 결과는 동일합니다.
+
+재발 방지로 `build_deck.py`가 저장 직후 검사합니다 — 모든 relationship과 content type이
+실제 파트를 가리키는지, 임베드 폰트가 다시 들어오지 않았는지, `app.xml`의 슬라이드 수가
+실제와 맞는지. 하나라도 어긋나면 빌드가 실패합니다.
 
 ## 발표 전 확인할 것
 

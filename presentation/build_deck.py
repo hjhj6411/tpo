@@ -823,4 +823,26 @@ s.shapes.add_picture(LOGO, Inches(8.25), Inches(6.74),
 notes(s, "[5:00] 감사합니다.")
 
 prs.save(OUT)
-print("saved:", OUT, "| slides:", len(prs.slides.__iter__.__self__._sldIdLst))
+
+# ── ship-time integrity gate ────────────────────────────────────────────────
+# The template is derived from another deck, so guard against inheriting its
+# baggage again: a dangling relationship makes PowerPoint offer to repair, and
+# a subsetted embedded CJK font makes it stall on open.
+import zipfile
+from sanitize_template import verify
+
+verify(OUT)
+_z = zipfile.ZipFile(OUT)
+_pres = _z.read("ppt/presentation.xml").decode("utf-8")
+assert "<p:embeddedFontLst>" not in _pres, "embedded fonts leaked back into the deck"
+assert not [n for n in _z.namelist() if n.startswith("ppt/fonts/")], "fntdata leaked back in"
+_n_slides = len([n for n in _z.namelist() if n.startswith("ppt/slides/slide")])
+_app = _z.read("docProps/app.xml").decode("utf-8")
+import re as _re
+_claim = _re.search(r"<Slides>(\d+)</Slides>", _app)
+assert _claim is None or int(_claim.group(1)) == _n_slides, (
+    f"docProps/app.xml claims {_claim.group(1)} slides, package has {_n_slides}")
+_z.close()
+
+print("saved:", OUT, "| slides:", _n_slides,
+      f"| {os.path.getsize(OUT)/1e6:.2f} MB")
