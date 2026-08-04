@@ -1,0 +1,66 @@
+tmux new -s dialog_eval
+
+# 세션 안에서 평소처럼 실행
+cd ~/pod_bench
+python -m exp.vlm_eval.eval_dialog --port 8001 \
+  --model Qwen/Qwen3-VL-30B-A3B-Instruct --concurrency 16
+
+Ctrl+B / D
+tmux attach -t dialog_eval
+
+cd ~/pod_bench && python - <<'EOF'
+import json, glob, os, time
+from collections import Counter, defaultdict
+F = ["dialog", "dialog+query"]
+GOAL_PLANS = 2550
+
+for p in sorted(glob.glob('data_wacv_scenario_v5/eval_dialog/*/results.jsonl')):
+    rows = {}
+    for l in open(p):
+        try:
+            r = json.loads(l); rows[(r['plan_id'], r['input_format'])] = r
+        except: pass
+    rows = list(rows.values())
+    if not rows: continue
+    keys = {(r['plan_id'], r['input_format']) for r in rows}
+    plans = {r['plan_id'] for r in rows}
+    full = {x for x in plans if all((x, f) in keys for f in F)}
+    goal = GOAL_PLANS * len(F)
+
+    print("=" * 66); print(p.split('/')[-2])
+    print(f"{len(rows)}/{goal} ({len(rows)/goal:.1%})  plan {len(plans)} 착수 / {len(full)} 완결"
+          f"  마지막 {time.time()-os.stat(p).st_mtime:.0f}초 전")
+    print("에러", sum(1 for r in rows if r.get('error')),
+          " 파싱실패", sum(1 for r in rows if not r.get('error') and not r['predicted_display']))
+    for k, v in Counter(r['error'][:70] for r in rows if r.get('error')).most_common(2):
+        print("  ", v, k)
+
+    pos = Counter(r['predicted_display'] for r in rows if r['predicted_display'])
+    cor = Counter(r['correct_display'] for r in rows)
+    print("예측", dict(sorted(pos.items())), "/ 정답", dict(sorted(cor.items())))
+
+    fair = [r for r in rows if r['plan_id'] in full]
+    def block(keyfn, title, sub=None):
+        agg = defaultdict(lambda: [0,0,0,0])
+        for r in (sub or fair):
+            a = agg[(keyfn(r), r['input_format'])]
+            a[0]+=r['strict']; a[1]+=r['tpo']; a[2]+=r['preference']; a[3]+=1
+        if not agg: return
+        print(f"\n{title}")
+        print(f"  {'':28s}{'n':>6}{'strict':>9}{'tpo':>9}{'pref':>9}")
+        for k in sorted(agg, key=lambda x: (str(x[0]), F.index(x[1]) if x[1] in F else 9)):
+            s,t,pr,n = agg[k]
+            print(f"  {str(k[0])+'/'+k[1]:28s}{n:6d}{s/n:9.1%}{t/n:9.1%}{pr/n:9.1%}")
+
+    block(lambda r: "ALL", "전체 (완결 plan만)")
+    block(lambda r: r.get('track'), "트랙별")
+    block(lambda r: r.get('evidence_pref_expression'), "표현 방식별 (선호값 노출 방식)")
+    block(lambda r: r.get('active_axis'), "활성축별")
+
+    d = [r for r in fair if r['input_format']=='dialog']
+    dq = [r for r in fair if r['input_format']=='dialog+query']
+    if d and dq:
+        print(f"\n→ pref {sum(r['preference'] for r in d)/len(d):.1%}"
+              f" → {sum(r['preference'] for r in dq)/len(dq):.1%}"
+              f" ({(sum(r['preference'] for r in dq)/len(dq)-sum(r['preference'] for r in d)/len(d))*100:+.1f}%p)")
+EOF
