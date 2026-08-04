@@ -12,7 +12,7 @@ cd ~/pod_bench && python - <<'EOF'
 import json, glob, os, time
 from collections import Counter, defaultdict
 F = ["dialog", "dialog+query"]
-GOAL_PLANS = 2550
+GOAL = 2550 * len(F)
 
 for p in sorted(glob.glob('data_wacv_scenario_v5/eval_dialog/*/results.jsonl')):
     rows = {}
@@ -20,47 +20,127 @@ for p in sorted(glob.glob('data_wacv_scenario_v5/eval_dialog/*/results.jsonl')):
         try:
             r = json.loads(l); rows[(r['plan_id'], r['input_format'])] = r
         except: pass
-    rows = list(rows.values())
+    rows = [r for r in rows.values()]
     if not rows: continue
-    keys = {(r['plan_id'], r['input_format']) for r in rows}
-    plans = {r['plan_id'] for r in rows}
+    ok = [r for r in rows if not r.get('error')]
+    keys = {(r['plan_id'], r['input_format']) for r in ok}
+    plans = {r['plan_id'] for r in ok}
     full = {x for x in plans if all((x, f) in keys for f in F)}
-    goal = GOAL_PLANS * len(F)
 
-    print("=" * 66); print(p.split('/')[-2])
-    print(f"{len(rows)}/{goal} ({len(rows)/goal:.1%})  plan {len(plans)} 착수 / {len(full)} 완결"
+    print("=" * 68); print(p.split('/')[-2])
+    print(f"{len(ok)}/{GOAL} ({len(ok)/GOAL:.1%})  plan {len(plans)} 착수 / {len(full)} 완결"
+          f"  사용자 {len({r['user_id'] for r in ok})}/24"
           f"  마지막 {time.time()-os.stat(p).st_mtime:.0f}초 전")
-    print("에러", sum(1 for r in rows if r.get('error')),
-          " 파싱실패", sum(1 for r in rows if not r.get('error') and not r['predicted_display']))
-    for k, v in Counter(r['error'][:70] for r in rows if r.get('error')).most_common(2):
-        print("  ", v, k)
+    err = [r for r in rows if r.get('error')]
+    print(f"에러 {len(err)}  파싱실패 {sum(1 for r in ok if not r['predicted_display'])}")
+    for k, v in Counter(r['error'][:60] for r in err).most_common(2): print("  ", v, k)
 
-    pos = Counter(r['predicted_display'] for r in rows if r['predicted_display'])
-    cor = Counter(r['correct_display'] for r in rows)
+    pos = Counter(r['predicted_display'] for r in ok if r['predicted_display'])
+    cor = Counter(r['correct_display'] for r in ok)
     print("예측", dict(sorted(pos.items())), "/ 정답", dict(sorted(cor.items())))
 
-    fair = [r for r in rows if r['plan_id'] in full]
-    def block(keyfn, title, sub=None):
+    fair = [r for r in ok if r['plan_id'] in full]
+    def block(fn, title):
         agg = defaultdict(lambda: [0,0,0,0])
-        for r in (sub or fair):
-            a = agg[(keyfn(r), r['input_format'])]
+        for r in fair:
+            a = agg[(fn(r), r['input_format'])]
             a[0]+=r['strict']; a[1]+=r['tpo']; a[2]+=r['preference']; a[3]+=1
         if not agg: return
         print(f"\n{title}")
-        print(f"  {'':28s}{'n':>6}{'strict':>9}{'tpo':>9}{'pref':>9}")
-        for k in sorted(agg, key=lambda x: (str(x[0]), F.index(x[1]) if x[1] in F else 9)):
+        print(f"  {'':30s}{'n':>6}{'strict':>9}{'tpo':>9}{'pref':>9}")
+        for k in sorted(agg, key=lambda x: (str(x[0]), F.index(x[1]))):
             s,t,pr,n = agg[k]
-            print(f"  {str(k[0])+'/'+k[1]:28s}{n:6d}{s/n:9.1%}{t/n:9.1%}{pr/n:9.1%}")
+            print(f"  {str(k[0])+'/'+k[1]:30s}{n:6d}{s/n:9.1%}{t/n:9.1%}{pr/n:9.1%}")
 
     block(lambda r: "ALL", "전체 (완결 plan만)")
     block(lambda r: r.get('track'), "트랙별")
-    block(lambda r: r.get('evidence_pref_expression'), "표현 방식별 (선호값 노출 방식)")
+    block(lambda r: r.get('evidence_pref_expression'), "표현 방식별")
     block(lambda r: r.get('active_axis'), "활성축별")
+    block(lambda r: "recur" if r.get('evidence_recurs') else "no-recur",
+          "이미지 재등장 여부별")
 
-    d = [r for r in fair if r['input_format']=='dialog']
+    d  = [r for r in fair if r['input_format']=='dialog']
     dq = [r for r in fair if r['input_format']=='dialog+query']
     if d and dq:
-        print(f"\n→ pref {sum(r['preference'] for r in d)/len(d):.1%}"
-              f" → {sum(r['preference'] for r in dq)/len(dq):.1%}"
-              f" ({(sum(r['preference'] for r in dq)/len(dq)-sum(r['preference'] for r in d)/len(d))*100:+.1f}%p)")
+        pd_, pq = sum(r['preference'] for r in d)/len(d), sum(r['preference'] for r in dq)/len(dq)
+        print(f"\n→ pref {pd_:.1%} → {pq:.1%} ({(pq-pd_)*100:+.1f}%p)")
+EOF
+
+
+
+
+cd ~/pod_bench && python - <<'EOF'
+import json, glob
+from collections import defaultdict
+import math
+
+F = ["dialog", "dialog+query"]
+
+def wilson(k, n, z=1.96):
+    if not n: return (0, 0)
+    p = k/n; d = 1 + z*z/n
+    c = (p + z*z/(2*n))/d
+    h = z*math.sqrt(p*(1-p)/n + z*z/(4*n*n))/d
+    return max(0, c-h), min(1, c+h)
+
+for path in sorted(glob.glob('data_wacv_scenario_v5/eval_dialog/*/results.jsonl')):
+    rows = {}
+    for l in open(path):
+        try:
+            r = json.loads(l)
+            if not r.get('error'): rows[(r['plan_id'], r['input_format'])] = r
+        except: pass
+    rows = list(rows.values())
+    if len(rows) < 500: continue
+    keys = set(rows and {(r['plan_id'], r['input_format']) for r in rows})
+    full = {p for p, _ in keys if all((p, f) in keys for f in F)}
+    rows = [r for r in rows if r['plan_id'] in full and r['evidence_pref_turn'] is not None]
+
+    print("=" * 72); print(path.split('/')[-2], f"  n={len(rows)//2}")
+
+    # ── ① 노출 위치(턴) 구간별 preference ──────────────────────────
+    #    48턴을 6구간으로. 초반 소실이면 앞구간이 낮고,
+    #    lost-in-the-middle 이면 가운데가 낮고 양끝이 높다(U자).
+    for fmt in F:
+        sub = [r for r in rows if r['input_format'] == fmt]
+        if not sub: continue
+        print(f"\n  [{fmt}]  노출 턴 구간별 preference")
+        print(f"    {'구간':12s}{'n':>6}{'pref':>8}{'95% CI':>18}  {'':<22}")
+        agg = defaultdict(lambda: [0, 0])
+        for r in sub:
+            b = min(int(r['evidence_pref_turn']) // 8, 5)
+            a = agg[b]; a[0] += r['preference']; a[1] += 1
+        for b in range(6):
+            k, n = agg[b]
+            if not n: continue
+            lo, hi = wilson(k, n)
+            bar = "█" * round((k/n) * 30)
+            print(f"    턴 {b*8:2d}-{b*8+7:2d}   {n:6d}{k/n:8.1%}  [{lo:5.1%},{hi:5.1%}]  {bar}")
+
+    # ── ② 선형 추세: 턴이 뒤로 갈수록 잘 맞히는가 ──────────────────
+    sub = [r for r in rows if r['input_format'] == 'dialog']
+    if len(sub) > 30:
+        xs = [r['evidence_pref_turn'] for r in sub]
+        ys = [r['preference'] for r in sub]
+        n = len(xs); mx = sum(xs)/n; my = sum(ys)/n
+        sxy = sum((x-mx)*(y-my) for x, y in zip(xs, ys))
+        sxx = sum((x-mx)**2 for x in xs)
+        syy = sum((y-my)**2 for y in ys)
+        slope = sxy/sxx if sxx else 0
+        r_ = sxy/math.sqrt(sxx*syy) if sxx and syy else 0
+        print(f"\n  선형 추세 (dialog): 기울기 {slope*100:+.3f}%p/턴, r={r_:+.3f}")
+        print(f"    → 양수면 '뒤쪽 노출이 유리'(초반 망각), 0 근처면 위치 무관")
+
+    # ── ③ 첫/중간/마지막 에피소드 비교 ─────────────────────────────
+    for fmt in F:
+        sub = [r for r in rows if r['input_format'] == fmt]
+        if not sub: continue
+        g = defaultdict(lambda: [0, 0])
+        for r in sub:
+            t = r['evidence_pref_turn']
+            k = "첫 에피소드(0-15)" if t < 16 else ("중간(16-31)" if t < 32 else "마지막(32-47)")
+            a = g[k]; a[0] += r['preference']; a[1] += 1
+        parts = [f"{k} {v[0]/v[1]:.1%}(n={v[1]})" for k, v in
+                 sorted(g.items(), key=lambda x: x[0])]
+        print(f"  [{fmt}] " + "  |  ".join(parts))
 EOF
