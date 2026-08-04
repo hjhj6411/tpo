@@ -28,9 +28,14 @@ renderer 가 키별로 소진 순서대로 꺼내며, 순서는 사용자 시드
 말해야 표면 다양성이 실제로 생긴다.
 """
 
-DIALOG_TEMPLATE_VERSION = "dlg-2026-08-03c"
+DIALOG_TEMPLATE_VERSION = "dlg-2026-08-03e"
 
-AXIS_WORD = {"color": "color", "pattern": "print", "garment_category": "cut"}
+# 축 이름은 정식 축 명칭을 그대로 쓴다. 도메인 용어("print", "cut")로
+# 우회하면 색만 직접 이름이고 나머지 둘은 "용어 → 축" 매핑이라는 추가 추론이
+# 붙어, 축별 정확도 분해가 오염된다(무늬 정확도가 낮을 때 지각 탓인지 단서가
+# 간접적인 탓인지 구분 불가). 값 어휘가 아니므로 R2 누설 검사에 걸리지 않는다.
+AXIS_WORD = {"color": "color", "pattern": "pattern",
+             "garment_category": "garment type"}
 AXIS_KIND = {"color": "attribute", "pattern": "attribute",
              "garment_category": "garment"}
 
@@ -87,9 +92,9 @@ UTTERANCES = {
      "So the {A} carried the whole purchase. Noted."),
 ],
 ("single", "attribute", "dislike"): [
-    ("This one, though: that {A} is the one {A} I always put back down.",
+    ("This one, though: that {A} is the one I always put back down.",
      "Understood — that {A} stays on the rack."),
-    ("The {A} here is the single {A} I will not wear.",
+    ("The {A} here is the one I will not wear.",
      "Got it. That {A} is off the table."),
     ("Whatever else this has going for it, that {A} rules it out.",
      "Noted — that {A} is disqualifying on its own."),
@@ -100,14 +105,14 @@ UTTERANCES = {
     ("This is exactly my favorite {A}. I own it in every version I can find.",
      "Noted — that {A} is officially yours."),
     ("The {A} here is the one I reach for constantly.",
-     "So that {A} is your default shape. Logged."),
+     "So that {A} is your default. Logged."),
     ("If my closet has a signature, it's this {A}.",
      "Understood — that {A} is the through-line."),
     ("I keep replacing this {A} rather than trying anything else.",
      "Replacing rather than switching says it all. That {A} is yours."),
 ],
 ("single", "garment", "dislike"): [
-    ("This one, though: that {A} is the one {A} that never works on me.",
+    ("This one, though: that {A} is the one that never works on me.",
      "Understood — that {A} stays on the rack."),
     ("The {A} here has never once looked right on me.",
      "Got it. That {A} is off the table."),
@@ -132,8 +137,8 @@ UTTERANCES = {
      "Understood — the {P} one's {A} goes on your list."),
 ],
 ("differ", "attribute", "dislike"): [
-    ("The same piece twice, differing only in the {A}. The {P} one's {A} is "
-     "the {A} I never touch.",
+    ("The same piece twice, differing only in the {A}. The {P} one is the one "
+     "I never touch.",
      "Same piece, one variable — the {P} one's {A} goes on the no list."),
     ("Identical except for the {A}, and the {P} one is the one I'd leave.",
      "One variable, one verdict. The {P} one's {A} is out."),
@@ -151,16 +156,16 @@ UTTERANCES = {
      "With the rest controlled, the {P} one's {A} is yours."),
     ("These two differ only in {A}, and the {P} one is the one I'd keep.",
      "Noted — the {P} one's {A} goes on your list."),
-    ("Same everything, two {A}s. The {P} one is my shape.",
+    ("Same everything, two {A}s. The {P} one is the one I want.",
      "Understood. The {P} one's {A} is the keeper."),
 ],
 ("differ", "garment", "dislike"): [
-    ("Two different pieces, identical apart from their shape. The {P} one's "
-     "{A} is the {A} I never touch.",
+    ("Two different pieces, alike in every respect but one. The {P} one's "
+     "{A} is the one I never touch.",
      "Everything else held equal — the {P} one's {A} goes on the no list."),
     ("Different {A}s, everything else matched. I'd leave the {P} one.",
      "With the rest controlled, the {P} one's {A} is out."),
-    ("They differ only in {A}, and the {P} one is the one I'd never buy.",
+    ("They differ only in {A}, and the {P} one is the version I would never buy.",
      "Noted — the {P} one's {A} is banned."),
     ("Same everything, two {A}s. The {P} one has never suited me.",
      "Understood. The {P} one's {A} goes on the no list."),
@@ -169,56 +174,56 @@ UTTERANCES = {
 # ══ share — 이미지 2~3장, 한 축만 공유 ═════════════════════════════════════
 # attribute: 서로 다른 옷들이 색(또는 무늬)만 공유 → "닮은 데 없다" 가 참
 ("share", "attribute", "like"): [
-    ("These {N} look nothing alike, but they share exactly one thing — and "
-     "that shared {A} is my favorite.",
+    ("These {N} look nothing alike, but there is exactly one thing every one "
+     "of them shares — and that {A} is my favorite.",
      "Spotted it. Whatever {A} those {N} have in common belongs to you."),
-    ("Nothing about these {N} matches except one {A}, and that's the {A} I "
-     "love.",
+    ("Across the whole set of {N}, nothing matches except one {A}, and that "
+     "is the {A} I love.",
      "One point of overlap — that shared {A} is the one that counts."),
-    ("Put these {N} side by side and only one thing repeats. That repeat is "
-     "my favorite {A}.",
+    ("Put these {N} side by side: only one thing runs through all of them, "
+     "and it is my favorite {A}.",
      "Found the overlap — that {A} is yours."),
-    ("Completely different pieces, all {N} sharing one {A}. That {A} is why "
-     "I own every one of them.",
+    ("Completely different pieces, and every one of these {N} shares one {A}. "
+     "That {A} is why I own them.",
      "The common thread is the {A}. Understood."),
 ],
 ("share", "attribute", "dislike"): [
-    ("Odd group of {N}: they have exactly one thing in common, and that "
-     "shared {A} is precisely what I avoid.",
+    ("Odd group of {N}: the only thing all of them have in common is one {A}, "
+     "and that {A} is precisely what I avoid.",
      "Understood. The one {A} those {N} share goes on the no list."),
     ("These {N} are unalike in every way but one {A} — the {A} I keep away "
      "from.",
      "One point of overlap — that shared {A} is the disqualifying one."),
-    ("Only one thing repeats across these {N}, and that repeat is the {A} I "
-     "won't wear.",
+    ("Only one thing runs through every one of these {N}, and it is the {A} "
+     "I won't wear.",
      "Found the overlap — that {A} is out."),
-    ("All {N} are different pieces with one shared {A}. That {A} is the "
-     "reason none of them worked.",
+    ("Every one of these {N} is a different piece, and they share a single "
+     "{A}. That {A} is the reason none of them worked.",
      "The common thread is that {A}. Noted as a no."),
 ],
 # garment: 같은 종류의 옷들 → 서로 닮아 보이므로 문구를 바꾼다
 ("share", "garment", "like"): [
-    ("These {N} differ in every way but one: every one of them is the same "
-     "{A}, and that {A} is my favorite.",
+    ("These {N} differ in every way but one: they are the same {A}, and that "
+     "is my favorite.",
      "Understood — the {A} those {N} have in common is yours."),
-    ("All {N} of these are the same {A}, and that's the only thing they share. "
-     "That {A} is my favorite.",
+    ("Every one of these {N} is the same {A}, and that is the only thing they "
+     "share. It is my favorite.",
      "One shared {A}, everything else different. Logged."),
     ("I own these {N} in wildly different versions, but always this {A}.",
-     "Same {A}, many versions — that's your shape."),
+     "Same {A} across every version — that one is yours."),
     ("Whatever else changes, these {N} keep the same {A}. That's on purpose.",
      "Deliberate repetition. The {A} is yours."),
 ],
 ("share", "garment", "dislike"): [
-    ("These {N} have nothing in common except one thing: every one of them is "
-     "the same {A}, and that {A} is precisely what I avoid.",
+    ("These {N} have nothing in common except one thing: they are the same "
+     "{A}, and that is precisely what I avoid.",
      "Understood. The {A} those {N} share goes on the no list."),
-    ("All {N} are the same {A} and nothing else matches. That {A} is the one "
-     "I stay away from.",
+    ("Every one of these {N} is the same {A}, and nothing else matches. That "
+     "is the one I stay away from.",
      "One shared {A}, and it's the disqualifying one. Logged."),
     ("I've tried this {A} in {N} different versions. None of them worked.",
      "Same {A}, many versions, same result. It's out."),
-    ("Whatever else changes about these {N}, the {A} stays — and that's the "
+    ("Whatever else changes about these {N}, the {A} stays — and that is the "
      "problem.",
      "The constant is the {A}. Noted as a no."),
 ],

@@ -33,13 +33,14 @@ IMAGE BUDGET
 ------------
 대화 이미지(~33) + 선택지 4 = 문항당 ~37장. 서빙을 다시 띄워야 한다:
 
-    vllm serve <model> --port 8001 --max-model-len 65536 \
+    vllm serve google/gemma-3-27b-it --port 8001 --max-model-len 65536 \
         --limit-mm-per-prompt '{"image":40}'
 
 USAGE
 -----
     python -m exp.vlm_eval.eval_dialog --port 8001 \
-        --model Qwen/Qwen3-VL-4B-Instruct --concurrency 8
+    --model  google/gemma-3-12b-it  --concurrency 4 --timeout 600
+    
     python -m exp.vlm_eval.eval_dialog --dialog-variant text \
         --base-url https://api.openai.com/v1 --model gpt-5-mini \
         --api-key-env OPENAI_API_KEY
@@ -241,8 +242,21 @@ def build_messages(query, dialog, shuffled, fmt, images_root, variant):
             {"role": "user", "content": content}]
 
 
+import re
+
 def parse_answer(text):
-    for ch in (text or "").strip():
+    """PersonaVLM 등 <think>/<answer> 형식을 쓰는 모델을 위해
+    answer 블록을 우선 확인한다. think 안의 'Option A ...' 를 답으로
+    오인하면 정확도가 아니라 파서를 측정하게 된다."""
+    t = (text or "").strip()
+    if not t:
+        return None
+    m = re.search(r"<answer>(.*?)</answer>", t, re.S | re.I)
+    if m:
+        t = m.group(1)
+    else:
+        t = re.sub(r"<think>.*?</think>", " ", t, flags=re.S | re.I)
+    for ch in t:
         if ch.upper() in LABELS:
             return ch.upper()
     return None

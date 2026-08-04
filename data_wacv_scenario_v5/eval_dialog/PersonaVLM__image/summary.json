@@ -1,0 +1,52 @@
+{
+ "model": "PersonaVLM",
+ "variant": "wacv_scenario_v5",
+ "profile_source": "dialog",
+ "dialog_variant": "image",
+ "prompt_version": 2,
+ "formats": [
+  "dialog",
+  "dialog+query"
+ ],
+ "n": 38,
+ "by_track_format": {
+  "physical|dialog": {
+   "strict": 11,
+   "tpo": 13,
+   "pref": 15,
+   "n": 19
+  },
+  "physical|dialog+query": {
+   "strict": 13,
+   "tpo": 16,
+   "pref": 13,
+   "n": 19
+  }
+ },
+ "by_expression_format": {
+  "differ|dialog": {
+   "strict": 8,
+   "tpo": 8,
+   "pref": 10,
+   "n": 11
+  },
+  "differ|dialog+query": {
+   "strict": 10,
+   "tpo": 10,
+   "pref": 10,
+   "n": 11
+  },
+  "single|dialog": {
+   "strict": 3,
+   "tpo": 5,
+   "pref": 5,
+   "n": 8
+  },
+  "single|dialog+query": {
+   "strict": 3,
+   "tpo": 6,
+   "pref": 3,
+   "n": 8
+  }
+ }
+}
