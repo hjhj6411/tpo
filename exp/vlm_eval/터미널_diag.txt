@@ -3,7 +3,7 @@ tmux new -s dialog_eval
 # 세션 안에서 평소처럼 실행
 cd ~/pod_bench
 python -m exp.vlm_eval.eval_dialog --port 8001 \
-  --model Qwen/Qwen3-VL-30B-A3B-Instruct --concurrency 16
+  --model Qwen/Qwen2.5-VL-72B-Instruct-AWQ --concurrency 16
 
 Ctrl+B / D
 tmux attach -t dialog_eval
@@ -144,3 +144,18 @@ for path in sorted(glob.glob('data_wacv_scenario_v5/eval_dialog/*/results.jsonl'
                  sorted(g.items(), key=lambda x: x[0])]
         print(f"  [{fmt}] " + "  |  ".join(parts))
 EOF
+
+
+
+cd ~/pod_bench && python - <<'PY'
+import json, glob, pathlib
+for p in sorted(glob.glob('data_wacv_scenario_v5/eval_dialog/*/results.jsonl')):
+    p = pathlib.Path(p)
+    rows = [json.loads(l) for l in p.open() if l.strip()]
+    keep = [r for r in rows if not r.get("error")]
+    if len(rows) == len(keep):
+        print(f"  {p.parent.name}: 에러 없음 ({len(rows)}행)")
+        continue
+    p.write_text("".join(json.dumps(r, ensure_ascii=False)+"\n" for r in keep))
+    print(f"* {p.parent.name}: {len(rows)} → {len(keep)}  (에러 {len(rows)-len(keep)}건 제거)")
+PY

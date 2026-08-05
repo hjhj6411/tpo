@@ -33,13 +33,13 @@ IMAGE BUDGET
 ------------
 대화 이미지(~33) + 선택지 4 = 문항당 ~37장. 서빙을 다시 띄워야 한다:
 
-    vllm serve google/gemma-3-27b-it --port 8001 --max-model-len 65536 \
+    vllm serve Qwen/Qwen2.5-VL-72B-Instruct-AWQ --port 8001 --max-model-len 65536 --tensor_parallel_size 4\
         --limit-mm-per-prompt '{"image":40}'
 
 USAGE
 -----
     python -m exp.vlm_eval.eval_dialog --port 8001 \
-    --model  google/gemma-3-12b-it  --concurrency 4 --timeout 600
+    --model  Qwen/Qwen2.5-VL-7B-Instruct  --concurrency 4 --timeout 600
     
     python -m exp.vlm_eval.eval_dialog --dialog-variant text \
         --base-url https://api.openai.com/v1 --model gpt-5-mini \
