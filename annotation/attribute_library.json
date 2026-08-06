@@ -302,7 +302,7 @@
    ]
   },
   "black|sweater|checkered": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/black/checkered_sweater/1.jpg",
@@ -310,7 +310,7 @@
      "url_key": "ccc57210de7c8b3263f3"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "black|sweater|floral": {
    "status": "available",
@@ -373,7 +373,7 @@
    ]
   },
   "black|hoodie|floral": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/black/floral_hoodie/1.jpg",
@@ -381,7 +381,7 @@
      "url_key": "c6b94c70830fea7f2493"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "black|hoodie|polka_dot": {
    "status": "available",
@@ -589,7 +589,7 @@
    ]
   },
   "black|windbreaker|floral": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/black/floral_windbreaker/2.jpg",
@@ -597,7 +597,7 @@
      "url_key": "575e7e457c06cfe3ab74"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "black|windbreaker|polka_dot": {
    "status": "available",
@@ -610,7 +610,7 @@
    ]
   },
   "black|windbreaker|leopard": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/black/leopard_windbreaker/1.jpg",
@@ -618,7 +618,7 @@
      "url_key": "9b41568e650d6c2027c9"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "black|leather_jacket|striped": {
    "status": "excluded",
@@ -626,7 +626,7 @@
    "images": []
   },
   "black|leather_jacket|checkered": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/black/checkered_leather_jacket/1.jpg",
@@ -634,10 +634,10 @@
      "url_key": "cac43061234fd2aecf25"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "black|leather_jacket|floral": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/black/floral_leather_jacket/2.jpg",
@@ -645,7 +645,7 @@
      "url_key": "24507e225c2280cbfd3e"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "black|leather_jacket|polka_dot": {
    "status": "excluded",
@@ -668,7 +668,7 @@
    ]
   },
   "black|puffer_jacket|floral": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/black/floral_puffer_jacket/1.jpg",
@@ -676,7 +676,7 @@
      "url_key": "b70c4f3c63fe546b3970"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "black|puffer_jacket|polka_dot": {
    "status": "available",
@@ -704,7 +704,7 @@
    ]
   },
   "black|fleece_jacket|striped": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/black/striped_fleece_jacket/1.jpg",
@@ -712,7 +712,7 @@
      "url_key": "d5d3da7e1f3123626db6"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "black|fleece_jacket|checkered": {
    "status": "excluded",
@@ -925,7 +925,7 @@
    ]
   },
   "black|slacks|leopard": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/black/leopard_slacks/1.jpg",
@@ -933,7 +933,7 @@
      "url_key": "8096cf5f4e0a9d051905"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "black|shorts|solid": {
    "status": "available",
@@ -946,7 +946,7 @@
    ]
   },
   "black|shorts|striped": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/black/striped_shorts/1.jpg",
@@ -954,7 +954,7 @@
      "url_key": "cd6d78299c90c02b9fc4"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "black|shorts|checkered": {
    "status": "available",
@@ -1017,7 +1017,7 @@
    ]
   },
   "black|leggings|checkered": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/black/checkered_leggings/1.jpg",
@@ -1025,7 +1025,7 @@
      "url_key": "2b5b0bea0f325a9a1c35"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "black|leggings|floral": {
    "status": "available",
@@ -1308,7 +1308,7 @@
    ]
   },
   "white|tank_top|striped": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/white/striped_tank_top/1.jpg",
@@ -1316,7 +1316,7 @@
      "url_key": "cfb6636a78923e0e19b7"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "white|tank_top|checkered": {
    "status": "available",
@@ -1329,7 +1329,7 @@
    ]
   },
   "white|tank_top|floral": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/white/floral_tank_top/1.jpg",
@@ -1337,7 +1337,7 @@
      "url_key": "71c0d4f224f69e68b11f"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "white|tank_top|polka_dot": {
    "status": "available",
@@ -1370,7 +1370,7 @@
    ]
   },
   "white|formal_shirt|checkered": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/white/checkered_formal_shirt/1.jpg",
@@ -1378,7 +1378,7 @@
      "url_key": "ca6542a1ee84bd0e2367"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "white|formal_shirt|floral": {
    "status": "available",
@@ -1531,7 +1531,7 @@
    ]
   },
   "white|sweater|checkered": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/white/checkered_sweater/1.jpg",
@@ -1539,7 +1539,7 @@
      "url_key": "6f3d638e677aa3d4a6d9"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "white|sweater|floral": {
    "status": "available",
@@ -1627,7 +1627,7 @@
    ]
   },
   "white|cardigan|striped": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/white/striped_cardigan/1.jpg",
@@ -1635,10 +1635,10 @@
      "url_key": "53379e983c763ca5d754"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "white|cardigan|checkered": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/white/checkered_cardigan/1.jpg",
@@ -1646,10 +1646,10 @@
      "url_key": "539c594200f2a345211b"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "white|cardigan|floral": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/white/floral_cardigan/1.jpg",
@@ -1657,10 +1657,10 @@
      "url_key": "083f4d66f8e468af06cd"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "white|cardigan|leopard": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/white/leopard_cardigan/1.jpg",
@@ -1668,7 +1668,7 @@
      "url_key": "1bf02ea16a876491d127"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "white|blazer|solid": {
    "status": "available",
@@ -2036,7 +2036,7 @@
    "images": []
   },
   "white|jeans|floral": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/white/floral_jeans/1.jpg",
@@ -2044,7 +2044,7 @@
      "url_key": "9c8797ee2ba71597290f"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "white|slacks|solid": {
    "status": "available",
@@ -2297,7 +2297,7 @@
    ]
   },
   "white|mini_skirt|checkered": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/white/checkered_mini_skirt/1.jpg",
@@ -2305,7 +2305,7 @@
      "url_key": "b427bc5eef731226944b"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "white|mini_skirt|floral": {
    "status": "available",
@@ -2768,7 +2768,7 @@
    "images": []
   },
   "gray|hoodie|leopard": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/gray/leopard_hoodie/1.jpg",
@@ -2776,10 +2776,10 @@
      "url_key": "e5e2423381ff7e3e4072"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "gray|cardigan|checkered": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/gray/checkered_cardigan/1.jpg",
@@ -2787,10 +2787,10 @@
      "url_key": "5a43c2ef94c63ad34c9d"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "gray|cardigan|floral": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/gray/floral_cardigan/1.jpg",
@@ -2798,10 +2798,10 @@
      "url_key": "4c8e9b10990534f129fb"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "gray|cardigan|polka_dot": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/gray/polka_dot_cardigan/1.jpg",
@@ -2809,10 +2809,10 @@
      "url_key": "6c6c08150f52d6c6502f"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "gray|cardigan|leopard": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/gray/leopard_cardigan/2.jpg",
@@ -2820,7 +2820,7 @@
      "url_key": "9f2fc2bd16a91d7adc68"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "gray|blazer|solid": {
    "status": "available",
@@ -2888,7 +2888,7 @@
    ]
   },
   "gray|suit_vest|striped": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/gray/striped_suit_vest/1.jpg",
@@ -2896,7 +2896,7 @@
      "url_key": "802685949afdfb689892"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "gray|suit_vest|checkered": {
    "status": "available",
@@ -3014,7 +3014,7 @@
    ]
   },
   "gray|puffer_jacket|checkered": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/gray/checkered_puffer_jacket/1.jpg",
@@ -3022,7 +3022,7 @@
      "url_key": "6b77b88b6b75c9a8ec72"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "gray|puffer_jacket|floral": {
    "status": "excluded",
@@ -3185,7 +3185,7 @@
    ]
   },
   "gray|jeans|striped": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/gray/striped_jeans/2.jpg",
@@ -3193,7 +3193,7 @@
      "url_key": "559d131e9b1cf452a263"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "gray|jeans|checkered": {
    "status": "available",
@@ -3806,7 +3806,7 @@
    "images": []
   },
   "navy|sweatshirt|floral": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/navy/floral_sweatshirt/1.jpg",
@@ -3814,7 +3814,7 @@
      "url_key": "b1d54235c0ffa71d4092"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "navy|sweatshirt|polka_dot": {
    "status": "excluded",
@@ -3837,7 +3837,7 @@
    ]
   },
   "navy|sweater|striped": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/navy/striped_sweater/1.jpg",
@@ -3845,7 +3845,7 @@
      "url_key": "ad76a889f3ad4550a61b"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "navy|sweater|checkered": {
    "status": "available",
@@ -3928,7 +3928,7 @@
    "images": []
   },
   "navy|cardigan|checkered": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/navy/checkered_cardigan/1.jpg",
@@ -3936,10 +3936,10 @@
      "url_key": "c5d8cb67d48718d5ee12"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "navy|cardigan|polka_dot": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/navy/polka_dot_cardigan/2.jpg",
@@ -3947,7 +3947,7 @@
      "url_key": "bd67676cd66a9d68fe03"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "navy|cardigan|leopard": {
    "status": "excluded",
@@ -4135,7 +4135,7 @@
    "images": []
   },
   "navy|leather_jacket|floral": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/navy/floral_leather_jacket/1.jpg",
@@ -4143,7 +4143,7 @@
      "url_key": "b57822ae5773bc9c290d"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "navy|leather_jacket|leopard": {
    "status": "excluded",
@@ -4171,7 +4171,7 @@
    ]
   },
   "navy|puffer_jacket|floral": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/navy/floral_puffer_jacket/1.jpg",
@@ -4179,7 +4179,7 @@
      "url_key": "44ec89ec99c4feed775e"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "navy|puffer_jacket|polka_dot": {
    "status": "available",
@@ -4207,7 +4207,7 @@
    ]
   },
   "navy|fleece_jacket|striped": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/navy/striped_fleece_jacket/1.jpg",
@@ -4215,10 +4215,10 @@
      "url_key": "1478db9f4d49528a9d4d"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "navy|fleece_jacket|checkered": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/navy/checkered_fleece_jacket/1.jpg",
@@ -4226,7 +4226,7 @@
      "url_key": "dba3aa4273ac59583b9b"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "navy|fleece_jacket|floral": {
    "status": "excluded",
@@ -4344,7 +4344,7 @@
    ]
   },
   "navy|jeans|checkered": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/navy/checkered_jeans/1.jpg",
@@ -4352,10 +4352,10 @@
      "url_key": "85baf7959875db30b4a2"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "navy|jeans|floral": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/navy/floral_jeans/1.jpg",
@@ -4363,7 +4363,7 @@
      "url_key": "858fd3c3ccdbf468a404"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "navy|jeans|leopard": {
    "status": "available",
@@ -4836,7 +4836,7 @@
    ]
   },
   "blue|formal_shirt|striped": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/blue/striped_formal_shirt/1.jpg",
@@ -4844,7 +4844,7 @@
      "url_key": "79d40500456a4e87f68a"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "blue|formal_shirt|checkered": {
    "status": "available",
@@ -5277,7 +5277,7 @@
    ]
   },
   "blue|windbreaker|striped": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/blue/striped_windbreaker/1.jpg",
@@ -5285,7 +5285,7 @@
      "url_key": "f6aa3b80683ed1acdeb4"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "blue|windbreaker|checkered": {
    "status": "excluded",
@@ -5328,7 +5328,7 @@
    "images": []
   },
   "blue|puffer_jacket|checkered": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/blue/checkered_puffer_jacket/1.jpg",
@@ -5336,10 +5336,10 @@
      "url_key": "feaec9c0f0f7ebf64a8a"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "blue|puffer_jacket|floral": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/blue/floral_puffer_jacket/1.jpg",
@@ -5347,7 +5347,7 @@
      "url_key": "0eeb75640a14279d0dd3"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "blue|puffer_jacket|leopard": {
    "status": "excluded",
@@ -5640,7 +5640,7 @@
    ]
   },
   "blue|leggings|floral": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/blue/floral_leggings/1.jpg",
@@ -5648,7 +5648,7 @@
      "url_key": "d0622dcd42d634209b93"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "blue|leggings|polka_dot": {
    "status": "available",
@@ -6096,7 +6096,7 @@
    "images": []
   },
   "red|sweatshirt|floral": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/red/floral_sweatshirt/1.jpg",
@@ -6104,7 +6104,7 @@
      "url_key": "0d9499414258b8105a4d"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "red|sweatshirt|polka_dot": {
    "status": "excluded",
@@ -6247,7 +6247,7 @@
    ]
   },
   "red|cardigan|checkered": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/red/checkered_cardigan/1.jpg",
@@ -6255,7 +6255,7 @@
      "url_key": "4289784b2d0a1aec8314"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "red|cardigan|polka_dot": {
    "status": "available",
@@ -6268,7 +6268,7 @@
    ]
   },
   "red|cardigan|leopard": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/red/leopard_cardigan/1.jpg",
@@ -6276,7 +6276,7 @@
      "url_key": "b151828935e6f567e9dc"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "red|blazer|solid": {
    "status": "available",
@@ -6314,7 +6314,7 @@
    ]
   },
   "red|blazer|polka_dot": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/red/polka_dot_blazer/1.jpg",
@@ -6322,7 +6322,7 @@
      "url_key": "08a6ecee65c0bf9d6642"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "red|blazer|leopard": {
    "status": "excluded",
@@ -6400,7 +6400,7 @@
    "images": []
   },
   "red|windbreaker|checkered": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/red/checkered_windbreaker/1.jpg",
@@ -6408,7 +6408,7 @@
      "url_key": "361d9dadaabf62d20db6"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "red|windbreaker|leopard": {
    "status": "excluded",
@@ -6481,7 +6481,7 @@
    "images": []
   },
   "red|fleece_jacket|checkered": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/red/checkered_fleece_jacket/1.jpg",
@@ -6489,7 +6489,7 @@
      "url_key": "f372b4c3009231a3354e"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "red|fleece_jacket|floral": {
    "status": "excluded",
@@ -6522,7 +6522,7 @@
    "images": []
   },
   "red|long_coat|checkered": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/red/checkered_long_coat/2.jpg",
@@ -6530,10 +6530,10 @@
      "url_key": "46603950de816126e4a7"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "red|long_coat|floral": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/red/floral_long_coat/2.jpg",
@@ -6541,10 +6541,10 @@
      "url_key": "dec6d93d48e757a2d52f"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "red|long_coat|polka_dot": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/red/polka_dot_long_coat/2.jpg",
@@ -6552,7 +6552,7 @@
      "url_key": "0139a82d97ec128839e0"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "red|long_coat|leopard": {
    "status": "excluded",
@@ -6575,7 +6575,7 @@
    "images": []
   },
   "red|jeans|checkered": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/red/checkered_jeans/1.jpg",
@@ -6583,7 +6583,7 @@
      "url_key": "33e54449ee8bda424639"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "red|jeans|floral": {
    "status": "excluded",
@@ -6726,7 +6726,7 @@
    ]
   },
   "red|leggings|striped": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/red/striped_leggings/2.jpg",
@@ -6734,10 +6734,10 @@
      "url_key": "1520d4659ea8527a39ae"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "red|leggings|checkered": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/red/checkered_leggings/1.jpg",
@@ -6745,7 +6745,7 @@
      "url_key": "8daaa8694eabbeb86b23"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "red|leggings|polka_dot": {
    "status": "available",
@@ -7093,7 +7093,7 @@
    ]
   },
   "pink|formal_shirt|floral": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/pink/floral_formal_shirt/1.jpg",
@@ -7101,7 +7101,7 @@
      "url_key": "5c3ea31710bad4ce5c15"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "pink|formal_shirt|polka_dot": {
    "status": "available",
@@ -7189,7 +7189,7 @@
    "images": []
   },
   "pink|sweatshirt|floral": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/pink/floral_sweatshirt/2.jpg",
@@ -7197,7 +7197,7 @@
      "url_key": "183d3ad53495897cd948"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "pink|sweatshirt|polka_dot": {
    "status": "excluded",
@@ -7395,7 +7395,7 @@
    ]
   },
   "pink|blazer|striped": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/pink/striped_blazer/1.jpg",
@@ -7403,7 +7403,7 @@
      "url_key": "ca17cbc8f124ab86d985"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "pink|blazer|checkered": {
    "status": "available",
@@ -7481,7 +7481,7 @@
    ]
   },
   "pink|windbreaker|striped": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/pink/striped_windbreaker/1.jpg",
@@ -7489,7 +7489,7 @@
      "url_key": "9a5b96166b35396992e5"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "pink|windbreaker|checkered": {
    "status": "excluded",
@@ -7497,7 +7497,7 @@
    "images": []
   },
   "pink|windbreaker|floral": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/pink/floral_windbreaker/1.jpg",
@@ -7505,10 +7505,10 @@
      "url_key": "93aa6f0f21dd8a67528b"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "pink|windbreaker|polka_dot": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/pink/polka_dot_windbreaker/1.jpg",
@@ -7516,7 +7516,7 @@
      "url_key": "93e945245bef21371445"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "pink|leather_jacket|solid": {
    "status": "available",
@@ -7564,7 +7564,7 @@
    ]
   },
   "pink|puffer_jacket|floral": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/pink/floral_puffer_jacket/1.jpg",
@@ -7572,7 +7572,7 @@
      "url_key": "55a82aeef933543b4a11"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "pink|puffer_jacket|polka_dot": {
    "status": "available",
@@ -7780,7 +7780,7 @@
    ]
   },
   "pink|slacks|checkered": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/pink/checkered_slacks/1.jpg",
@@ -7788,7 +7788,7 @@
      "url_key": "e078e32eb62c42bab1ba"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "pink|slacks|floral": {
    "status": "available",
@@ -7801,7 +7801,7 @@
    ]
   },
   "pink|slacks|leopard": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/pink/leopard_slacks/1.jpg",
@@ -7809,7 +7809,7 @@
      "url_key": "dc9ef549d23081b564ef"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "pink|shorts|solid": {
    "status": "available",
@@ -7887,7 +7887,7 @@
    "images": []
   },
   "pink|leggings|floral": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/pink/floral_leggings/1.jpg",
@@ -7895,7 +7895,7 @@
      "url_key": "181be341714ed3f5d54d"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "pink|leggings|polka_dot": {
    "status": "available",
@@ -8153,7 +8153,7 @@
    ]
   },
   "orange|tank_top|striped": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/orange/striped_tank_top/1.jpg",
@@ -8161,7 +8161,7 @@
      "url_key": "2ee0b053abdba47c1f85"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "orange|tank_top|checkered": {
    "status": "excluded",
@@ -8169,7 +8169,7 @@
    "images": []
   },
   "orange|tank_top|floral": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/orange/floral_tank_top/1.jpg",
@@ -8177,7 +8177,7 @@
      "url_key": "270aac07442b820f8aed"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "orange|tank_top|polka_dot": {
    "status": "available",
@@ -8485,7 +8485,7 @@
    ]
   },
   "orange|cardigan|checkered": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/orange/checkered_cardigan/1.jpg",
@@ -8493,7 +8493,7 @@
      "url_key": "9bf8f553b16079c85e99"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "orange|cardigan|floral": {
    "status": "available",
@@ -8671,7 +8671,7 @@
    ]
   },
   "orange|puffer_jacket|checkered": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/orange/checkered_puffer_jacket/1.jpg",
@@ -8679,7 +8679,7 @@
      "url_key": "277ae1dc110768b9defb"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "orange|puffer_jacket|floral": {
    "status": "excluded",
@@ -9467,7 +9467,7 @@
    ]
   },
   "yellow|sweater|striped": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/yellow/striped_sweater/1.jpg",
@@ -9475,10 +9475,10 @@
      "url_key": "8cf458b2d4da2670ce2e"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "yellow|sweater|checkered": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/yellow/checkered_sweater/1.jpg",
@@ -9486,7 +9486,7 @@
      "url_key": "8d2545245494b6ad0338"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "yellow|sweater|floral": {
    "status": "excluded",
@@ -9589,7 +9589,7 @@
    ]
   },
   "yellow|cardigan|leopard": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/yellow/leopard_cardigan/1.jpg",
@@ -9597,7 +9597,7 @@
      "url_key": "1ccca0710f03a13a0556"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "yellow|blazer|solid": {
    "status": "available",
@@ -9705,7 +9705,7 @@
    "images": []
   },
   "yellow|windbreaker|floral": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/yellow/floral_windbreaker/1.jpg",
@@ -9713,10 +9713,10 @@
      "url_key": "3f8dc6ce6482459e8223"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "yellow|windbreaker|polka_dot": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/yellow/polka_dot_windbreaker/1.jpg",
@@ -9724,7 +9724,7 @@
      "url_key": "aa6c7845b6651b91859c"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "yellow|windbreaker|leopard": {
    "status": "excluded",
@@ -9812,7 +9812,7 @@
    "images": []
   },
   "yellow|fleece_jacket|floral": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/yellow/floral_fleece_jacket/1.jpg",
@@ -9820,7 +9820,7 @@
      "url_key": "0fe1413c3adc81222ca7"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "yellow|fleece_jacket|polka_dot": {
    "status": "excluded",
@@ -9933,7 +9933,7 @@
    "images": []
   },
   "yellow|jeans|checkered": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/yellow/checkered_jeans/1.jpg",
@@ -9941,7 +9941,7 @@
      "url_key": "060cea1c59096702ef2d"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "yellow|jeans|floral": {
    "status": "excluded",
@@ -10199,7 +10199,7 @@
    ]
   },
   "yellow|mini_skirt|striped": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/yellow/striped_mini_skirt/1.jpg",
@@ -10207,7 +10207,7 @@
      "url_key": "cc1ef6271aedbbc80dcd"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "yellow|mini_skirt|checkered": {
    "status": "available",
@@ -10320,7 +10320,7 @@
    ]
   },
   "green|t_shirt|checkered": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/green/checkered_t_shirt/1.jpg",
@@ -10328,7 +10328,7 @@
      "url_key": "00f779225d2f514fd4f5"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "green|t_shirt|floral": {
    "status": "available",
@@ -10511,7 +10511,7 @@
    ]
   },
   "green|polo_shirt|floral": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/green/floral_polo_shirt/1.jpg",
@@ -10519,10 +10519,10 @@
      "url_key": "b9302e51ef8e991cc10d"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "green|polo_shirt|polka_dot": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/green/polka_dot_polo_shirt/1.jpg",
@@ -10530,7 +10530,7 @@
      "url_key": "46d2098bba4a8ea80de6"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "green|polo_shirt|leopard": {
    "status": "excluded",
@@ -10613,7 +10613,7 @@
    ]
   },
   "green|sweater|floral": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/green/floral_sweater/1.jpg",
@@ -10621,7 +10621,7 @@
      "url_key": "dff5a1b7e1566c0198bf"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "green|sweater|polka_dot": {
    "status": "excluded",
@@ -10684,7 +10684,7 @@
    "images": []
   },
   "green|cardigan|checkered": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/green/checkered_cardigan/2.jpg",
@@ -10692,10 +10692,10 @@
      "url_key": "b1a0e5e8cc14c4ae4b18"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "green|cardigan|floral": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/green/floral_cardigan/1.jpg",
@@ -10703,10 +10703,10 @@
      "url_key": "32acbbcdc7cb338f389c"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "green|cardigan|leopard": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/green/leopard_cardigan/1.jpg",
@@ -10714,7 +10714,7 @@
      "url_key": "c14124df6c63e51bedd4"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "green|blazer|striped": {
    "status": "excluded",
@@ -10772,7 +10772,7 @@
    "images": []
   },
   "green|suit_vest|checkered": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/green/checkered_suit_vest/1.jpg",
@@ -10780,7 +10780,7 @@
      "url_key": "28aeab1f67a7b5c74dd1"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "green|suit_vest|floral": {
    "status": "excluded",
@@ -10883,7 +10883,7 @@
    "images": []
   },
   "green|puffer_jacket|checkered": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/green/checkered_puffer_jacket/1.jpg",
@@ -10891,7 +10891,7 @@
      "url_key": "d80446ee6e4c5b86bc9a"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "green|puffer_jacket|floral": {
    "status": "excluded",
@@ -10899,7 +10899,7 @@
    "images": []
   },
   "green|puffer_jacket|polka_dot": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/green/polka_dot_puffer_jacket/1.jpg",
@@ -10907,7 +10907,7 @@
      "url_key": "404eebf85262e8df9e3f"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "green|puffer_jacket|leopard": {
    "status": "excluded",
@@ -10925,7 +10925,7 @@
    ]
   },
   "green|fleece_jacket|striped": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/green/striped_fleece_jacket/1.jpg",
@@ -10933,7 +10933,7 @@
      "url_key": "6a5236a8fdd122da8687"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "green|fleece_jacket|checkered": {
    "status": "excluded",
@@ -11051,7 +11051,7 @@
    "images": []
   },
   "green|jeans|floral": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/green/floral_jeans/1.jpg",
@@ -11059,7 +11059,7 @@
      "url_key": "1ab2dd5df775da865769"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "green|jeans|polka_dot": {
    "status": "excluded",
@@ -11072,7 +11072,7 @@
    "images": []
   },
   "green|slacks|checkered": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/green/checkered_slacks/1.jpg",
@@ -11080,10 +11080,10 @@
      "url_key": "6035a753926347a5f9b4"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "green|slacks|floral": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/green/floral_slacks/2.jpg",
@@ -11091,7 +11091,7 @@
      "url_key": "80b5f9d8a7e1cdb0fea0"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "green|slacks|leopard": {
    "status": "excluded",
@@ -11749,7 +11749,7 @@
    ]
   },
   "brown|cardigan|checkered": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/brown/checkered_cardigan/1.jpg",
@@ -11757,10 +11757,10 @@
      "url_key": "d9051f19edf3de900247"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "brown|cardigan|floral": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/brown/floral_cardigan/1.jpg",
@@ -11768,7 +11768,7 @@
      "url_key": "f8969ac81f87f84122e4"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "brown|cardigan|polka_dot": {
    "status": "available",
@@ -11921,7 +11921,7 @@
    "images": []
   },
   "brown|windbreaker|leopard": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/brown/leopard_windbreaker/1.jpg",
@@ -11929,7 +11929,7 @@
      "url_key": "2f89aa466dd3b52fa400"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "brown|leather_jacket|solid": {
    "status": "available",
@@ -11957,7 +11957,7 @@
    "images": []
   },
   "brown|leather_jacket|leopard": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/brown/leopard_leather_jacket/1.jpg",
@@ -11965,7 +11965,7 @@
      "url_key": "bb2876fbf910e5ef2883"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "brown|puffer_jacket|solid": {
    "status": "available",
@@ -12188,7 +12188,7 @@
    "images": []
   },
   "brown|slacks|checkered": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/brown/checkered_slacks/1.jpg",
@@ -12196,7 +12196,7 @@
      "url_key": "08baa580d2f3df8f6a89"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "brown|slacks|floral": {
    "status": "excluded",
@@ -12204,7 +12204,7 @@
    "images": []
   },
   "brown|slacks|polka_dot": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/brown/polka_dot_slacks/1.jpg",
@@ -12212,7 +12212,7 @@
      "url_key": "edce0115186188df0cf1"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "brown|shorts|solid": {
    "status": "available",
@@ -12415,7 +12415,7 @@
    ]
   },
   "brown|long_skirt|checkered": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/brown/checkered_long_skirt/1.jpg",
@@ -12423,7 +12423,7 @@
      "url_key": "88e29734d40bfc4d6c41"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "brown|long_skirt|floral": {
    "status": "available",
@@ -12716,7 +12716,7 @@
    ]
   },
   "beige|sweater|checkered": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/beige/checkered_sweater/2.jpg",
@@ -12724,7 +12724,7 @@
      "url_key": "2432eb7060d8287ff4c6"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "beige|sweater|floral": {
    "status": "available",
@@ -12812,7 +12812,7 @@
    ]
   },
   "beige|cardigan|checkered": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/beige/checkered_cardigan/1.jpg",
@@ -12820,10 +12820,10 @@
      "url_key": "773daf3d0edf9e71d080"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "beige|cardigan|floral": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/beige/floral_cardigan/1.jpg",
@@ -12831,7 +12831,7 @@
      "url_key": "bb093003f7d9134a7e71"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "beige|cardigan|polka_dot": {
    "status": "available",
@@ -12844,7 +12844,7 @@
    ]
   },
   "beige|cardigan|leopard": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/beige/leopard_cardigan/1.jpg",
@@ -12852,7 +12852,7 @@
      "url_key": "107adb2dd545d3fdf5b8"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "beige|blazer|solid": {
    "status": "available",
@@ -12975,7 +12975,7 @@
    "images": []
   },
   "beige|windbreaker|leopard": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/beige/leopard_windbreaker/1.jpg",
@@ -12983,7 +12983,7 @@
      "url_key": "5c45646e399496fe51b9"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "beige|leather_jacket|solid": {
    "status": "available",
@@ -13016,7 +13016,7 @@
    "images": []
   },
   "beige|puffer_jacket|checkered": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/beige/checkered_puffer_jacket/1.jpg",
@@ -13024,7 +13024,7 @@
      "url_key": "07677512a27310809170"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "beige|puffer_jacket|floral": {
    "status": "excluded",
@@ -13162,7 +13162,7 @@
    "images": []
   },
   "beige|jeans|floral": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/beige/floral_jeans/1.jpg",
@@ -13170,7 +13170,7 @@
      "url_key": "c57fb5bfe3da02a8831c"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "beige|jeans|polka_dot": {
    "status": "excluded",
@@ -13313,7 +13313,7 @@
    ]
   },
   "beige|leggings|striped": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/beige/striped_leggings/1.jpg",
@@ -13321,10 +13321,10 @@
      "url_key": "ecb1a3c294e950fe1827"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "beige|leggings|checkered": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/beige/checkered_leggings/1.jpg",
@@ -13332,7 +13332,7 @@
      "url_key": "18d95703836e626651c9"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "beige|leggings|polka_dot": {
    "status": "excluded",
@@ -13340,7 +13340,7 @@
    "images": []
   },
   "beige|leggings|leopard": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/beige/leopard_leggings/2.jpg",
@@ -13348,7 +13348,7 @@
      "url_key": "cb46c8937a3da413e539"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "beige|dress|solid": {
    "status": "available",
@@ -13481,7 +13481,7 @@
    ]
   },
   "beige|long_skirt|striped": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/beige/striped_long_skirt/1.jpg",
@@ -13489,7 +13489,7 @@
      "url_key": "fcbe413203a321b1b060"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "beige|long_skirt|checkered": {
    "status": "available",
@@ -14027,7 +14027,7 @@
    "images": []
   },
   "purple|windbreaker|floral": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/purple/floral_windbreaker/1.jpg",
@@ -14035,7 +14035,7 @@
      "url_key": "efecd51b642139326cd3"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "purple|windbreaker|polka_dot": {
    "status": "excluded",
@@ -14118,7 +14118,7 @@
    ]
   },
   "purple|fleece_jacket|striped": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/purple/striped_fleece_jacket/1.jpg",
@@ -14126,7 +14126,7 @@
      "url_key": "c499460ee66642eb33f0"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "purple|fleece_jacket|checkered": {
    "status": "excluded",
@@ -14239,7 +14239,7 @@
    ]
   },
   "purple|jeans|striped": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/purple/striped_jeans/2.jpg",
@@ -14247,7 +14247,7 @@
      "url_key": "a5402745d7b0d9dae901"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "purple|jeans|checkered": {
    "status": "excluded",
@@ -14385,7 +14385,7 @@
    "images": []
   },
   "purple|leggings|polka_dot": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/purple/polka_dot_leggings/1.jpg",
@@ -14393,7 +14393,7 @@
      "url_key": "b7b02fdf2958570ec826"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "purple|leggings|leopard": {
    "status": "excluded",
@@ -14516,7 +14516,7 @@
    ]
   },
   "purple|long_skirt|checkered": {
-   "status": "excluded",
+   "status": "available",
    "images": [
     {
      "path": "images_final/purple/checkered_long_skirt/1.jpg",
@@ -14524,7 +14524,7 @@
      "url_key": "c62a896f23e1b6079801"
     }
    ],
-   "reason": "not_materialized"
+   "in_benchmark_v5": false
   },
   "purple|long_skirt|polka_dot": {
    "status": "available",
@@ -14544,8 +14544,9 @@
  },
  "summary": {
   "total": 1661,
-  "available": 1108,
-  "excluded": 553,
-  "pending": 0
+  "available": 1223,
+  "excluded": 438,
+  "pending": 0,
+  "in_benchmark_v5": 1108
  }
 }
