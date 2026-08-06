@@ -39,7 +39,7 @@ IMAGE BUDGET
 USAGE
 -----
     python -m exp.vlm_eval.eval_dialog --port 8001 \
-    --model  Qwen/Qwen2.5-VL-7B-Instruct  --concurrency 4 --timeout 600
+    --model  Qwen/Qwen2.5-VL-7B-Instruct  --concurrency 4 --timeout 600 --dialog-variant text
     
     python -m exp.vlm_eval.eval_dialog --dialog-variant text \
         --base-url https://api.openai.com/v1 --model gpt-5-mini \
