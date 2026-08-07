@@ -1,0 +1,167 @@
+{
+ "model": "Qwen/Qwen2.5-VL-7B-Instruct",
+ "variant": "wacv_scenario_v5",
+ "prompt_version": 2,
+ "formats": [
+  "query",
+  "narrative",
+  "narrative+query",
+  "all",
+  "all+query"
+ ],
+ "n": 12750,
+ "by_track_format": {
+  "physical|query": {
+   "strict": 436,
+   "tpo": 869,
+   "pref": 481,
+   "n": 967
+  },
+  "physical|narrative+query": {
+   "strict": 681,
+   "tpo": 790,
+   "pref": 837,
+   "n": 967
+  },
+  "physical|all+query": {
+   "strict": 654,
+   "tpo": 762,
+   "pref": 833,
+   "n": 967
+  },
+  "physical|narrative": {
+   "strict": 445,
+   "tpo": 476,
+   "pref": 907,
+   "n": 967
+  },
+  "physical|all": {
+   "strict": 426,
+   "tpo": 473,
+   "pref": 874,
+   "n": 967
+  },
+  "dress_code|query": {
+   "strict": 667,
+   "tpo": 1304,
+   "pref": 802,
+   "n": 1583
+  },
+  "dress_code|narrative": {
+   "strict": 804,
+   "tpo": 872,
+   "pref": 1453,
+   "n": 1583
+  },
+  "dress_code|narrative+query": {
+   "strict": 976,
+   "tpo": 1225,
+   "pref": 1265,
+   "n": 1583
+  },
+  "dress_code|all": {
+   "strict": 810,
+   "tpo": 884,
+   "pref": 1441,
+   "n": 1583
+  },
+  "dress_code|all+query": {
+   "strict": 997,
+   "tpo": 1234,
+   "pref": 1277,
+   "n": 1583
+  }
+ },
+ "by_axis_format": {
+  "color|query": {
+   "strict": 560,
+   "tpo": 1078,
+   "pref": 611,
+   "n": 1183
+  },
+  "color|narrative+query": {
+   "strict": 893,
+   "tpo": 975,
+   "pref": 1082,
+   "n": 1183
+  },
+  "color|all+query": {
+   "strict": 886,
+   "tpo": 966,
+   "pref": 1086,
+   "n": 1183
+  },
+  "color|narrative": {
+   "strict": 628,
+   "tpo": 644,
+   "pref": 1145,
+   "n": 1183
+  },
+  "color|all": {
+   "strict": 617,
+   "tpo": 643,
+   "pref": 1127,
+   "n": 1183
+  },
+  "pattern|query": {
+   "strict": 408,
+   "tpo": 821,
+   "pref": 517,
+   "n": 1046
+  },
+  "pattern|narrative": {
+   "strict": 443,
+   "tpo": 514,
+   "pref": 919,
+   "n": 1046
+  },
+  "pattern|narrative+query": {
+   "strict": 553,
+   "tpo": 766,
+   "pref": 767,
+   "n": 1046
+  },
+  "pattern|all": {
+   "strict": 441,
+   "tpo": 527,
+   "pref": 887,
+   "n": 1046
+  },
+  "pattern|all+query": {
+   "strict": 553,
+   "tpo": 757,
+   "pref": 772,
+   "n": 1046
+  },
+  "garment_category|query": {
+   "strict": 135,
+   "tpo": 274,
+   "pref": 155,
+   "n": 321
+  },
+  "garment_category|narrative": {
+   "strict": 178,
+   "tpo": 190,
+   "pref": 296,
+   "n": 321
+  },
+  "garment_category|narrative+query": {
+   "strict": 211,
+   "tpo": 274,
+   "pref": 253,
+   "n": 321
+  },
+  "garment_category|all": {
+   "strict": 178,
+   "tpo": 187,
+   "pref": 301,
+   "n": 321
+  },
+  "garment_category|all+query": {
+   "strict": 212,
+   "tpo": 273,
+   "pref": 252,
+   "n": 321
+  }
+ }
+}

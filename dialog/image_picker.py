@@ -71,11 +71,18 @@ class ImagePicker:
                 "attributes": {"color": color, "garment_category": garment,
                                "pattern": pattern}}
 
-    def _bases(self, axis: str, value: str):
-        """evidence 축=value, 나머지는 중립(무늬는 solid)인 셀 전부."""
+    def _bases(self, axis: str, value: str, wide_background: bool = False):
+        """evidence 축=value, 나머지는 사용자-중립인 셀 전부.
+
+        wide_background 면 배경 무늬로 solid 뿐 아니라 중립 유무늬도 허용한다.
+        R3 가 요구하는 것은 '그 사용자에게 취향 중립'이지 'solid' 가 아니므로
+        둘 다 규칙을 만족한다. solid 로 못 박으면 후보가 절반 이하로 줄어
+        선택지 셀 회피가 불가능해진다.
+        """
+        pats = ["solid"] + (self.neutral_values("pattern") if wide_background else [])
         opts = {"color": self.neutral_values("color"),
                 "garment_category": self.neutral_values("garment_category"),
-                "pattern": ["solid"]}
+                "pattern": pats}
         opts[axis] = [value]
         for c in opts["color"]:
             for g in opts["garment_category"]:
@@ -85,19 +92,20 @@ class ImagePicker:
                         yield cell
 
     # ── 방식별 조합 ───────────────────────────────────────────────────────
-    def pick(self, expr_name: str, axis: str, value: str
+    def pick(self, expr_name: str, axis: str, value: str,
+             wide_background: bool = False
              ) -> tuple[list[dict], int | None] | None:
         """(이미지 목록, evidence_index) 또는 실패 시 None."""
         if expr_name == "single":
-            cell = next(self._bases(axis, value), None)
+            cell = next(self._bases(axis, value, wide_background), None)
             return ([cell], 0) if cell else None
         if expr_name == "differ":
-            return self._differ(axis, value)
+            return self._differ(axis, value, wide_background)
         return self._share(axis, value, 2 if expr_name == "share2" else 3)
 
-    def _differ(self, axis, value):
+    def _differ(self, axis, value, wide_background: bool = False):
         """evidence 축만 다르고 나머지는 동일한 2장."""
-        for base in self._bases(axis, value):
+        for base in self._bases(axis, value, wide_background):
             for alt in self.neutral_values(axis, exclude=(value,)):
                 at = dict(base["attributes"]); at[axis] = alt
                 partner = self.cell(at["color"], at["garment_category"],

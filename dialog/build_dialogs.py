@@ -38,6 +38,12 @@ def main() -> int:
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--out", type=Path, default=DATA_DIR / "dialogs")
     ap.add_argument("--library", type=Path, default=LIBRARY)
+    ap.add_argument("--avoid-option-cells", default="prefer",
+                    choices=["off", "prefer", "strict"],
+                    help="대화 이미지가 그 사용자의 문항 선택지로 재등장하지 "
+                         "않게 한다. prefer=불가능하면 겹침 허용+기록")
+    ap.add_argument("--plans", type=Path,
+                    default=DATA_DIR / "options" / "option_plans.jsonl")
     ap.add_argument("--manifest", type=Path,
                     default=DATA_DIR / "images_manifest.json",
                     help="실제 materialize 된 셀 목록. 라이브러리와 교집합을 쓴다")
@@ -53,10 +59,34 @@ def main() -> int:
             if args.users is None or r["user_id"] in args.users:
                 profiles.append(r)
 
+    # 사용자별로 그 사람의 문항이 쓰는 셀 = 대화가 피해야 할 집합
+    avoid_by_user: dict[str, set[str]] = {}
+    if args.avoid_option_cells != "off" and not args.plans.is_file():
+        raise SystemExit(
+            f"[error] {args.plans} 가 없습니다. 회피 모드({args.avoid_option_cells})"
+            f"에서는 문항 파일이 반드시 필요합니다. 없이 진행하면 재등장이 그대로 "
+            f"남은 대화가 조용히 만들어집니다. --avoid-option-cells off 로 "
+            f"명시하거나 문항을 먼저 생성하세요.")
+    if args.avoid_option_cells != "off" and args.plans.is_file():
+        key = (lambda a: f'{a.get("color")}|{a.get("garment_category")}'
+                         f'|{a.get("pattern")}')
+        with args.plans.open() as fh:
+            for line in fh:
+                if not line.strip():
+                    continue
+                r = json.loads(line)
+                s_ = avoid_by_user.setdefault(r["user_id"], set())
+                for o in r["options"].values():
+                    s_.add(key(o["attributes"]))
+        n = [len(v) for v in avoid_by_user.values()]
+        print(f"  회피 셀: 사용자당 {min(n)}~{max(n)}개 "
+              f"(모드 {args.avoid_option_cells})")
+
     args.out.mkdir(parents=True, exist_ok=True)
     episodes = [ep_id for ep_id, _, _ in EPISODES]
 
     manifest = {"variant": DATA_DIR.name, "seed": args.seed,
+                "avoid_option_cells": args.avoid_option_cells,
                 "template_version": DIALOG_TEMPLATE_VERSION,
                 "library_sha256_16": lib_hash, "episodes": episodes,
                 "dialogs": []}
@@ -64,7 +94,12 @@ def main() -> int:
     turns_tot = imgs_tot = 0
 
     for prof in profiles:
-        plan = plan_dialog(prof, cells, episodes, args.seed)
+        plan = plan_dialog(prof, cells, episodes, args.seed,
+                           avoid=avoid_by_user.get(prof["user_id"]),
+                           avoid_mode=args.avoid_option_cells)
+        if plan.recur_fallbacks:
+            print(f"  ~ {prof['user_id']}: 회피 실패 "
+                  f"{len(plan.recur_fallbacks)}건 (겹치는 셀 사용)")
         if plan.failures:
             failures += 1
             for f in plan.failures:
@@ -82,6 +117,7 @@ def main() -> int:
             "user_id": prof["user_id"], "turns": len(img_dlg["turns"]),
             "evidence": len(img_dlg["evidence"]), "images": n_img,
             "downgrades": plan.downgrades,
+            "recur_fallbacks": plan.recur_fallbacks,
             "cells": sorted({f'{a["color"]}|{a["garment_category"]}|{a["pattern"]}'
                              for e in img_dlg["evidence"]
                              for a in e["image_attributes"]})})
