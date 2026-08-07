@@ -8,80 +8,80 @@
   "dialog",
   "dialog+query"
  ],
- "n": 5100,
+ "n": 5096,
  "by_track_format": {
   "physical|dialog+query": {
-   "strict": 366,
-   "tpo": 746,
-   "pref": 430,
+   "strict": 396,
+   "tpo": 801,
+   "pref": 469,
    "n": 967
   },
   "physical|dialog": {
-   "strict": 242,
-   "tpo": 455,
-   "pref": 446,
+   "strict": 262,
+   "tpo": 487,
+   "pref": 496,
    "n": 967
   },
   "dress_code|dialog": {
-   "strict": 399,
-   "tpo": 753,
-   "pref": 764,
-   "n": 1583
+   "strict": 453,
+   "tpo": 838,
+   "pref": 866,
+   "n": 1581
   },
   "dress_code|dialog+query": {
-   "strict": 602,
-   "tpo": 1167,
-   "pref": 722,
-   "n": 1583
+   "strict": 668,
+   "tpo": 1283,
+   "pref": 808,
+   "n": 1581
   }
  },
  "by_expression_format": {
   "differ|dialog+query": {
-   "strict": 353,
-   "tpo": 687,
-   "pref": 420,
+   "strict": 373,
+   "tpo": 722,
+   "pref": 450,
    "n": 880
   },
   "single|dialog": {
-   "strict": 268,
-   "tpo": 476,
-   "pref": 496,
-   "n": 985
+   "strict": 307,
+   "tpo": 529,
+   "pref": 558,
+   "n": 983
   },
   "single|dialog+query": {
-   "strict": 365,
-   "tpo": 733,
-   "pref": 439,
-   "n": 985
+   "strict": 407,
+   "tpo": 804,
+   "pref": 487,
+   "n": 983
   },
   "differ|dialog": {
-   "strict": 193,
-   "tpo": 419,
-   "pref": 379,
+   "strict": 200,
+   "tpo": 442,
+   "pref": 401,
    "n": 880
   },
   "share2|dialog": {
-   "strict": 99,
-   "tpo": 175,
-   "pref": 180,
+   "strict": 121,
+   "tpo": 209,
+   "pref": 232,
    "n": 399
   },
   "share2|dialog+query": {
-   "strict": 137,
-   "tpo": 270,
-   "pref": 161,
+   "strict": 161,
+   "tpo": 318,
+   "pref": 196,
    "n": 399
   },
   "share3|dialog": {
-   "strict": 81,
-   "tpo": 138,
-   "pref": 155,
+   "strict": 87,
+   "tpo": 145,
+   "pref": 171,
    "n": 286
   },
   "share3|dialog+query": {
-   "strict": 113,
-   "tpo": 223,
-   "pref": 132,
+   "strict": 123,
+   "tpo": 240,
+   "pref": 144,
    "n": 286
   }
  }
