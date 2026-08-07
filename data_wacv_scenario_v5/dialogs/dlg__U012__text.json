@@ -2,44 +2,87 @@
  "dialog_id": "dlg__U012__text",
  "user_id": "U012",
  "variant": "text",
- "seed": 42,
+ "seed": 1,
  "template_version": "dlg-2026-08-03e",
  "downgrades": [
-  "garment_category=sweatshirt(dislike): share3 -> differ"
+  "garment_category=pea_coat(dislike): share2 -> differ",
+  "garment_category=suit_vest(dislike): share2 -> differ"
  ],
+ "recur_fallbacks": [],
  "evidence": [
   {
    "axis": "garment_category",
-   "value": "pea_coat",
-   "polarity": "dislike",
-   "expression_type": "single",
-   "requested_type": "single",
-   "evidence_index": 0,
+   "value": "dress",
+   "polarity": "like",
+   "expression_type": "share3",
+   "requested_type": "share3",
+   "evidence_index": null,
    "episode_id": "shopping_haul",
    "revealed_in_turn": 2,
    "modality": "text",
+   "recur_fallback": false,
    "image_attributes": [
     {
-     "color": "orange",
-     "garment_category": "pea_coat",
+     "color": "blue",
+     "garment_category": "dress",
+     "pattern": "leopard"
+    },
+    {
+     "color": "gray",
+     "garment_category": "dress",
+     "pattern": "leopard"
+    },
+    {
+     "color": "gray",
+     "garment_category": "dress",
      "pattern": "solid"
     }
    ]
   },
   {
-   "axis": "color",
-   "value": "brown",
-   "polarity": "like",
+   "axis": "garment_category",
+   "value": "long_coat",
+   "polarity": "dislike",
    "expression_type": "single",
    "requested_type": "single",
    "evidence_index": 0,
    "episode_id": "shopping_haul",
    "revealed_in_turn": 4,
    "modality": "text",
+   "recur_fallback": false,
    "image_attributes": [
     {
-     "color": "brown",
+     "color": "yellow",
+     "garment_category": "long_coat",
+     "pattern": "solid"
+    }
+   ]
+  },
+  {
+   "axis": "color",
+   "value": "green",
+   "polarity": "dislike",
+   "expression_type": "share3",
+   "requested_type": "share3",
+   "evidence_index": null,
+   "episode_id": "shopping_haul",
+   "revealed_in_turn": 6,
+   "modality": "text",
+   "recur_fallback": false,
+   "image_attributes": [
+    {
+     "color": "green",
+     "garment_category": "sweater",
+     "pattern": "leopard"
+    },
+    {
+     "color": "green",
      "garment_category": "shorts",
+     "pattern": "leopard"
+    },
+    {
+     "color": "green",
+     "garment_category": "windbreaker",
      "pattern": "solid"
     }
    ]
@@ -51,9 +94,10 @@
    "expression_type": "differ",
    "requested_type": "differ",
    "evidence_index": 0,
-   "episode_id": "shopping_haul",
-   "revealed_in_turn": 6,
+   "episode_id": "closet_cleanout",
+   "revealed_in_turn": 10,
    "modality": "text",
+   "recur_fallback": false,
    "image_attributes": [
     {
      "color": "orange",
@@ -69,23 +113,19 @@
   },
   {
    "axis": "garment_category",
-   "value": "sweatshirt",
-   "polarity": "dislike",
-   "expression_type": "differ",
-   "requested_type": "share3",
-   "evidence_index": 1,
+   "value": "blazer",
+   "polarity": "like",
+   "expression_type": "single",
+   "requested_type": "single",
+   "evidence_index": 0,
    "episode_id": "closet_cleanout",
-   "revealed_in_turn": 10,
+   "revealed_in_turn": 12,
    "modality": "text",
+   "recur_fallback": false,
    "image_attributes": [
     {
-     "color": "gray",
-     "garment_category": "sweater",
-     "pattern": "solid"
-    },
-    {
-     "color": "gray",
-     "garment_category": "sweatshirt",
+     "color": "blue",
+     "garment_category": "blazer",
      "pattern": "solid"
     }
    ]
@@ -94,118 +134,46 @@
    "axis": "color",
    "value": "pink",
    "polarity": "like",
-   "expression_type": "share3",
-   "requested_type": "share3",
-   "evidence_index": null,
+   "expression_type": "differ",
+   "requested_type": "differ",
+   "evidence_index": 1,
    "episode_id": "closet_cleanout",
-   "revealed_in_turn": 12,
+   "revealed_in_turn": 14,
    "modality": "text",
+   "recur_fallback": false,
    "image_attributes": [
     {
-     "color": "pink",
-     "garment_category": "fleece_jacket",
+     "color": "yellow",
+     "garment_category": "jeans",
      "pattern": "solid"
     },
     {
      "color": "pink",
-     "garment_category": "mini_skirt",
-     "pattern": "leopard"
-    },
-    {
-     "color": "pink",
-     "garment_category": "t_shirt",
-     "pattern": "leopard"
+     "garment_category": "jeans",
+     "pattern": "solid"
     }
    ]
   },
   {
    "axis": "garment_category",
-   "value": "long_coat",
-   "polarity": "dislike",
-   "expression_type": "differ",
-   "requested_type": "differ",
-   "evidence_index": 0,
-   "episode_id": "closet_cleanout",
-   "revealed_in_turn": 14,
-   "modality": "text",
-   "image_attributes": [
-    {
-     "color": "gray",
-     "garment_category": "long_coat",
-     "pattern": "solid"
-    },
-    {
-     "color": "gray",
-     "garment_category": "t_shirt",
-     "pattern": "solid"
-    }
-   ]
-  },
-  {
-   "axis": "pattern",
-   "value": "striped",
-   "polarity": "dislike",
-   "expression_type": "differ",
-   "requested_type": "differ",
-   "evidence_index": 1,
-   "episode_id": "gift_reaction",
-   "revealed_in_turn": 18,
-   "modality": "text",
-   "image_attributes": [
-    {
-     "color": "purple",
-     "garment_category": "formal_shirt",
-     "pattern": "leopard"
-    },
-    {
-     "color": "purple",
-     "garment_category": "formal_shirt",
-     "pattern": "striped"
-    }
-   ]
-  },
-  {
-   "axis": "color",
-   "value": "beige",
+   "value": "tank_top",
    "polarity": "like",
-   "expression_type": "differ",
-   "requested_type": "differ",
-   "evidence_index": 0,
-   "episode_id": "gift_reaction",
-   "revealed_in_turn": 20,
-   "modality": "text",
-   "image_attributes": [
-    {
-     "color": "beige",
-     "garment_category": "sweater",
-     "pattern": "solid"
-    },
-    {
-     "color": "purple",
-     "garment_category": "sweater",
-     "pattern": "solid"
-    }
-   ]
-  },
-  {
-   "axis": "color",
-   "value": "red",
-   "polarity": "dislike",
    "expression_type": "share2",
    "requested_type": "share2",
    "evidence_index": null,
    "episode_id": "gift_reaction",
-   "revealed_in_turn": 22,
+   "revealed_in_turn": 18,
    "modality": "text",
+   "recur_fallback": false,
    "image_attributes": [
     {
-     "color": "red",
-     "garment_category": "windbreaker",
+     "color": "purple",
+     "garment_category": "tank_top",
      "pattern": "solid"
     },
     {
-     "color": "red",
-     "garment_category": "leggings",
+     "color": "yellow",
+     "garment_category": "tank_top",
      "pattern": "leopard"
     }
    ]
@@ -216,88 +184,149 @@
    "polarity": "dislike",
    "expression_type": "differ",
    "requested_type": "differ",
-   "evidence_index": 1,
-   "episode_id": "packing_trip",
-   "revealed_in_turn": 26,
+   "evidence_index": 0,
+   "episode_id": "gift_reaction",
+   "revealed_in_turn": 20,
    "modality": "text",
+   "recur_fallback": false,
    "image_attributes": [
-    {
-     "color": "purple",
-     "garment_category": "sweater",
-     "pattern": "solid"
-    },
     {
      "color": "white",
-     "garment_category": "sweater",
-     "pattern": "solid"
-    }
-   ]
-  },
-  {
-   "axis": "garment_category",
-   "value": "tank_top",
-   "polarity": "like",
-   "expression_type": "share3",
-   "requested_type": "share3",
-   "evidence_index": null,
-   "episode_id": "packing_trip",
-   "revealed_in_turn": 28,
-   "modality": "text",
-   "image_attributes": [
-    {
-     "color": "yellow",
-     "garment_category": "tank_top",
+     "garment_category": "long_skirt",
      "pattern": "solid"
     },
-    {
-     "color": "navy",
-     "garment_category": "tank_top",
-     "pattern": "solid"
-    },
-    {
-     "color": "yellow",
-     "garment_category": "tank_top",
-     "pattern": "leopard"
-    }
-   ]
-  },
-  {
-   "axis": "garment_category",
-   "value": "blazer",
-   "polarity": "like",
-   "expression_type": "single",
-   "requested_type": "single",
-   "evidence_index": 0,
-   "episode_id": "packing_trip",
-   "revealed_in_turn": 30,
-   "modality": "text",
-   "image_attributes": [
     {
      "color": "gray",
-     "garment_category": "blazer",
+     "garment_category": "long_skirt",
      "pattern": "solid"
     }
    ]
   },
   {
    "axis": "color",
-   "value": "green",
-   "polarity": "dislike",
+   "value": "brown",
+   "polarity": "like",
    "expression_type": "differ",
    "requested_type": "differ",
-   "evidence_index": 0,
-   "episode_id": "online_cart",
-   "revealed_in_turn": 34,
+   "evidence_index": 1,
+   "episode_id": "gift_reaction",
+   "revealed_in_turn": 22,
    "modality": "text",
+   "recur_fallback": false,
    "image_attributes": [
     {
-     "color": "green",
-     "garment_category": "shorts",
+     "color": "black",
+     "garment_category": "sweater",
      "pattern": "solid"
     },
     {
-     "color": "navy",
-     "garment_category": "shorts",
+     "color": "brown",
+     "garment_category": "sweater",
+     "pattern": "solid"
+    }
+   ]
+  },
+  {
+   "axis": "pattern",
+   "value": "striped",
+   "polarity": "dislike",
+   "expression_type": "single",
+   "requested_type": "single",
+   "evidence_index": 0,
+   "episode_id": "packing_trip",
+   "revealed_in_turn": 26,
+   "modality": "text",
+   "recur_fallback": false,
+   "image_attributes": [
+    {
+     "color": "black",
+     "garment_category": "long_skirt",
+     "pattern": "striped"
+    }
+   ]
+  },
+  {
+   "axis": "color",
+   "value": "red",
+   "polarity": "dislike",
+   "expression_type": "single",
+   "requested_type": "single",
+   "evidence_index": 0,
+   "episode_id": "packing_trip",
+   "revealed_in_turn": 28,
+   "modality": "text",
+   "recur_fallback": false,
+   "image_attributes": [
+    {
+     "color": "red",
+     "garment_category": "mini_skirt",
+     "pattern": "solid"
+    }
+   ]
+  },
+  {
+   "axis": "pattern",
+   "value": "polka_dot",
+   "polarity": "like",
+   "expression_type": "differ",
+   "requested_type": "differ",
+   "evidence_index": 0,
+   "episode_id": "packing_trip",
+   "revealed_in_turn": 30,
+   "modality": "text",
+   "recur_fallback": false,
+   "image_attributes": [
+    {
+     "color": "yellow",
+     "garment_category": "long_skirt",
+     "pattern": "polka_dot"
+    },
+    {
+     "color": "yellow",
+     "garment_category": "long_skirt",
+     "pattern": "leopard"
+    }
+   ]
+  },
+  {
+   "axis": "garment_category",
+   "value": "pea_coat",
+   "polarity": "dislike",
+   "expression_type": "differ",
+   "requested_type": "share2",
+   "evidence_index": 1,
+   "episode_id": "online_cart",
+   "revealed_in_turn": 34,
+   "modality": "text",
+   "recur_fallback": false,
+   "image_attributes": [
+    {
+     "color": "gray",
+     "garment_category": "leather_jacket",
+     "pattern": "solid"
+    },
+    {
+     "color": "gray",
+     "garment_category": "pea_coat",
+     "pattern": "solid"
+    }
+   ]
+  },
+  {
+   "axis": "garment_category",
+   "value": "cardigan",
+   "polarity": "like",
+   "expression_type": "single",
+   "requested_type": "single",
+   "evidence_index": 0,
+   "episode_id": "online_cart",
+   "revealed_in_turn": 36,
+   "modality": "text",
+   "recur_fallback": false,
+   "image_attributes": [
+    {
+     "color": "black",
+     "garment_category": "cardigan",
      "pattern": "solid"
     }
    ]
@@ -306,16 +335,46 @@
    "axis": "garment_category",
    "value": "suit_vest",
    "polarity": "dislike",
-   "expression_type": "single",
-   "requested_type": "single",
+   "expression_type": "differ",
+   "requested_type": "share2",
    "evidence_index": 0,
    "episode_id": "online_cart",
-   "revealed_in_turn": 36,
+   "revealed_in_turn": 38,
    "modality": "text",
+   "recur_fallback": false,
    "image_attributes": [
     {
-     "color": "gray",
+     "color": "purple",
      "garment_category": "suit_vest",
+     "pattern": "solid"
+    },
+    {
+     "color": "purple",
+     "garment_category": "sweater",
+     "pattern": "solid"
+    }
+   ]
+  },
+  {
+   "axis": "color",
+   "value": "beige",
+   "polarity": "like",
+   "expression_type": "differ",
+   "requested_type": "differ",
+   "evidence_index": 1,
+   "episode_id": "laundry_day",
+   "revealed_in_turn": 42,
+   "modality": "text",
+   "recur_fallback": false,
+   "image_attributes": [
+    {
+     "color": "blue",
+     "garment_category": "windbreaker",
+     "pattern": "solid"
+    },
+    {
+     "color": "beige",
+     "garment_category": "windbreaker",
      "pattern": "solid"
     }
    ]
@@ -324,80 +383,46 @@
    "axis": "pattern",
    "value": "checkered",
    "polarity": "dislike",
-   "expression_type": "single",
-   "requested_type": "single",
-   "evidence_index": 0,
-   "episode_id": "online_cart",
-   "revealed_in_turn": 38,
+   "expression_type": "share3",
+   "requested_type": "share3",
+   "evidence_index": null,
+   "episode_id": "laundry_day",
+   "revealed_in_turn": 44,
    "modality": "text",
+   "recur_fallback": false,
    "image_attributes": [
     {
-     "color": "gray",
-     "garment_category": "hoodie",
+     "color": "black",
+     "garment_category": "t_shirt",
+     "pattern": "checkered"
+    },
+    {
+     "color": "blue",
+     "garment_category": "shorts",
+     "pattern": "checkered"
+    },
+    {
+     "color": "blue",
+     "garment_category": "t_shirt",
      "pattern": "checkered"
     }
    ]
   },
   {
    "axis": "garment_category",
-   "value": "dress",
-   "polarity": "like",
-   "expression_type": "share2",
-   "requested_type": "share2",
-   "evidence_index": null,
-   "episode_id": "laundry_day",
-   "revealed_in_turn": 42,
-   "modality": "text",
-   "image_attributes": [
-    {
-     "color": "yellow",
-     "garment_category": "dress",
-     "pattern": "solid"
-    },
-    {
-     "color": "blue",
-     "garment_category": "dress",
-     "pattern": "leopard"
-    }
-   ]
-  },
-  {
-   "axis": "pattern",
-   "value": "polka_dot",
-   "polarity": "like",
+   "value": "sweatshirt",
+   "polarity": "dislike",
    "expression_type": "single",
    "requested_type": "single",
    "evidence_index": 0,
    "episode_id": "laundry_day",
-   "revealed_in_turn": 44,
-   "modality": "text",
-   "image_attributes": [
-    {
-     "color": "blue",
-     "garment_category": "mini_skirt",
-     "pattern": "polka_dot"
-    }
-   ]
-  },
-  {
-   "axis": "garment_category",
-   "value": "cardigan",
-   "polarity": "like",
-   "expression_type": "share2",
-   "requested_type": "share2",
-   "evidence_index": null,
-   "episode_id": "laundry_day",
    "revealed_in_turn": 46,
    "modality": "text",
+   "recur_fallback": false,
    "image_attributes": [
     {
-     "color": "black",
-     "garment_category": "cardigan",
-     "pattern": "leopard"
-    },
-    {
-     "color": "blue",
-     "garment_category": "cardigan",
+     "color": "yellow",
+     "garment_category": "sweatshirt",
      "pattern": "solid"
     }
    ]
@@ -422,42 +447,42 @@
    "turn_id": 2,
    "speaker": "user",
    "time": "2026-07-06 19:12",
-   "text": "This one, though: that garment type is the one that never works on me.  {orange solid pea coat}",
+   "text": "Whatever else changes, these three keep the same garment type. That's on purpose.  {blue leopard dress}  {gray leopard dress}  {gray solid dress}",
    "images": []
   },
   {
    "turn_id": 3,
    "speaker": "assistant",
    "time": "2026-07-06 19:13",
-   "text": "Understood — that garment type stays on the rack.",
+   "text": "Deliberate repetition. The garment type is yours.",
    "images": []
   },
   {
    "turn_id": 4,
    "speaker": "user",
    "time": "2026-07-06 19:14",
-   "text": "Same trip: If I had to name one color I always go for, it's the color here.  {brown solid shorts}",
+   "text": "Same trip: No matter how it's made, this garment type is not for me.  {yellow solid long coat}",
    "images": []
   },
   {
    "turn_id": 5,
    "speaker": "assistant",
    "time": "2026-07-06 19:15",
-   "text": "Understood — that's your default color.",
+   "text": "Noted — the garment type itself is the problem, not the execution.",
    "images": []
   },
   {
    "turn_id": 6,
    "speaker": "user",
    "time": "2026-07-06 19:16",
-   "text": "Also in the bag: Same piece, two patterns. The first one is the version I'd actually wear.  {orange floral shorts}  {orange leopard shorts}",
+   "text": "Also in the bag: Odd group of three: the only thing all of them have in common is one color, and that color is precisely what I avoid.  {green leopard sweater}  {green leopard shorts}  {green solid windbreaker}",
    "images": []
   },
   {
    "turn_id": 7,
    "speaker": "assistant",
    "time": "2026-07-06 19:17",
-   "text": "Understood — the first one's pattern goes on your list.",
+   "text": "Understood. The one color those three share goes on the no list.",
    "images": []
   },
   {
@@ -478,42 +503,42 @@
    "turn_id": 10,
    "speaker": "user",
    "time": "2026-07-08 19:12",
-   "text": "Two different pieces, alike in every respect but one. The second one's garment type is the one I never touch.  {gray solid sweater}  {gray solid sweatshirt}",
+   "text": "Here's the same thing twice, split only by the pattern — and the first one wins easily.  {orange floral shorts}  {orange leopard shorts}",
    "images": []
   },
   {
    "turn_id": 11,
    "speaker": "assistant",
    "time": "2026-07-08 19:13",
-   "text": "Everything else held equal — the second one's garment type goes on the no list.",
+   "text": "Clean comparison. Logging the first one's pattern.",
    "images": []
   },
   {
    "turn_id": 12,
    "speaker": "user",
    "time": "2026-07-08 19:14",
-   "text": "Next out of the pile: Put these three side by side: only one thing runs through all of them, and it is my favorite color.  {pink solid fleece jacket}  {pink leopard mini skirt}  {pink leopard t-shirt}",
+   "text": "Next out of the pile: The garment type here is the one I reach for constantly.  {blue solid blazer}",
    "images": []
   },
   {
    "turn_id": 13,
    "speaker": "assistant",
    "time": "2026-07-08 19:15",
-   "text": "Found the overlap — that color is yours.",
+   "text": "So that garment type is your default. Logged.",
    "images": []
   },
   {
    "turn_id": 14,
    "speaker": "user",
    "time": "2026-07-08 19:16",
-   "text": "Same sort: Different garment types, everything else matched. I'd leave the first one.  {gray solid long coat}  {gray solid t-shirt}",
+   "text": "Same sort: Identical apart from the color. I'd take the second one every time.  {yellow solid jeans}  {pink solid jeans}",
    "images": []
   },
   {
    "turn_id": 15,
    "speaker": "assistant",
    "time": "2026-07-08 19:17",
-   "text": "With the rest controlled, the first one's garment type is out.",
+   "text": "One variable, one verdict. The second one's color is yours.",
    "images": []
   },
   {
@@ -534,42 +559,42 @@
    "turn_id": 18,
    "speaker": "user",
    "time": "2026-07-10 19:12",
-   "text": "Identical except for the pattern, and the second one is the one I'd leave.  {purple leopard formal shirt}  {purple striped formal shirt}",
+   "text": "I own these two in wildly different versions, but always this garment type.  {purple solid tank top}  {yellow leopard tank top}",
    "images": []
   },
   {
    "turn_id": 19,
    "speaker": "assistant",
    "time": "2026-07-10 19:13",
-   "text": "One variable, one verdict. The second one's pattern is out.",
+   "text": "Same garment type across every version — that one is yours.",
    "images": []
   },
   {
    "turn_id": 20,
    "speaker": "user",
    "time": "2026-07-10 19:14",
-   "text": "She also sent this: Identical apart from the color. I'd take the first one every time.  {beige solid sweater}  {purple solid sweater}",
+   "text": "She also sent this: Two colors of the same piece. The first one is the version I avoid.  {white solid long skirt}  {gray solid long skirt}",
    "images": []
   },
   {
    "turn_id": 21,
    "speaker": "assistant",
    "time": "2026-07-10 19:15",
-   "text": "One variable, one verdict. The first one's color is yours.",
+   "text": "Understood — the first one's color goes on the no list.",
    "images": []
   },
   {
    "turn_id": 22,
    "speaker": "user",
    "time": "2026-07-10 19:16",
-   "text": "Next out of the box: Odd group of two: the only thing all of them have in common is one color, and that color is precisely what I avoid.  {red solid windbreaker}  {red leopard leggings}",
+   "text": "Next out of the box: Two of the same piece, and the only difference between them is the color. The second one's color is completely me.  {black solid sweater}  {brown solid sweater}",
    "images": []
   },
   {
    "turn_id": 23,
    "speaker": "assistant",
    "time": "2026-07-10 19:17",
-   "text": "Understood. The one color those two share goes on the no list.",
+   "text": "Same piece, one variable — the second one's color it is.",
    "images": []
   },
   {
@@ -590,42 +615,42 @@
    "turn_id": 26,
    "speaker": "user",
    "time": "2026-07-12 19:12",
-   "text": "The same piece twice, differing only in the color. The second one is the one I never touch.  {purple solid sweater}  {white solid sweater}",
+   "text": "I've tried this pattern more than once and it has never worked.  {black striped long skirt}",
    "images": []
   },
   {
    "turn_id": 27,
    "speaker": "assistant",
    "time": "2026-07-12 19:13",
-   "text": "Same piece, one variable — the second one's color goes on the no list.",
+   "text": "Tried and settled, then. That pattern goes on the no list.",
    "images": []
   },
   {
    "turn_id": 28,
    "speaker": "user",
    "time": "2026-07-12 19:14",
-   "text": "Next into the bag: Whatever else changes, these three keep the same garment type. That's on purpose.  {yellow solid tank top}  {navy solid tank top}  {yellow leopard tank top}",
+   "text": "Next into the bag: The color here is the one I will not wear.  {red solid mini skirt}",
    "images": []
   },
   {
    "turn_id": 29,
    "speaker": "assistant",
    "time": "2026-07-12 19:15",
-   "text": "Deliberate repetition. The garment type is yours.",
+   "text": "Got it. That color is off the table.",
    "images": []
   },
   {
    "turn_id": 30,
    "speaker": "user",
    "time": "2026-07-12 19:16",
-   "text": "Also going: I keep replacing this garment type rather than trying anything else.  {gray solid blazer}",
+   "text": "Also going: Same piece, two patterns. The first one is the version I'd actually wear.  {yellow polka dot long skirt}  {yellow leopard long skirt}",
    "images": []
   },
   {
    "turn_id": 31,
    "speaker": "assistant",
    "time": "2026-07-12 19:17",
-   "text": "Replacing rather than switching says it all. That garment type is yours.",
+   "text": "Understood — the first one's pattern goes on your list.",
    "images": []
   },
   {
@@ -646,42 +671,42 @@
    "turn_id": 34,
    "speaker": "user",
    "time": "2026-07-14 19:12",
-   "text": "Same thing twice, split by the color. I'd never take the first one.  {green solid shorts}  {navy solid shorts}",
+   "text": "Different garment types, everything else matched. I'd leave the second one.  {gray solid leather jacket}  {gray solid pea coat}",
    "images": []
   },
   {
    "turn_id": 35,
    "speaker": "assistant",
    "time": "2026-07-14 19:13",
-   "text": "Clean comparison. The first one's color is banned.",
+   "text": "With the rest controlled, the second one's garment type is out.",
    "images": []
   },
   {
    "turn_id": 36,
    "speaker": "user",
    "time": "2026-07-14 19:14",
-   "text": "Next in the cart: No matter how it's made, this garment type is not for me.  {gray solid suit vest}",
+   "text": "Next in the cart: I keep replacing this garment type rather than trying anything else.  {black solid cardigan}",
    "images": []
   },
   {
    "turn_id": 37,
    "speaker": "assistant",
    "time": "2026-07-14 19:15",
-   "text": "Noted — the garment type itself is the problem, not the execution.",
+   "text": "Replacing rather than switching says it all. That garment type is yours.",
    "images": []
   },
   {
    "turn_id": 38,
    "speaker": "user",
    "time": "2026-07-14 19:16",
-   "text": "Also saved: Whatever else this has going for it, that pattern rules it out.  {gray checkered hoodie}",
+   "text": "Also saved: Two different pieces, alike in every respect but one. The first one's garment type is the one I never touch.  {purple solid suit vest}  {purple solid sweater}",
    "images": []
   },
   {
    "turn_id": 39,
    "speaker": "assistant",
    "time": "2026-07-14 19:17",
-   "text": "Noted — that pattern is disqualifying on its own.",
+   "text": "Everything else held equal — the first one's garment type goes on the no list.",
    "images": []
   },
   {
@@ -702,42 +727,42 @@
    "turn_id": 42,
    "speaker": "user",
    "time": "2026-07-16 19:12",
-   "text": "These two differ in every way but one: they are the same garment type, and that is my favorite.  {yellow solid dress}  {blue leopard dress}",
+   "text": "Here's the same thing twice, split only by the color — and the second one wins easily.  {blue solid windbreaker}  {beige solid windbreaker}",
    "images": []
   },
   {
    "turn_id": 43,
    "speaker": "assistant",
    "time": "2026-07-16 19:13",
-   "text": "Understood — the garment type those two have in common is yours.",
+   "text": "Clean comparison. Logging the second one's color.",
    "images": []
   },
   {
    "turn_id": 44,
    "speaker": "user",
    "time": "2026-07-16 19:14",
-   "text": "Next off the pile: This is exactly my favorite pattern. Grabbed it without thinking twice.  {blue polka dot mini skirt}",
+   "text": "Next off the pile: Every one of these three is a different piece, and they share a single pattern. That pattern is the reason none of them worked.  {black checkered t-shirt}  {blue checkered shorts}  {blue checkered t-shirt}",
    "images": []
   },
   {
    "turn_id": 45,
    "speaker": "assistant",
    "time": "2026-07-16 19:15",
-   "text": "Noted — that pattern is officially yours.",
+   "text": "The common thread is that pattern. Noted as a no.",
    "images": []
   },
   {
    "turn_id": 46,
    "speaker": "user",
    "time": "2026-07-16 19:16",
-   "text": "Also here: I own these two in wildly different versions, but always this garment type.  {black leopard cardigan}  {blue solid cardigan}",
+   "text": "Also here: I've owned this garment type twice and worn it zero times.  {yellow solid sweatshirt}",
    "images": []
   },
   {
    "turn_id": 47,
    "speaker": "assistant",
    "time": "2026-07-16 19:17",
-   "text": "Same garment type across every version — that one is yours.",
+   "text": "Owned twice, worn never. That garment type goes on the no list.",
    "images": []
   }
  ]

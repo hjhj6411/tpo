@@ -43,7 +43,7 @@ CUDA_VISIBLE_DEVICES=0 vllm serve OpenGVLab/InternVL3_5-8B-Instruct --port 8001 
 
 
     python -m exp.vlm_eval.eval_multimodal --port 8001 \
-        --model OpenGVLab/InternVL3_5-8B-Instruct --concurrency 32
+        --model Qwen/Qwen3-VL-4B-Instruct --concurrency 16
 
 and a hosted model needs a base URL and a key:
 
@@ -79,6 +79,7 @@ import requests
 
 REPO = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(REPO))
+from exp.vlm_eval.option_order import assign_orders
 from configs.scenarios import (EVAL_FRAME_CLAUSE, EVAL_PRIORITY_CLAUSE_SITUATION,
                                EVAL_PRIORITY_CLAUSE_PREFERENCE, PROMPT_VERSION)
 
@@ -213,19 +214,32 @@ def data_uri(path: Path) -> str:
 
 
 # ══ message building ══════════════════════════════════════════════════════
+# 모든 모델이 같은 문자열을 보도록, system 역할을 쓰지 않고 지시문을
+# user 메시지 맨 앞에 합친다. 채팅 템플릿이 모델마다 달라 (Qwen 은 system 을
+# 별도 블록으로, Gemma 는 system 을 지원하지 않아 첫 user 턴에 병합) 같은
+# messages 를 보내도 최종 시퀀스가 달라지기 때문이다. PersonaVLM(CVPR'26),
+# CoViP 등 멀티모달 대화 데이터셋도 같은 방식을 쓴다.
 def build_messages(query, profile, shuffled, fmt, images_root):
+    # 순서: 프로필 → 질의 → 선택지 → 지시문.
+    # eval_dialog.py 의 대화 → 질의 → 선택지 → 지시문과 같은 배열이다.
+    # 프로필 전달 형식(서술문 / 키-값 / 대화)만 바뀌고 나머지 구조는 동일해야
+    # 조건 간 차이가 배치 차이와 섞이지 않는다. 사용자 정보를 앞에 두면
+    # 같은 사용자의 문항들이 접두사를 공유해 캐싱에도 유리하다.
     intro = []
-    if uses_query(fmt):
-        intro.append(f"=== QUERY ===\n{(query or {}).get('query_text','').strip()}")
     if fmt in {"narrative", "narrative+query"}:
-        intro.append(f"\n=== USER PROFILE ===\n{profile_to_narrative(profile)}")
+        intro.append(f"=== USER PROFILE ===\n{profile_to_narrative(profile)}")
     elif fmt in {"all", "all+query"}:
-        intro.append(f"\n=== USER PROFILE ===\n{profile_to_all_kv_text(profile)}")
+        intro.append(f"=== USER PROFILE ===\n{profile_to_all_kv_text(profile)}")
+    if uses_query(fmt):
+        pre = "\n" if intro else ""
+        intro.append(f"{pre}=== QUERY ===\n"
+                     f"{(query or {}).get('query_text','').strip()}")
 
     intro.append("\n=== OPTIONS ===")
     intro.append("Below are four clothing option images labeled A, B, C, D.")
 
-    content = [{"type": "text", "text": "\n".join(intro)}]
+    content = [{"type": "text",
+                "text": system_prompt_for(fmt) + "\n" + "\n".join(intro)}]
     for label, opt in shuffled:
         path = cell_image_path(opt.get("attributes", {}), images_root)
         content.append({"type": "text", "text": f"Option {label}:"})
@@ -248,8 +262,7 @@ def build_messages(query, profile, shuffled, fmt, images_root):
                     "Do NOT write anything before or after the letter.\n"
                     "Your complete response must be a single character.\n\n"
                     "Answer:"})
-    return [{"role": "system", "content": system_prompt_for(fmt)},
-            {"role": "user", "content": content}]
+    return [{"role": "user", "content": content}]
 
 
 def parse_answer(text):
@@ -295,7 +308,8 @@ def usable(plan, images_root):
                for k in LABELS)
 
 
-def make_jobs(plans, queries, profiles, fmts, images_root, seed, done):
+def make_jobs(plans, queries, profiles, fmts, images_root, seed, done,
+              orders=None):
     """Option order is shuffled ONCE per plan and reused across formats, so a
     format comparison is not also a comparison of different shuffles."""
     jobs, skipped = [], []
@@ -303,11 +317,12 @@ def make_jobs(plans, queries, profiles, fmts, images_root, seed, done):
         pid = plan.get("plan_id") or plan["query_id"]
         if not usable(plan, images_root):
             skipped.append(pid); continue
-        rng = random.Random(f"{seed}|{pid}")
-        items = list(plan["options"].items())
-        rng.shuffle(items)
-        shuffled = [(d, dict(o, _original_key=k)) for d, (k, o) in zip(LABELS, items)]
-        d2o = {d: k for d, (k, _) in zip(LABELS, items)}
+        order = orders[pid] if orders else None
+        if order is None:
+            rng = random.Random(f"{seed}|{pid}")
+            order = list(LABELS); rng.shuffle(order)
+        shuffled = [(d, plan["options"][k]) for d, k in zip(LABELS, order)]
+        d2o = {d: k for d, k in zip(LABELS, order)}
         correct = next(d for d, k in d2o.items() if k == "A")
         for fmt in fmts:
             if (pid, fmt) in done:
@@ -364,7 +379,18 @@ def main() -> int:
     ap.add_argument("--track", default="both",
                     choices=["both", "physical", "dress_code"])
     ap.add_argument("--limit", type=int, default=0)
-    ap.add_argument("--seed", type=int, default=42)
+    ap.add_argument("--seed", type=int,
+                    default=int(os.environ.get("POD_SEED", 1)),
+                    help="문항 생성과 같은 시드여야 세 평가 스크립트의 셔플이 "
+                         "일치해 문항 단위 짝비교가 성립한다. 기본값은 "
+                         "$POD_SEED (없으면 1).")
+    ap.add_argument("--option-order", default="balanced",
+                    choices=["balanced", "random",
+                             "fixed:A", "fixed:B", "fixed:C", "fixed:D"],
+                    help="정답 위치 배정. balanced(기본)=정확히 4등분, "
+                         "random=문항별 독립 셔플, fixed:X=정답을 항상 X 에 "
+                         "고정(위치 편향 진단용). 세 평가 스크립트에 같은 값을 "
+                         "줘야 문항 단위 짝비교가 성립한다.")
     ap.add_argument("--concurrency", type=int, default=8)
     ap.add_argument("--max-tokens", type=int, default=4)
     ap.add_argument("--temperature", type=float, default=0.0)
@@ -395,12 +421,18 @@ def main() -> int:
     plans = load(plans_path)
     queries = {q["query_id"]: q for q in load(queries_path)}
     profiles = {p["user_id"]: p for p in load(profiles_path)}
+    all_plans = list(plans)          # 필터 전 전체 목록
     if args.track != "both":
         plans = [p for p in plans if p.get("track") == args.track]
     if args.limit > 0:
         plans = plans[:args.limit]
 
-    out_dir = args.out or (data / "eval" / f"{args.model.replace('/', '_')}")
+    # 정답 위치를 고정하거나 무작위로 돌린 결과는 기본(balanced) 결과와
+    # 섞이면 안 된다. 같은 (plan_id, format) 인데 배치가 달라 resume 이 이미
+    # 끝난 것으로 착각한다. 그래서 경로에 모드를 새긴다.
+    _pos = ("" if args.option_order == "balanced"
+            else "_" + args.option_order.replace(":", ""))
+    out_dir = args.out or (data / ("eval" + _pos) / f"{args.model.replace('/', '_')}")
     out_dir.mkdir(parents=True, exist_ok=True)
     res_path = out_dir / "results.jsonl"
 
@@ -415,8 +447,18 @@ def main() -> int:
     elif args.fresh and res_path.exists():
         res_path.unlink()
 
+    # 선택지 순서는 전체 plan 목록 위에서 한 번에 정한다.
+    # --limit / --track 으로 부분만 돌려도 배치가 달라지지 않게 하기 위해서다.
+    all_pids = [p.get("plan_id") or p["query_id"] for p in all_plans]
+    orders = assign_orders(all_pids, args.seed, args.option_order)
+    from collections import Counter as _C
+    from exp.vlm_eval.option_order import correct_display as _cd
+    _d = _C(_cd(orders[p]) for p in all_pids)
+    print(f"  positions  : {args.option_order} (seed {args.seed}) "
+          f"{dict(sorted(_d.items()))}")
+
     jobs, skipped = make_jobs(plans, queries, profiles, fmts, images_root,
-                              args.seed, done)
+                              args.seed, done, orders)
 
     print("=" * 74)
     print("  POD-Bench multimodal A/B/C/D evaluation")

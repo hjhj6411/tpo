@@ -1,0 +1,88 @@
+{
+ "model": "Qwen/Qwen3-VL-30B-A3B-Instruct",
+ "variant": "wacv_scenario_v5",
+ "profile_source": "dialog",
+ "dialog_variant": "image",
+ "prompt_version": 2,
+ "formats": [
+  "dialog",
+  "dialog+query"
+ ],
+ "n": 5100,
+ "by_track_format": {
+  "physical|dialog": {
+   "strict": 377,
+   "tpo": 514,
+   "pref": 713,
+   "n": 967
+  },
+  "physical|dialog+query": {
+   "strict": 520,
+   "tpo": 861,
+   "pref": 583,
+   "n": 967
+  },
+  "dress_code|dialog": {
+   "strict": 617,
+   "tpo": 882,
+   "pref": 1123,
+   "n": 1583
+  },
+  "dress_code|dialog+query": {
+   "strict": 740,
+   "tpo": 1315,
+   "pref": 888,
+   "n": 1583
+  }
+ },
+ "by_expression_format": {
+  "differ|dialog": {
+   "strict": 300,
+   "tpo": 480,
+   "pref": 566,
+   "n": 880
+  },
+  "differ|dialog+query": {
+   "strict": 415,
+   "tpo": 748,
+   "pref": 489,
+   "n": 880
+  },
+  "single|dialog+query": {
+   "strict": 522,
+   "tpo": 838,
+   "pref": 603,
+   "n": 985
+  },
+  "single|dialog": {
+   "strict": 423,
+   "tpo": 541,
+   "pref": 760,
+   "n": 985
+  },
+  "share2|dialog": {
+   "strict": 143,
+   "tpo": 216,
+   "pref": 280,
+   "n": 399
+  },
+  "share2|dialog+query": {
+   "strict": 194,
+   "tpo": 341,
+   "pref": 229,
+   "n": 399
+  },
+  "share3|dialog": {
+   "strict": 128,
+   "tpo": 159,
+   "pref": 230,
+   "n": 286
+  },
+  "share3|dialog+query": {
+   "strict": 129,
+   "tpo": 249,
+   "pref": 150,
+   "n": 286
+  }
+ }
+}

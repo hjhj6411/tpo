@@ -31,6 +31,7 @@ class EvidencePlan:
     images: list[dict]            # [{file, attributes}, ...]
     evidence_index: int | None    # differ/single 에서 evidence 이미지 위치
     episode_id: str
+    recur_fallback: bool = False  # 회피 집합에서 못 찾아 겹치는 셀을 쓴 경우
 
 
 @dataclass
@@ -41,6 +42,7 @@ class DialogPlan:
     episodes: list[str] = field(default_factory=list)
     downgrades: list[str] = field(default_factory=list)
     failures: list[str] = field(default_factory=list)
+    recur_fallbacks: list[str] = field(default_factory=list)
 
 
 def all_preferences(profile: dict) -> list[tuple[str, str, str]]:
@@ -53,9 +55,29 @@ def all_preferences(profile: dict) -> list[tuple[str, str, str]]:
 
 
 def plan_dialog(profile: dict, cells: set[str], episodes: list[str],
-                seed: int) -> DialogPlan:
+                seed: int, avoid: set[str] | None = None,
+                avoid_mode: str = "prefer") -> DialogPlan:
+    """avoid: 이 사용자의 문항 선택지가 쓰는 셀. 대화 이미지가 선택지로
+    재등장하면 과제가 시각적 재인으로 바뀌므로 피한다.
+
+    avoid_mode
+      off     회피하지 않는다 (기존 동작)
+      prefer  회피 집합 밖에서 먼저 찾고, 불가능하면 겹침을 허용하되 기록한다
+      strict  겹침을 절대 허용하지 않는다. 못 채우면 failures 에 남는다
+
+    single/differ 는 배경축이 좁아 회피 시 조합이 사라지는 취향이 생긴다
+    (실측: 24명 중 15명이 18개 중 1~3개). 그래서 기본은 prefer 다 —
+    커버리지를 지키고 어긋난 건수를 드러내는 쪽이 조용한 결손보다 낫다.
+    """
     rng = random.Random(f"{profile['user_id']}|dialog|{seed}")
-    picker = ImagePicker(profile, cells, rng)
+    avoid = avoid or set()
+    if avoid_mode == "off" or not avoid:
+        primary = ImagePicker(profile, cells, rng)
+        fallback = None
+    else:
+        primary = ImagePicker(profile, cells - avoid, rng)
+        fallback = None if avoid_mode == "strict" else \
+            ImagePicker(profile, cells, rng)
 
     slots = all_preferences(profile)
     if len(slots) != 18:
@@ -78,16 +100,29 @@ def plan_dialog(profile: dict, cells: set[str], episodes: list[str],
             want = next(req_iter)
             order = [want] + [t for t in DOWNGRADE_ORDER if t != want]
             chosen = None
-            for ty in order:
-                got = picker.pick(ty, axis, value)
-                if got:
-                    chosen = (ty, *got)
+            # 1) 좁은 배경(solid) → 2) 넓은 배경(중립 유무늬 포함) 순으로
+            #    회피 집합 밖에서 찾는다. 넓은 배경도 R3 를 만족한다.
+            for wide in (False, True):
+                for ty in order:
+                    got = primary.pick(ty, axis, value, wide_background=wide)
+                    if got:
+                        chosen = (ty, *got, False)
+                        break
+                if chosen:
                     break
+            if chosen is None and fallback is not None:
+                for ty in order:                   # 그래도 없으면 겹침 허용
+                    got = fallback.pick(ty, axis, value, wide_background=True)
+                    if got:
+                        chosen = (ty, *got, True)
+                        plan.recur_fallbacks.append(
+                            f"{axis}={value}({polarity}): {ty} with option cell")
+                        break
             if chosen is None:
                 plan.failures.append(
                     f"{axis}={value}({polarity}): no cells for any expression")
                 continue
-            ty, images, ev_idx = chosen
+            ty, images, ev_idx, fell_back = chosen
             if EXPRESSIONS[ty].name == "differ":
                 ev_idx = flip % 2                 # 위치 카운터밸런스
                 flip += 1
@@ -99,5 +134,6 @@ def plan_dialog(profile: dict, cells: set[str], episodes: list[str],
             plan.evidence.append(EvidencePlan(
                 axis=axis, value=value, polarity=polarity,
                 expression_type=ty, requested_type=want,
-                images=images, evidence_index=ev_idx, episode_id=ep_id))
+                images=images, evidence_index=ev_idx, episode_id=ep_id,
+                recur_fallback=fell_back))
     return plan

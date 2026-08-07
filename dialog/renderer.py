@@ -127,6 +127,7 @@ def render(plan: DialogPlan) -> dict:
                 "evidence_index": ev.evidence_index,
                 "episode_id": ev.episode_id,
                 "revealed_in_turn": tid - 1, "modality": "image",
+                "recur_fallback": ev.recur_fallback,
                 "image_attributes": [c["attributes"] for c in ev.images],
             })
             add("assistant", ack_text)
@@ -139,6 +140,7 @@ def render(plan: DialogPlan) -> dict:
         "seed": plan.seed,
         "template_version": DIALOG_TEMPLATE_VERSION,
         "downgrades": plan.downgrades,
+        "recur_fallbacks": plan.recur_fallbacks,
         "evidence": evidence,
         "turns": turns,
     }

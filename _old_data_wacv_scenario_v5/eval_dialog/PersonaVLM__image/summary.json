@@ -1,0 +1,88 @@
+{
+ "model": "PersonaVLM",
+ "variant": "wacv_scenario_v5",
+ "profile_source": "dialog",
+ "dialog_variant": "image",
+ "prompt_version": 2,
+ "formats": [
+  "dialog",
+  "dialog+query"
+ ],
+ "n": 5100,
+ "by_track_format": {
+  "physical|dialog": {
+   "strict": 402,
+   "tpo": 545,
+   "pref": 709,
+   "n": 967
+  },
+  "physical|dialog+query": {
+   "strict": 493,
+   "tpo": 790,
+   "pref": 600,
+   "n": 967
+  },
+  "dress_code|dialog": {
+   "strict": 566,
+   "tpo": 809,
+   "pref": 1112,
+   "n": 1583
+  },
+  "dress_code|dialog+query": {
+   "strict": 703,
+   "tpo": 1235,
+   "pref": 896,
+   "n": 1583
+  }
+ },
+ "by_expression_format": {
+  "differ|dialog": {
+   "strict": 282,
+   "tpo": 454,
+   "pref": 549,
+   "n": 880
+  },
+  "differ|dialog+query": {
+   "strict": 406,
+   "tpo": 704,
+   "pref": 504,
+   "n": 880
+  },
+  "single|dialog": {
+   "strict": 411,
+   "tpo": 532,
+   "pref": 760,
+   "n": 985
+  },
+  "single|dialog+query": {
+   "strict": 469,
+   "tpo": 778,
+   "pref": 604,
+   "n": 985
+  },
+  "share2|dialog": {
+   "strict": 158,
+   "tpo": 212,
+   "pref": 303,
+   "n": 399
+  },
+  "share2|dialog+query": {
+   "strict": 186,
+   "tpo": 308,
+   "pref": 227,
+   "n": 399
+  },
+  "share3|dialog": {
+   "strict": 117,
+   "tpo": 156,
+   "pref": 209,
+   "n": 286
+  },
+  "share3|dialog+query": {
+   "strict": 135,
+   "tpo": 235,
+   "pref": 161,
+   "n": 286
+  }
+ }
+}

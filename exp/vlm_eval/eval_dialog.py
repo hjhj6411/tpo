@@ -33,14 +33,13 @@ IMAGE BUDGET
 ------------
 대화 이미지(~33) + 선택지 4 = 문항당 ~37장. 서빙을 다시 띄워야 한다:
 
-    vllm serve Qwen/Qwen2.5-VL-72B-Instruct-AWQ --port 8001 --max-model-len 65536 --tensor_parallel_size 4\
+    vllm serve <model> --port 8001 --max-model-len 65536 \
         --limit-mm-per-prompt '{"image":40}'
 
 USAGE
 -----
     python -m exp.vlm_eval.eval_dialog --port 8001 \
-    --model  Qwen/Qwen2.5-VL-7B-Instruct  --concurrency 4 --timeout 600 --dialog-variant text
-    
+        --model Qwen/Qwen3-VL-4B-Instruct --concurrency 8
     python -m exp.vlm_eval.eval_dialog --dialog-variant text \
         --base-url https://api.openai.com/v1 --model gpt-5-mini \
         --api-key-env OPENAI_API_KEY
@@ -64,6 +63,7 @@ import requests
 
 REPO = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(REPO))
+from exp.vlm_eval.option_order import assign_orders
 from configs.scenarios import (EVAL_FRAME_CLAUSE,                    # noqa: E402
                                EVAL_PRIORITY_CLAUSE_PREFERENCE,
                                EVAL_PRIORITY_CLAUSE_SITUATION,
@@ -202,8 +202,13 @@ def dialog_blocks(dialog, images_root: Path, variant: str):
     return blocks
 
 
+# 모든 모델이 같은 문자열을 보도록, system 역할을 쓰지 않고 지시문을
+# user 메시지 맨 앞에 합친다. 채팅 템플릿이 모델마다 달라 (Qwen 은 system 을
+# 별도 블록으로, Gemma 는 system 을 지원하지 않아 첫 user 턴에 병합) 같은
+# messages 를 보내도 최종 시퀀스가 달라지기 때문이다. PersonaVLM(CVPR'26),
+# CoViP 등 멀티모달 대화 데이터셋도 같은 방식을 쓴다.
 def build_messages(query, dialog, shuffled, fmt, images_root, variant):
-    content = []
+    content = [{"type": "text", "text": system_prompt_for(fmt)}]
     # 대화를 맨 앞에 — 같은 사용자의 문항들이 접두사를 공유해 캐싱이 걸린다
     if uses_dialog(fmt):
         content += dialog_blocks(dialog, images_root, variant)
@@ -238,25 +243,11 @@ def build_messages(query, dialog, shuffled, fmt, images_root, variant):
                     "Do NOT write anything before or after the letter.\n"
                     "Your complete response must be a single character.\n\n"
                     "Answer:"})
-    return [{"role": "system", "content": system_prompt_for(fmt)},
-            {"role": "user", "content": content}]
+    return [{"role": "user", "content": content}]
 
-
-import re
 
 def parse_answer(text):
-    """PersonaVLM 등 <think>/<answer> 형식을 쓰는 모델을 위해
-    answer 블록을 우선 확인한다. think 안의 'Option A ...' 를 답으로
-    오인하면 정확도가 아니라 파서를 측정하게 된다."""
-    t = (text or "").strip()
-    if not t:
-        return None
-    m = re.search(r"<answer>(.*?)</answer>", t, re.S | re.I)
-    if m:
-        t = m.group(1)
-    else:
-        t = re.sub(r"<think>.*?</think>", " ", t, flags=re.S | re.I)
-    for ch in t:
+    for ch in (text or "").strip():
         if ch.upper() in LABELS:
             return ch.upper()
     return None
@@ -345,7 +336,8 @@ def usable(plan, images_root):
                                images_root) for k in LABELS)
 
 
-def make_jobs(plans, queries, dialogs, fmts, images_root, seed, done):
+def make_jobs(plans, queries, dialogs, fmts, images_root, seed, done,
+              orders=None):
     """셔플은 plan 당 1회. eval_multimodal.py 와 같은 키라 이미지 실행과
     선택지 순서가 일치한다."""
     jobs, skipped = [], []
@@ -356,11 +348,12 @@ def make_jobs(plans, queries, dialogs, fmts, images_root, seed, done):
             skipped.append((pid, "no dialog")); continue
         if not usable(plan, images_root):
             skipped.append((pid, "missing option image")); continue
-        rng = random.Random(f"{seed}|{pid}")
-        items = list(plan["options"].items())
-        rng.shuffle(items)
-        shuffled = [(d, o) for d, (k, o) in zip(LABELS, items)]
-        d2o = {d: k for d, (k, _) in zip(LABELS, items)}
+        order = orders[pid] if orders else None
+        if order is None:
+            rng = random.Random(f"{seed}|{pid}")
+            order = list(LABELS); rng.shuffle(order)
+        shuffled = [(d, plan["options"][k]) for d, k in zip(LABELS, order)]
+        d2o = {d: k for d, k in zip(LABELS, order)}
         correct = next(d for d, k in d2o.items() if k == "A")
         ev = item_evidence(plan, evidence_index(dialog))
         ev.update(recurrence(plan, dialog_cells(dialog)))
@@ -406,6 +399,10 @@ def main() -> int:
     ap.add_argument("--dialogs", type=Path)
     ap.add_argument("--images-root", type=Path)
     ap.add_argument("--dialog-variant", default="image", choices=["image", "text"])
+    ap.add_argument("--tag", default="",
+                    help="대화 판 이름. 출력이 eval_dialog_<tag>/ 로 분리된다. "
+                         "다른 대화 집합을 돌릴 때 반드시 지정할 것 — 빠뜨리면 "
+                         "기존 결과 파일에 append 되어 두 판이 섞인다.")
 
     ap.add_argument("--model", required=True)
     ap.add_argument("--port", type=int)
@@ -416,8 +413,18 @@ def main() -> int:
     ap.add_argument("--track", default="both",
                     choices=["both", "physical", "dress_code"])
     ap.add_argument("--limit", type=int, default=0)
-    ap.add_argument("--seed", type=int, default=42,
-                    help="eval_multimodal.py 와 같은 값이어야 셔플이 일치한다")
+    ap.add_argument("--seed", type=int,
+                    default=int(os.environ.get("POD_SEED", 1)),
+                    help="문항 생성과 같은 시드여야 세 평가 스크립트의 셔플이 "
+                         "일치해 문항 단위 짝비교가 성립한다. 기본값은 "
+                         "$POD_SEED (없으면 1).")
+    ap.add_argument("--option-order", default="balanced",
+                    choices=["balanced", "random",
+                             "fixed:A", "fixed:B", "fixed:C", "fixed:D"],
+                    help="정답 위치 배정. balanced(기본)=정확히 4등분, "
+                         "random=문항별 독립 셔플, fixed:X=정답을 항상 X 에 "
+                         "고정(위치 편향 진단용). 세 평가 스크립트에 같은 값을 "
+                         "줘야 문항 단위 짝비교가 성립한다.")
     ap.add_argument("--concurrency", type=int, default=8)
     ap.add_argument("--max-tokens", type=int, default=4)
     ap.add_argument("--temperature", type=float, default=0.0)
@@ -454,13 +461,20 @@ def main() -> int:
     if not dialogs:
         raise SystemExit(f"[error] no {args.dialog_variant} dialogs in {dialogs_dir}")
 
+    all_plans = list(plans)          # 필터 전 전체 목록
     if args.track != "both":
         plans = [p for p in plans if p.get("track") == args.track]
     if args.limit > 0:
         plans = plans[:args.limit]
 
-    tag = f"{args.model.replace('/', '_')}__{args.dialog_variant}"
-    out_dir = args.out or (data / "eval_dialog" / tag)
+    mtag = f"{args.model.replace('/', '_')}__{args.dialog_variant}"
+    # 정답 위치를 고정하거나 무작위로 돌린 결과는 기본(balanced) 결과와
+    # 섞이면 안 된다. 같은 (plan_id, format) 인데 배치가 다르므로 resume 이
+    # 이미 끝난 것으로 착각한다. 그래서 경로에 모드를 새긴다.
+    _pos = ("" if args.option_order == "balanced"
+            else "_" + args.option_order.replace(":", ""))
+    root = "eval_dialog" + (f"_{args.tag}" if args.tag else "") + _pos
+    out_dir = args.out or (data / root / mtag)
     out_dir.mkdir(parents=True, exist_ok=True)
     res_path = out_dir / "results.jsonl"
 
@@ -476,8 +490,18 @@ def main() -> int:
     elif args.fresh and res_path.exists():
         res_path.unlink()
 
+    # 선택지 순서는 전체 plan 목록 위에서 한 번에 정한다.
+    # --limit / --track 으로 부분만 돌려도 배치가 달라지지 않게 하기 위해서다.
+    all_pids = [p.get("plan_id") or p["query_id"] for p in all_plans]
+    orders = assign_orders(all_pids, args.seed, args.option_order)
+    from collections import Counter as _C
+    from exp.vlm_eval.option_order import correct_display as _cd
+    _d = _C(_cd(orders[p]) for p in all_pids)
+    print(f"  positions  : {args.option_order} (seed {args.seed}) "
+          f"{dict(sorted(_d.items()))}")
+
     jobs, skipped = make_jobs(plans, queries, dialogs, fmts, images_root,
-                              args.seed, done)
+                              args.seed, done, orders)
     n_dlg_img = (0 if args.dialog_variant == "text" else
                  int(sum(sum(len(t["images"]) for t in d["turns"])
                          for d in dialogs.values()) / len(dialogs)))
@@ -487,6 +511,9 @@ def main() -> int:
     print(f"  model      : {args.model}")
     print(f"  endpoint   : {url}")
     print(f"  variant    : {args.variant}   track: {args.track}")
+    print(f"  dialog set : {dialogs_dir}"
+          + (f"   tag={args.tag}" if args.tag else "   (base)"))
+    print(f"  output     : {out_dir}")
     print(f"  dialogs    : {len(dialogs)} users, {args.dialog_variant} variant, "
           f"~{n_dlg_img} images each")
     print(f"  images/req : ~{n_dlg_img + 4}  ← --limit-mm-per-prompt 확인")
@@ -529,6 +556,7 @@ def main() -> int:
                "user_id": plan["user_id"], "input_format": fmt,
                "modality": args.dialog_variant, "profile_source": "dialog",
                "dialog_id": job["dialog"]["dialog_id"],
+               "dialog_set": dialogs_dir.name, "dialog_tag": args.tag or "base",
                "track": plan.get("track"), "scenario_id": plan.get("scenario_id"),
                "active_axis": plan.get("active_axis"),
                "violation_axis": plan.get("violation_axis"),
@@ -598,6 +626,7 @@ def main() -> int:
 
     summary = {"model": args.model, "variant": args.variant,
                "profile_source": "dialog", "dialog_variant": args.dialog_variant,
+               "dialog_set": str(dialogs_dir), "dialog_tag": args.tag or "base",
                "prompt_version": PROMPT_VERSION, "formats": fmts, "n": len(rows),
                "by_track_format": {f"{k[0]}|{k[1]}": v for k, v
                                    in bucket(lambda r: r.get("track")).items()},

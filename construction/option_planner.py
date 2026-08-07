@@ -96,6 +96,64 @@ CONFUSABLE_ACTIVE_PAIRS["garment_category"] = CONFUSABLE_GARMENT_PAIRS
 #     counterbalance are assigned exactly as before.
 _AVAILABLE_CELLS = None
 
+# ── dialogue-cell reservation ─────────────────────────────────────────
+# The dialogue condition shows the user's own preference values as images.
+# If the exact cell used in the dialogue also appears as an option, the item
+# can be answered by visual recognition rather than by applying the preference,
+# which inflates accuracy and inverts the failure mode (a recurring C pulls the
+# model into a situation violation). We therefore RESERVE, per user and per
+# preference value, a small set of cells that the option planner may not use.
+# Reservation runs before planning and is deterministic, so the whole dataset
+# still regenerates from one command.
+_RESERVED = {}          # user_id -> set of "color|garment|pattern"
+_CURRENT_UID = None     # set per query while planning
+_RESERVE_PER_VALUE = 0  # cells held back per (user, axis, value); 0 = off
+
+
+def _reserved_now():
+    return _RESERVED.get(_CURRENT_UID) or ()
+
+
+def build_reservations(profiles, cells, per_value=2, seed=42):
+    """For each (user, axis, value) in the profile, hold back `per_value`
+    cells that carry that value against a preference-neutral background.
+
+    Neutral background mirrors dialog/image_picker.py: the non-evidence axes
+    must be neutral for that user, so a reserved cell is exactly what the
+    dialogue is allowed to show. Selection is sorted-then-seeded, never
+    order-dependent.
+    """
+    import random as _r
+    reserved = {}
+    for prof in profiles:
+        uid = prof["user_id"]
+        sa = prof.get("structured_attributes", {})
+        neutral = {}
+        for ax in ("color", "garment_category", "pattern"):
+            taken = set(sa.get(ax, {}).get("likes", [])) | \
+                    set(sa.get(ax, {}).get("dislikes", []))
+            neutral[ax] = [v for v in FASHION_ATTRIBUTE_AXES[ax]
+                           if v not in taken and v != "solid"]
+        keep = set()
+        rng = _r.Random(f"{seed}|reserve|{uid}")
+        for ax in ("color", "garment_category", "pattern"):
+            for pol in ("likes", "dislikes"):
+                for val in sa.get(ax, {}).get(pol, []):
+                    opts = {"color": neutral["color"],
+                            "garment_category": neutral["garment_category"],
+                            "pattern": ["solid"] + neutral["pattern"]}
+                    opts[ax] = [val]
+                    cand = sorted(
+                        f"{c}|{g}|{p}"
+                        for c in opts["color"]
+                        for g in opts["garment_category"]
+                        for p in opts["pattern"]
+                        if f"{c}|{g}|{p}" in cells)
+                    rng.shuffle(cand)
+                    keep.update(cand[:per_value])
+        reserved[uid] = keep
+    return reserved
+
 
 def load_cell_library(path):
     """Load annotation/attribute_library.json and activate the filter."""
@@ -123,7 +181,9 @@ def _cells_ok(triples, fill_pool=None):
             return True  # incomplete key → orthogonal policy, bypass
         filled, _ = _fill_missing(triples, fill_pool)
         return filled is not None
-    return all(f"{c}|{g}|{p}" in _AVAILABLE_CELLS for c, g, p in triples)
+    res = _reserved_now()
+    return all(f"{c}|{g}|{p}" in _AVAILABLE_CELLS and f"{c}|{g}|{p}" not in res
+               for c, g, p in triples)
 
 
 def _value_violation_triples(active, axis, a, b, g, cv, iv, fixed_attrs):
@@ -247,8 +307,10 @@ def _fill_missing(triples, pool):
     ranked = sorted(pool, key=lambda v: (_BG_USE[v], v))
     for v in ranked:
         filled = [tuple(v if j == idx else t[j] for j in range(3)) for t in triples]
+        res = _reserved_now()
         if _AVAILABLE_CELLS is None or all(
-                f"{c}|{g}|{p}" in _AVAILABLE_CELLS for c, g, p in filled):
+                f"{c}|{g}|{p}" in _AVAILABLE_CELLS and f"{c}|{g}|{p}" not in res
+                for c, g, p in filled):
             return filled, v
     return None, None
 
@@ -403,6 +465,7 @@ def assign_ab_values(queries, seed=42):
                                    # even though each user's own rotation is fine
 
         def dof(q):
+            globals()["_CURRENT_UID"] = q.get("user_id")
             # fewest degrees of freedom first → place constrained queries before easy ones
             return (len(set(_liked_pool(q))), len(set(_disliked_pool(q))))
 
@@ -771,6 +834,7 @@ def plan_option_variant(profile, query, ab_values, violation_axis,
     A query may yield several plans (parallel variants) that share the
     same query_id; `plan_id` = query_id + variant suffix is unique.
     """
+    globals()["_CURRENT_UID"] = query.get("user_id")
     scenario = get_scenario_by_id(query["scenario_id"])
     if scenario is None:
         return None, "scenario_not_found"
@@ -1031,6 +1095,18 @@ def run_pipeline(profile_path, query_path, output_path, force=False, limit=0, se
     queries = load_jsonl(query_path)
     print(f"  {len(profiles)} profiles, {len(queries)} queries")
 
+    # Reserve dialogue cells before any planning so the option planner never
+    # consumes them. Without this the dialogue can be forced to reuse a cell
+    # that also appears as an option (measured at 25% of items before the
+    # reservation was introduced).
+    global _RESERVED
+    if _AVAILABLE_CELLS is not None and _RESERVE_PER_VALUE > 0:
+        _RESERVED = build_reservations(list(profiles.values()), _AVAILABLE_CELLS,
+                                       per_value=_RESERVE_PER_VALUE, seed=seed)
+        n = sorted(len(v) for v in _RESERVED.values())
+        print(f"  Dialogue-cell reservation: {_RESERVE_PER_VALUE}/value, "
+              f"{n[0]}~{n[-1]} cells per user withheld from options")
+
     # GLOBAL pass over ALL queries so balance holds even with --limit.
     ab_values = assign_ab_values(queries, seed=seed)
     print(f"  Counterbalanced A/B value assignment for {len(ab_values)} queries")
@@ -1252,6 +1328,12 @@ def main():
                         help="1: background fill must be preference-neutral; "
                              "2: also allow a low-salience non-neutral value "
                              "(solid/striped/checkered) as a last resort")
+    parser.add_argument("--reserve-dialog-cells", type=int, default=0,
+                        metavar="N",
+                        help="hold back N image cells per (user, preference "
+                             "value) so the dialogue can show that preference "
+                             "without the same photo reappearing as an option. "
+                             "Requires --cell-library. 2 is enough in practice.")
     parser.add_argument("--fill-background", action="store_true",
                         help="explicitly assign a preference-NEUTRAL, TPO-safe, "
                              "image-available value to the background axis when "
@@ -1265,6 +1347,7 @@ def main():
         globals()["_FILL_BACKGROUND"] = True
         globals()["_FILL_TIER"] = args.fill_tier
         print("  Explicit background-axis fill: ON")
+    globals()["_RESERVE_PER_VALUE"] = args.reserve_dialog_cells
     if args.cell_library:
         n = load_cell_library(args.cell_library)
         print(f"  Cell-availability filter ON: {n} available cells "
