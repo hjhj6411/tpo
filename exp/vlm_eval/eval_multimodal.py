@@ -80,6 +80,7 @@ import requests
 REPO = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(REPO))
 from exp.vlm_eval.option_order import assign_orders
+from configs.config import VARIANT                                   # noqa: E402
 from configs.scenarios import (EVAL_FRAME_CLAUSE, EVAL_PRIORITY_CLAUSE_SITUATION,
                                EVAL_PRIORITY_CLAUSE_PREFERENCE, PROMPT_VERSION)
 
@@ -393,7 +394,9 @@ def print_block(rows, title, fmts):
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--variant", default="wacv_scenario_v5")
+    ap.add_argument("--variant", default=VARIANT,
+                    help=f"dataset variant; default is configs.config.VARIANT "
+                         f"({VARIANT}), which honours $POD_VARIANT")
     ap.add_argument("--plans", type=Path)
     ap.add_argument("--queries", type=Path)
     ap.add_argument("--profiles", type=Path)

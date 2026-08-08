@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # verify_release.sh — reproduce the shipped dataset and prove it is unchanged.
 #
-#   scripts/verify_release.sh [VARIANT]      (default: wacv_scenario_v5)
+#   scripts/verify_release.sh [VARIANT]      (default: configs.config.VARIANT)
 #
 # Pins the GENERATION INPUTS, regenerates profiles/queries/option_plans into a
 # scratch variant, compares the three SHA256s against the released files, runs
@@ -18,9 +18,11 @@
 # Check out the tag/commit that produced a variant to reverify it.
 set -euo pipefail
 
-VARIANT="${1:-wacv_scenario_v5}"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
+# One source of truth for "the current release": configs.config decides it and
+# every generator already reads it, so the verifier must not carry its own copy.
+VARIANT="${1:-$(python -c 'from configs.config import VARIANT; print(VARIANT)')}"
 
 RELEASED="data_${VARIANT}"
 VERIFY_VARIANT="${VARIANT}_verify"

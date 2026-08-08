@@ -401,7 +401,11 @@ def main():
         for pair, items in pairs.items():
             if len(pair) < 2:
                 continue
-            x, y = tuple(pair)
+            # sorted(), not tuple(): frozenset iteration follows string hashes,
+            # which Python randomizes per process, so tuple(pair) swapped the two
+            # orientation blocks run to run. Same ids either way, but the file
+            # bytes moved and a released artifact has to hash the same twice.
+            x, y = sorted(pair)
             xy = [pid for pid, a in items if a == x]   # A == x
             yx = [pid for pid, a in items if a == y]   # A == y
             m = min(len(xy), len(yx))
