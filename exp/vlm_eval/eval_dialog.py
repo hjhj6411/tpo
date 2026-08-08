@@ -64,6 +64,7 @@ import requests
 REPO = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(REPO))
 from exp.vlm_eval.option_order import assign_orders
+from exp.vlm_eval.eval_multimodal import missing_images_error       # noqa: E402
 from configs.scenarios import (EVAL_FRAME_CLAUSE,                    # noqa: E402
                                EVAL_PRIORITY_CLAUSE_PREFERENCE,
                                EVAL_PRIORITY_CLAUSE_SITUATION,
@@ -331,13 +332,19 @@ def item_evidence(plan, ev_idx):
 
 
 # ══ jobs ══════════════════════════════════════════════════════════════════
+def missing_option_images(plan, images_root):
+    """[(label, attributes)] for the options whose cell has no image file."""
+    return [(k, plan["options"][k].get("attributes", {})) for k in LABELS
+            if cell_image_path(plan["options"][k].get("attributes", {}),
+                               images_root) is None]
+
+
 def usable(plan, images_root):
-    return all(cell_image_path(plan["options"][k].get("attributes", {}),
-                               images_root) for k in LABELS)
+    return not missing_option_images(plan, images_root)
 
 
 def make_jobs(plans, queries, dialogs, fmts, images_root, seed, done,
-              orders=None):
+              orders=None, allow_missing=False):
     """셔플은 plan 당 1회. eval_multimodal.py 와 같은 키라 이미지 실행과
     선택지 순서가 일치한다."""
     jobs, skipped = [], []
@@ -346,7 +353,10 @@ def make_jobs(plans, queries, dialogs, fmts, images_root, seed, done,
         dialog = dialogs.get(plan["user_id"])
         if dialog is None:
             skipped.append((pid, "no dialog")); continue
-        if not usable(plan, images_root):
+        missing = missing_option_images(plan, images_root)
+        if missing:
+            if not allow_missing:
+                raise missing_images_error(pid, missing, images_root)
             skipped.append((pid, "missing option image")); continue
         order = orders[pid] if orders else None
         if order is None:
@@ -432,6 +442,9 @@ def main() -> int:
     ap.add_argument("--retries", type=int, default=3)
     ap.add_argument("--out", type=Path)
     ap.add_argument("--fresh", action="store_true")
+    ap.add_argument("--allow-missing-images", action="store_true",
+                    help="score the image-complete subset instead of failing "
+                         "when a plan has no image for one of its options.")
     args = ap.parse_args()
 
     data = REPO / f"data_{args.variant}"
@@ -501,7 +514,8 @@ def main() -> int:
           f"{dict(sorted(_d.items()))}")
 
     jobs, skipped = make_jobs(plans, queries, dialogs, fmts, images_root,
-                              args.seed, done, orders)
+                              args.seed, done, orders,
+                              allow_missing=args.allow_missing_images)
     n_dlg_img = (0 if args.dialog_variant == "text" else
                  int(sum(sum(len(t["images"]) for t in d["turns"])
                          for d in dialogs.values()) / len(dialogs)))
