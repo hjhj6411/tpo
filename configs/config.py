@@ -19,10 +19,23 @@ from pathlib import Path
 ROOT = Path(__file__).parent.parent
 
 # ── Variant-aware data root ───────────────────────────────
-# Current release: wacv_scenario_v4. Keep selection explicit so historical
-# variants remain addressable, e.g. POD_VARIANT=wacv_scenario_v3.
-_VARIANT = os.environ.get("POD_VARIANT", "").strip()
-DATA_DIR = ROOT / (f"data_{_VARIANT}" if _VARIANT else "data")
+# Current release: wacv_scenario_v5b. Every script that reads or writes the
+# benchmark goes through DATA_DIR, so this one line decides what "the dataset"
+# means for the whole repo; POD_VARIANT overrides it, so historical variants
+# stay addressable (POD_VARIANT=wacv_scenario_v5) and a scratch rebuild never
+# touches the release (POD_VARIANT=wacv_scenario_v5b_verify).
+#
+# Before v5b the unset default was the pre-variant root ROOT/"data". That root
+# is NOT a dataset variant — it holds the image corpora and the screening
+# artifacts — so it is named separately as CORPUS_DIR instead of doubling as
+# the default release.
+DEFAULT_VARIANT = "wacv_scenario_v5b"
+VARIANT = os.environ.get("POD_VARIANT", "").strip() or DEFAULT_VARIANT
+DATA_DIR = ROOT / f"data_{VARIANT}"
+
+# Not variant-scoped: amazon/, clip_corpus/, fashionsiglip*_corpus/ and the
+# availability-screening outputs under retrieval/ are inputs to every variant.
+CORPUS_DIR = ROOT / "data"
 
 PROFILES_DIR = DATA_DIR / "profiles"
 QUERIES_DIR  = DATA_DIR / "queries"

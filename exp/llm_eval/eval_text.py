@@ -56,6 +56,8 @@ import requests
 REPO = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(REPO))
 from exp.vlm_eval.option_order import assign_orders
+from exp.vlm_eval.eval_multimodal import missing_images_error       # noqa: E402
+from configs.config import VARIANT                                   # noqa: E402
 from configs.scenarios import (EVAL_FRAME_CLAUSE, EVAL_PRIORITY_CLAUSE_SITUATION,
                                EVAL_PRIORITY_CLAUSE_PREFERENCE, PROMPT_VERSION)
 
@@ -275,15 +277,22 @@ def cell_image_exists(attrs, images_root: Path) -> bool:
 
 
 def make_jobs(plans, queries, profiles, fmts, seed, done,
-              images_root=None, orders=None):
+              images_root=None, orders=None, allow_missing=False):
     """셔플은 plan당 1회. eval_multimodal.py와 같은 키(f"{seed}|{pid}")를 쓰므로
     같은 seed면 이미지 판과 선택지 순서가 동일하다 — 문항 단위 짝비교가 된다."""
     jobs, skipped = [], []
     for plan in plans:
         pid = plan.get("plan_id") or plan["query_id"]
-        if images_root is not None and not all(
-                cell_image_exists(plan["options"][k].get("attributes", {}), images_root)
-                for k in LABELS):
+        missing = [] if images_root is None else [
+            (k, plan["options"][k].get("attributes", {})) for k in LABELS
+            if not cell_image_exists(plan["options"][k].get("attributes", {}),
+                                     images_root)]
+        if missing:
+            # 텍스트 판은 이미지 판과 같은 문항 집합 위에서 돌아야 짝비교가
+            # 성립한다. 조용히 빼면 두 집합이 갈라지고 그 사실이 어디에도
+            # 남지 않는다 — 이미지 판과 같은 이유로 여기서 멈춘다.
+            if not allow_missing:
+                raise missing_images_error(pid, missing, images_root)
             skipped.append(pid); continue
         order = orders[pid] if orders else None
         if order is None:
@@ -328,7 +337,9 @@ def print_block(rows, title, fmts):
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--variant", default="wacv_scenario_v5")
+    ap.add_argument("--variant", default=VARIANT,
+                    help=f"dataset variant; default is configs.config.VARIANT "
+                         f"({VARIANT}), which honours $POD_VARIANT")
     ap.add_argument("--plans", type=Path)
     ap.add_argument("--queries", type=Path)
     ap.add_argument("--profiles", type=Path)
@@ -336,6 +347,9 @@ def main() -> int:
                     help="문항 집합을 이미지 판과 맞추는 데만 쓴다 (인코딩 없음)")
     ap.add_argument("--no-image-filter", action="store_true",
                     help="이미지 없는 plan도 포함 (이미지 판과 문항 집합이 달라짐)")
+    ap.add_argument("--allow-missing-images", action="store_true",
+                    help="이미지 없는 plan을 중단 대신 조용히 제외한다. "
+                         "기본값은 중단: 제외는 문항 집합을 말없이 줄인다.")
 
     ap.add_argument("--model", required=True)
     ap.add_argument("--port", type=int,
@@ -431,7 +445,8 @@ def main() -> int:
           f"{dict(sorted(_d.items()))}")
 
     jobs, skipped = make_jobs(plans, queries, profiles, fmts, args.seed, done,
-                              images_root, orders)
+                              images_root, orders,
+                              allow_missing=args.allow_missing_images)
 
     print("=" * 74)
     print("  POD-Bench TEXT-ONLY A/B/C/D evaluation")

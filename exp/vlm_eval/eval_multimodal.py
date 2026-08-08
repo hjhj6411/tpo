@@ -80,6 +80,7 @@ import requests
 REPO = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(REPO))
 from exp.vlm_eval.option_order import assign_orders
+from configs.config import VARIANT                                   # noqa: E402
 from configs.scenarios import (EVAL_FRAME_CLAUSE, EVAL_PRIORITY_CLAUSE_SITUATION,
                                EVAL_PRIORITY_CLAUSE_PREFERENCE, PROMPT_VERSION)
 
@@ -303,19 +304,51 @@ def call_model(session, url, model, messages, max_tokens, temperature,
 
 
 # ══ jobs ══════════════════════════════════════════════════════════════════
+def missing_option_images(plan, images_root):
+    """[(label, attributes)] for the options whose cell has no image file."""
+    return [(k, plan["options"][k].get("attributes", {})) for k in LABELS
+            if cell_image_path(plan["options"][k].get("attributes", {}),
+                               images_root) is None]
+
+
 def usable(plan, images_root):
-    return all(cell_image_path(plan["options"][k].get("attributes", {}), images_root)
-               for k in LABELS)
+    return not missing_option_images(plan, images_root)
+
+
+def missing_images_error(pid, missing, images_root):
+    """A plan without four images is a BUILD defect, not an eval condition:
+    silently skipping it changes the item set without changing the reported
+    denominator, so every number computed afterwards is over a set nobody
+    chose. Fail here and fix the dataset (or opt in with the flag)."""
+    cells = "\n".join(
+        f"      {k}: {a.get('color')}|{a.get('garment_category')}|{a.get('pattern')}"
+        f"  ->  {images_root}/{a.get('color')}/{a.get('pattern')}_{a.get('garment_category')}.jpg"
+        for k, a in missing)
+    return SystemExit(
+        f"[error] plan {pid} has no image for {len(missing)} of its 4 options:\n"
+        f"{cells}\n"
+        f"    The item set and the image folder disagree. Rebuild the plans "
+        f"against the materialized cells\n"
+        f"      python -m construction.option_planner --force --cell-library "
+        f"annotation/attribute_library.json \\\n"
+        f"          --solid-baseline --image-manifest <variant>/images_manifest.json\n"
+        f"    or materialize the missing cells "
+        f"(python -m scripts.materialize_cells --help).\n"
+        f"    To score the image-complete subset anyway, pass "
+        f"--allow-missing-images.")
 
 
 def make_jobs(plans, queries, profiles, fmts, images_root, seed, done,
-              orders=None):
+              orders=None, allow_missing=False):
     """Option order is shuffled ONCE per plan and reused across formats, so a
     format comparison is not also a comparison of different shuffles."""
     jobs, skipped = [], []
     for plan in plans:
         pid = plan.get("plan_id") or plan["query_id"]
-        if not usable(plan, images_root):
+        missing = missing_option_images(plan, images_root)
+        if missing:
+            if not allow_missing:
+                raise missing_images_error(pid, missing, images_root)
             skipped.append(pid); continue
         order = orders[pid] if orders else None
         if order is None:
@@ -361,7 +394,9 @@ def print_block(rows, title, fmts):
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--variant", default="wacv_scenario_v5")
+    ap.add_argument("--variant", default=VARIANT,
+                    help=f"dataset variant; default is configs.config.VARIANT "
+                         f"({VARIANT}), which honours $POD_VARIANT")
     ap.add_argument("--plans", type=Path)
     ap.add_argument("--queries", type=Path)
     ap.add_argument("--profiles", type=Path)
@@ -398,6 +433,11 @@ def main() -> int:
     ap.add_argument("--retries", type=int, default=3)
     ap.add_argument("--out", type=Path)
     ap.add_argument("--fresh", action="store_true", help="ignore previous results")
+    ap.add_argument("--allow-missing-images", action="store_true",
+                    help="score the image-complete subset instead of failing "
+                         "when a plan has no image for one of its options. "
+                         "Off by default: a silent skip shrinks the item set "
+                         "without saying so.")
     args = ap.parse_args()
 
     data = REPO / f"data_{args.variant}"
@@ -458,7 +498,8 @@ def main() -> int:
           f"{dict(sorted(_d.items()))}")
 
     jobs, skipped = make_jobs(plans, queries, profiles, fmts, images_root,
-                              args.seed, done, orders)
+                              args.seed, done, orders,
+                              allow_missing=args.allow_missing_images)
 
     print("=" * 74)
     print("  POD-Bench multimodal A/B/C/D evaluation")

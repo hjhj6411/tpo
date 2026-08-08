@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from configs.config import FASHION_ATTRIBUTE_AXES, DATA_DIR
+from configs.config import FASHION_ATTRIBUTE_AXES, CORPUS_DIR
 
 # ── endpoints ─────────────────────────────────────────────
 KNN_URL = "http://127.0.0.1:1235"          # fsiglip/serve_fsiglip_knn.py
@@ -16,7 +16,9 @@ VLM_URL = "http://127.0.0.1:8002/v1"       # vLLM OpenAI-compat (Qwen3-VL)
 VLM_MODEL = "Qwen/Qwen3-VL-30B-A3B-Instruct"
 
 # ── outputs ───────────────────────────────────────────────
-AUDIT_DIR = DATA_DIR / "retrieval" / "availability"
+# CORPUS_DIR, not DATA_DIR: the screening artifacts are an input to every
+# variant, so they must not move when POD_VARIANT changes.
+AUDIT_DIR = CORPUS_DIR / "retrieval" / "availability"
 CANDIDATES_PATH = AUDIT_DIR / "candidates.jsonl"           # after retrieve
 CATALOG_PATH = AUDIT_DIR / "availability_catalog.jsonl"    # after verify+classify
 CORPUS_SUPPORT_PATH = AUDIT_DIR / "corpus_support.json"

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # verify_release.sh — reproduce the shipped dataset and prove it is unchanged.
 #
-#   scripts/verify_release.sh [VARIANT]      (default: wacv_scenario_v5)
+#   scripts/verify_release.sh [VARIANT]      (default: configs.config.VARIANT)
 #
 # Pins the GENERATION INPUTS, regenerates profiles/queries/option_plans into a
 # scratch variant, compares the three SHA256s against the released files, runs
@@ -18,9 +18,11 @@
 # Check out the tag/commit that produced a variant to reverify it.
 set -euo pipefail
 
-VARIANT="${1:-wacv_scenario_v5}"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
+# One source of truth for "the current release": configs.config decides it and
+# every generator already reads it, so the verifier must not carry its own copy.
+VARIANT="${1:-$(python -c 'from configs.config import VARIANT; print(VARIANT)')}"
 
 RELEASED="data_${VARIANT}"
 VERIFY_VARIANT="${VARIANT}_verify"
@@ -31,10 +33,25 @@ VERIFY_DIR="data_${VERIFY_VARIANT}"
 # option planner only places options on cells a human marked "available", and
 # holds the pattern axis at its baseline when pattern is the nuisance axis.
 # Older variants predate both flags and must be rebuilt without them.
+#
+# v5b adds two more generation inputs: the MATERIALIZED-cell manifest (an option
+# may only land on a cell that exists as a jpg, not merely on one a human
+# approved) and the dialogue-cell reservation. Its case must come first — the
+# v5 pattern would otherwise swallow it and rebuild v5b with v5's flags.
 PLANNER_FLAGS=()
 CELL_LIBRARY=""
 CELL_LIBRARY_SHA=""
+IMAGE_MANIFEST=""
+IMAGE_MANIFEST_SHA=""
 case "$VARIANT" in
+  wacv_scenario_v5b*)
+    CELL_LIBRARY="annotation/attribute_library.json"
+    CELL_LIBRARY_SHA="ab9f99aa1c29b063a9c067f53809e06af4a97a05931139ac26a06cd2dc4f7293"
+    IMAGE_MANIFEST="data_wacv_scenario_v5b/images_manifest.json"
+    IMAGE_MANIFEST_SHA="21d5e05fd49a60aec490ec6747b98e6c582b5ef7dfd915f27653a6e2c55bf1ea"
+    PLANNER_FLAGS=(--cell-library "$CELL_LIBRARY" --solid-baseline
+                   --reserve-dialog-cells 3 --image-manifest "$IMAGE_MANIFEST")
+    ;;
   wacv_scenario_v5*)
     CELL_LIBRARY="annotation/attribute_library.json"
     CELL_LIBRARY_SHA="72cc8665d6f92d143f850b751bba1767c342a2e9b857292e6738666bea86baae"
@@ -62,6 +79,19 @@ if [[ -n "$CELL_LIBRARY" ]]; then
   fi
 else
   echo "  (none — ${VARIANT} predates the cell-library input)"
+fi
+if [[ -n "$IMAGE_MANIFEST" ]]; then
+  have="$(sha256sum "$IMAGE_MANIFEST" | cut -d' ' -f1)"
+  if [[ "$have" == "$IMAGE_MANIFEST_SHA" ]]; then
+    echo "  OK    ${IMAGE_MANIFEST}  ${have:0:12}…"
+  else
+    echo "  DIFF  ${IMAGE_MANIFEST}" >&2
+    echo "        pinned:  $IMAGE_MANIFEST_SHA" >&2
+    echo "        on disk: $have" >&2
+    echo "  [FAIL] the image manifest is a generation input; materializing a" >&2
+    echo "         different cell set changes the released plans." >&2
+    exit 1
+  fi
 fi
 
 echo

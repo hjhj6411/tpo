@@ -165,20 +165,63 @@ def load_cell_library(path):
     return len(_AVAILABLE_CELLS)
 
 
+# ── realizability mode (--image-manifest) ─────────────────────────────
+# "available" is a human annotation verdict; "materialized" is a fact about the
+# image folder, and only the second one makes an option renderable. The two
+# sets are not the same — a cell a human approved is only copied into
+# data_<variant>/images/ when some plan needed it — so a planner that reads
+# only the library can place options on cells that have no image file, and the
+# evaluators then skip those items. --image-manifest ANDs the manifest into the
+# filter and turns the candidate test into a REALIZABILITY test:
+#   * the cell must be library-available AND present in the manifest,
+#   * an incomplete key (unfixed background axis) can never resolve to a file,
+#     so it stops bypassing the check,
+#   * the cell that is TESTED is the cell that will be BUILT — under
+#     --solid-baseline plan_option_variant overwrites the background pattern
+#     with "solid" after the assigners have run, so the pre-assignment checks
+#     must apply the same override (docs/wacv_scenario_v5_report.md, "The 70
+#     plans without four images", cause 2).
+# Off by default: --cell-library alone behaves exactly as before.
+_REALIZABLE_ONLY = False
+
+
+def load_image_manifest(path):
+    """AND the materialized-cell manifest into the availability filter."""
+    global _AVAILABLE_CELLS, _REALIZABLE_ONLY
+    import json
+    if _AVAILABLE_CELLS is None:
+        raise SystemExit("[error] --image-manifest requires --cell-library")
+    cells = set(json.loads(Path(path).read_text()).get("cells") or ())
+    _AVAILABLE_CELLS = _AVAILABLE_CELLS & cells
+    _REALIZABLE_ONLY = True
+    return len(cells), len(_AVAILABLE_CELLS)
+
+
+def _baseline_fixed_attrs(query, active_axis, violation_axis):
+    """The fixed attrs plan_option_variant will actually build with, so a
+    pre-assignment availability check tests the cell that gets built."""
+    fixed = dict(query.get("fixed_attrs") or {})
+    if (_REALIZABLE_ONLY and _SOLID_BASELINE
+            and "pattern" not in (active_axis, violation_axis)):
+        fixed["pattern"] = "solid"
+    return fixed
+
+
 def _cells_ok(triples, fill_pool=None):
     """triples: iterable of (color, garment, pattern) for options A-D.
     True when the filter is off, when all four exact cells are available, or
     (fill mode) when one preference-neutral background value completes them.
-    Without fill mode an incomplete triple bypasses the check unchanged."""
+    Without fill mode an incomplete triple bypasses the check unchanged —
+    except in realizability mode, where an unspecified cell has no image."""
     if _AVAILABLE_CELLS is None:
         return True
     triples = list(triples)
     if any(t[1] is None for t in triples):
-        return True
+        return not _REALIZABLE_ONLY
     incomplete = any(t[0] is None or t[2] is None for t in triples)
     if incomplete:
         if not (_FILL_BACKGROUND and fill_pool):
-            return True  # incomplete key → orthogonal policy, bypass
+            return not _REALIZABLE_ONLY  # incomplete key → orthogonal policy
         filled, _ = _fill_missing(triples, fill_pool)
         return filled is not None
     res = _reserved_now()
@@ -526,7 +569,7 @@ def _value_violation_feasible(query, axis, ab_values):
         return _cells_ok(
             _value_violation_triples(
                 query["active_axis"], axis, a_val, b_val, g, cv, iv,
-                query.get("fixed_attrs")),
+                _baseline_fixed_attrs(query, query["active_axis"], axis)),
             _background_pool(query, _third_axis(query["active_axis"], axis), (g,)))
 
     if axis == "color":
@@ -571,7 +614,8 @@ def _garment_active_violation_feasible(query, axis, ab_values):
     def avail(cv, iv):
         return _cells_ok(
             _garment_active_triples(
-                axis, liked_g, disliked_g, cv, iv, query.get("fixed_attrs")),
+                axis, liked_g, disliked_g, cv, iv,
+                _baseline_fixed_attrs(query, "garment_category", axis)),
             _background_pool(query, _third_axis("garment_category", axis),
                              (liked_g, disliked_g)))
 
@@ -670,7 +714,7 @@ def assign_violation_values(queries, ab_values, violation_axes, seed=42):
                     if a_val and b_val and not _cells_ok(
                             _value_violation_triples(
                                 q["active_axis"], axis, a_val, b_val, g, cv, iv,
-                                q.get("fixed_attrs")),
+                                _baseline_fixed_attrs(q, q["active_axis"], axis)),
                             _background_pool(
                                 q, _third_axis(q["active_axis"], axis), (g,))):
                         continue
@@ -734,7 +778,8 @@ def assign_garment_active_values(queries, ab_values, violation_axes, seed=42):
                     continue
                 if not _cells_ok(
                         _garment_active_triples(
-                            axis, liked_g, disliked_g, cv, iv, q.get("fixed_attrs")),
+                            axis, liked_g, disliked_g, cv, iv,
+                            _baseline_fixed_attrs(q, "garment_category", axis)),
                         _background_pool(q, _third_axis("garment_category", axis),
                                          (liked_g, disliked_g))):
                     continue
@@ -793,7 +838,8 @@ def assign_garment_pairs(queries, ab_values, seed=42):
                     continue
                 if a_val and b_val and not _cells_ok(
                         _garment_violation_triples(
-                            axis, a_val, b_val, cg, ig, q.get("fixed_attrs")),
+                            axis, a_val, b_val, cg, ig,
+                            _baseline_fixed_attrs(q, axis, "garment_category")),
                         _background_pool(q, _third_axis(axis, "garment_category"),
                                          (cg, ig))):
                     continue
@@ -905,7 +951,8 @@ def plan_option_variant(profile, query, ab_values, violation_axis,
                     if not _cells_ok(
                             _garment_violation_triples(
                                 active_axis, liked_v, disliked_v, cg, ig,
-                                query.get("fixed_attrs")),
+                                _baseline_fixed_attrs(query, active_axis,
+                                                      "garment_category")),
                             _background_pool(
                                 query, _third_axis(active_axis, "garment_category"),
                                 (cg, ig))):
@@ -1321,6 +1368,14 @@ def main():
                              "human-annotated 'available' cells are filtered "
                              "out BEFORE the balance objectives (incomplete-key "
                              "plans bypass unchanged)")
+    parser.add_argument("--image-manifest", type=Path, default=None,
+                        help="data_<variant>/images_manifest.json; ANDed with "
+                             "--cell-library so a candidate is kept only when "
+                             "all four options are BOTH library-available AND "
+                             "materialized as image files. Also stops "
+                             "incomplete keys from bypassing the filter and "
+                             "checks the cell that --solid-baseline will "
+                             "actually build. Requires --cell-library.")
     parser.add_argument("--solid-baseline", action="store_true",
                         help="hold the pattern axis at 'solid' whenever pattern "
                              "is neither the preference nor the TPO axis")
@@ -1352,6 +1407,10 @@ def main():
         n = load_cell_library(args.cell_library)
         print(f"  Cell-availability filter ON: {n} available cells "
               f"({args.cell_library})")
+    if args.image_manifest:
+        n_man, n_both = load_image_manifest(args.image_manifest)
+        print(f"  Image-realizability filter ON: {n_man} materialized cells "
+              f"({args.image_manifest}); {n_both} available AND materialized")
     run_pipeline(args.profile_path, args.query_path, args.output,
                  args.force, args.limit, args.seed,
                  pattern_downsample=not args.no_pattern_downsample)
